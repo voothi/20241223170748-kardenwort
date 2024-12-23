@@ -5,14 +5,26 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python Debugger: Current File with Arguments",
+            "name": "Python Debugger: Current File with Arguments / DE",
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
             "args": [
                 "--text", "Ich stehe morgen früh auf. Sie räumt ihr Zimmer immer auf. Er kommt heute Abend vorbei. Wir schlagen einen neuen Weg ein.",
-                "--output", "result.csv"
+                "--output", "result.en.csv"
+            ],
+            "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
+        },
+        {
+            "name": "Python Debugger: Current File with Arguments / EN",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args": [
+                "--text", "Whatever you do, do not ask an AI to summarize the tips we're about to go through. Because make no mistake, if you can't summarize information yourself and practice the summarization of information, you're not going to be learning on your own. It's just that simple.",
+                "--output", "result.de.csv"
             ],
             "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
         }

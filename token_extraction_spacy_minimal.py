@@ -15,11 +15,6 @@ doc = nlp(input_text)
 # Lemmatize tokens and filter out non-alphabetic tokens
 lemmatized_tokens = [token.lemma_ for token in doc if token.is_alpha]
 
-# Calculate frequency of each token
-token_frequency = {}
-for token in lemmatized_tokens:
-    token_frequency[token] = token_frequency.get(token, 0) + 1
-
 # Read the Morph-Lemma column from the external dictionary
 priority_tokens = set()
 with open("en-wiki-priority.csv", "r", newline='', encoding='utf-8') as csvfile:
@@ -28,30 +23,26 @@ with open("en-wiki-priority.csv", "r", newline='', encoding='utf-8') as csvfile:
     for row in csv_reader:
         priority_tokens.add(row[0].lower())  # Add the Morph-Lemma to the set
 
-# Sort tokens by frequency (in descending order)
-sorted_tokens_by_frequency = sorted(token_frequency.items(), key=lambda item: item[1], reverse=True)
-
 # Separate tokens into priority and non-priority
 priority_tokens_list = []
 non_priority_tokens_list = []
 
-for token, frequency in sorted_tokens_by_frequency:
+for token in lemmatized_tokens:
     if token in priority_tokens:
-        priority_tokens_list.append((token, frequency))
+        priority_tokens_list.append(token)
     else:
-        non_priority_tokens_list.append((token, frequency))
+        non_priority_tokens_list.append(token)
 
 # Sort non-priority tokens alphabetically
-non_priority_tokens_list.sort(key=lambda item: item[0])
+non_priority_tokens_list = sorted(set(non_priority_tokens_list))  # Ensure uniqueness and sort
 
 # Combine both lists
 combined_tokens = priority_tokens_list + non_priority_tokens_list
 
-# Write data to a CSV file
+# Write data to a CSV file without header
 with open("filtered_tokens_spacy.csv", "w", newline='', encoding='utf-8') as csvfile:
     csv_writer = csv.writer(csvfile)
-    csv_writer.writerow(["Token", "Frequency"])  # Write header
-    for token, frequency in combined_tokens:
-        csv_writer.writerow([token, frequency])
+    for token in combined_tokens:
+        csv_writer.writerow([token])
 
 print("CSV file 'filtered_tokens_spacy.csv' created successfully.")

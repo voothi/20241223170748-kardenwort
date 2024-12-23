@@ -15,14 +15,23 @@ doc = nlp(input_text)
 # Lemmatize tokens and filter out non-alphabetic tokens, then convert to a set to remove duplicates
 unique_lemmatized_tokens = set(token.lemma_ for token in doc if token.is_alpha)
 
-# Convert the set back to a list and sort it alphabetically
-sorted_unique_tokens = sorted(unique_lemmatized_tokens)
+# Read the priority CSV file and create a dictionary for lemma priorities
+lemma_priority = {}
+with open("en-wiki-priority.csv", "r", newline='', encoding='utf-8') as csvfile:
+    csv_reader = csv.reader(csvfile)
+    next(csv_reader)  # Skip the header
+    for row in csv_reader:
+        lemma, _, priority, _, _ = row
+        lemma_priority[lemma] = int(priority)
 
-# Write data to a CSV file in alphabetical order
+# Sort unique tokens based on their priority
+sorted_unique_tokens = sorted(unique_lemmatized_tokens, key=lambda token: lemma_priority.get(token, float('inf')))
+
+# Write data to a CSV file in priority order
 with open("tokens_spacy.csv", "w", newline='', encoding='utf-8') as csvfile:
     csv_writer = csv.writer(csvfile)
     csv_writer.writerow(["Token"])  # Write header
     for token in sorted_unique_tokens:
         csv_writer.writerow([token])
 
-print("CSV file 'tokens_spacy.csv' created successfully with unique tokens in alphabetical order.")
+print("CSV file 'tokens_spacy.csv' created successfully with unique tokens sorted by priority.")

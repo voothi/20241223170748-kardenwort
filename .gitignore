@@ -100,3 +100,5 @@ terraform.tfstate.backup
 .terraform.tfstate.lock.info
 
 /test-*
+
+en-wiki-priority.csv

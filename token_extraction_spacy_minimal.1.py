@@ -32,7 +32,7 @@ def process_text(input_text, output_file):
 
     # Create a lemma index from the reference CSV
     lemma_index = {}
-    with open("de-news-priority.csv", "r", newline='', encoding='utf-8') as csvfile:
+    with open("U:\\voothi\\20241223170748-token-extraction\\de-news-priority.csv", "r", newline='', encoding='utf-8') as csvfile:
         for line_number, row in enumerate(csv.reader(csvfile)):
             if row:  # Skip empty rows
                 word = row[0]

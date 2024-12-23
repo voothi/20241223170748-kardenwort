@@ -17,15 +17,14 @@ unique_lemmatized_tokens = set(token.lemma_ for token in doc if token.is_alpha)
 
 # Read the priority CSV file and create a dictionary for lemma indices with the minimum index
 lemma_index = {}
-with open("en-wiki-priority.csv", "r", newline='', encoding='utf-8') as csvfile:
+with open("en-news-2023-1m-words.csv", "r", newline='', encoding='utf-8') as csvfile:
     csv_reader = csv.reader(csvfile)
-    next(csv_reader)  # Skip the header
     for index, row in enumerate(csv_reader):
-        lemma, _, _, _, _ = row
-        if lemma not in lemma_index:
-            lemma_index[lemma] = index
-        else:
-            lemma_index[lemma] = min(lemma_index[lemma], index)
+            lemma = row[0]
+            if lemma not in lemma_index:
+                lemma_index[lemma] = index
+            else:
+                lemma_index[lemma] = min(lemma_index[lemma], index)
 
 # Sort unique tokens based on their index in the priority CSV file
 sorted_unique_tokens = sorted(unique_lemmatized_tokens, key=lambda token: lemma_index.get(token, float('inf')))
@@ -37,4 +36,4 @@ with open("tokens_spacy.csv", "w", newline='', encoding='utf-8') as csvfile:
     for token in sorted_unique_tokens:
         csv_writer.writerow([token])
 
-print("CSV file 'tokens_spacy.csv' created successfully with unique tokens sorted by their order in en-wiki-priority.csv.")
+print("CSV file 'tokens_spacy.csv' created successfully with unique tokens sorted by their order in en-news-2023-1m-words.csv.")

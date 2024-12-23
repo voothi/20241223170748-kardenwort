@@ -23,12 +23,22 @@ with open("en-wiki-priority.csv", "r", newline='', encoding='utf-8') as csvfile:
             word = row[0]
             lemma_index.setdefault(word, line_number)
 
-# Sort the unique tokens based on their indices in lemma_index
-sorted_unique_tokens = sorted(unique_lemmatized_tokens, key=lambda token: lemma_index.get(token, float('inf')))
+# Split the tokens into those found in the index and those not found
+found_tokens = [token for token in unique_lemmatized_tokens if token in lemma_index]
+not_found_tokens = [token for token in unique_lemmatized_tokens if token not in lemma_index]
+
+# Sort the found tokens by their indices in lemma_index
+sorted_found_tokens = sorted(found_tokens, key=lambda token: lemma_index[token])
+
+# Sort the not found tokens alphabetically
+sorted_not_found_tokens = sorted(not_found_tokens)
+
+# Combine the lists
+final_sorted_tokens = sorted_found_tokens + sorted_not_found_tokens
 
 # Write sorted tokens to CSV
 with open("tokens_spacy.csv", "w", newline='', encoding='utf-8') as csvfile:
     csv_writer = csv.writer(csvfile)
-    csv_writer.writerows([[token] for token in sorted_unique_tokens])
+    csv_writer.writerows([[token] for token in final_sorted_tokens])
 
-print("CSV file 'tokens_spacy.csv' created successfully with unique tokens sorted by their order in en-wiki-priority.csv.")
+print("CSV file 'tokens_spacy.csv' created successfully with unique tokens sorted, placing not found tokens at the end alphabetically.")

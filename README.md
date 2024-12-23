@@ -1,0 +1,1 @@
+C:\Users\voothi\AppData\Roaming\Anki2\addons21\spacyenv\Scripts

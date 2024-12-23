@@ -2,7 +2,7 @@ import spacy
 import csv
 
 # Load the English NLP model
-nlp = spacy.load("en_core_web_sm")
+nlp = spacy.load("en_core_web_lg")
 
 # Define the input text
 input_text = """Whatever you do, do not ask an AI to summarize the tips we're about to go through. 

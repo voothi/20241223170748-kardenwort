@@ -50,10 +50,14 @@ sorted_not_found_tokens = sorted(not_found_tokens)
 # Combine both lists: found tokens first, then not found tokens
 final_sorted_tokens = sorted_found_tokens + sorted_not_found_tokens
 
-# Write the results to CSV
-with open("tokens_spacy.1.csv", "w", newline='', encoding='utf-8') as csvfile:
-    csv_writer = csv.writer(csvfile)
-    csv_writer.writerows([[token] for token in final_sorted_tokens])
+# # Write the results to CSV
+# with open("tokens_spacy.1.csv", "w", newline='', encoding='utf-8') as csvfile:
+#     csv_writer = csv.writer(csvfile)
+#     csv_writer.writerows([[token] for token in final_sorted_tokens])
 
-print("CSV file 'tokens_spacy.1.csv' has been created successfully.")
-print("Tokens have been sorted with priority tokens first, followed by alphabetically sorted non-priority tokens.")
+# Print the final sorted tokens with categories
+for token in final_sorted_tokens:
+    print(token)
+
+# print("CSV file 'tokens_spacy.1.csv' has been created successfully.")
+# print("Tokens have been sorted with priority tokens first, followed by alphabetically sorted non-priority tokens.")

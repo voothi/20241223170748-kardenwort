@@ -13,26 +13,27 @@ of information, you're not going to be learning on your own. It's just that simp
 doc = nlp(input_text)
 
 # Lemmatize tokens and filter out non-alphabetic tokens, then convert to a set to remove duplicates
-unique_lemmatized_tokens = set(token.lemma_ for token in doc if token.is_alpha)
+unique_lemmatized_tokens = set(token.lemma_.lower() for token in doc if token.is_alpha)
 
-# Read the priority CSV file and create a dictionary for lemma indices with the minimum index
+# Read the priority CSV file and create a dictionary for lemma indices
 lemma_index = {}
 with open("en-news-2023-1m-words.csv", "r", newline='', encoding='utf-8') as csvfile:
-    csv_reader = csv.reader(csvfile)
-    for index, row in enumerate(csv_reader):
-            lemma = row[0]
-            if lemma not in lemma_index:
-                lemma_index[lemma] = index
-            else:
-                lemma_index[lemma] = min(lemma_index[lemma], index)
+    # Используем enumerate для отслеживания номера строки (начиная с 0)
+    for line_number, row in enumerate(csv.reader(csvfile)):
+        if row:  # Проверяем, что строка не пустая
+            word = row[0]  # Получаем слово и нормализуем его
+            # Сохраняем минимальный индекс для каждого слова
+            if word not in lemma_index or line_number < lemma_index[word]:
+                lemma_index[word] = line_number
 
 # Sort unique tokens based on their index in the priority CSV file
-sorted_unique_tokens = sorted(unique_lemmatized_tokens, key=lambda token: lemma_index.get(token, float('inf')))
+# Используем float('inf') для слов, которых нет в словаре индексов
+sorted_unique_tokens = sorted(unique_lemmatized_tokens, 
+                            key=lambda token: lemma_index.get(token, float('inf')))
 
 # Write data to a CSV file in priority order based on CSV file line number
 with open("tokens_spacy.csv", "w", newline='', encoding='utf-8') as csvfile:
     csv_writer = csv.writer(csvfile)
-    csv_writer.writerow(["Token"])  # Write header
     for token in sorted_unique_tokens:
         csv_writer.writerow([token])
 

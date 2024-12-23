@@ -15,14 +15,17 @@ doc = nlp(input_text)
 # Lemmatize tokens and filter out non-alphabetic tokens, then convert to a set to remove duplicates
 unique_lemmatized_tokens = set(token.lemma_ for token in doc if token.is_alpha)
 
-# Read the priority CSV file and create a dictionary for lemma indices
+# Read the priority CSV file and create a dictionary for lemma indices with the minimum index
 lemma_index = {}
 with open("en-wiki-priority.csv", "r", newline='', encoding='utf-8') as csvfile:
     csv_reader = csv.reader(csvfile)
     next(csv_reader)  # Skip the header
     for index, row in enumerate(csv_reader):
         lemma, _, _, _, _ = row
-        lemma_index[lemma] = index
+        if lemma not in lemma_index:
+            lemma_index[lemma] = index
+        else:
+            lemma_index[lemma] = min(lemma_index[lemma], index)
 
 # Sort unique tokens based on their index in the priority CSV file
 sorted_unique_tokens = sorted(unique_lemmatized_tokens, key=lambda token: lemma_index.get(token, float('inf')))

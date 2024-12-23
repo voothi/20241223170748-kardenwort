@@ -15,6 +15,11 @@ doc = nlp(input_text)
 # Lemmatize tokens and filter out non-alphabetic tokens
 lemmatized_tokens = [token.lemma_ for token in doc if token.is_alpha]
 
+# Calculate frequency of each token
+token_frequency = {}
+for token in lemmatized_tokens:
+    token_frequency[token] = token_frequency.get(token, 0) + 1
+
 # Read the Morph-Lemma column from the external dictionary
 priority_tokens = set()
 with open("en-wiki-priority.csv", "r", newline='', encoding='utf-8') as csvfile:
@@ -23,22 +28,30 @@ with open("en-wiki-priority.csv", "r", newline='', encoding='utf-8') as csvfile:
     for row in csv_reader:
         priority_tokens.add(row[0].lower())  # Add the Morph-Lemma to the set
 
-# Filter lemmatized tokens based on the priority tokens
-filtered_tokens = [token for token in lemmatized_tokens if token in priority_tokens]
-
-# Calculate frequency of each token
-token_frequency = {}
-for token in filtered_tokens:
-    token_frequency[token] = token_frequency.get(token, 0) + 1
-
 # Sort tokens by frequency (in descending order)
-sorted_tokens = sorted(token_frequency.items(), key=lambda item: item[1], reverse=True)
+sorted_tokens_by_frequency = sorted(token_frequency.items(), key=lambda item: item[1], reverse=True)
+
+# Separate tokens into priority and non-priority
+priority_tokens_list = []
+non_priority_tokens_list = []
+
+for token, frequency in sorted_tokens_by_frequency:
+    if token in priority_tokens:
+        priority_tokens_list.append((token, frequency))
+    else:
+        non_priority_tokens_list.append((token, frequency))
+
+# Sort non-priority tokens alphabetically
+non_priority_tokens_list.sort(key=lambda item: item[0])
+
+# Combine both lists
+combined_tokens = priority_tokens_list + non_priority_tokens_list
 
 # Write data to a CSV file
 with open("filtered_tokens_spacy.csv", "w", newline='', encoding='utf-8') as csvfile:
     csv_writer = csv.writer(csvfile)
     csv_writer.writerow(["Token", "Frequency"])  # Write header
-    for token, frequency in sorted_tokens:
+    for token, frequency in combined_tokens:
         csv_writer.writerow([token, frequency])
 
 print("CSV file 'filtered_tokens_spacy.csv' created successfully.")

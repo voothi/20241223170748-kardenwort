@@ -110,3 +110,5 @@ de-news-priority.csv
 deu-mixed-typical-2011-1m-words.csv
 tokens_spacy.1.csv
 result.csv
+result.en.csv
+result.de.csv

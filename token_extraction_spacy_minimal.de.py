@@ -16,19 +16,27 @@ def get_verb_with_particle(token):
                 return f"{particle.text}{token.lemma_}"
     return token.lemma_
 
-def process_text(input_text, output_file):
+def process_text(input_text, output_file, sentence_context_size, detailed_output):
     # Process the text using spaCy
     doc = nlp(input_text)
 
     # Extract unique lemmatized tokens with special handling for separable verbs
     unique_lemmatized_tokens = set()
-    for token in doc:
-        if token.is_alpha:
-            if token.pos_ == "VERB":
-                verb_form = get_verb_with_particle(token)
-                unique_lemmatized_tokens.add(verb_form)
-            elif token.dep_ != "svp":  # Skip separated particles as they're handled with their verbs
-                unique_lemmatized_tokens.add(token.lemma_)
+    token_to_sentence = {}
+
+    # Extract sentences
+    sentences = list(doc.sents)
+
+    for sent_index, sent in enumerate(sentences):
+        for token in sent:
+            if token.is_alpha:
+                if token.pos_ == "VERB":
+                    verb_form = get_verb_with_particle(token)
+                    unique_lemmatized_tokens.add(verb_form)
+                    token_to_sentence[verb_form] = (sent_index, sent.text)
+                elif token.dep_ != "svp":  # Skip separated particles as they're handled with their verbs
+                    unique_lemmatized_tokens.add(token.lemma_)
+                    token_to_sentence[token.lemma_] = (sent_index, sent.text)
 
     # Create a lemma index from the reference CSV
     lemma_index = {}
@@ -49,15 +57,43 @@ def process_text(input_text, output_file):
     # Combine both lists: found tokens first, then not found tokens
     final_sorted_tokens = sorted_found_tokens + sorted_not_found_tokens
 
-    # Write the results to CSV if output file is specified
+    # Write the results to TSV if output file is specified
     if output_file:
-        with open(output_file, "w", newline='', encoding='utf-8') as csvfile:
-            csv_writer = csv.writer(csvfile)
-            csv_writer.writerows([[token] for token in final_sorted_tokens])
+        with open(output_file, "w", newline='', encoding='utf-8') as tsvfile:
+            tsv_writer = csv.writer(tsvfile, delimiter='\t')
+            for token in final_sorted_tokens:
+                sent_index, sentence = token_to_sentence[token]
+                # Get context sentences
+                start_index = max(0, sent_index - sentence_context_size)
+                end_index = min(len(sentences), sent_index + sentence_context_size + 1)
+                left_context = ' '.join(sent.text for sent in sentences[start_index:sent_index])
+                right_context = ' '.join(sent.text for sent in sentences[sent_index + 1:end_index])
+                # Write the row
+                tsv_writer.writerow([token, sentence, left_context, right_context])
 
-    # Print each token
+    # Print the simple list of tokens first
     for token in final_sorted_tokens:
         print(token)
+    print()  # Empty line to separate the list of tokens from the detailed output
+
+    # Print each token with its sentence and context if detailed output is requested
+    if detailed_output:
+        for token in final_sorted_tokens:
+            sent_index, sentence = token_to_sentence[token]
+            # Get context sentences
+            start_index = max(0, sent_index - sentence_context_size)
+            end_index = min(len(sentences), sent_index + sentence_context_size + 1)
+            left_context = ' '.join(sent.text for sent in sentences[start_index:sent_index])
+            right_context = ' '.join(sent.text for sent in sentences[sent_index + 1:end_index])
+            
+            # Print the formatted output
+            print(token)
+            if left_context:
+                print(left_context)
+            print(sentence)
+            if right_context:
+                print(right_context)
+            print()  # Empty line between entries
 
 if __name__ == "__main__":
     # Create argument parser
@@ -67,10 +103,14 @@ if __name__ == "__main__":
     parser.add_argument('--text', type=str, required=True,
                         help='Input text to process')
     parser.add_argument('--output', type=str, required=False,
-                        help='Output file path for saving results')
+                        help='Output TSV file path for saving results')
+    parser.add_argument('--sentence_context_size', type=int, default=1,
+                        help='Number of sentences to include before and after the target sentence (default: 1)')
+    parser.add_argument('--detailed', action='store_true',
+                        help='Enable detailed output in console with sentence and context')
     
     # Parse arguments
     args = parser.parse_args()
     
     # Process the text
-    process_text(args.text, args.output)
+    process_text(args.text, args.output, args.sentence_context_size, args.detailed)

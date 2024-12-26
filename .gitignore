@@ -107,7 +107,7 @@ en-wiki-priority-cut.csv
 tokens_spacy.csv
 en-news-2023-1m-words.csv
 # de-news-priority.csv
-deu-mixed-typical-2011-1m-words.csv
+# deu-mixed-typical-2011-1m-words.csv
 tokens_spacy.1.csv
 result.csv
 result.en.csv

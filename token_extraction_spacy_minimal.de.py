@@ -16,7 +16,31 @@ def get_verb_with_particle(token):
                 return f"{particle.text}{token.lemma_}"
     return token.lemma_
 
-def process_text(input_text, output_file, sentence_context_size, detailed_output):
+def load_lemma_index(file_path):
+    """
+    Load the lemma index from a CSV file into a dictionary.
+    """
+    lemma_index = {}
+    try:
+        with open(file_path, "r", newline='', encoding='utf-8') as csvfile:
+            csv_reader = csv.reader(csvfile)
+            for line_number, row in enumerate(csv_reader):
+                if row:  # Skip empty rows
+                    word = row[0]
+                    if word not in lemma_index:  # Add only if the lemma is not yet in the dictionary
+                        lemma_index[word] = line_number
+    except FileNotFoundError:
+        print(f"File not found: {file_path}")
+        return {}
+    except Exception as e:
+        print(f"Error reading file {file_path}: {e}")
+        return {}
+    return lemma_index
+
+def process_text(input_text, output_file, sentence_context_size, detailed_output, include_simple_list, lemma_index_file):
+    # Load the lemma index
+    lemma_index = load_lemma_index(lemma_index_file)
+
     # Process the text using spaCy
     doc = nlp(input_text)
 
@@ -37,14 +61,6 @@ def process_text(input_text, output_file, sentence_context_size, detailed_output
                 elif token.dep_ != "svp":  # Skip separated particles as they're handled with their verbs
                     unique_lemmatized_tokens.add(token.lemma_)
                     token_to_sentence[token.lemma_] = (sent_index, sent.text)
-
-    # Create a lemma index from the reference CSV
-    lemma_index = {}
-    with open("U:\\voothi\\20241223170748-token-extraction\\de-news-priority.csv", "r", newline='', encoding='utf-8') as csvfile:
-        for line_number, row in enumerate(csv.reader(csvfile)):
-            if row:  # Skip empty rows
-                word = row[0]
-                lemma_index.setdefault(word, line_number)
 
     # Divide tokens into two groups: found in reference and not found
     found_tokens = [token for token in unique_lemmatized_tokens if token in lemma_index]
@@ -68,10 +84,20 @@ def process_text(input_text, output_file, sentence_context_size, detailed_output
                 end_index = min(len(sentences), sent_index + sentence_context_size + 1)
                 left_context = ' '.join(sent.text for sent in sentences[start_index:sent_index])
                 right_context = ' '.join(sent.text for sent in sentences[sent_index + 1:end_index])
-                # Write the row
-                tsv_writer.writerow([token, sentence, left_context, right_context])
 
-    # Print the simple list of tokens first
+                # Extract tokens from the sentence and create a simple list
+                sent_doc = nlp(sentence)
+                sentence_tokens = [get_verb_with_particle(token) if token.pos_ == "VERB" else token.lemma_ for token in sent_doc if token.is_alpha]
+
+                # Sort sentence tokens according to lemma_index
+                sentence_tokens_sorted = sorted(sentence_tokens, key=lambda x: lemma_index.get(x, float('inf')))
+
+                simple_list_entry = '\n'.join(sentence_tokens_sorted) if include_simple_list else ''
+
+                # Write the row
+                tsv_writer.writerow([token, sentence, left_context, right_context, simple_list_entry])
+
+    # Print the simple list of tokens, each on a new line
     for token in final_sorted_tokens:
         print(token)
     print()  # Empty line to separate the list of tokens from the detailed output
@@ -104,13 +130,18 @@ if __name__ == "__main__":
                         help='Input text to process')
     parser.add_argument('--output', type=str, required=False,
                         help='Output TSV file path for saving results')
-    parser.add_argument('--sentence_context_size', type=int, default=1,
+    parser.add_argument('--sentence-context-size', type=int, default=1,
                         help='Number of sentences to include before and after the target sentence (default: 1)')
     parser.add_argument('--detailed', action='store_true',
                         help='Enable detailed output in console with sentence and context')
+    parser.add_argument('--include-simple-list', action='store_true',
+                        help='Include a simple list of tokens in the last column of the output file')
+    parser.add_argument('--lemma-index-file', type=str, default="U:\\voothi\\20241224175657\\20241223170748-token-extraction\\de-news-priority.csv",
+    # parser.add_argument('--lemma-index-file', type=str, default="U:\\voothi\\20241224175657\\20241223170748-token-extraction\\deu-mixed-typical-2011-1m-words.csv",
+                        help='Path to the lemma index CSV file')
     
     # Parse arguments
     args = parser.parse_args()
     
     # Process the text
-    process_text(args.text, args.output, args.sentence_context_size, args.detailed)
+    process_text(args.text, args.output, args.sentence_context_size, args.detailed, args.include_simple_list, args.lemma_index_file)

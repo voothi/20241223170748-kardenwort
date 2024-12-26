@@ -13,8 +13,9 @@
             "args": [
                 "--text", "Ich stehe morgen früh auf. Sie räumt ihr Zimmer immer auf. Er kommt heute Abend vorbei. Wir schlagen einen neuen Weg ein. Ich mache das Licht an. Sie zieht die Jacke aus. Er bringt das Buch zurück. Du schläfst nachmittags ein. Sie gibt die Hausaufgaben ab. Ich esse die Suppe auf. Er fährt morgen weg.",
                 // "--text", "programmieren lernen ist schwer wenn man sich die statistik anschaut 95 prozent der leute die sich ein onlinevideo kurs kaufen gucken diesen kurs nicht einmal zu ende 80 prozent der leute die sich solch einen kurs kaufen schauen nicht einmal die erste stunde dieses kurses an das heißt von 20 leuten guckt statistisch gesehen nur eine person diesen kurs überhaupt zu ende diese zahlen die kommen nicht von mir sondern von einem befreundeten programmierer der selbst solche kurse erstellt und diese online verkauft gerade weil es alleine so schwer ist und weil von 20 leuten eine person ist überhaupt nur schafft ein video kurs zu ende anzuschauen ist es natürlich so dass die meisten software entwickler da draußen programmieren nicht ganz alleine gelernt haben die meisten lärm programmieren zum beispiel parallel zum studium in einer weiterbildung sowie unserer oder während ihrer ausbildung und bei all diesen",
-                "--output", "result.de.csv",
-                "--sentence_context_size", "1",
+                "--output", "result.de.tsv",
+                "--sentence-context-size", "2",
+                "--include-simple-list"
                 // "--detailed",
                 // "--sentence_token_limit", "5"
             ],
@@ -30,7 +31,7 @@
                 "--text", "Whatever you do, do not ask an AI to summarize the tips we're about to go through. Because make no mistake, if you can't summarize information yourself and practice the summarization of information, you're not going to be learning on your own. It's just that simple.",
                 "--output", "result.en.csv",
                 "--detailed",
-                "--sentence_context_size", "1",
+                "--sentence-context-size", "1",
             ],
             "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
         }

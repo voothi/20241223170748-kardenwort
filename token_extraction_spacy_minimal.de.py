@@ -136,8 +136,8 @@ if __name__ == "__main__":
                         help='Enable detailed output in console with sentence and context')
     parser.add_argument('--include-simple-list', action='store_true',
                         help='Include a simple list of tokens in the last column of the output file')
-    # parser.add_argument('--lemma-index-file', type=str, default="U:\\voothi\\20241224175657\\20241223170748-token-extraction\\de-news-priority.csv",
-    parser.add_argument('--lemma-index-file', type=str, default="U:\\voothi\\20241224175657\\20241223170748-token-extraction\\deu-mixed-typical-2011-1m-words.csv",
+    # parser.add_argument('--lemma-index-file', type=str, default="U:\\voothi\\20241223170748-token-extraction\\de-news-priority.csv",
+    parser.add_argument('--lemma-index-file', type=str, default="U:\\voothi\\20241223170748-token-extraction\\deu-mixed-typical-2011-1m-words.csv",
                         help='Path to the lemma index CSV file')
     
     # Parse arguments

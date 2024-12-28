@@ -87,7 +87,7 @@ def process_text(input_text, output_file, sentence_context_size, detailed_output
 
                 # Extract tokens from the sentence and create a simple list
                 sent_doc = nlp(sentence)
-                sentence_tokens = [get_verb_with_particle(token) if token.pos_ == "VERB" else token.lemma_ for token in sent_doc if token.is_alpha]
+                sentence_tokens = [get_verb_with_particle(token) if token.pos_ == "VERB" else token.lemma_ for token in sent_doc if token.is_alpha and token.dep_ != "svp"]
 
                 # Sort sentence tokens according to lemma_index
                 sentence_tokens_sorted = sorted(sentence_tokens, key=lambda x: lemma_index.get(x, float('inf')))
@@ -136,8 +136,8 @@ if __name__ == "__main__":
                         help='Enable detailed output in console with sentence and context')
     parser.add_argument('--include-simple-list', action='store_true',
                         help='Include a simple list of tokens in the last column of the output file')
-    # parser.add_argument('--lemma-index-file', type=str, default="U:\\voothi\\20241223170748-token-extraction\\de-news-priority.csv",
-    parser.add_argument('--lemma-index-file', type=str, default="U:\\voothi\\20241223170748-token-extraction\\deu-mixed-typical-2011-1m-words.csv",
+    # parser.add_argument('--lemma-index-file', type=str, default="U:\\voothi\\20241224175657\\20241223170748-token-extraction\\de-news-priority.csv",
+    parser.add_argument('--lemma-index-file', type=str, default="U:\\voothi\\20241224175657\\20241223170748-token-extraction\\deu-mixed-typical-2011-1m-words.csv",
                         help='Path to the lemma index CSV file')
     
     # Parse arguments

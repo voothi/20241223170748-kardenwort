@@ -7,8 +7,8 @@ nlp = spacy.load("de_core_news_lg")
 
 def get_verb_with_particle(token):
     """
-    Check if a verb token has a separable prefix and combine them
-    Returns the combined form for separable verbs or just the lemma for regular verbs
+    Check if a verb token has a separable prefix and combine them.
+    Returns the combined form for separable verbs or just the lemma for regular verbs.
     """
     if token.pos_ == "VERB":
         for particle in token.rights:
@@ -85,12 +85,13 @@ def process_text(input_text, output_file, sentence_context_size, detailed_output
                 left_context = ' '.join(sent.text for sent in sentences[start_index:sent_index])
                 right_context = ' '.join(sent.text for sent in sentences[sent_index + 1:end_index])
 
-                # Extract tokens from the sentence and create a simple list
+                # Extract tokens from the sentence and create a simple set to ensure uniqueness
                 sent_doc = nlp(sentence)
-                sentence_tokens = [get_verb_with_particle(token) if token.pos_ == "VERB" else token.lemma_ for token in sent_doc if token.is_alpha and token.dep_ != "svp"]
+                sentence_tokens_set = {get_verb_with_particle(token) if token.pos_ == "VERB" else token.lemma_ 
+                                       for token in sent_doc if token.is_alpha and token.dep_ != "svp"}
 
                 # Sort sentence tokens according to lemma_index
-                sentence_tokens_sorted = sorted(sentence_tokens, key=lambda x: lemma_index.get(x, float('inf')))
+                sentence_tokens_sorted = sorted(sentence_tokens_set, key=lambda x: lemma_index.get(x, float('inf')))
 
                 simple_list_entry = '\n'.join(sentence_tokens_sorted) if include_simple_list else ''
 

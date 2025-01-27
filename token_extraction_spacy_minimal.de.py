@@ -17,9 +17,6 @@ def get_verb_with_particle(token):
     return token.lemma_
 
 def load_lemma_index(file_path):
-    """
-    Load the lemma index from a CSV file into a dictionary.
-    """
     lemma_index = {}
     try:
         with open(file_path, "r", newline='', encoding='utf-8') as csvfile:
@@ -37,6 +34,13 @@ def load_lemma_index(file_path):
         return {}
     return lemma_index
 
+def get_original_form_with_particle(token):
+    if token.pos_ == "VERB":
+        particle = next((child for child in token.children if child.dep_ == "svp"), None)
+        if particle:
+            return f"{token.text} {particle.text}"
+    return token.text
+
 def process_text(input_text, output_file, sentence_context_size, detailed_output, include_simple_list, lemma_index_file):
     # Load the lemma index
     lemma_index = load_lemma_index(lemma_index_file)
@@ -47,6 +51,7 @@ def process_text(input_text, output_file, sentence_context_size, detailed_output
     # Extract unique lemmatized tokens with special handling for separable verbs
     unique_lemmatized_tokens = set()
     token_to_sentence = {}
+    token_to_original_form = {}
 
     # Extract sentences
     sentences = list(doc.sents)
@@ -58,9 +63,11 @@ def process_text(input_text, output_file, sentence_context_size, detailed_output
                     verb_form = get_verb_with_particle(token)
                     unique_lemmatized_tokens.add(verb_form)
                     token_to_sentence[verb_form] = (sent_index, sent.text)
+                    token_to_original_form[verb_form] = get_original_form_with_particle(token)  # Используем новую функцию
                 elif token.dep_ != "svp":  # Skip separated particles as they're handled with their verbs
                     unique_lemmatized_tokens.add(token.lemma_)
                     token_to_sentence[token.lemma_] = (sent_index, sent.text)
+                    token_to_original_form[token.lemma_] = token.text
 
     # Divide tokens into two groups: found in reference and not found
     found_tokens = [token for token in unique_lemmatized_tokens if token in lemma_index]
@@ -96,7 +103,8 @@ def process_text(input_text, output_file, sentence_context_size, detailed_output
                 simple_list_entry = '\n'.join(sentence_tokens_sorted) if include_simple_list else ''
 
                 # Write the row
-                tsv_writer.writerow([token, sentence, left_context, right_context, simple_list_entry])
+                original_form = token_to_original_form[token]
+                tsv_writer.writerow([token, original_form, sentence, left_context, right_context, simple_list_entry])
 
     # Print the simple list of tokens, each on a new line
     for token in final_sorted_tokens:

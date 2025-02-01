@@ -104,7 +104,7 @@ def process_text(input_text, output_file, sentence_context_size, detailed_output
 
                 # Write the row
                 original_form = token_to_original_form[token]
-                tsv_writer.writerow([token, original_form, simple_list_entry, left_context, sentence, right_context])
+                tsv_writer.writerow([sentence, token, original_form, "", left_context, sentence, right_context, "", simple_list_entry])
 
     # Print the simple list of tokens, each on a new line
     for token in final_sorted_tokens:

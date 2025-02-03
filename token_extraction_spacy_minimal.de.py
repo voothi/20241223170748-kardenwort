@@ -41,7 +41,7 @@ def get_original_form_with_particle(token):
             return f"{token.text} {particle.text}"
     return token.text
 
-def process_text(input_text, output_file, sentence_context_size, detailed_output, include_simple_list, lemma_index_file):
+def process_text(input_text, output_file, sentence_context_size, detailed_output, include_simple_list, lemma_index_file, two_column_output):
     # Load the lemma index
     lemma_index = load_lemma_index(lemma_index_file)
 
@@ -107,10 +107,15 @@ def process_text(input_text, output_file, sentence_context_size, detailed_output
                 # tsv_writer.writerow([sentence, token, original_form, "", left_context, sentence, right_context, "", simple_list_entry])
                 tsv_writer.writerow([sentence, token, original_form, "", "", left_context, sentence, right_context, "", simple_list_entry, sentence, "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "1", "", "", "", "", "", "", "1"])
 
-    # Print the simple list of tokens, each on a new line
-    for token in final_sorted_tokens:
-        print(token)
-    print()  # Empty line to separate the list of tokens from the detailed output
+    # Print the list of tokens, each on a new line
+    if two_column_output:
+        for token in final_sorted_tokens:
+            original_form = token_to_original_form[token]
+            print(f"{token}\t\t{original_form}")
+    else:
+        for token in final_sorted_tokens:
+            print(token)
+        print()  # Empty line to separate the list of tokens from the detailed output
 
     # Print each token with its sentence and context if detailed output is requested
     if detailed_output:
@@ -149,9 +154,11 @@ if __name__ == "__main__":
     # parser.add_argument('--lemma-index-file', type=str, default="U:\\voothi\\20241223170748-token-extraction\\de-news-priority.csv",
     parser.add_argument('--lemma-index-file', type=str, default="U:\\voothi\\20241223170748-token-extraction\\deu-mixed-typical-2011-1m-words.csv",
                         help='Path to the lemma index CSV file')
+    parser.add_argument('--two-column-output', action='store_true',
+                        help='Output tokens in two columns: token and original form')
     
     # Parse arguments
     args = parser.parse_args()
     
     # Process the text
-    process_text(args.text, args.output, args.sentence_context_size, args.detailed, args.include_simple_list, args.lemma_index_file)
+    process_text(args.text, args.output, args.sentence_context_size, args.detailed, args.include_simple_list, args.lemma_index_file, args.two_column_output)

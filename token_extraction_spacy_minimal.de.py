@@ -110,7 +110,7 @@ def process_text(input_text, output_file, sentence_context_size, detailed_output
     # Output tokens in HTML table if html_output is enabled
     if html_output:
         print("<table>")
-        print("<tr><th>Token</th><th>Original Form</th></tr>")
+        # print("<tr><th>Lemma</th><th>Original Form</th></tr>")
         for token in final_sorted_tokens:
             original_form = token_to_original_form[token]
             print(f"<tr><td>{token}</td><td>{original_form}</td></tr>")

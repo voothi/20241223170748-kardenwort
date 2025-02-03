@@ -17,7 +17,7 @@
                 "--sentence-context-size", "2",
                 "--include-simple-list",
                 "--two-column-output",
-                "--html"
+                // "--html"
                 // "--detailed",
                 // "--sentence_token_limit", "5"
             ],

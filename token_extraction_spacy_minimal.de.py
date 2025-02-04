@@ -1,6 +1,7 @@
 import spacy
 import csv
 import argparse
+from datetime import datetime
 
 # Load the German spaCy model
 nlp = spacy.load("de_core_news_lg")
@@ -41,7 +42,7 @@ def get_original_form_with_particle(token):
             return f"{token.text} {particle.text}"
     return token.text
 
-def process_text(input_text, output_file, sentence_context_size, detailed_output, include_simple_list, lemma_index_file, two_column_output, html_output):
+def process_text(input_text, output_file, sentence_context_size, detailed_output, include_simple_list, lemma_index_file, two_column_output, html_output, timestamp):
     # Load the lemma index
     lemma_index = load_lemma_index(lemma_index_file)
 
@@ -82,6 +83,16 @@ def process_text(input_text, output_file, sentence_context_size, detailed_output
 
     # Write the results to TSV if output file is specified
     if output_file:
+        if timestamp:
+            # Extract the directory and filename from the output path
+            import os
+            output_dir = os.path.dirname(output_file)
+            output_filename = os.path.basename(output_file)
+            # Prepend timestamp to the filename
+            timestamp_str = datetime.now().strftime("%Y%m%d%H%M%S")
+            new_output_filename = f"{timestamp_str}-{output_filename}"
+            output_file = os.path.join(output_dir, new_output_filename)
+
         with open(output_file, "w", newline='', encoding='utf-8') as tsvfile:
             tsv_writer = csv.writer(tsvfile, delimiter='\t')
             for token in final_sorted_tokens:
@@ -166,9 +177,11 @@ if __name__ == "__main__":
                         help='Output tokens in two columns: token and original form')
     parser.add_argument('--html', action='store_true',
                         help='Output tokens in an HTML table')
+    parser.add_argument('--timestamp', action='store_true',
+                        help='Prepend timestamp to the output file name')
     
     # Parse arguments
     args = parser.parse_args()
     
     # Process the text
-    process_text(args.text, args.output, args.sentence_context_size, args.detailed, args.include_simple_list, args.lemma_index_file, args.two_column_output, args.html)
+    process_text(args.text, args.output, args.sentence_context_size, args.detailed, args.include_simple_list, args.lemma_index_file, args.two_column_output, args.html, args.timestamp)

@@ -42,7 +42,7 @@ def get_original_form_with_particle(token):
             return f"{token.text} {particle.text}"
     return token.text
 
-def process_text(input_text, output_file, sentence_context_size, detailed_output, include_simple_list, lemma_index_file, two_column_output, html_output, timestamp):
+def process_text(input_text, output_file, sentence_context_size, detailed_output, include_simple_list, lemma_index_file, two_column_output, html_output, timestamp, original_form_in_simple_list):
     # Load the lemma index
     lemma_index = load_lemma_index(lemma_index_file)
 
@@ -111,7 +111,11 @@ def process_text(input_text, output_file, sentence_context_size, detailed_output
                 # Sort sentence tokens according to lemma_index
                 sentence_tokens_sorted = sorted(sentence_tokens_set, key=lambda x: lemma_index.get(x, float('inf')))
 
-                simple_list_entry = '\n'.join(sentence_tokens_sorted) if include_simple_list else ''
+                # Create simple list entry with both lemma and original form
+                if original_form_in_simple_list:
+                    simple_list_entry = '\n'.join(f"{sentence_token}\t{token_to_original_form[sentence_token]}" for sentence_token in sentence_tokens_sorted) if include_simple_list else ''
+                else:
+                    simple_list_entry = '\n'.join(sentence_tokens_sorted) if include_simple_list else ''
 
                 # Write the row
                 original_form = token_to_original_form[token]
@@ -160,28 +164,30 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Extract and process tokens from German text.")
     
     # Add arguments
-    parser.add_argument('--text', type=str, required=True,
-                        help='Input text to process')
-    parser.add_argument('--output', type=str, required=False,
-                        help='Output TSV file path for saving results')
-    parser.add_argument('--sentence-context-size', type=int, default=1,
-                        help='Number of sentences to include before and after the target sentence (default: 1)')
-    parser.add_argument('--detailed', action='store_true',
-                        help='Enable detailed output in console with sentence and context')
-    parser.add_argument('--include-simple-list', action='store_true',
-                        help='Include a simple list of tokens in the last column of the output file')
     # parser.add_argument('--lemma-index-file', type=str, default="U:\\voothi\\20241223170748-token-extraction\\de-news-priority.csv",
     parser.add_argument('--lemma-index-file', type=str, default="U:\\voothi\\20241223170748-token-extraction\\deu-mixed-typical-2011-1m-words.csv",
                         help='Path to the lemma index CSV file')
+    parser.add_argument('--text', type=str, required=True,
+                        help='Input text to process')
+    parser.add_argument('--detailed', action='store_true',
+                        help='STDOUT: Enable detailed output in console with sentence and context')
     parser.add_argument('--two-column-output', action='store_true',
-                        help='Output tokens in two columns: token and original form')
+                        help='STDOUT: Output tokens in two columns: token and original form')
     parser.add_argument('--html', action='store_true',
-                        help='Output tokens in an HTML table')
+                        help='STDOUT: Output tokens in an HTML table')
+    parser.add_argument('--sentence-context-size', type=int, default=1,
+                        help='CSV: Number of sentences to include before and after the target sentence (default: 1)')
+    parser.add_argument('--output', type=str, required=False,
+                        help='CSV: Output TSV file path for saving results')
     parser.add_argument('--timestamp', action='store_true',
-                        help='Prepend timestamp to the output file name')
+                        help='CSV: Prepend timestamp to the output file name')
+    parser.add_argument('--include-simple-list', action='store_true',
+                        help='CSV: Include a simple list of tokens in the last column of the output file')
+    parser.add_argument('--original-form-in-simple-list', action='store_true',
+                        help='CSV: Include original forms in the simple list entry in the TSV file')
     
     # Parse arguments
     args = parser.parse_args()
     
     # Process the text
-    process_text(args.text, args.output, args.sentence_context_size, args.detailed, args.include_simple_list, args.lemma_index_file, args.two_column_output, args.html, args.timestamp)
+    process_text(args.text, args.output, args.sentence_context_size, args.detailed, args.include_simple_list, args.lemma_index_file, args.two_column_output, args.html, args.timestamp, args.original_form_in_simple_list)

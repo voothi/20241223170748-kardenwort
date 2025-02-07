@@ -20,6 +20,7 @@
                 // "--sentence_token_limit", "5"
                 "--output", ".\\out\\result.de.tsv",
                 "--timestamp",
+                "--two-column-output-to-file",
                 "--include-simple-list",
                 "--original-form-in-simple-list",
             ],

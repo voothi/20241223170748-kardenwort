@@ -42,7 +42,7 @@ def get_original_form_with_particle(token):
             return f"{token.text} {particle.text}"
     return token.text
 
-def process_text(input_text, output_file, sentence_context_size, detailed_output, include_simple_list, lemma_index_file, two_column_output, html_output, timestamp, original_form_in_simple_list):
+def process_text(input_text, output_file, sentence_context_size, detailed_output, include_simple_list, lemma_index_file, two_column_output, html_output, timestamp, original_form_in_simple_list, two_column_output_to_file):
     # Load the lemma index
     lemma_index = load_lemma_index(lemma_index_file)
 
@@ -119,8 +119,10 @@ def process_text(input_text, output_file, sentence_context_size, detailed_output
 
                 # Write the row
                 original_form = token_to_original_form[token]
-                # tsv_writer.writerow([sentence, token, original_form, "", left_context, sentence, right_context, "", simple_list_entry])
-                tsv_writer.writerow([sentence, token, original_form, "", "", left_context, sentence, right_context, "", simple_list_entry, sentence, "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "1", "", "", "", "", "", "", "1"])
+                if two_column_output_to_file:
+                    tsv_writer.writerow([sentence, token, original_form, "", "", left_context, sentence, right_context, "", simple_list_entry, sentence, "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "1", "", "", "", "", "", "", "1"])
+                else:
+                    tsv_writer.writerow([sentence, token, "", "", "", left_context, sentence, right_context, "", simple_list_entry, sentence, "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "1", "", "", "", "", "", "", "1"])
 
     # Output tokens in HTML table if html_output is enabled
     if html_output:
@@ -181,6 +183,8 @@ if __name__ == "__main__":
                         help='CSV: Output TSV file path for saving results')
     parser.add_argument('--timestamp', action='store_true',
                         help='CSV: Prepend timestamp to the output file name')
+    parser.add_argument('--two-column-output-to-file', action='store_true',
+                        help='CSV: Include original forms in the TSV output file when writing to file')
     parser.add_argument('--include-simple-list', action='store_true',
                         help='CSV: Include a simple list of tokens in the last column of the output file')
     parser.add_argument('--original-form-in-simple-list', action='store_true',
@@ -190,4 +194,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     # Process the text
-    process_text(args.text, args.output, args.sentence_context_size, args.detailed, args.include_simple_list, args.lemma_index_file, args.two_column_output, args.html, args.timestamp, args.original_form_in_simple_list)
+    process_text(args.text, args.output, args.sentence_context_size, args.detailed, args.include_simple_list, args.lemma_index_file, args.two_column_output, args.html, args.timestamp, args.original_form_in_simple_list, args.two_column_output_to_file)

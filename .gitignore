@@ -112,4 +112,11 @@ tokens_spacy.1.csv
 result.csv
 result.en.csv
 result.de.csv
+de-news-priority.tsv
+deu-mixed-typical-2011-1m-words.tsv
+# de-news-priority.csv
 result.de.tsv
+# de-news-priority.csv
+20250103174057.tsv
+
+in/

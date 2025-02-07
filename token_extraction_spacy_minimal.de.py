@@ -161,6 +161,17 @@ def process_text(input_text, output_file, sentence_context_size, detailed_output
                 print(right_context)
             print()  # Empty line between entries
 
+def read_input_text(input_file):
+    try:
+        with open(input_file, "r", encoding='utf-8') as file:
+            return file.read()
+    except FileNotFoundError:
+        print(f"File not found: {input_file}")
+        exit(1)
+    except Exception as e:
+        print(f"Error reading file {input_file}: {e}")
+        exit(1)
+
 if __name__ == "__main__":
     # Create argument parser
     parser = argparse.ArgumentParser(description="Extract and process tokens from German text.")
@@ -169,8 +180,10 @@ if __name__ == "__main__":
     # parser.add_argument('--lemma-index-file', type=str, default="U:\\voothi\\20241223170748-token-extraction\\de-news-priority.csv",
     parser.add_argument('--lemma-index-file', type=str, default="U:\\voothi\\20241223170748-token-extraction\\deu-mixed-typical-2011-1m-words.csv",
                         help='Path to the lemma index CSV file')
-    parser.add_argument('--text', type=str, required=True,
+    parser.add_argument('--text', type=str,
                         help='Input text to process')
+    parser.add_argument('--input', type=str,
+                        help='Path to input text file to process')
     parser.add_argument('--detailed', action='store_true',
                         help='STDOUT: Enable detailed output in console with sentence and context')
     parser.add_argument('--two-column-output', action='store_true',
@@ -193,5 +206,17 @@ if __name__ == "__main__":
     # Parse arguments
     args = parser.parse_args()
     
+    # Determine input text
+    if args.input and args.text:
+        print("Error: Both --input and --text cannot be specified simultaneously.")
+        exit(1)
+    elif args.input:
+        input_text = read_input_text(args.input)
+    elif args.text:
+        input_text = args.text
+    else:
+        print("Error: Either --input or --text must be specified.")
+        exit(1)
+    
     # Process the text
-    process_text(args.text, args.output, args.sentence_context_size, args.detailed, args.include_simple_list, args.lemma_index_file, args.two_column_output, args.html, args.timestamp, args.original_form_in_simple_list, args.two_column_output_to_file)
+    process_text(input_text, args.output, args.sentence_context_size, args.detailed, args.include_simple_list, args.lemma_index_file, args.two_column_output, args.html, args.timestamp, args.original_form_in_simple_list, args.two_column_output_to_file)

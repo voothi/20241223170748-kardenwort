@@ -40,7 +40,7 @@
                 // "--detailed",
                 "--two-column-output",
                 // "--html"
-                "--sentence-context-size", "2",
+                "--sentence-context-size", "1",
                 // "--sentence_token_limit", "5"
                 "--output", ".\\out\\result.de.tsv",
                 "--timestamp",

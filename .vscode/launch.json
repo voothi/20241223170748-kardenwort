@@ -47,7 +47,7 @@
                 "--two-column-output",
                 // "--html"
                 "--sentence-context-size",
-                "1",
+                "2",
                 // "--sentence_token_limit", "5"
                 "--output",
                 ".\\out\\result.de.tsv",
@@ -73,7 +73,7 @@
                 "result.en.csv",
                 "--detailed",
                 "--sentence-context-size",
-                "1"
+                "2"
             ],
             "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
         },
@@ -121,7 +121,7 @@
                 "--two-column-output",
                 // "--html"
                 "--sentence-context-size",
-                "1",
+                "2",
                 // "--sentence_token_limit", "5"
                 "--output",
                 ".\\out\\result.en.tsv",

@@ -124,15 +124,15 @@ def process_text(input_text, output_file, sentence_context_size, detailed_output
                 original_form = token_to_original_form[token]
                 if language == "de":
                     if two_column_output_to_file:
-                        tsv_writer.writerow([token, token, original_form, "", "", left_context, sentence, right_context, "", "", "", simple_list_entry, sentence, "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "1", "", "", "", "", "", "", "1"])
+                        tsv_writer.writerow([token, token, original_form, "", "", left_context, sentence, right_context, "", "", "", simple_list_entry, sentence, "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "1", "", "", "", "", "", "", "1"])
                     else:
-                        tsv_writer.writerow([token, token,            "", "", "", left_context, sentence, right_context, "", "", "", simple_list_entry, sentence, "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "1", "", "", "", "", "", "", "1"])
+                        tsv_writer.writerow([token, token,            "", "", "", left_context, sentence, right_context, "", "", "", simple_list_entry, sentence, "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "1", "", "", "", "", "", "", "1"])
 
                 if language == "en":
                     if two_column_output_to_file:
-                        tsv_writer.writerow([token, token, original_form, "", "", left_context, sentence, right_context, "", "", "", simple_list_entry, sentence, "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "1", "", "", "", "", "", "", "", "1"])
+                        tsv_writer.writerow([token, token, original_form, "", "", left_context, sentence, right_context, "", "", "", simple_list_entry, sentence, "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "1", "", "", "", "", "", "", "", "1"])
                     else:
-                        tsv_writer.writerow([token, token,            "", "", "", left_context, sentence, right_context, "", "", "", simple_list_entry, sentence, "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "1", "", "", "", "", "", "", "", "1"])
+                        tsv_writer.writerow([token, token,            "", "", "", left_context, sentence, right_context, "", "", "", simple_list_entry, sentence, "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "1", "", "", "", "", "", "", "", "1"])
 
 
     # Output tokens in HTML table if html_output is enabled

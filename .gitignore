@@ -105,15 +105,15 @@ terraform.tfstate.backup
 filtered_tokens_spacy.csv
 en-wiki-priority-cut.csv
 tokens_spacy.csv
-en-news-2023-1m-words.csv
+# en-news-2023-1m-words.csv
 # de-news-priority.csv
 # deu-mixed-typical-2011-1m-words.csv
 tokens_spacy.1.csv
 result.csv
 result.en.csv
 result.de.csv
-de-news-priority.tsv
-deu-mixed-typical-2011-1m-words.tsv
+# de-news-priority.tsv
+# deu-mixed-typical-2011-1m-words.csv
 # de-news-priority.csv
 result.de.tsv
 # de-news-priority.csv

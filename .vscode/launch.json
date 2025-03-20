@@ -99,7 +99,7 @@
             "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
         },
         {
-            "name": "Python Debugger: Current File with Arguments / De / --input",
+            "name": "Python Debugger: Current File with Arguments / En / --input",
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",

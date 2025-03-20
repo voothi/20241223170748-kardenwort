@@ -51,6 +51,11 @@ def process_text(input_text, lemma_index, output_file, sentence_context_size, de
             import datetime
             timestamp_str = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
             output_file = f"{timestamp_str}_{output_file}"
+        # Ensure the directory exists
+        import os
+        output_dir = os.path.dirname(output_file)
+        if output_dir and not os.path.exists(output_dir):
+            os.makedirs(output_dir)
         with open(output_file, "w", newline='', encoding='utf-8') as tsvfile:
             tsv_writer = csv.writer(tsvfile, delimiter='\t')
             for token in final_sorted_tokens:

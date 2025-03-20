@@ -588,7 +588,7 @@ if __name__ == "__main__":
     if not args.lemma_index_file:
         if args.language == "de":
             args.lemma_index_file = "U:\\voothi\\20241223170748-token-extraction\\deu-mixed-typical-2011-1m-words.csv"
-        else:
+        elif args.language == "en":
             # args.lemma_index_file = "U:\\voothi\\20241223170748-token-extraction\\en-news-2023-1m-words.csv"
             args.lemma_index_file = (
                 "U:\\voothi\\20241223170748-token-extraction\\en-wiki-priority.csv"

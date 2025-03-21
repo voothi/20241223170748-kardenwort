@@ -587,11 +587,11 @@ if __name__ == "__main__":
     # Determine the lemma index file based on the language
     if not args.lemma_index_file:
         if args.language == "de":
-            args.lemma_index_file = "U:\\voothi\\20241223170748-token-extraction\\deu-mixed-typical-2011-1m-words.csv"
+            args.lemma_index_file = "U:\\voothi\\20241223170748-token-extraction\\de-default.csv"
         elif args.language == "en":
             # args.lemma_index_file = "U:\\voothi\\20241223170748-token-extraction\\en-news-2023-1m-words.csv"
             args.lemma_index_file = (
-                "U:\\voothi\\20241223170748-token-extraction\\en-wiki-priority.csv"
+                "U:\\voothi\\20241223170748-token-extraction\\en-default.csv"
             )
 
     # Determine input text

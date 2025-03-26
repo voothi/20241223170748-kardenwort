@@ -163,10 +163,10 @@ def process_text(
                 # Get context sentences
                 start_index = max(0, sent_index - sentence_context_size)
                 end_index = min(len(sentences), sent_index + sentence_context_size + 1)
-                l1_left_context = " ".join(
+                l1_left_context = "".join(
                     sent.text for sent in sentences[start_index:sent_index]
                 )
-                l1_right_context = " ".join(
+                l1_right_context = "".join(
                     sent.text for sent in sentences[sent_index + 1 : end_index]
                 )
 
@@ -516,10 +516,10 @@ def process_text(
             # Get context sentences
             start_index = max(0, sent_index - sentence_context_size)
             end_index = min(len(sentences), sent_index + sentence_context_size + 1)
-            l1_left_context = " ".join(
+            l1_left_context = "".join(
                 sent.text for sent in sentences[start_index:sent_index]
             )
-            l1_right_context = " ".join(
+            l1_right_context = "".join(
                 sent.text for sent in sentences[sent_index + 1 : end_index]
             )
 
@@ -599,10 +599,10 @@ def process_sentences(
                 l2_right = text2_lines[i + 1 : i + 1 + context_size]
 
                 # Join context sentences
-                l1_left_context = " ".join(l1_left)
-                l1_right_context = " ".join(l1_right)
-                l2_left_context = " ".join(l2_left)
-                l2_right_context = " ".join(l2_right)
+                l1_left_context = "".join(l1_left)
+                l1_right_context = "".join(l1_right)
+                l2_left_context = "".join(l2_left)
+                l2_right_context = "".join(l2_right)
 
                 # Process lemmas if simple list is requested
                 simple_list_entry = ""

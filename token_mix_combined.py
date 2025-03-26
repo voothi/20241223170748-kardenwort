@@ -180,10 +180,10 @@ def process_text(
                 if sentences2 and sent_index < len(sentences2):  # Check boundaries
                     l2_sentence = sentences2[sent_index]
                     l2_left_context = " ".join(
-                        sentences2[max(0, sent_index - sentence_context_size) : sent_index]
+                        line.strip() for line in sentences2[max(0, sent_index - sentence_context_size) : sent_index] if line.strip()
                     )
                     l2_right_context = " ".join(
-                        sentences2[sent_index + 1 : min(len(sentences2), sent_index + sentence_context_size + 1)]
+                        line.strip() for line in sentences2[sent_index + 1 : min(len(sentences2), sent_index + sentence_context_size + 1)] if line.strip()
                     )
                 else:
                     l2_sentence = ""

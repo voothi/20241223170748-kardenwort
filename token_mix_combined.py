@@ -159,19 +159,19 @@ def process_text(
         with open(output_file, "w", newline="", encoding="utf-8") as tsvfile:
             tsv_writer = csv.writer(tsvfile, delimiter="\t")
             for token in final_sorted_tokens:
-                sent_index, sentence = token_to_sentence[token]
+                sent_index, l1_sentence = token_to_sentence[token]
                 # Get context sentences
                 start_index = max(0, sent_index - sentence_context_size)
                 end_index = min(len(sentences), sent_index + sentence_context_size + 1)
-                left_context = " ".join(
+                l1_left_context = " ".join(
                     sent.text for sent in sentences[start_index:sent_index]
                 )
-                right_context = " ".join(
+                l1_right_context = " ".join(
                     sent.text for sent in sentences[sent_index + 1 : end_index]
                 )
 
                 # Extract tokens from the sentence and create a simple set to ensure uniqueness
-                sent_doc = nlp(sentence)
+                sent_doc = nlp(l1_sentence)
                 sentence_tokens_set = {
                     (
                         get_verb_with_particle(token)
@@ -213,14 +213,14 @@ def process_text(
                                 original_form,
                                 "",
                                 "",
-                                left_context,
-                                sentence,
-                                right_context,
+                                l1_left_context,
+                                l1_sentence,
+                                l1_right_context,
                                 "",
                                 "",
                                 "",
                                 simple_list_entry,
-                                sentence,
+                                l1_sentence,
                                 "",
                                 "",
                                 "",
@@ -284,14 +284,14 @@ def process_text(
                                 "",
                                 "",
                                 "",
-                                left_context,
-                                sentence,
-                                right_context,
+                                l1_left_context,
+                                l1_sentence,
+                                l1_right_context,
                                 "",
                                 "",
                                 "",
                                 simple_list_entry,
-                                sentence,
+                                l1_sentence,
                                 "",
                                 "",
                                 "",
@@ -357,14 +357,14 @@ def process_text(
                                 original_form,
                                 "",
                                 "",
-                                left_context,
-                                sentence,
-                                right_context,
+                                l1_left_context,
+                                l1_sentence,
+                                l1_right_context,
                                 "",
                                 "",
                                 "",
                                 simple_list_entry,
-                                sentence,
+                                l1_sentence,
                                 "",
                                 "",
                                 "",
@@ -428,14 +428,14 @@ def process_text(
                                 "",
                                 "",
                                 "",
-                                left_context,
-                                sentence,
-                                right_context,
+                                l1_left_context,
+                                l1_sentence,
+                                l1_right_context,
                                 "",
                                 "",
                                 "",
                                 simple_list_entry,
-                                sentence,
+                                l1_sentence,
                                 "",
                                 "",
                                 "",
@@ -512,24 +512,24 @@ def process_text(
     # Print each token with its sentence and context if detailed output is requested
     if detailed_output:
         for token in final_sorted_tokens:
-            sent_index, sentence = token_to_sentence[token]
+            sent_index, l1_sentence = token_to_sentence[token]
             # Get context sentences
             start_index = max(0, sent_index - sentence_context_size)
             end_index = min(len(sentences), sent_index + sentence_context_size + 1)
-            left_context = " ".join(
+            l1_left_context = " ".join(
                 sent.text for sent in sentences[start_index:sent_index]
             )
-            right_context = " ".join(
+            l1_right_context = " ".join(
                 sent.text for sent in sentences[sent_index + 1 : end_index]
             )
 
             # Print the formatted output
             print(token)
-            if left_context:
-                print(left_context)
-            print(sentence)
-            if right_context:
-                print(right_context)
+            if l1_left_context:
+                print(l1_left_context)
+            print(l1_sentence)
+            if l1_right_context:
+                print(l1_right_context)
             print()  # Empty line between entries
 
 
@@ -589,7 +589,7 @@ def process_sentences(
             tsv_writer = csv.writer(out_file, delimiter="\t")
             for i in range(min_length):
                 # Process German text
-                de_sentence = text1_lines[i]
+                l1_sentence = text1_lines[i]
                 l1_left = text1_lines[max(0, i - context_size) : i]
                 l1_right = text1_lines[i + 1 : i + 1 + context_size]
 
@@ -599,35 +599,35 @@ def process_sentences(
                 l2_right = text2_lines[i + 1 : i + 1 + context_size]
 
                 # Join context sentences
-                l1_left_str = " ".join(l1_left)
-                l1_right_str = " ".join(l1_right)
-                l2_left_str = " ".join(l2_left)
-                l2_right_str = " ".join(l2_right)
+                l1_left_context = " ".join(l1_left)
+                l1_right_context = " ".join(l1_right)
+                l2_left_context = " ".join(l2_left)
+                l2_right_context = " ".join(l2_right)
 
                 # Process lemmas if simple list is requested
-                simple_list = ""
+                simple_list_entry = ""
                 if include_simple_list:
-                    lemmas = process_sentence_lemmas(de_sentence, lemma_index, nlp)
-                    simple_list = "\n".join(lemmas)  # Newline-separated without quotes
+                    lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp)
+                    simple_list_entry = "\n".join(lemmas)  # Newline-separated without quotes
 
                 # Format TSV line
                 if language == "de":
                     tsv_line = (
                         "\t".join(
                             [
-                                de_sentence,
+                                l1_sentence,
                                 "",
                                 "",
                                 "",
                                 "",
-                                l1_left_str,
-                                de_sentence,
-                                l1_right_str,
-                                l2_left_str,
+                                l1_left_context,
+                                l1_sentence,
+                                l1_right_context,
+                                l2_left_context,
                                 en_sentence,
-                                l2_right_str,
-                                f'"{simple_list}"',
-                                de_sentence,
+                                l2_right_context,
+                                f'"{simple_list_entry}"',
+                                l1_sentence,
                                 "",
                                 "",
                                 "",
@@ -690,19 +690,19 @@ def process_sentences(
                     tsv_line = (
                         "\t".join(
                             [
-                                de_sentence,
+                                l1_sentence,
                                 "",
                                 "",
                                 "",
                                 "",
-                                l1_left_str,
-                                de_sentence,
-                                l1_right_str,
-                                l2_left_str,
+                                l1_left_context,
+                                l1_sentence,
+                                l1_right_context,
+                                l2_left_context,
                                 en_sentence,
-                                l2_right_str,
-                                f'"{simple_list}"',
-                                de_sentence,
+                                l2_right_context,
+                                f'"{simple_list_entry}"',
+                                l1_sentence,
                                 "",
                                 "",
                                 "",

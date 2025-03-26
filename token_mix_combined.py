@@ -495,15 +495,10 @@ def main():
 
     if args.type == "token":
         # Determine input text
-        if args.text1 and args.text:
-            print("Error: Both --text1 and --text cannot be specified simultaneously.")
-            exit(1)
-        elif args.text1:
+        if args.text1:
             input_text = read_input_text(args.text1)
-        elif args.text:
-            input_text = args.text
         else:
-            print("Error: Either --text1 or --text must be specified.")
+            print("Error: --text1 must be specified.")
             exit(1)
 
         # Process the text

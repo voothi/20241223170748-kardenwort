@@ -162,7 +162,7 @@ def process_text(
                 sent_index, l1_sentence = token_to_sentence[token]
                 # Get context sentences
                 start_index = max(0, sent_index - sentence_context_size)
-                end_index = min(len(sentences), sent_index + sentence_context_size + 1)
+                end_index = min(len(sentences), sent_index + sentence_context_size)
                 l1_left_context = " ".join(
                     sent.text.strip() for sent in sentences[start_index:sent_index]
                 )
@@ -515,7 +515,7 @@ def process_text(
             sent_index, l1_sentence = token_to_sentence[token]
             # Get context sentences
             start_index = max(0, sent_index - sentence_context_size)
-            end_index = min(len(sentences), sent_index + sentence_context_size + 1)
+            end_index = min(len(sentences), sent_index + sentence_context_size)
             l1_left_context = " ".join(
                 sent.text.strip() for sent in sentences[start_index:sent_index]
             )

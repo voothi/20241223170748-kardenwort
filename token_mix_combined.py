@@ -108,6 +108,12 @@ def process_text(
     else:
         sentences2 = []
 
+    if len(sentences) != len(sentences2):
+        print(f"Warning: Mismatch in sentence counts - text1: {len(sentences)}, text2: {len(sentences2)}", file=sys.stderr)
+        min_length = min(len(sentences), len(sentences2))
+        sentences = sentences[:min_length]
+        sentences2 = sentences2[:min_length]
+
     # Extract unique lemmatized tokens with special handling for separable verbs
     unique_lemmatized_tokens = set()
     token_to_sentence = {}

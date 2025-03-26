@@ -92,12 +92,14 @@ def process_text(
     original_form_in_simple_list,
     two_column_output_to_file,
     language,
+    text2=None,  # Добавлено для второго текста
 ):
     # Load the lemma index
     lemma_index = load_lemma_index(lemma_index_file)
 
     # Process the text using spaCy
     doc = nlp(input_text)
+    doc2 = nlp(text2) if text2 else None  # Обработка второго текста
 
     # Extract unique lemmatized tokens with special handling for separable verbs
     unique_lemmatized_tokens = set()
@@ -106,6 +108,7 @@ def process_text(
 
     # Extract sentences
     sentences = list(doc.sents)
+    sentences2 = list(doc2.sents) if doc2 else []  # Предложения из второго текста
 
     for sent_index, sent in enumerate(sentences):
         for token in sent:
@@ -160,7 +163,7 @@ def process_text(
             tsv_writer = csv.writer(tsvfile, delimiter="\t")
             for token in final_sorted_tokens:
                 sent_index, l1_sentence = token_to_sentence[token]
-                # Get context sentences
+                # Get context sentences for text1
                 start_index = max(0, sent_index - sentence_context_size)
                 end_index = min(len(sentences), sent_index + sentence_context_size + 1)
                 l1_left_context = " ".join(
@@ -169,6 +172,22 @@ def process_text(
                 l1_right_context = " ".join(
                     sent.text.strip() for sent in sentences[sent_index + 1 : end_index]
                 )
+
+                # Get context sentences for text2
+                if sentences2:
+                    l2_sentence = sentences2[sent_index].text
+                    l2_left_context = " ".join(
+                        sent.text.strip()
+                        for sent in sentences2[max(0, sent_index - sentence_context_size) : sent_index]
+                    )
+                    l2_right_context = " ".join(
+                        sent.text.strip()
+                        for sent in sentences2[sent_index + 1 : min(len(sentences2), sent_index + sentence_context_size + 1)]
+                    )
+                else:
+                    l2_sentence = ""
+                    l2_left_context = ""
+                    l2_right_context = ""
 
                 # Extract tokens from the sentence and create a simple set to ensure uniqueness
                 sent_doc = nlp(l1_sentence)
@@ -216,11 +235,15 @@ def process_text(
                                 l1_left_context,
                                 l1_sentence,
                                 l1_right_context,
-                                "",
-                                "",
-                                "",
+                                l2_left_context,
+                                l2_sentence,
+                                l2_right_context,
                                 simple_list_entry,
                                 l1_sentence,
+                                "",
+                                "",
+                                "",
+                                "",
                                 "",
                                 "",
                                 "",
@@ -287,11 +310,17 @@ def process_text(
                                 l1_left_context,
                                 l1_sentence,
                                 l1_right_context,
-                                "",
-                                "",
-                                "",
+                                l2_left_context,
+                                l2_sentence,
+                                l2_right_context,
                                 simple_list_entry,
                                 l1_sentence,
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
                                 "",
                                 "",
                                 "",
@@ -360,11 +389,18 @@ def process_text(
                                 l1_left_context,
                                 l1_sentence,
                                 l1_right_context,
-                                "",
-                                "",
-                                "",
+                                l2_left_context,
+                                l2_sentence,
+                                l2_right_context,
                                 simple_list_entry,
                                 l1_sentence,
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
                                 "",
                                 "",
                                 "",
@@ -431,11 +467,18 @@ def process_text(
                                 l1_left_context,
                                 l1_sentence,
                                 l1_right_context,
-                                "",
-                                "",
-                                "",
+                                l2_left_context,
+                                l2_sentence,
+                                l2_right_context,
                                 simple_list_entry,
                                 l1_sentence,
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
                                 "",
                                 "",
                                 "",
@@ -895,6 +938,7 @@ def main():
             args.original_form_in_simple_list,
             args.two_column_output_to_file,
             args.language,
+            args.text2,  # Добавлено для второго текста
         )
     elif args.type == "sentence":
         if not args.text1 or not args.text2:

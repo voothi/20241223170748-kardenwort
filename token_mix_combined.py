@@ -554,6 +554,19 @@ def process_sentences(
                 "U:\\voothi\\20241223170748-token-extraction\\en-default.csv"
             )
 
+    # Add timestamp to the output file name if requested
+    if timestamp:
+        import os
+        from datetime import datetime
+
+        # Extract the directory and filename from the output path
+        output_dir = os.path.dirname(output_file)
+        output_filename = os.path.basename(output_file)
+        # Prepend timestamp to the filename
+        timestamp_str = datetime.now().strftime("%Y%m%d%H%M%S")
+        new_output_filename = f"{timestamp_str}-{output_filename}"
+        output_file = os.path.join(output_dir, new_output_filename)
+
     # Load spaCy model based on language
     language_model_map = {"de": "de_core_news_lg", "en": "en_core_web_lg"}
     nlp = spacy.load(language_model_map[language])

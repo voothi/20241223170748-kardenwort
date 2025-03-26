@@ -39,8 +39,8 @@
             "console": "integratedTerminal",
             "args": [
                 "--type",
-                // "sentence",
-                "token",
+                "sentence",
+                // "token",
                 "--text1",
                 "U:\\voothi\\20250307194819-mix-sentences\\in\\text1.de.txt",
                 "--text2",

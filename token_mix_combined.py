@@ -590,19 +590,19 @@ def process_sentences(
             for i in range(min_length):
                 # Process German text
                 de_sentence = text1_lines[i]
-                de_left = text1_lines[max(0, i - context_size) : i]
-                de_right = text1_lines[i + 1 : i + 1 + context_size]
+                l1_left = text1_lines[max(0, i - context_size) : i]
+                l1_right = text1_lines[i + 1 : i + 1 + context_size]
 
                 # Process English text
                 en_sentence = text2_lines[i]
-                en_left = text2_lines[max(0, i - context_size) : i]
-                en_right = text2_lines[i + 1 : i + 1 + context_size]
+                l2_left = text2_lines[max(0, i - context_size) : i]
+                l2_right = text2_lines[i + 1 : i + 1 + context_size]
 
                 # Join context sentences
-                de_left_str = " ".join(de_left)
-                de_right_str = " ".join(de_right)
-                en_left_str = " ".join(en_left)
-                en_right_str = " ".join(en_right)
+                l1_left_str = " ".join(l1_left)
+                l1_right_str = " ".join(l1_right)
+                l2_left_str = " ".join(l2_left)
+                l2_right_str = " ".join(l2_right)
 
                 # Process lemmas if simple list is requested
                 simple_list = ""
@@ -620,12 +620,12 @@ def process_sentences(
                                 "",
                                 "",
                                 "",
-                                de_left_str,
+                                l1_left_str,
                                 de_sentence,
-                                de_right_str,
-                                en_left_str,
+                                l1_right_str,
+                                l2_left_str,
                                 en_sentence,
-                                en_right_str,
+                                l2_right_str,
                                 f'"{simple_list}"',
                                 de_sentence,
                                 "",
@@ -695,12 +695,12 @@ def process_sentences(
                                 "",
                                 "",
                                 "",
-                                de_left_str,
+                                l1_left_str,
                                 de_sentence,
-                                de_right_str,
-                                en_left_str,
+                                l1_right_str,
+                                l2_left_str,
                                 en_sentence,
-                                en_right_str,
+                                l2_right_str,
                                 f'"{simple_list}"',
                                 de_sentence,
                                 "",

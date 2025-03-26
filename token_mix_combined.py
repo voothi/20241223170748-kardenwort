@@ -92,23 +92,26 @@ def process_text(
     original_form_in_simple_list,
     two_column_output_to_file,
     language,
-    text2=None  # Добавлено для второго текста
+    text2=None
 ):
     # Load the lemma index
     lemma_index = load_lemma_index(lemma_index_file)
 
     # Process the text using spaCy
     doc = nlp(input_text)
-    doc2 = nlp(text2) if text2 else None  # Обработка второго текста
+    sentences = list(doc.sents)
+
+    # Read the second text file into a list of sentences
+    if text2:
+        with open(text2, "r", encoding="utf-8") as f:
+            sentences2 = [line.rstrip("\n") for line in f]
+    else:
+        sentences2 = []
 
     # Extract unique lemmatized tokens with special handling for separable verbs
     unique_lemmatized_tokens = set()
     token_to_sentence = {}
     token_to_original_form = {}
-
-    # Extract sentences
-    sentences = list(doc.sents)
-    sentences2 = list(doc2.sents) if doc2 else []  # Предложения из второго текста
 
     for sent_index, sent in enumerate(sentences):
         for token in sent:
@@ -174,15 +177,13 @@ def process_text(
                 )
 
                 # Get context sentences for text2
-                if sentences2 and sent_index < len(sentences2):  # Ensure sent_index is within bounds
-                    l2_sentence = sentences2[sent_index].text
+                if sentences2 and sent_index < len(sentences2):  # Check boundaries
+                    l2_sentence = sentences2[sent_index]
                     l2_left_context = " ".join(
-                        sent.text.strip()
-                        for sent in sentences2[max(0, sent_index - sentence_context_size) : sent_index]
+                        sentences2[max(0, sent_index - sentence_context_size) : sent_index]
                     )
                     l2_right_context = " ".join(
-                        sent.text.strip()
-                        for sent in sentences2[sent_index + 1 : min(len(sentences2), sent_index + sentence_context_size + 1)]
+                        sentences2[sent_index + 1 : min(len(sentences2), sent_index + sentence_context_size + 1)]
                     )
                 else:
                     l2_sentence = ""

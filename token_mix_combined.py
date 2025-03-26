@@ -621,7 +621,9 @@ def process_sentences(
                 simple_list_entry = ""
                 if include_simple_list:
                     lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp)
-                    simple_list_entry = "\n".join(lemmas)  # Newline-separated without quotes
+                    simple_list_entry = "\n".join(
+                        lemmas
+                    )  # Newline-separated without quotes
 
                 # Format TSV line
                 if language == "de":

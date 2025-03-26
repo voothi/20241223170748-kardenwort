@@ -92,7 +92,7 @@ def process_text(
     original_form_in_simple_list,
     two_column_output_to_file,
     language,
-    text2=None,  # Добавлено для второго текста
+    text2=None  # Добавлено для второго текста
 ):
     # Load the lemma index
     lemma_index = load_lemma_index(lemma_index_file)
@@ -174,7 +174,7 @@ def process_text(
                 )
 
                 # Get context sentences for text2
-                if sentences2:
+                if sentences2 and sent_index < len(sentences2):  # Ensure sent_index is within bounds
                     l2_sentence = sentences2[sent_index].text
                     l2_left_context = " ".join(
                         sent.text.strip()
@@ -684,7 +684,7 @@ def process_sentences(
                                 l2_left_context,
                                 l2_sentence,
                                 l2_right_context,
-                                f'"{simple_list_entry}"',
+                                simple_list_entry,
                                 l1_sentence,
                                 "",
                                 "",
@@ -759,7 +759,7 @@ def process_sentences(
                                 l2_left_context,
                                 l2_sentence,
                                 l2_right_context,
-                                f'"{simple_list_entry}"',
+                                simple_list_entry,
                                 l1_sentence,
                                 "",
                                 "",

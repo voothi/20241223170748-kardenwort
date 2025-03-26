@@ -162,7 +162,7 @@ def process_text(
                 sent_index, l1_sentence = token_to_sentence[token]
                 # Get context sentences
                 start_index = max(0, sent_index - sentence_context_size)
-                end_index = min(len(sentences), sent_index + sentence_context_size)
+                end_index = min(len(sentences), sent_index + sentence_context_size + 1)
                 l1_left_context = " ".join(
                     sent.text.strip() for sent in sentences[start_index:sent_index]
                 )
@@ -515,7 +515,7 @@ def process_text(
             sent_index, l1_sentence = token_to_sentence[token]
             # Get context sentences
             start_index = max(0, sent_index - sentence_context_size)
-            end_index = min(len(sentences), sent_index + sentence_context_size)
+            end_index = min(len(sentences), sent_index + sentence_context_size + 1)
             l1_left_context = " ".join(
                 sent.text.strip() for sent in sentences[start_index:sent_index]
             )
@@ -806,7 +806,8 @@ def main():
         default="",
         help="Path to the lemma index CSV file",
     )
-    parser.add_argument("--text1", type=str, help="Input text to process")
+    parser.add_argument("--text", type=str, help="Input text to process")  # Добавлено
+    parser.add_argument("--text1", type=str, help="Path to input text file to process")
     parser.add_argument(
         "--detailed",
         action="store_true",
@@ -869,10 +870,15 @@ def main():
 
     if args.type == "token":
         # Determine input text
-        if args.text1:
+        if args.text and args.text1:
+            print("Error: Both --text and --text1 cannot be specified simultaneously.")
+            exit(1)
+        elif args.text:
+            input_text = args.text
+        elif args.text1:
             input_text = read_input_text(args.text1)
         else:
-            print("Error: --text1 must be specified.")
+            print("Error: Either --text or --text1 must be specified.")
             exit(1)
 
         # Process the text

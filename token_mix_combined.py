@@ -607,7 +607,7 @@ def process_sentences(
                 l1_right = text1_lines[i + 1 : i + 1 + context_size]
 
                 # Process English text
-                en_sentence = text2_lines[i]
+                l2_sentence = text2_lines[i]
                 l2_left = text2_lines[max(0, i - context_size) : i]
                 l2_right = text2_lines[i + 1 : i + 1 + context_size]
 
@@ -639,7 +639,7 @@ def process_sentences(
                                 l1_sentence,
                                 l1_right_context,
                                 l2_left_context,
-                                en_sentence,
+                                l2_sentence,
                                 l2_right_context,
                                 f'"{simple_list_entry}"',
                                 l1_sentence,
@@ -714,7 +714,7 @@ def process_sentences(
                                 l1_sentence,
                                 l1_right_context,
                                 l2_left_context,
-                                en_sentence,
+                                l2_sentence,
                                 l2_right_context,
                                 f'"{simple_list_entry}"',
                                 l1_sentence,

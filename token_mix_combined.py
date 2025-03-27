@@ -139,7 +139,9 @@ def process_text(
                         unique_lemmatized_tokens.add(verb_form)
                         token_to_sentence[verb_form] = (i, line1)
                         if language == "de":
-                            token_to_original_form[verb_form] = get_original_form_with_particle(token)
+                            token_to_original_form[verb_form] = (
+                                get_original_form_with_particle(token)
+                            )
                         else:
                             token_to_original_form[verb_form] = token.text
                     elif token.dep_ != "svp":
@@ -163,6 +165,7 @@ def process_text(
                 text_content = f.read()
 
         doc = nlp(text_content)
+        sentences = list(doc.sents)
         for token in doc:
             if token.is_alpha and token.dep_ != "svp":
                 if token.pos_ == "VERB":
@@ -171,9 +174,14 @@ def process_text(
                     else:
                         verb_form = token.lemma_
                     unique_lemmatized_tokens.add(verb_form)
-                    token_to_sentence[verb_form] = (0, token.sent.text)  # Use sentence context
+                    token_to_sentence[verb_form] = (
+                        0,
+                        token.sent.text,
+                    )  # Use sentence context
                     if language == "de":
-                        token_to_original_form[verb_form] = get_original_form_with_particle(token)
+                        token_to_original_form[verb_form] = (
+                            get_original_form_with_particle(token)
+                        )
                     else:
                         token_to_original_form[verb_form] = token.text
                 else:
@@ -182,8 +190,12 @@ def process_text(
                     token_to_original_form[token.lemma_] = token.text
 
         # Divide tokens into found and not found
-        found_tokens = [token for token in unique_lemmatized_tokens if token in lemma_index]
-        not_found_tokens = [token for token in unique_lemmatized_tokens if token not in lemma_index]
+        found_tokens = [
+            token for token in unique_lemmatized_tokens if token in lemma_index
+        ]
+        not_found_tokens = [
+            token for token in unique_lemmatized_tokens if token not in lemma_index
+        ]
 
         # Sort tokens
         sorted_found_tokens = sorted(found_tokens, key=lambda token: lemma_index[token])
@@ -193,7 +205,13 @@ def process_text(
         # Write TSV without text2 columns
         if output_file:
             if timestamp:
-                # ... timestamp code remains same ...
+                # Extract the directory and filename from the output path
+                output_dir = os.path.dirname(output_file)
+                output_filename = os.path.basename(output_file)
+                # Prepend timestamp to the filename
+                timestamp_str = datetime.now().strftime("%Y%m%d%H%M%S")
+                new_output_filename = f"{timestamp_str}-{output_filename}"
+                output_file = os.path.join(output_dir, new_output_filename)
             with open(output_file, "w", newline="", encoding="utf-8") as tsvfile:
                 tsv_writer = csv.writer(tsvfile, delimiter="\t")
                 for token in final_sorted_tokens:
@@ -202,12 +220,14 @@ def process_text(
 
                     # Context sentences for single text
                     start_index = max(0, sent_index - sentence_context_size)
-                    end_index = min(len(doc.sents), sent_index + sentence_context_size + 1)
+                    end_index = min(
+                        len(sentences), sent_index + sentence_context_size + 1
+                    )
                     left_context = " ".join(
-                        sent.text for sent in doc.sents[start_index:sent_index]
+                        sent.text for sent in sentences[start_index:sent_index]
                     )
                     right_context = " ".join(
-                        sent.text for sent in doc.sents[sent_index + 1 : end_index]
+                        sent.text for sent in sentences[sent_index + 1 : end_index]
                     )
 
                     # Simple list entry
@@ -218,23 +238,93 @@ def process_text(
 
                     # Write row without text2 columns
                     if language == "de":
-                        tsv_writer.writerow([
-                            token, token, original_form,
-                            "", "", left_context, sentence, right_context,
-                            "", "", "", simple_list_entry, sentence,
-                            "", "", "", "", "", "", "", "", "",
-                            "", "", "", "", "", "", "", "", "",
-                            "", "", "", "", "", "", "", "1",
-                        ])
+                        tsv_writer.writerow(
+                            [
+                                token,
+                                token,
+                                original_form,
+                                "",
+                                "",
+                                left_context,
+                                sentence,
+                                right_context,
+                                "",
+                                "",
+                                "",
+                                simple_list_entry,
+                                sentence,
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "1",
+                            ]
+                        )
                     else:
-                        tsv_writer.writerow([
-                            token, token, "",
-                            "", "", left_context, sentence, right_context,
-                            "", "", "", simple_list_entry, sentence,
-                            "", "", "", "", "", "", "", "", "",
-                            "", "", "", "", "", "", "", "", "",
-                            "", "", "", "", "", "", "", "1",
-                        ])
+                        tsv_writer.writerow(
+                            [
+                                token,
+                                token,
+                                "",
+                                "",
+                                "",
+                                left_context,
+                                sentence,
+                                right_context,
+                                "",
+                                "",
+                                "",
+                                simple_list_entry,
+                                sentence,
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "1",
+                            ]
+                        )
 
         # Handle HTML, two-column, etc. outputs for single text case
         if html_output:
@@ -256,12 +346,12 @@ def process_text(
             for token in final_sorted_tokens:
                 sent_index, sentence = token_to_sentence[token]
                 start_index = max(0, sent_index - sentence_context_size)
-                end_index = min(len(doc.sents), sent_index + sentence_context_size + 1)
+                end_index = min(len(sentences), sent_index + sentence_context_size + 1)
                 left_context = " ".join(
-                    sent.text for sent in doc.sents[start_index:sent_index]
+                    sent.text for sent in sentences[start_index:sent_index]
                 )
                 right_context = " ".join(
-                    sent.text for sent in doc.sents[sent_index + 1 : end_index]
+                    sent.text for sent in sentences[sent_index + 1 : end_index]
                 )
                 print(token)
                 if left_context:
@@ -271,8 +361,12 @@ def process_text(
                     print(right_context)
                 print()
         # Divide tokens into two groups: found in reference and not found
-        found_tokens = [token for token in unique_lemmatized_tokens if token in lemma_index]
-        not_found_tokens = [token for token in unique_lemmatized_tokens if token not in lemma_index]
+        found_tokens = [
+            token for token in unique_lemmatized_tokens if token in lemma_index
+        ]
+        not_found_tokens = [
+            token for token in unique_lemmatized_tokens if token not in lemma_index
+        ]
 
         # Sort tokens: found tokens by their reference index, not found tokens alphabetically
         sorted_found_tokens = sorted(found_tokens, key=lambda token: lemma_index[token])
@@ -301,11 +395,13 @@ def process_text(
 
                     # Get context sentences
                     start_index = max(0, sent_index - sentence_context_size)
-                    end_index = min(len(text1_lines), sent_index + sentence_context_size + 1)
+                    end_index = min(
+                        len(text1_lines), sent_index + sentence_context_size + 1
+                    )
                     l1_left_context = " ".join(text1_lines[start_index:sent_index])
-                    l1_right_context = " ".join(text1_lines[sent_index + 1:end_index])
+                    l1_right_context = " ".join(text1_lines[sent_index + 1 : end_index])
                     l2_left_context = " ".join(text2_lines[start_index:sent_index])
-                    l2_right_context = " ".join(text2_lines[sent_index + 1:end_index])
+                    l2_right_context = " ".join(text2_lines[sent_index + 1 : end_index])
 
                     # Перед циклом или использованием simple_list_entry
                     simple_list_entry = ""  # Инициализация переменной
@@ -697,9 +793,6 @@ def process_sentences(
 
     # Add timestamp to the output file name if requested
     if timestamp:
-        import os
-        from datetime import datetime
-
         # Extract the directory and filename from the output path
         output_dir = os.path.dirname(output_file)
         output_filename = os.path.basename(output_file)

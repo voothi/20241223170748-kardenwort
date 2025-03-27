@@ -669,6 +669,7 @@ def process_text_v2(
             tsv_writer = csv.writer(tsvfile, delimiter="\t")
             for token in final_sorted_tokens:
                 sent_index, l1_sentence = token_to_sentence[token]
+                l1_sentence = l1_sentence.strip()
                 # Get context sentences
                 start_index = max(0, sent_index - sentence_context_size)
                 end_index = min(len(sentences), sent_index + sentence_context_size + 1)
@@ -1111,7 +1112,8 @@ def process_sentences(
             tsv_writer = csv.writer(out_file, delimiter="\t")
             for i in range(min_length):
                 # Process German text
-                l1_sentence = text1_lines[i].strip()
+                l1_sentence = text1_lines[i]
+                l1_sentence = l1_sentence.strip()
                 l1_left = text1_lines[max(0, i - context_size) : i]
                 l1_right = text1_lines[i + 1 : i + 1 + context_size]
 

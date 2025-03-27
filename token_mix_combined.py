@@ -79,6 +79,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp):
     # Sort tokens by frequency index
     return sorted(sentence_tokens, key=lambda x: lemma_index.get(x, float("inf")))
 
+
 def process_text(
     input_text,
     output_file,
@@ -94,38 +95,39 @@ def process_text(
     language,
     text2=None,
 ):
-        if text2:
-            process_text_v1(
-                input_text,
-                output_file,
-                sentence_context_size,
-                detailed_output,
-                include_simple_list,
-                lemma_index_file,
-                two_column_output,
-                html_output,
-                timestamp,
-                original_form_in_simple_list,
-                two_column_output_to_file,
-                language,
-                text2,
-            )
-        else:
-            process_text_v2(
-                input_text,
-                output_file,
-                sentence_context_size,
-                detailed_output,
-                include_simple_list,
-                lemma_index_file,
-                two_column_output,
-                html_output,
-                timestamp,
-                original_form_in_simple_list,
-                two_column_output_to_file,
-                language,
-            )
-    
+    if text2:
+        process_text_v1(
+            input_text,
+            output_file,
+            sentence_context_size,
+            detailed_output,
+            include_simple_list,
+            lemma_index_file,
+            two_column_output,
+            html_output,
+            timestamp,
+            original_form_in_simple_list,
+            two_column_output_to_file,
+            language,
+            text2,
+        )
+    else:
+        process_text_v2(
+            input_text,
+            output_file,
+            sentence_context_size,
+            detailed_output,
+            include_simple_list,
+            lemma_index_file,
+            two_column_output,
+            html_output,
+            timestamp,
+            original_form_in_simple_list,
+            two_column_output_to_file,
+            language,
+        )
+
+
 def process_text_v1(
     input_text,
     output_file,
@@ -185,7 +187,9 @@ def process_text_v1(
                         unique_lemmatized_tokens.add(verb_form)
                         token_to_sentence[verb_form] = (i, line1)
                         if language == "de":
-                            token_to_original_form[verb_form] = get_original_form_with_particle(token)
+                            token_to_original_form[verb_form] = (
+                                get_original_form_with_particle(token)
+                            )
                         else:
                             token_to_original_form[verb_form] = token.text
                     elif token.dep_ != "svp":
@@ -194,8 +198,12 @@ def process_text_v1(
                         token_to_original_form[token.lemma_] = token.text
 
         # Divide tokens into two groups: found in reference and not found
-        found_tokens = [token for token in unique_lemmatized_tokens if token in lemma_index]
-        not_found_tokens = [token for token in unique_lemmatized_tokens if token not in lemma_index]
+        found_tokens = [
+            token for token in unique_lemmatized_tokens if token in lemma_index
+        ]
+        not_found_tokens = [
+            token for token in unique_lemmatized_tokens if token not in lemma_index
+        ]
 
         # Sort tokens: found tokens by their reference index, not found tokens alphabetically
         sorted_found_tokens = sorted(found_tokens, key=lambda token: lemma_index[token])
@@ -224,11 +232,13 @@ def process_text_v1(
 
                     # Get context sentences
                     start_index = max(0, sent_index - sentence_context_size)
-                    end_index = min(len(text1_lines), sent_index + sentence_context_size + 1)
+                    end_index = min(
+                        len(text1_lines), sent_index + sentence_context_size + 1
+                    )
                     l1_left_context = " ".join(text1_lines[start_index:sent_index])
-                    l1_right_context = " ".join(text1_lines[sent_index + 1:end_index])
+                    l1_right_context = " ".join(text1_lines[sent_index + 1 : end_index])
                     l2_left_context = " ".join(text2_lines[start_index:sent_index])
-                    l2_right_context = " ".join(text2_lines[sent_index + 1:end_index])
+                    l2_right_context = " ".join(text2_lines[sent_index + 1 : end_index])
 
                     # Перед циклом или использованием simple_list_entry
                     simple_list_entry = ""  # Инициализация переменной
@@ -567,6 +577,7 @@ def process_text_v1(
             if l1_right_context:
                 print(l1_right_context)
             print()  # Empty line between entries
+
 
 def process_text_v2(
     input_text,
@@ -1019,6 +1030,7 @@ def process_text_v2(
             if l1_right_context:
                 print(l1_right_context)
             print()  # Empty line between entries
+
 
 def process_sentences(
     text1,

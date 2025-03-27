@@ -110,7 +110,7 @@ def process_text(
     if text2:
         # Read text2 as a file
         with open(text2, "r", encoding="utf-8") as f2:
-            text2_lines = [line.rstrip("\n") for line in f2]
+            text2_lines = [line.rstrip("\\n") for line in f2]
 
         if len(text1_lines) != len(text2_lines):
             print(
@@ -147,6 +147,129 @@ def process_text(
                         token_to_sentence[token.lemma_] = (i, line1)
                         token_to_original_form[token.lemma_] = token.text
 
+    else:
+        # Handle single text processing
+        unique_lemmatized_tokens = set()
+        token_to_sentence = {}
+        token_to_original_form = {}
+
+        # Process the entire input_text as a single document
+        if "\n" in input_text or not os.path.exists(input_text):
+            # Treat as raw text
+            text_content = input_text
+        else:
+            # Read the file
+            with open(input_text, "r", encoding="utf-8") as f:
+                text_content = f.read()
+
+        doc = nlp(text_content)
+        for token in doc:
+            if token.is_alpha and token.dep_ != "svp":
+                if token.pos_ == "VERB":
+                    if language == "de":
+                        verb_form = get_verb_with_particle(token)
+                    else:
+                        verb_form = token.lemma_
+                    unique_lemmatized_tokens.add(verb_form)
+                    token_to_sentence[verb_form] = (0, token.sent.text)  # Use sentence context
+                    if language == "de":
+                        token_to_original_form[verb_form] = get_original_form_with_particle(token)
+                    else:
+                        token_to_original_form[verb_form] = token.text
+                else:
+                    unique_lemmatized_tokens.add(token.lemma_)
+                    token_to_sentence[token.lemma_] = (0, token.sent.text)
+                    token_to_original_form[token.lemma_] = token.text
+
+        # Divide tokens into found and not found
+        found_tokens = [token for token in unique_lemmatized_tokens if token in lemma_index]
+        not_found_tokens = [token for token in unique_lemmatized_tokens if token not in lemma_index]
+
+        # Sort tokens
+        sorted_found_tokens = sorted(found_tokens, key=lambda token: lemma_index[token])
+        sorted_not_found_tokens = sorted(not_found_tokens)
+        final_sorted_tokens = sorted_found_tokens + sorted_not_found_tokens
+
+        # Write TSV without text2 columns
+        if output_file:
+            if timestamp:
+                # ... timestamp code remains same ...
+            with open(output_file, "w", newline="", encoding="utf-8") as tsvfile:
+                tsv_writer = csv.writer(tsvfile, delimiter="\t")
+                for token in final_sorted_tokens:
+                    sent_index, sentence = token_to_sentence[token]
+                    original_form = token_to_original_form[token]
+
+                    # Context sentences for single text
+                    start_index = max(0, sent_index - sentence_context_size)
+                    end_index = min(len(doc.sents), sent_index + sentence_context_size + 1)
+                    left_context = " ".join(
+                        sent.text for sent in doc.sents[start_index:sent_index]
+                    )
+                    right_context = " ".join(
+                        sent.text for sent in doc.sents[sent_index + 1 : end_index]
+                    )
+
+                    # Simple list entry
+                    simple_list_entry = ""
+                    if include_simple_list:
+                        lemmas = process_sentence_lemmas(sentence, lemma_index, nlp)
+                        simple_list_entry = "\n".join(lemmas)
+
+                    # Write row without text2 columns
+                    if language == "de":
+                        tsv_writer.writerow([
+                            token, token, original_form,
+                            "", "", left_context, sentence, right_context,
+                            "", "", "", simple_list_entry, sentence,
+                            "", "", "", "", "", "", "", "", "",
+                            "", "", "", "", "", "", "", "", "",
+                            "", "", "", "", "", "", "", "1",
+                        ])
+                    else:
+                        tsv_writer.writerow([
+                            token, token, "",
+                            "", "", left_context, sentence, right_context,
+                            "", "", "", simple_list_entry, sentence,
+                            "", "", "", "", "", "", "", "", "",
+                            "", "", "", "", "", "", "", "", "",
+                            "", "", "", "", "", "", "", "1",
+                        ])
+
+        # Handle HTML, two-column, etc. outputs for single text case
+        if html_output:
+            print("<table>")
+            for token in final_sorted_tokens:
+                original_form = token_to_original_form[token]
+                print(f"<tr><td>{token}</td><td>{original_form}</td></tr>")
+            print("</table>")
+        elif two_column_output:
+            for token in final_sorted_tokens:
+                original_form = token_to_original_form[token]
+                print(f"{token}\t{original_form}")
+        else:
+            for token in final_sorted_tokens:
+                print(token)
+            print()
+
+        if detailed_output:
+            for token in final_sorted_tokens:
+                sent_index, sentence = token_to_sentence[token]
+                start_index = max(0, sent_index - sentence_context_size)
+                end_index = min(len(doc.sents), sent_index + sentence_context_size + 1)
+                left_context = " ".join(
+                    sent.text for sent in doc.sents[start_index:sent_index]
+                )
+                right_context = " ".join(
+                    sent.text for sent in doc.sents[sent_index + 1 : end_index]
+                )
+                print(token)
+                if left_context:
+                    print(left_context)
+                print(sentence)
+                if right_context:
+                    print(right_context)
+                print()
         # Divide tokens into two groups: found in reference and not found
         found_tokens = [token for token in unique_lemmatized_tokens if token in lemma_index]
         not_found_tokens = [token for token in unique_lemmatized_tokens if token not in lemma_index]

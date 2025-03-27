@@ -228,17 +228,26 @@ def process_text_v1(
                 tsv_writer = csv.writer(tsvfile, delimiter="\t")
                 for token in final_sorted_tokens:
                     sent_index, l1_sentence = token_to_sentence[token]
-                    l2_sentence = text2_lines[sent_index]
+                    l1_sentence = l1_sentence.strip()
+                    l2_sentence = text2_lines[sent_index].strip()
 
                     # Get context sentences
                     start_index = max(0, sent_index - sentence_context_size)
                     end_index = min(
                         len(text1_lines), sent_index + sentence_context_size + 1
                     )
-                    l1_left_context = " ".join(text1_lines[start_index:sent_index])
-                    l1_right_context = " ".join(text1_lines[sent_index + 1 : end_index])
-                    l2_left_context = " ".join(text2_lines[start_index:sent_index])
-                    l2_right_context = " ".join(text2_lines[sent_index + 1 : end_index])
+                    l1_left_context = " ".join(
+                        line.strip() for line in text1_lines[start_index:sent_index]
+                    )
+                    l1_right_context = " ".join(
+                        line.strip() for line in text1_lines[sent_index + 1 : end_index]
+                    )
+                    l2_left_context = " ".join(
+                        line.strip() for line in text2_lines[start_index:sent_index]
+                    )
+                    l2_right_context = " ".join(
+                        line.strip() for line in text2_lines[sent_index + 1 : end_index]
+                    )
 
                     # Перед циклом или использованием simple_list_entry
                     simple_list_entry = ""  # Инициализация переменной
@@ -559,6 +568,7 @@ def process_text_v1(
     if detailed_output:
         for token in final_sorted_tokens:
             sent_index, l1_sentence = token_to_sentence[token]
+            l1_sentence = l1_sentence.strip()
             # Get context sentences
             start_index = max(0, sent_index - sentence_context_size)
             end_index = min(len(text1_lines), sent_index + sentence_context_size + 1)
@@ -1101,12 +1111,12 @@ def process_sentences(
             tsv_writer = csv.writer(out_file, delimiter="\t")
             for i in range(min_length):
                 # Process German text
-                l1_sentence = text1_lines[i]
+                l1_sentence = text1_lines[i].strip()
                 l1_left = text1_lines[max(0, i - context_size) : i]
                 l1_right = text1_lines[i + 1 : i + 1 + context_size]
 
                 # Process English text
-                l2_sentence = text2_lines[i]
+                l2_sentence = text2_lines[i].strip()
                 l2_left = text2_lines[max(0, i - context_size) : i]
                 l2_right = text2_lines[i + 1 : i + 1 + context_size]
 

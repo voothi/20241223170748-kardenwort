@@ -95,6 +95,7 @@ def process_text(
     language,
     text2=None,
     with_fields=False,
+    with_br=False,
 ):
     if text2:
         process_text_v1(
@@ -112,6 +113,7 @@ def process_text(
             language,
             text2,
             with_fields,
+            with_br,
         )
     else:
         process_text_v2(
@@ -128,6 +130,7 @@ def process_text(
             two_column_output_to_file,
             language,
             with_fields,
+            with_br,
         )
 
 
@@ -146,6 +149,7 @@ def process_text_v1(
     language,
     text2=None,
     with_fields=False,
+    with_br=False,
 ):
     # Load the lemma index
     lemma_index = load_lemma_index(lemma_index_file)
@@ -335,6 +339,10 @@ def process_text_v1(
                         # Если требуется, обработайте и заполните simple_list_entry
                         lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp)
                         simple_list_entry = "\n".join(lemmas)  # Пример заполнения
+
+                        # Заменяем \t на <br>, если задан ключ --with-br
+                        if with_br:
+                            simple_list_entry = simple_list_entry.replace("\t", "<br>")
 
                     # Write the row
                     original_form = token_to_original_form[token]
@@ -681,6 +689,7 @@ def process_text_v2(
     two_column_output_to_file,
     language,
     with_fields=False,
+    with_br=False,
 ):
     # Load the lemma index
     lemma_index = load_lemma_index(lemma_index_file)
@@ -864,6 +873,10 @@ def process_text_v2(
                     simple_list_entry = (
                         "\n".join(sentence_tokens_sorted) if include_simple_list else ""
                     )
+
+                # Заменяем \t на <br>, если задан ключ --with-br
+                if with_br:
+                    simple_list_entry = simple_list_entry.replace("\t", "<br>")
 
                 # Write the row
                 original_form = token_to_original_form[token]
@@ -1602,6 +1615,11 @@ def main():
         type=str,
         help="Path to the second text file (German/English translations)",
     )
+    parser.add_argument(
+        "--with-br",
+        action="store_true",
+        help="Replace tabs with <br> in the simple list entry",
+    )
 
     args = parser.parse_args()
 
@@ -1641,6 +1659,7 @@ def main():
             args.language,
             args.text2,
             args.with_fields,
+            args.with_br,
         )
     elif args.type == "sentence":
         if not args.text1 or not args.text2:

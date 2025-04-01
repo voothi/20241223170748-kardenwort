@@ -94,6 +94,7 @@ def process_text(
     two_column_output_to_file,
     language,
     text2=None,
+    with_fields=False,  # Добавлен параметр with_fields
 ):
     if text2:
         process_text_v1(
@@ -110,6 +111,7 @@ def process_text(
             two_column_output_to_file,
             language,
             text2,
+            with_fields,  # Передаем параметр with_fields
         )
     else:
         process_text_v2(
@@ -125,6 +127,7 @@ def process_text(
             original_form_in_simple_list,
             two_column_output_to_file,
             language,
+            with_fields,  # Передаем параметр with_fields
         )
 
 
@@ -142,6 +145,7 @@ def process_text_v1(
     two_column_output_to_file,
     language,
     text2=None,
+    with_fields=False,  # Добавлен параметр with_fields
 ):
     # Load the lemma index
     lemma_index = load_lemma_index(lemma_index_file)
@@ -226,6 +230,22 @@ def process_text_v1(
 
             with open(output_file, "w", newline="", encoding="utf-8") as tsvfile:
                 tsv_writer = csv.writer(tsvfile, delimiter="\t")
+
+                # Write field names if with_fields is enabled
+                if with_fields:
+                    tsv_writer.writerow(
+                        [
+                            "Token",
+                            "Token",
+                            "Original Form",
+                            "Left Context",
+                            "Sentence",
+                            "Right Context",
+                            "Simple List Entry",
+                            "Sentence",
+                        ]
+                    )
+
                 for token in final_sorted_tokens:
                     sent_index, l1_sentence = token_to_sentence[token]
                     l1_sentence = l1_sentence.strip()
@@ -348,6 +368,7 @@ def process_text_v1(
                                     l2_right_context,
                                     simple_list_entry,
                                     l1_sentence,
+                                    "",
                                     "",
                                     "",
                                     "",
@@ -602,6 +623,7 @@ def process_text_v2(
     original_form_in_simple_list,
     two_column_output_to_file,
     language,
+    with_fields=False,  # Добавлен параметр with_fields
 ):
     # Load the lemma index
     lemma_index = load_lemma_index(lemma_index_file)
@@ -667,6 +689,22 @@ def process_text_v2(
 
         with open(output_file, "w", newline="", encoding="utf-8") as tsvfile:
             tsv_writer = csv.writer(tsvfile, delimiter="\t")
+
+            # Write field names if with_fields is enabled
+            if with_fields:
+                tsv_writer.writerow(
+                    [
+                        "Token",
+                        "Token",
+                        "Original Form",
+                        "Left Context",
+                        "Sentence",
+                        "Right Context",
+                        "Simple List Entry",
+                        "Sentence",
+                    ]
+                )
+
             for token in final_sorted_tokens:
                 sent_index, l1_sentence = token_to_sentence[token]
                 l1_sentence = l1_sentence.strip()
@@ -1052,6 +1090,7 @@ def process_sentences(
     timestamp,
     lemma_index_file,
     language,
+    with_fields=False,  # Добавлен параметр with_fields
 ):
     # Determine the lemma index file based on the language
     if not lemma_index_file:
@@ -1110,6 +1149,22 @@ def process_sentences(
     try:
         with open(output_file, "w", newline="", encoding="utf-8") as out_file:
             tsv_writer = csv.writer(out_file, delimiter="\t")
+
+            # Write field names if with_fields is enabled
+            if with_fields:
+                tsv_writer.writerow(
+                    [
+                        "Token",
+                        "Token",
+                        "Original Form",
+                        "Left Context",
+                        "Sentence",
+                        "Right Context",
+                        "Simple List Entry",
+                        "Sentence",
+                    ]
+                )
+
             for i in range(min_length):
                 # Process German text
                 l1_sentence = text1_lines[i]
@@ -1317,7 +1372,7 @@ def main():
         default="",
         help="Path to the lemma index CSV file",
     )
-    parser.add_argument("--text", type=str, help="Input text to process")  # Добавлено
+    parser.add_argument("--text", type=str, help="Input text to process")
     parser.add_argument("--text1", type=str, help="Path to input text file to process")
     parser.add_argument(
         "--detailed",
@@ -1365,6 +1420,11 @@ def main():
         help="CSV: Include original forms in the simple list entry in the TSV file",
     )
     parser.add_argument(
+        "--with-fields",
+        action="store_true",
+        help="CSV: Include field names as the first row in the output TSV file",
+    )
+    parser.add_argument(
         "--text2",
         type=str,
         help="Path to the second text file (German/English translations)",
@@ -1406,7 +1466,8 @@ def main():
             args.original_form_in_simple_list,
             args.two_column_output_to_file,
             args.language,
-            args.text2,  # Добавлено для второго текста
+            args.text2,
+            args.with_fields,  # Передаем флаг --with-fields
         )
     elif args.type == "sentence":
         if not args.text1 or not args.text2:
@@ -1425,6 +1486,7 @@ def main():
             args.timestamp,
             args.lemma_index_file,
             args.language,
+            args.with_fields,  # Передаем флаг --with-fields
         )
     else:
         print("Error: Invalid --type specified.")

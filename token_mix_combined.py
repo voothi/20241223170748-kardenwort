@@ -1221,6 +1221,7 @@ def process_sentences(
     lemma_index_file,
     language,
     with_fields=False,
+    with_br=False,
 ):
     # Determine the lemma index file based on the language
     if not lemma_index_file:
@@ -1375,9 +1376,13 @@ def process_sentences(
                 simple_list_entry = ""
                 if include_simple_list:
                     lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp)
-                    simple_list_entry = "\n".join(
-                        lemmas
-                    )  # Newline-separated without quotes
+                    if with_br:
+                        # Добавляем <br> к каждой записи, кроме последней
+                        simple_list_entry = "<br>".join(lemmas[:-1]) + (
+                            "\n" + lemmas[-1] if len(lemmas) > 1 else ""
+                        )
+                    else:
+                        simple_list_entry = "\n".join(lemmas)
 
                 # Format TSV line
                 if language == "de":
@@ -1681,6 +1686,7 @@ def main():
             args.lemma_index_file,
             args.language,
             args.with_fields,
+            args.with_br,
         )
     else:
         print("Error: Invalid --type specified.")

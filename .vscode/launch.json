@@ -290,7 +290,9 @@
                 "--include-simple-list",
                 // "--original-form-in-simple-list",
                 "--lemma-index-file",
-                "U:\\voothi\\20241223170748-token-extraction\\de-default.csv"
+                "U:\\voothi\\20241223170748-token-extraction\\de-default.csv",
+                // "--with-fields",
+                // "--with-br"
             ],
             "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
         },
@@ -362,7 +364,9 @@
                 "--include-simple-list",
                 // "--original-form-in-simple-list",
                 "--lemma-index-file",
-                "U:\\voothi\\20241223170748-token-extraction\\de-default.csv"
+                "U:\\voothi\\20241223170748-token-extraction\\de-default.csv",
+                "--with-fields",
+                "--with-br"
             ],
             "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
         },

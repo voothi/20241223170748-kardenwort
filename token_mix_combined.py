@@ -95,6 +95,7 @@ def process_text(
     language,
     text2=None,
     with_fields=False,
+    with_br=False,  # New argument to add <br> tags to the simple list entries for HTML formatting
 ):
     if text2:
         process_text_v1(
@@ -112,6 +113,7 @@ def process_text(
             language,
             text2,
             with_fields,
+            with_br=False,  # Добавлен новый аргумент
         )
     else:
         process_text_v2(
@@ -128,6 +130,7 @@ def process_text(
             two_column_output_to_file,
             language,
             with_fields,
+            with_br=False,  # Добавлен новый аргумент
         )
 
 
@@ -146,6 +149,7 @@ def process_text_v1(
     language,
     text2=None,
     with_fields=False,
+    with_br=False,  # Добавлен новый аргумент
 ):
     # Load the lemma index
     lemma_index = load_lemma_index(lemma_index_file)
@@ -329,6 +333,12 @@ def process_text_v1(
 
                     # Перед циклом или использованием simple_list_entry
                     simple_list_entry = ""  # Инициализация переменной
+
+                    # Добавить <br>, если with_br включен
+                    if with_br:
+                        simple_list_entry = "\n".join(
+                            f"{entry}<br>" for entry in simple_list_entry.split("\n")[:-1]
+                        ) + simple_list_entry.split("\n")[-1]
 
                     # Внутри цикла или при обработке
                     if include_simple_list:
@@ -681,6 +691,7 @@ def process_text_v2(
     two_column_output_to_file,
     language,
     with_fields=False,
+    with_br=False,  # New argument
 ):
     # Load the lemma index
     lemma_index = load_lemma_index(lemma_index_file)
@@ -864,6 +875,14 @@ def process_text_v2(
                     simple_list_entry = (
                         "\n".join(sentence_tokens_sorted) if include_simple_list else ""
                     )
+
+                # Add <br> if with_br is enabled
+                if with_br:
+                    simple_list_entry = "\n".join(
+                        f"{entry}<br>" for entry in simple_list_entry.split("\n")[:-1]
+                    ) + simple_list_entry.split("\n")[-1]
+                else:
+                    simple_list_entry = simple_list_entry  # No modification if with_br is False
 
                 # Write the row
                 original_form = token_to_original_form[token]
@@ -1602,6 +1621,11 @@ def main():
         type=str,
         help="Path to the second text file (German/English translations)",
     )
+    parser.add_argument(
+        "--with-br",
+        action="store_true",
+        help="Add <br> at the end of each entry in the simple list except the last one",
+    )
 
     args = parser.parse_args()
 
@@ -1641,6 +1665,7 @@ def main():
             args.language,
             args.text2,
             args.with_fields,
+            args.with_br,  # Pass the new argument
         )
     elif args.type == "sentence":
         if not args.text1 or not args.text2:

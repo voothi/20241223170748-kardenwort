@@ -4,6 +4,8 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+        
+
         {
             "name": "Python Debugger: Current File with Arguments / Test / De / type token / text",
             "type": "debugpy",
@@ -181,7 +183,8 @@
                 // "--original-form-in-simple-list",
                 "--lemma-index-file",
                 "U:\\voothi\\20241223170748-token-extraction\\de-default.csv",
-                "--with-fields"
+                "--with-fields",
+                "--with-br"
             ],
             "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
         },

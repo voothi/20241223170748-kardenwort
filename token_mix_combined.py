@@ -340,9 +340,7 @@ def process_text_v1(
                         lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp)
                         if with_br:
                             # Добавляем <br> к каждой записи, кроме последней
-                            simple_list_entry = "<br>".join(lemmas[:-1]) + (
-                                "\n" + lemmas[-1] if len(lemmas) > 1 else ""
-                            )
+                            simple_list_entry = "<br>".join(lemmas[:-1])
                         else:
                             simple_list_entry = "\n".join(lemmas)
 
@@ -876,9 +874,15 @@ def process_text_v2(
                         "\n".join(sentence_tokens_sorted) if include_simple_list else ""
                     )
 
-                # Заменяем \t на <br>, если задан ключ --with-br
-                if with_br:
-                    simple_list_entry = simple_list_entry.replace("\t", "<br>")
+                    # Внутри цикла или при обработке
+                    if include_simple_list:
+                        # Если требуется, обработайте и заполните simple_list_entry
+                        lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp)
+                        if with_br:
+                            # Добавляем <br> к каждой записи, кроме последней
+                            simple_list_entry = "<br>".join(lemmas[:-1])
+                        else:
+                            simple_list_entry = "\n".join(lemmas)
 
                 # Write the row
                 original_form = token_to_original_form[token]
@@ -1378,9 +1382,7 @@ def process_sentences(
                     lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp)
                     if with_br:
                         # Добавляем <br> к каждой записи, кроме последней
-                        simple_list_entry = "<br>".join(lemmas[:-1]) + (
-                            "\n" + lemmas[-1] if len(lemmas) > 1 else ""
-                        )
+                        simple_list_entry = "<br>".join(lemmas[:-1])
                     else:
                         simple_list_entry = "\n".join(lemmas)
 

@@ -166,492 +166,491 @@ def process_text_v1(
         with open(input_text, "r", encoding="utf-8") as f1:
             text1_lines = [line.rstrip("\n") for line in f1]
 
-    if text2:
-        # Read text2 as a file
-        with open(text2, "r", encoding="utf-8") as f2:
-            text2_lines = [line.rstrip("\n") for line in f2]
+    # Read text2 as a file
+    with open(text2, "r", encoding="utf-8") as f2:
+        text2_lines = [line.rstrip("\n") for line in f2]
 
-        if len(text1_lines) != len(text2_lines):
-            print(
-                f"Warning: Mismatch in line counts - text1: {len(text1_lines)}, text2: {len(text2_lines)}",
-                file=sys.stderr,
-            )
-            min_length = min(len(text1_lines), len(text2_lines))
-            text1_lines = text1_lines[:min_length]
-            text2_lines = text2_lines[:min_length]
+    if len(text1_lines) != len(text2_lines):
+        print(
+            f"Warning: Mismatch in line counts - text1: {len(text1_lines)}, text2: {len(text2_lines)}",
+            file=sys.stderr,
+        )
+        min_length = min(len(text1_lines), len(text2_lines))
+        text1_lines = text1_lines[:min_length]
+        text2_lines = text2_lines[:min_length]
 
-        # Process each line
-        unique_lemmatized_tokens = set()
-        token_to_sentence = {}
-        token_to_original_form = {}
+    # Process each line
+    unique_lemmatized_tokens = set()
+    token_to_sentence = {}
+    token_to_original_form = {}
 
-        for i, (line1, line2) in enumerate(zip(text1_lines, text2_lines)):
-            # Process tokens in line1 using spaCy
-            doc = nlp(line1)
-            for token in doc:
-                if token.is_alpha:
-                    if token.pos_ == "VERB":
-                        if language == "de":
-                            verb_form = get_verb_with_particle(token)
-                        else:
-                            verb_form = token.lemma_
-                        unique_lemmatized_tokens.add(verb_form)
-                        token_to_sentence[verb_form] = (i, line1)
-                        if language == "de":
-                            token_to_original_form[verb_form] = (
-                                get_original_form_with_particle(token)
-                            )
-                        else:
-                            token_to_original_form[verb_form] = token.text
-                    elif token.dep_ != "svp":
-                        unique_lemmatized_tokens.add(token.lemma_)
-                        token_to_sentence[token.lemma_] = (i, line1)
-                        token_to_original_form[token.lemma_] = token.text
-
-        # Divide tokens into two groups: found in reference and not found
-        found_tokens = [
-            token for token in unique_lemmatized_tokens if token in lemma_index
-        ]
-        not_found_tokens = [
-            token for token in unique_lemmatized_tokens if token not in lemma_index
-        ]
-
-        # Sort tokens: found tokens by their reference index, not found tokens alphabetically
-        sorted_found_tokens = sorted(found_tokens, key=lambda token: lemma_index[token])
-        sorted_not_found_tokens = sorted(not_found_tokens)
-
-        # Combine both lists: found tokens first, then not found tokens
-        final_sorted_tokens = sorted_found_tokens + sorted_not_found_tokens
-
-        # Write the results to TSV if output file is specified
-        if output_file:
-            if timestamp:
-
-                # Extract the directory and filename from the output path
-                output_dir = os.path.dirname(output_file)
-                output_filename = os.path.basename(output_file)
-                # Prepend timestamp to the filename
-                timestamp_str = datetime.now().strftime("%Y%m%d%H%M%S")
-                new_output_filename = f"{timestamp_str}-{output_filename}"
-                final_output_file = os.path.join(output_dir, new_output_filename)
-
-            with open(final_output_file, "w", newline="", encoding="utf-8") as tsvfile:
-                tsv_writer = csv.writer(tsvfile, delimiter="\t")
-
-                # Write field names if with_fields is enabled
-                if with_fields:
-                    tsv_writer.writerow(
-                        [
-                            "Quotation",
-                            "WordSource",
-                            "WordSourceInflectedForm",
-                            "WordDestination",
-                            "WordSourceContext",
-                            "SentenceSourceContextLeft",
-                            "SentenceSource",
-                            "SentenceSourceContextRight",
-                            "SentenceDestinationContextLeft",
-                            "SentenceDestination",
-                            "SentenceDestinationContextRight",
-                            "SentenceSourceWordlist",
-                            "SentenceSourceCloze",
-                            "SentenceSourceRewriteAISentenceSource",
-                            "SentenceSourceRewriteAISentenceDestination",
-                            "WordSourceMorphologyAI",
-                            "Note",
-                            "WordRussian",
-                            "WordUkrainian",
-                            "WordEnglish",
-                            "WordGerman",
-                            "WordSourceMorphemeFirst",
-                            "WordSourceMorphemeFirstDefinition",
-                            "WordSourceMorphemeSecond",
-                            "WordSourceMorphemeSecondDefinition",
-                            "WordSourceMorphemeThird",
-                            "WordSourceMorphemeThirdDefinition",
-                            "WordSourceMorphemeFourth",
-                            "WordSourceMorphemeFourthDefinition",
-                            "WordSourceMorphemeFifth",
-                            "WordSourceMorphemeFifthDefinition",
-                            "WordSourceIPA",
-                            "WordSourceSynonymAI",
-                            "WordSourceDefinitionAISentenceSource",
-                            "WordSourceDefinitionAISentenceDestination",
-                            "WordSourceDefinitionFirst",
-                            "WordSourceDefinitionFirstClipping",
-                            "WordSourceDefinitionSecond",
-                            "WordDestinationDefinitionFirst",
-                            "WordDestinationDefinitionSecond",
-                            "WordSourceAudio",
-                            "SentenceSourceIPA",
-                            "SentenceSourceAudio",
-                            "Image",
-                            "WordSourceCloze",
-                            "WordSourceContextAI",
-                            "TextSource",
-                            "TextDestination",
-                            "TextSourceURL",
-                            "SentenceEnglish",
-                            "SentenceGerman",
-                            "SentenceUkrainian",
-                            "SentenceRussian",
-                            "Source",
-                            "SourceURL",
-                            "SeparatorAudio",
-                            "Source-en-GB",
-                            "Source-en-US",
-                            "Source-de-DE",
-                            "Source-uk-UA",
-                            "Source-ru-RU",
-                            "Destination-en-GB",
-                            "Destination-en-US",
-                            "Destination-de-DE",
-                            "Destination-uk-UA",
-                            "Destination-ru-RU",
-                        ]
-                    )
-
-                for token in final_sorted_tokens:
-                    sent_index, l1_sentence = token_to_sentence[token]
-                    l1_sentence = l1_sentence.strip()
-                    l2_sentence = text2_lines[sent_index].strip()
-
-                    # Get context sentences
-                    start_index = max(0, sent_index - sentence_context_size)
-                    end_index = min(
-                        len(text1_lines), sent_index + sentence_context_size + 1
-                    )
-                    l1_left_context = " ".join(
-                        line.strip() for line in text1_lines[start_index:sent_index]
-                    )
-                    l1_right_context = " ".join(
-                        line.strip() for line in text1_lines[sent_index + 1 : end_index]
-                    )
-                    l2_left_context = " ".join(
-                        line.strip() for line in text2_lines[start_index:sent_index]
-                    )
-                    l2_right_context = " ".join(
-                        line.strip() for line in text2_lines[sent_index + 1 : end_index]
-                    )
-
-                    # Перед циклом или использованием simple_list_entry
-                    simple_list_entry = ""  # Инициализация переменной
-
-                    # Внутри цикла или при обработке
-                    if include_simple_list:
-                        # Если требуется, обработайте и заполните simple_list_entry
-                        lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp)
-                        if with_br:
-                            # Добавляем <br> к каждой записи, кроме последней
-                            simple_list_entry = "<br>".join(lemmas)
-                        else:
-                            simple_list_entry = "\n".join(lemmas)
-
-                    # Write the row
-                    original_form = token_to_original_form[token]
+    for i, (line1, line2) in enumerate(zip(text1_lines, text2_lines)):
+        # Process tokens in line1 using spaCy
+        doc = nlp(line1)
+        for token in doc:
+            if token.is_alpha:
+                if token.pos_ == "VERB":
                     if language == "de":
-                        if two_column_output_to_file:
-                            tsv_writer.writerow(
-                                [
-                                    token,
-                                    token,
-                                    original_form,
-                                    "",
-                                    "",
-                                    l1_left_context,
-                                    l1_sentence,
-                                    l1_right_context,
-                                    l2_left_context,
-                                    l2_sentence,
-                                    l2_right_context,
-                                    simple_list_entry,
-                                    l1_sentence,
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "1",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "1",
-                                ]
-                            )
-                        else:
-                            tsv_writer.writerow(
-                                [
-                                    token,
-                                    token,
-                                    "",
-                                    "",
-                                    "",
-                                    l1_left_context,
-                                    l1_sentence,
-                                    l1_right_context,
-                                    l2_left_context,
-                                    l2_sentence,
-                                    l2_right_context,
-                                    simple_list_entry,
-                                    l1_sentence,
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "1",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "1",
-                                ]
-                            )
+                        verb_form = get_verb_with_particle(token)
+                    else:
+                        verb_form = token.lemma_
+                    unique_lemmatized_tokens.add(verb_form)
+                    token_to_sentence[verb_form] = (i, line1)
+                    if language == "de":
+                        token_to_original_form[verb_form] = (
+                            get_original_form_with_particle(token)
+                        )
+                    else:
+                        token_to_original_form[verb_form] = token.text
+                elif token.dep_ != "svp":
+                    unique_lemmatized_tokens.add(token.lemma_)
+                    token_to_sentence[token.lemma_] = (i, line1)
+                    token_to_original_form[token.lemma_] = token.text
 
-                    if language == "en":
-                        if two_column_output_to_file:
-                            tsv_writer.writerow(
-                                [
-                                    token,
-                                    token,
-                                    original_form,
-                                    "",
-                                    "",
-                                    l1_left_context,
-                                    l1_sentence,
-                                    l1_right_context,
-                                    l2_left_context,
-                                    l2_sentence,
-                                    l2_right_context,
-                                    simple_list_entry,
-                                    l1_sentence,
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "1",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "1",
-                                ]
-                            )
-                        else:
-                            tsv_writer.writerow(
-                                [
-                                    token,
-                                    token,
-                                    "",
-                                    "",
-                                    "",
-                                    l1_left_context,
-                                    l1_sentence,
-                                    l1_right_context,
-                                    l2_left_context,
-                                    l2_sentence,
-                                    l2_right_context,
-                                    simple_list_entry,
-                                    l1_sentence,
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "1",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    "1",
-                                ]
-                            )
+    # Divide tokens into two groups: found in reference and not found
+    found_tokens = [
+        token for token in unique_lemmatized_tokens if token in lemma_index
+    ]
+    not_found_tokens = [
+        token for token in unique_lemmatized_tokens if token not in lemma_index
+    ]
 
-        # Output tokens in HTML table if html_output is enabled
-        if html_output:
-            print("<table>")
+    # Sort tokens: found tokens by their reference index, not found tokens alphabetically
+    sorted_found_tokens = sorted(found_tokens, key=lambda token: lemma_index[token])
+    sorted_not_found_tokens = sorted(not_found_tokens)
+
+    # Combine both lists: found tokens first, then not found tokens
+    final_sorted_tokens = sorted_found_tokens + sorted_not_found_tokens
+
+    # Write the results to TSV if output file is specified
+    if output_file:
+        if timestamp:
+
+            # Extract the directory and filename from the output path
+            output_dir = os.path.dirname(output_file)
+            output_filename = os.path.basename(output_file)
+            # Prepend timestamp to the filename
+            timestamp_str = datetime.now().strftime("%Y%m%d%H%M%S")
+            new_output_filename = f"{timestamp_str}-{output_filename}"
+            final_output_file = os.path.join(output_dir, new_output_filename)
+
+        with open(final_output_file, "w", newline="", encoding="utf-8") as tsvfile:
+            tsv_writer = csv.writer(tsvfile, delimiter="\t")
+
+            # Write field names if with_fields is enabled
+            if with_fields:
+                tsv_writer.writerow(
+                    [
+                        "Quotation",
+                        "WordSource",
+                        "WordSourceInflectedForm",
+                        "WordDestination",
+                        "WordSourceContext",
+                        "SentenceSourceContextLeft",
+                        "SentenceSource",
+                        "SentenceSourceContextRight",
+                        "SentenceDestinationContextLeft",
+                        "SentenceDestination",
+                        "SentenceDestinationContextRight",
+                        "SentenceSourceWordlist",
+                        "SentenceSourceCloze",
+                        "SentenceSourceRewriteAISentenceSource",
+                        "SentenceSourceRewriteAISentenceDestination",
+                        "WordSourceMorphologyAI",
+                        "Note",
+                        "WordRussian",
+                        "WordUkrainian",
+                        "WordEnglish",
+                        "WordGerman",
+                        "WordSourceMorphemeFirst",
+                        "WordSourceMorphemeFirstDefinition",
+                        "WordSourceMorphemeSecond",
+                        "WordSourceMorphemeSecondDefinition",
+                        "WordSourceMorphemeThird",
+                        "WordSourceMorphemeThirdDefinition",
+                        "WordSourceMorphemeFourth",
+                        "WordSourceMorphemeFourthDefinition",
+                        "WordSourceMorphemeFifth",
+                        "WordSourceMorphemeFifthDefinition",
+                        "WordSourceIPA",
+                        "WordSourceSynonymAI",
+                        "WordSourceDefinitionAISentenceSource",
+                        "WordSourceDefinitionAISentenceDestination",
+                        "WordSourceDefinitionFirst",
+                        "WordSourceDefinitionFirstClipping",
+                        "WordSourceDefinitionSecond",
+                        "WordDestinationDefinitionFirst",
+                        "WordDestinationDefinitionSecond",
+                        "WordSourceAudio",
+                        "SentenceSourceIPA",
+                        "SentenceSourceAudio",
+                        "Image",
+                        "WordSourceCloze",
+                        "WordSourceContextAI",
+                        "TextSource",
+                        "TextDestination",
+                        "TextSourceURL",
+                        "SentenceEnglish",
+                        "SentenceGerman",
+                        "SentenceUkrainian",
+                        "SentenceRussian",
+                        "Source",
+                        "SourceURL",
+                        "SeparatorAudio",
+                        "Source-en-GB",
+                        "Source-en-US",
+                        "Source-de-DE",
+                        "Source-uk-UA",
+                        "Source-ru-RU",
+                        "Destination-en-GB",
+                        "Destination-en-US",
+                        "Destination-de-DE",
+                        "Destination-uk-UA",
+                        "Destination-ru-RU",
+                    ]
+                )
+
             for token in final_sorted_tokens:
+                sent_index, l1_sentence = token_to_sentence[token]
+                l1_sentence = l1_sentence.strip()
+                l2_sentence = text2_lines[sent_index].strip()
+
+                # Get context sentences
+                start_index = max(0, sent_index - sentence_context_size)
+                end_index = min(
+                    len(text1_lines), sent_index + sentence_context_size + 1
+                )
+                l1_left_context = " ".join(
+                    line.strip() for line in text1_lines[start_index:sent_index]
+                )
+                l1_right_context = " ".join(
+                    line.strip() for line in text1_lines[sent_index + 1 : end_index]
+                )
+                l2_left_context = " ".join(
+                    line.strip() for line in text2_lines[start_index:sent_index]
+                )
+                l2_right_context = " ".join(
+                    line.strip() for line in text2_lines[sent_index + 1 : end_index]
+                )
+
+                # Перед циклом или использованием simple_list_entry
+                simple_list_entry = ""  # Инициализация переменной
+
+                # Внутри цикла или при обработке
+                if include_simple_list:
+                    # Если требуется, обработайте и заполните simple_list_entry
+                    lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp)
+                    if with_br:
+                        # Добавляем <br> к каждой записи, кроме последней
+                        simple_list_entry = "<br>".join(lemmas)
+                    else:
+                        simple_list_entry = "\n".join(lemmas)
+
+                # Write the row
                 original_form = token_to_original_form[token]
-                print(f"<tr><td>{token}</td><td>{original_form}</td></tr>")
-            print("</table>")
-        elif two_column_output:
-            for token in final_sorted_tokens:
-                original_form = token_to_original_form[token]
-                print(f"{token}\t{original_form}")
-        else:
-            for token in final_sorted_tokens:
-                print(token)
-            print()  # Empty line to separate the list of tokens from the detailed output
+                if language == "de":
+                    if two_column_output_to_file:
+                        tsv_writer.writerow(
+                            [
+                                token,
+                                token,
+                                original_form,
+                                "",
+                                "",
+                                l1_left_context,
+                                l1_sentence,
+                                l1_right_context,
+                                l2_left_context,
+                                l2_sentence,
+                                l2_right_context,
+                                simple_list_entry,
+                                l1_sentence,
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "1",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "1",
+                            ]
+                        )
+                    else:
+                        tsv_writer.writerow(
+                            [
+                                token,
+                                token,
+                                "",
+                                "",
+                                "",
+                                l1_left_context,
+                                l1_sentence,
+                                l1_right_context,
+                                l2_left_context,
+                                l2_sentence,
+                                l2_right_context,
+                                simple_list_entry,
+                                l1_sentence,
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "1",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "1",
+                            ]
+                        )
+
+                if language == "en":
+                    if two_column_output_to_file:
+                        tsv_writer.writerow(
+                            [
+                                token,
+                                token,
+                                original_form,
+                                "",
+                                "",
+                                l1_left_context,
+                                l1_sentence,
+                                l1_right_context,
+                                l2_left_context,
+                                l2_sentence,
+                                l2_right_context,
+                                simple_list_entry,
+                                l1_sentence,
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "1",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "1",
+                            ]
+                        )
+                    else:
+                        tsv_writer.writerow(
+                            [
+                                token,
+                                token,
+                                "",
+                                "",
+                                "",
+                                l1_left_context,
+                                l1_sentence,
+                                l1_right_context,
+                                l2_left_context,
+                                l2_sentence,
+                                l2_right_context,
+                                simple_list_entry,
+                                l1_sentence,
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "1",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "1",
+                            ]
+                        )
+
+    # Output tokens in HTML table if html_output is enabled
+    if html_output:
+        print("<table>")
+        for token in final_sorted_tokens:
+            original_form = token_to_original_form[token]
+            print(f"<tr><td>{token}</td><td>{original_form}</td></tr>")
+        print("</table>")
+    elif two_column_output:
+        for token in final_sorted_tokens:
+            original_form = token_to_original_form[token]
+            print(f"{token}\t{original_form}")
+    else:
+        for token in final_sorted_tokens:
+            print(token)
+        print()  # Empty line to separate the list of tokens from the detailed output
 
     # Print each token with its sentence and context if detailed output is requested
     if detailed_output:

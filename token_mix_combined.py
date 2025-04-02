@@ -883,15 +883,15 @@ def process_text_v2(
                             "\n".join(sentence_tokens_sorted) if include_simple_list else ""
                         )
 
-                    # Внутри цикла или при обработке
-                    if include_simple_list:
-                        # Если требуется, обработайте и заполните simple_list_entry
-                        lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp)
-                        if with_br:
-                            # Добавляем <br> к каждой записи, кроме последней
-                            simple_list_entry = "<br>".join(lemmas)
-                        else:
-                            simple_list_entry = "\n".join(lemmas)
+                    # # Внутри цикла или при обработке
+                    # if include_simple_list:
+                    #     # Если требуется, обработайте и заполните simple_list_entry
+                    #     lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp)
+                    #     if with_br:
+                    #         # Добавляем <br> к каждой записи, кроме последней
+                    #         simple_list_entry = "<br>".join(lemmas)
+                    #     else:
+                    #         simple_list_entry = "\n".join(lemmas)
 
                 # Write the row
                 original_form = token_to_original_form[token]

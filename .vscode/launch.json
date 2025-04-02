@@ -179,7 +179,7 @@
                 "--two-column-output",
                 // "--html"
                 "--sentence-context-size",
-                "2",
+                "0",
                 // "--sentence_token_limit", "5"
                 "--output",
                 ".\\out\\result-t.token.de.tsv",
@@ -406,7 +406,7 @@
                 "--two-column-output",
                 // "--html"
                 "--sentence-context-size",
-                "2",
+                "0",
                 // "--sentence_token_limit", "5"
                 "--output",
                 ".\\out\\result-t.token.en.tsv",

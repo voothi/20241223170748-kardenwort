@@ -96,6 +96,7 @@ def process_text(
     text2=None,
     with_fields=False,
     with_br=False,
+    pipe=False,
 ):
     final_output_file = None
     if text2:
@@ -115,6 +116,7 @@ def process_text(
             text2,
             with_fields,
             with_br,
+            pipe,
         )
     else:
         final_output_file = process_text_v2(
@@ -132,6 +134,7 @@ def process_text(
             language,
             with_fields,
             with_br,
+            pipe,
         )
     return final_output_file
 
@@ -152,6 +155,7 @@ def process_text_v1(
     text2=None,
     with_fields=False,
     with_br=False,
+    pipe=False,
 ):
     final_output_file = output_file
     # Load the lemma index
@@ -636,45 +640,46 @@ def process_text_v1(
                             ]
                         )
 
-    # Output tokens in HTML table if html_output is enabled
-    if html_output:
-        print("<table>")
-        for token in final_sorted_tokens:
-            original_form = token_to_original_form[token]
-            print(f"<tr><td>{token}</td><td>{original_form}</td></tr>")
-        print("</table>")
-    elif two_column_output:
-        for token in final_sorted_tokens:
-            original_form = token_to_original_form[token]
-            print(f"{token}\t{original_form}")
-    else:
-        for token in final_sorted_tokens:
-            print(token)
-        print()  # Empty line to separate the list of tokens from the detailed output
+    if not pipe:
+        # Output tokens in HTML table if html_output is enabled
+        if html_output:
+            print("<table>")
+            for token in final_sorted_tokens:
+                original_form = token_to_original_form[token]
+                print(f"<tr><td>{token}</td><td>{original_form}</td></tr>")
+            print("</table>")
+        elif two_column_output:
+            for token in final_sorted_tokens:
+                original_form = token_to_original_form[token]
+                print(f"{token}\t{original_form}")
+        else:
+            for token in final_sorted_tokens:
+                print(token)
+            print()  # Empty line to separate the list of tokens from the detailed output
 
-    # Print each token with its sentence and context if detailed output is requested
-    if detailed_output:
-        for token in final_sorted_tokens:
-            sent_index, l1_sentence = token_to_sentence[token]
-            l1_sentence = l1_sentence.strip()
-            # Get context sentences
-            start_index = max(0, sent_index - sentence_context_size)
-            end_index = min(len(text1_lines), sent_index + sentence_context_size + 1)
-            l1_left_context = " ".join(
-                line.strip() for line in text1_lines[start_index:sent_index]
-            )
-            l1_right_context = " ".join(
-                line.strip() for line in text1_lines[sent_index + 1 : end_index]
-            )
+        # Print each token with its sentence and context if detailed output is requested
+        if detailed_output:
+            for token in final_sorted_tokens:
+                sent_index, l1_sentence = token_to_sentence[token]
+                l1_sentence = l1_sentence.strip()
+                # Get context sentences
+                start_index = max(0, sent_index - sentence_context_size)
+                end_index = min(len(text1_lines), sent_index + sentence_context_size + 1)
+                l1_left_context = " ".join(
+                    line.strip() for line in text1_lines[start_index:sent_index]
+                )
+                l1_right_context = " ".join(
+                    line.strip() for line in text1_lines[sent_index + 1 : end_index]
+                )
 
-            # Print the formatted output
-            print(token)
-            if l1_left_context:
-                print(l1_left_context)
-            print(l1_sentence)
-            if l1_right_context:
-                print(l1_right_context)
-            print()  # Empty line between entries
+                # Print the formatted output
+                print(token)
+                if l1_left_context:
+                    print(l1_left_context)
+                print(l1_sentence)
+                if l1_right_context:
+                    print(l1_right_context)
+                print()  # Empty line between entries
 
     return final_output_file
 
@@ -694,6 +699,7 @@ def process_text_v2(
     language,
     with_fields=False,
     with_br=False,
+    pipe=False,
 ):
     final_output_file = output_file
     # Load the lemma index
@@ -1177,46 +1183,46 @@ def process_text_v2(
                                 "1",
                             ]
                         )
+    if not pipe:
+        # Output tokens in HTML table if html_output is enabled
+        if html_output:
+            print("<table>")
+            for token in final_sorted_tokens:
+                original_form = token_to_original_form[token]
+                print(f"<tr><td>{token}</td><td>{original_form}</td></tr>")
+            print("</table>")
+        # Output tokens in two columns if two_column_output is enabled
+        elif two_column_output:
+            for token in final_sorted_tokens:
+                original_form = token_to_original_form[token]
+                print(f"{token}\t{original_form}")
+        else:
+            for token in final_sorted_tokens:
+                print(token)
+            print()  # Empty line to separate the list of tokens from the detailed output
 
-    # Output tokens in HTML table if html_output is enabled
-    if html_output:
-        print("<table>")
-        for token in final_sorted_tokens:
-            original_form = token_to_original_form[token]
-            print(f"<tr><td>{token}</td><td>{original_form}</td></tr>")
-        print("</table>")
-    # Output tokens in two columns if two_column_output is enabled
-    elif two_column_output:
-        for token in final_sorted_tokens:
-            original_form = token_to_original_form[token]
-            print(f"{token}\t{original_form}")
-    else:
-        for token in final_sorted_tokens:
-            print(token)
-        print()  # Empty line to separate the list of tokens from the detailed output
+        # Print each token with its sentence and context if detailed output is requested
+        if detailed_output:
+            for token in final_sorted_tokens:
+                sent_index, l1_sentence = token_to_sentence[token]
+                # Get context sentences
+                start_index = max(0, sent_index - sentence_context_size)
+                end_index = min(len(sentences), sent_index + sentence_context_size + 1)
+                l1_left_context = " ".join(
+                    sent.text.strip() for sent in sentences[start_index:sent_index]
+                )
+                l1_right_context = " ".join(
+                    sent.text.strip() for sent in sentences[sent_index + 1 : end_index]
+                )
 
-    # Print each token with its sentence and context if detailed output is requested
-    if detailed_output:
-        for token in final_sorted_tokens:
-            sent_index, l1_sentence = token_to_sentence[token]
-            # Get context sentences
-            start_index = max(0, sent_index - sentence_context_size)
-            end_index = min(len(sentences), sent_index + sentence_context_size + 1)
-            l1_left_context = " ".join(
-                sent.text.strip() for sent in sentences[start_index:sent_index]
-            )
-            l1_right_context = " ".join(
-                sent.text.strip() for sent in sentences[sent_index + 1 : end_index]
-            )
-
-            # Print the formatted output
-            print(token)
-            if l1_left_context:
-                print(l1_left_context)
-            print(l1_sentence)
-            if l1_right_context:
-                print(l1_right_context)
-            print()  # Empty line between entries
+                # Print the formatted output
+                print(token)
+                if l1_left_context:
+                    print(l1_left_context)
+                print(l1_sentence)
+                if l1_right_context:
+                    print(l1_right_context)
+                print()  # Empty line between entries
 
     return final_output_file
 
@@ -1683,6 +1689,7 @@ def main():
             args.text2,
             args.with_fields,
             args.with_br,
+            args.pipe,
         )
 
         # If in pipe mode and output file was created, print the filename
@@ -1708,6 +1715,7 @@ def main():
             args.language,
             args.with_fields,
             args.with_br,
+            args.pipe,
         )
 
         # If in pipe mode and output file was created, print the filename

@@ -82,38 +82,44 @@ def process_sentence_lemmas(sentence, lemma_index, nlp):
 
 def process_text(
     input_text,
-    output_file,
-    sentence_context_size,
-    detailed_output,
-    include_simple_list,
-    lemma_index_file,
-    two_column_output,
-    html_output,
-    timestamp,
-    original_form_in_simple_list,
-    two_column_output_to_file,
+    type,
     language,
-    text2=None,
-    with_fields=False,
-    with_br=False,
-    pipe=False,
+    lemma_index_file,
+    text,
+    text1,
+    text2,
+    detailed,
+    two_column_output,
+    html,
+    sentence_context_size,
+    output,
+    timestamp,
+    two_column_output_to_file,
+    include_simple_list,
+    original_form_in_simple_list,
+    with_fields,
+    with_br,
+    pipe,
 ):
     final_output_file = None
     if text2:
         final_output_file = process_text_v1(
             input_text,
-            output_file,
-            sentence_context_size,
-            detailed_output,
-            include_simple_list,
-            lemma_index_file,
-            two_column_output,
-            html_output,
-            timestamp,
-            original_form_in_simple_list,
-            two_column_output_to_file,
+            type,
             language,
+            lemma_index_file,
+            text,
+            text1,
             text2,
+            detailed,
+            two_column_output,
+            html,
+            sentence_context_size,
+            output,
+            timestamp,
+            two_column_output_to_file,
+            include_simple_list,
+            original_form_in_simple_list,
             with_fields,
             with_br,
             pipe,
@@ -121,17 +127,21 @@ def process_text(
     else:
         final_output_file = process_text_v2(
             input_text,
-            output_file,
-            sentence_context_size,
-            detailed_output,
-            include_simple_list,
-            lemma_index_file,
-            two_column_output,
-            html_output,
-            timestamp,
-            original_form_in_simple_list,
-            two_column_output_to_file,
+            type,
             language,
+            lemma_index_file,
+            text,
+            text1,
+            text2,
+            detailed,
+            two_column_output,
+            html,
+            sentence_context_size,
+            output,
+            timestamp,
+            two_column_output_to_file,
+            include_simple_list,
+            original_form_in_simple_list,
             with_fields,
             with_br,
             pipe,
@@ -141,21 +151,24 @@ def process_text(
 
 def process_text_v1(
     input_text,
-    output_file,
-    sentence_context_size,
-    detailed_output,
-    include_simple_list,
+    type,
+    language,
     lemma_index_file,
+    text,
+    text1,
+    text2,
+    detailed_output,
     two_column_output,
     html_output,
+    sentence_context_size,
+    output_file,
     timestamp,
-    original_form_in_simple_list,
     two_column_output_to_file,
-    language,
-    text2=None,
-    with_fields=False,
-    with_br=False,
-    pipe=False,
+    include_simple_list,
+    original_form_in_simple_list,
+    with_fields,
+    with_br,
+    pipe,
 ):
     final_output_file = output_file
     # Load the lemma index
@@ -212,9 +225,7 @@ def process_text_v1(
                     token_to_original_form[token.lemma_] = token.text
 
     # Divide tokens into two groups: found in reference and not found
-    found_tokens = [
-        token for token in unique_lemmatized_tokens if token in lemma_index
-    ]
+    found_tokens = [token for token in unique_lemmatized_tokens if token in lemma_index]
     not_found_tokens = [
         token for token in unique_lemmatized_tokens if token not in lemma_index
     ]
@@ -664,7 +675,9 @@ def process_text_v1(
                 l1_sentence = l1_sentence.strip()
                 # Get context sentences
                 start_index = max(0, sent_index - sentence_context_size)
-                end_index = min(len(text1_lines), sent_index + sentence_context_size + 1)
+                end_index = min(
+                    len(text1_lines), sent_index + sentence_context_size + 1
+                )
                 l1_left_context = " ".join(
                     line.strip() for line in text1_lines[start_index:sent_index]
                 )
@@ -686,20 +699,24 @@ def process_text_v1(
 
 def process_text_v2(
     input_text,
-    output_file,
-    sentence_context_size,
-    detailed_output,
-    include_simple_list,
+    type,
+    language,
     lemma_index_file,
+    text,
+    text1,
+    text2,
+    detailed_output,
     two_column_output,
     html_output,
+    sentence_context_size,
+    output_file,
     timestamp,
-    original_form_in_simple_list,
     two_column_output_to_file,
-    language,
-    with_fields=False,
-    with_br=False,
-    pipe=False,
+    include_simple_list,
+    original_form_in_simple_list,
+    with_fields,
+    with_br,
+    pipe,
 ):
     final_output_file = output_file
     # Load the lemma index
@@ -891,7 +908,9 @@ def process_text_v2(
                         simple_list_entry = "<br>".join(sentence_tokens_sorted)
                     else:
                         simple_list_entry = (
-                            "\n".join(sentence_tokens_sorted) if include_simple_list else ""
+                            "\n".join(sentence_tokens_sorted)
+                            if include_simple_list
+                            else ""
                         )
 
                 # Write the row
@@ -1228,16 +1247,25 @@ def process_text_v2(
 
 
 def process_sentences(
+    # input_text,
+    type,
+    language,
+    lemma_index_file,
+    text,
     text1,
     text2,
-    output_file,
+    detailed_output,
+    two_column_output,
+    html_output,
     sentence_context_size,
-    include_simple_list,
+    output_file,
     timestamp,
-    lemma_index_file,
-    language,
-    with_fields=False,
-    with_br=False,
+    two_column_output_to_file,
+    include_simple_list,
+    original_form_in_simple_list,
+    with_fields,
+    with_br,
+    pipe,
 ):
     final_output_file = output_file
     # Determine the lemma index file based on the language
@@ -1590,6 +1618,11 @@ def main():
         help="STDOUT: Enable detailed output in console with sentence and context",
     )
     parser.add_argument(
+        "--text2",
+        type=str,
+        help="Path to the second text file (German/English translations)",
+    )
+    parser.add_argument(
         "--two-column-output",
         action="store_true",
         help="STDOUT: Output tokens in two columns: token and original form",
@@ -1635,11 +1668,6 @@ def main():
         help="CSV: Include field names as the first row in the output TSV file",
     )
     parser.add_argument(
-        "--text2",
-        type=str,
-        help="Path to the second text file (German/English translations)",
-    )
-    parser.add_argument(
         "--with-br",
         action="store_true",
         help="Replace tabs with <br> in the simple list entry",
@@ -1675,18 +1703,21 @@ def main():
         # Process the text and get output filename
         output_file = process_text(
             input_text,
-            args.output,
-            args.sentence_context_size,
-            args.detailed,
-            args.include_simple_list,
+            args.type,
+            args.language,
             args.lemma_index_file,
+            args.text,
+            args.text1,
+            args.text2,
+            args.detailed,
             args.two_column_output,
             args.html,
+            args.sentence_context_size,
+            args.output,
             args.timestamp,
-            args.original_form_in_simple_list,
             args.two_column_output_to_file,
-            args.language,
-            args.text2,
+            args.include_simple_list,
+            args.original_form_in_simple_list,
             args.with_fields,
             args.with_br,
             args.pipe,
@@ -1705,14 +1736,22 @@ def main():
 
         # Process sentences and handle pipe mode
         final_output_file = process_sentences(
+            # input_text,
+            args.type,
+            args.language,
+            args.lemma_index_file,
+            args.text,
             args.text1,
             args.text2,
-            args.output,
+            args.detailed,
+            args.two_column_output,
+            args.html,
             args.sentence_context_size,
-            args.include_simple_list,
+            args.output,
             args.timestamp,
-            args.lemma_index_file,
-            args.language,
+            args.two_column_output_to_file,
+            args.include_simple_list,
+            args.original_form_in_simple_list,
             args.with_fields,
             args.with_br,
             args.pipe,

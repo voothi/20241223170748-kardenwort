@@ -32,7 +32,7 @@
                 "--output",
                 ".\\out\\result-t1.token.de.tsv",
                 "--timestamp",
-                // "--two-column-output-to-file",
+                "--two-column-output-to-file",
                 "--include-simple-list",
                 // "--original-form-in-simple-list",
                 "--lemma-index-file",

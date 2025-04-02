@@ -63,7 +63,7 @@
                 "--text2",
                 "U:\\voothi\\20241223170748-token-extraction\\in\\text2.txt",
                 // "--detailed",
-                "--two-column-output",
+                // "--two-column-output",
                 // "--html"
                 "--sentence-context-size",
                 "2",

@@ -24,32 +24,6 @@ def get_token_args(args, python_path, token_workspace):
         "--pipe",
     ]
 
-    # # Add two-column-output flag for sentence mode
-    # if args.type == "sentence":
-    #     base_args += [
-    #         "--type",
-    #         "sentence",
-    #         "--language",
-    #         "de",
-    #         "--text1",
-    #         "U:\\voothi\\20241223170748-token-extraction\\in\\text1.txt",
-    #         "--text2",
-    #         "U:\\voothi\\20241223170748-token-extraction\\in\\text2.txt",
-    #         "--sentence-context-size",
-    #         "2",
-    #         "--output",
-    #         ".\\out\\result-t1-t2.sentence.de.tsv",
-    #         "--timestamp",
-    #         "--two-column-output",
-    #         "--two-column-output-to-file",
-    #         "--include-simple-list",
-    #         "--lemma-index-file",
-    #         "U:\\voothi\\20241223170748-token-extraction\\deu-mixed-typical-2011-1m-words.csv",
-    #         "--with-fields",
-    #         "--with-br",
-    #         "--pipe",
-    #     ]
-
     output_suffix = "sentence" if args.type == "sentence" else "token"
 
     if args.mode == "single":

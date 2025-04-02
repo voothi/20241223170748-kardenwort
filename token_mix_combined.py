@@ -97,8 +97,9 @@ def process_text(
     with_fields=False,
     with_br=False,
 ):
+    final_output_file = None
     if text2:
-        process_text_v1(
+        final_output_file = process_text_v1(
             input_text,
             output_file,
             sentence_context_size,
@@ -116,7 +117,7 @@ def process_text(
             with_br,
         )
     else:
-        process_text_v2(
+        final_output_file = process_text_v2(
             input_text,
             output_file,
             sentence_context_size,
@@ -132,6 +133,7 @@ def process_text(
             with_fields,
             with_br,
         )
+    return final_output_file
 
 
 def process_text_v1(
@@ -151,6 +153,7 @@ def process_text_v1(
     with_fields=False,
     with_br=False,
 ):
+    final_output_file = output_file
     # Load the lemma index
     lemma_index = load_lemma_index(lemma_index_file)
 
@@ -230,9 +233,9 @@ def process_text_v1(
                 # Prepend timestamp to the filename
                 timestamp_str = datetime.now().strftime("%Y%m%d%H%M%S")
                 new_output_filename = f"{timestamp_str}-{output_filename}"
-                output_file = os.path.join(output_dir, new_output_filename)
+                final_output_file = os.path.join(output_dir, new_output_filename)
 
-            with open(output_file, "w", newline="", encoding="utf-8") as tsvfile:
+            with open(final_output_file, "w", newline="", encoding="utf-8") as tsvfile:
                 tsv_writer = csv.writer(tsvfile, delimiter="\t")
 
                 # Write field names if with_fields is enabled
@@ -674,6 +677,8 @@ def process_text_v1(
                 print(l1_right_context)
             print()  # Empty line between entries
 
+    return final_output_file
+
 
 def process_text_v2(
     input_text,
@@ -691,6 +696,7 @@ def process_text_v2(
     with_fields=False,
     with_br=False,
 ):
+    final_output_file = output_file
     # Load the lemma index
     lemma_index = load_lemma_index(lemma_index_file)
 
@@ -751,9 +757,9 @@ def process_text_v2(
             # Prepend timestamp to the filename
             timestamp_str = datetime.now().strftime("%Y%m%d%H%M%S")
             new_output_filename = f"{timestamp_str}-{output_filename}"
-            output_file = os.path.join(output_dir, new_output_filename)
+            final_output_file = os.path.join(output_dir, new_output_filename)
 
-        with open(output_file, "w", newline="", encoding="utf-8") as tsvfile:
+        with open(final_output_file, "w", newline="", encoding="utf-8") as tsvfile:
             tsv_writer = csv.writer(tsvfile, delimiter="\t")
 
             # Write field names if with_fields is enabled
@@ -882,16 +888,6 @@ def process_text_v2(
                         simple_list_entry = (
                             "\n".join(sentence_tokens_sorted) if include_simple_list else ""
                         )
-
-                    # # Внутри цикла или при обработке
-                    # if include_simple_list:
-                    #     # Если требуется, обработайте и заполните simple_list_entry
-                    #     lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp)
-                    #     if with_br:
-                    #         # Добавляем <br> к каждой записи, кроме последней
-                    #         simple_list_entry = "<br>".join(lemmas)
-                    #     else:
-                    #         simple_list_entry = "\n".join(lemmas)
 
                 # Write the row
                 original_form = token_to_original_form[token]
@@ -1223,6 +1219,8 @@ def process_text_v2(
                 print(l1_right_context)
             print()  # Empty line between entries
 
+    return final_output_file
+
 
 def process_sentences(
     text1,
@@ -1236,6 +1234,7 @@ def process_sentences(
     with_fields=False,
     with_br=False,
 ):
+    final_output_file = output_file
     # Determine the lemma index file based on the language
     if not lemma_index_file:
         if language == "de":
@@ -1258,7 +1257,7 @@ def process_sentences(
         # Prepend timestamp to the filename
         timestamp_str = datetime.now().strftime("%Y%m%d%H%M%S")
         new_output_filename = f"{timestamp_str}-{output_filename}"
-        output_file = os.path.join(output_dir, new_output_filename)
+        final_output_file = os.path.join(output_dir, new_output_filename)
 
     # Load spaCy model based on language
     language_model_map = {"de": "de_core_news_lg", "en": "en_core_web_lg"}
@@ -1291,7 +1290,7 @@ def process_sentences(
 
     # Process lines and write output
     try:
-        with open(output_file, "w", newline="", encoding="utf-8") as out_file:
+        with open(final_output_file, "w", newline="", encoding="utf-8") as out_file:
             tsv_writer = csv.writer(out_file, delimiter="\t")
 
             # Write field names if with_fields is enabled
@@ -1551,6 +1550,8 @@ def process_sentences(
         print(f"Error writing output: {e}", file=sys.stderr)
         sys.exit(1)
 
+    return final_output_file
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -1638,6 +1639,11 @@ def main():
         action="store_true",
         help="Replace tabs with <br> in the simple list entry",
     )
+    parser.add_argument(
+        "--pipe",
+        action="store_true",
+        help="Enable pipeline mode - outputs TSV filename to stdout when using --output",
+    )
 
     args = parser.parse_args()
 
@@ -1661,8 +1667,8 @@ def main():
             print("Error: Either --text or --text1 must be specified.")
             exit(1)
 
-        # Process the text
-        process_text(
+        # Process the text and get output filename
+        output_file = process_text(
             input_text,
             args.output,
             args.sentence_context_size,
@@ -1679,6 +1685,11 @@ def main():
             args.with_fields,
             args.with_br,
         )
+
+        # If in pipe mode and output file was created, print the filename
+        if args.pipe and output_file:
+            print(output_file)
+
     elif args.type == "sentence":
         if not args.text1 or not args.text2:
             print(
@@ -1686,8 +1697,8 @@ def main():
             )
             exit(1)
 
-        # Process sentences
-        process_sentences(
+        # Process sentences and handle pipe mode
+        final_output_file = process_sentences(
             args.text1,
             args.text2,
             args.output,
@@ -1699,6 +1710,10 @@ def main():
             args.with_fields,
             args.with_br,
         )
+
+        # If in pipe mode and output file was created, print the filename
+        if args.pipe and args.output:
+            print(final_output_file)
     else:
         print("Error: Invalid --type specified.")
         exit(1)

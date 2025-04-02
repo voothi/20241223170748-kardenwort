@@ -36,7 +36,9 @@
                 "--include-simple-list",
                 // "--original-form-in-simple-list",
                 "--lemma-index-file",
-                "U:\\voothi\\20241223170748-token-extraction\\de-default.csv"
+                "U:\\voothi\\20241223170748-token-extraction\\de-default.csv",
+                "--with-fields",
+                "--with-br"
             ],
             "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
         },
@@ -73,47 +75,49 @@
                 // "--original-form-in-simple-list",
                 "--lemma-index-file",
                 "U:\\voothi\\20241223170748-token-extraction\\de-default.csv",
-                "--with-fields",
-                "--with-br"
+                // "--with-fields",
+                // "--with-br"
             ],
             "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
         },
-        {
-            "name": "Run token_mix_combined.py / Prod / De / type sentence / text1",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/token_mix_combined.py",
-            "console": "integratedTerminal",
-            "args": [
-                "--type",
-                "sentence",
-                "--language",
-                "de",
-                // "--text",
-                // "Ich stehe morgen früh auf. Sie räumt ihr Zimmer immer auf. Er kommt heute Abend vorbei. Wir schlagen einen neuen Weg ein. Ich mache das Licht an. Sie zieht die Jacke aus. Er bringt das Buch zurück. Du schläfst nachmittags ein. Sie gibt die Hausaufgaben ab. Ich esse die Suppe auf. Er fährt morgen weg.",
-                // "--text", "programmieren lernen ist schwer wenn man sich die statistik anschaut 95 prozent der leute die sich ein onlinevideo kurs kaufen gucken diesen kurs nicht einmal zu ende 80 prozent der leute die sich solch einen kurs kaufen schauen nicht einmal die erste stunde dieses kurses an das heißt von 20 leuten guckt statistisch gesehen nur eine person diesen kurs überhaupt zu ende diese zahlen die kommen nicht von mir sondern von einem befreundeten programmierer der selbst solche kurse erstellt und diese online verkauft gerade weil es alleine so schwer ist und weil von 20 leuten eine person ist überhaupt nur schafft ein video kurs zu ende anzuschauen ist es natürlich so dass die meisten software entwickler da draußen programmieren nicht ganz alleine gelernt haben die meisten lärm programmieren zum beispiel parallel zum studium in einer weiterbildung sowie unserer oder während ihrer ausbildung und bei all diesen",
-                // "--input", ".\\in\\text.de.txt",
-                "--text1",
-                "U:\\voothi\\20241223170748-token-extraction\\in\\text1.txt",
-                // "--text2",
-                // "U:\\voothi\\20241223170748-token-extraction\\in\\text2.txt",
-                // "--detailed",
-                "--two-column-output",
-                // "--html"
-                "--sentence-context-size",
-                "2",
-                // "--sentence_token_limit", "5"
-                "--output",
-                ".\\out\\result-t1.sentence.de.tsv",
-                "--timestamp",
-                "--two-column-output-to-file",
-                "--include-simple-list",
-                // "--original-form-in-simple-list",
-                "--lemma-index-file",
-                "U:\\voothi\\20241223170748-token-extraction\\de-default.csv"
-            ],
-            "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
-        },
+        // {
+        //     "name": "Run token_mix_combined.py / Prod / De / type sentence / text1",
+        //     "type": "debugpy",
+        //     "request": "launch",
+        //     "program": "${workspaceFolder}/token_mix_combined.py",
+        //     "console": "integratedTerminal",
+        //     "args": [
+        //         "--type",
+        //         "sentence",
+        //         "--language",
+        //         "de",
+        //         // "--text",
+        //         // "Ich stehe morgen früh auf. Sie räumt ihr Zimmer immer auf. Er kommt heute Abend vorbei. Wir schlagen einen neuen Weg ein. Ich mache das Licht an. Sie zieht die Jacke aus. Er bringt das Buch zurück. Du schläfst nachmittags ein. Sie gibt die Hausaufgaben ab. Ich esse die Suppe auf. Er fährt morgen weg.",
+        //         // "--text", "programmieren lernen ist schwer wenn man sich die statistik anschaut 95 prozent der leute die sich ein onlinevideo kurs kaufen gucken diesen kurs nicht einmal zu ende 80 prozent der leute die sich solch einen kurs kaufen schauen nicht einmal die erste stunde dieses kurses an das heißt von 20 leuten guckt statistisch gesehen nur eine person diesen kurs überhaupt zu ende diese zahlen die kommen nicht von mir sondern von einem befreundeten programmierer der selbst solche kurse erstellt und diese online verkauft gerade weil es alleine so schwer ist und weil von 20 leuten eine person ist überhaupt nur schafft ein video kurs zu ende anzuschauen ist es natürlich so dass die meisten software entwickler da draußen programmieren nicht ganz alleine gelernt haben die meisten lärm programmieren zum beispiel parallel zum studium in einer weiterbildung sowie unserer oder während ihrer ausbildung und bei all diesen",
+        //         // "--input", ".\\in\\text.de.txt",
+        //         "--text1",
+        //         "U:\\voothi\\20241223170748-token-extraction\\in\\text1.txt",
+        //         // "--text2",
+        //         // "U:\\voothi\\20241223170748-token-extraction\\in\\text2.txt",
+        //         // "--detailed",
+        //         "--two-column-output",
+        //         // "--html"
+        //         "--sentence-context-size",
+        //         "2",
+        //         // "--sentence_token_limit", "5"
+        //         "--output",
+        //         ".\\out\\result-t1.sentence.de.tsv",
+        //         "--timestamp",
+        //         "--two-column-output-to-file",
+        //         "--include-simple-list",
+        //         // "--original-form-in-simple-list",
+        //         "--lemma-index-file",
+        //         "U:\\voothi\\20241223170748-token-extraction\\de-default.csv",
+        //         "--with-fields",
+        //         "--with-br"
+        //     ],
+        //     "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
+        // },
         {
             "name": "Run token_mix_combined.py / Prod / De / type sentence / text1 text2",
             "type": "debugpy",
@@ -184,7 +188,9 @@
                 "--include-simple-list",
                 // "--original-form-in-simple-list",
                 "--lemma-index-file",
-                "U:\\voothi\\20241223170748-token-extraction\\de-default.csv"
+                "U:\\voothi\\20241223170748-token-extraction\\de-default.csv",
+                "--with-fields",
+                "--with-br"
             ],
             "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
         },
@@ -220,7 +226,9 @@
                 "--include-simple-list",
                 // "--original-form-in-simple-list",
                 "--lemma-index-file",
-                "U:\\voothi\\20241223170748-token-extraction\\de-default.csv"
+                "U:\\voothi\\20241223170748-token-extraction\\de-default.csv",
+                // "--with-fields",
+                // "--with-br"
             ],
             "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
         },
@@ -256,7 +264,9 @@
                 "--include-simple-list",
                 // "--original-form-in-simple-list",
                 "--lemma-index-file",
-                "U:\\voothi\\20241223170748-token-extraction\\de-default.csv"
+                "U:\\voothi\\20241223170748-token-extraction\\de-default.csv",
+                // "--with-fields",
+                // "--with-br"
             ],
             "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
         },
@@ -292,46 +302,50 @@
                 "--include-simple-list",
                 // "--original-form-in-simple-list",
                 "--lemma-index-file",
-                "U:\\voothi\\20241223170748-token-extraction\\de-default.csv"
+                "U:\\voothi\\20241223170748-token-extraction\\de-default.csv",
+                // "--with-fields",
+                // "--with-br"
             ],
             "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
         },
-        {
-            "name": "Run token_mix_combined.py / Test / De / type sentence / text1",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/token_mix_combined.py",
-            "console": "integratedTerminal",
-            "args": [
-                "--type",
-                "sentence",
-                "--language",
-                "de",
-                // "--text",
-                // "Ich stehe morgen früh auf. Sie räumt ihr Zimmer immer auf. Er kommt heute Abend vorbei. Wir schlagen einen neuen Weg ein. Ich mache das Licht an. Sie zieht die Jacke aus. Er bringt das Buch zurück. Du schläfst nachmittags ein. Sie gibt die Hausaufgaben ab. Ich esse die Suppe auf. Er fährt morgen weg.",
-                // "--text", "programmieren lernen ist schwer wenn man sich die statistik anschaut 95 prozent der leute die sich ein onlinevideo kurs kaufen gucken diesen kurs nicht einmal zu ende 80 prozent der leute die sich solch einen kurs kaufen schauen nicht einmal die erste stunde dieses kurses an das heißt von 20 leuten guckt statistisch gesehen nur eine person diesen kurs überhaupt zu ende diese zahlen die kommen nicht von mir sondern von einem befreundeten programmierer der selbst solche kurse erstellt und diese online verkauft gerade weil es alleine so schwer ist und weil von 20 leuten eine person ist überhaupt nur schafft ein video kurs zu ende anzuschauen ist es natürlich so dass die meisten software entwickler da draußen programmieren nicht ganz alleine gelernt haben die meisten lärm programmieren zum beispiel parallel zum studium in einer weiterbildung sowie unserer oder während ihrer ausbildung und bei all diesen",
-                // "--input", ".\\in\\text.de.txt",
-                "--text1",
-                "U:\\voothi\\20241223170748-token-extraction\\in\\test\\text1.de.txt",
-                // "--text2",
-                // "U:\\voothi\\20241223170748-token-extraction\\in\\test\\text2.de.txt",
-                // "--detailed",
-                "--two-column-output",
-                // "--html"
-                "--sentence-context-size",
-                "2",
-                // "--sentence_token_limit", "5"
-                "--output",
-                ".\\out\\result-t1.sentence.de.tsv",
-                "--timestamp",
-                "--two-column-output-to-file",
-                "--include-simple-list",
-                // "--original-form-in-simple-list",
-                "--lemma-index-file",
-                "U:\\voothi\\20241223170748-token-extraction\\de-default.csv"
-            ],
-            "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
-        },
+        // {
+        //     "name": "Run token_mix_combined.py / Test / De / type sentence / text1",
+        //     "type": "debugpy",
+        //     "request": "launch",
+        //     "program": "${workspaceFolder}/token_mix_combined.py",
+        //     "console": "integratedTerminal",
+        //     "args": [
+        //         "--type",
+        //         "sentence",
+        //         "--language",
+        //         "de",
+        //         // "--text",
+        //         // "Ich stehe morgen früh auf. Sie räumt ihr Zimmer immer auf. Er kommt heute Abend vorbei. Wir schlagen einen neuen Weg ein. Ich mache das Licht an. Sie zieht die Jacke aus. Er bringt das Buch zurück. Du schläfst nachmittags ein. Sie gibt die Hausaufgaben ab. Ich esse die Suppe auf. Er fährt morgen weg.",
+        //         // "--text", "programmieren lernen ist schwer wenn man sich die statistik anschaut 95 prozent der leute die sich ein onlinevideo kurs kaufen gucken diesen kurs nicht einmal zu ende 80 prozent der leute die sich solch einen kurs kaufen schauen nicht einmal die erste stunde dieses kurses an das heißt von 20 leuten guckt statistisch gesehen nur eine person diesen kurs überhaupt zu ende diese zahlen die kommen nicht von mir sondern von einem befreundeten programmierer der selbst solche kurse erstellt und diese online verkauft gerade weil es alleine so schwer ist und weil von 20 leuten eine person ist überhaupt nur schafft ein video kurs zu ende anzuschauen ist es natürlich so dass die meisten software entwickler da draußen programmieren nicht ganz alleine gelernt haben die meisten lärm programmieren zum beispiel parallel zum studium in einer weiterbildung sowie unserer oder während ihrer ausbildung und bei all diesen",
+        //         // "--input", ".\\in\\text.de.txt",
+        //         "--text1",
+        //         "U:\\voothi\\20241223170748-token-extraction\\in\\test\\text1.de.txt",
+        //         // "--text2",
+        //         // "U:\\voothi\\20241223170748-token-extraction\\in\\test\\text2.de.txt",
+        //         // "--detailed",
+        //         "--two-column-output",
+        //         // "--html"
+        //         "--sentence-context-size",
+        //         "2",
+        //         // "--sentence_token_limit", "5"
+        //         "--output",
+        //         ".\\out\\result-t1.sentence.de.tsv",
+        //         "--timestamp",
+        //         "--two-column-output-to-file",
+        //         "--include-simple-list",
+        //         // "--original-form-in-simple-list",
+        //         "--lemma-index-file",
+        //         "U:\\voothi\\20241223170748-token-extraction\\de-default.csv",
+        //         // "--with-fields",
+        //         // "--with-br"
+        //     ],
+        //     "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
+        // },
         {
             "name": "Run token_mix_combined.py / Test / De / type sentence / text1 text2",
             "type": "debugpy",
@@ -401,7 +415,9 @@
                 "--include-simple-list",
                 // "--original-form-in-simple-list",
                 "--lemma-index-file",
-                "U:\\voothi\\20241223170748-token-extraction\\en-default.csv"
+                "U:\\voothi\\20241223170748-token-extraction\\en-default.csv",
+                // "--with-fields",
+                // "--with-br"
             ],
             "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
         },
@@ -436,7 +452,9 @@
                 "--include-simple-list",
                 // "--original-form-in-simple-list",
                 "--lemma-index-file",
-                "U:\\voothi\\20241223170748-token-extraction\\en-default.csv"
+                "U:\\voothi\\20241223170748-token-extraction\\en-default.csv",
+                // "--with-fields",
+                // "--with-br"
             ],
             "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
         },
@@ -471,7 +489,9 @@
                 "--include-simple-list",
                 // "--original-form-in-simple-list",
                 "--lemma-index-file",
-                "U:\\voothi\\20241223170748-token-extraction\\en-default.csv"
+                "U:\\voothi\\20241223170748-token-extraction\\en-default.csv",
+                // "--with-fields",
+                // "--with-br"
             ],
             "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
         },
@@ -506,7 +526,9 @@
                 "--include-simple-list",
                 // "--original-form-in-simple-list",
                 "--lemma-index-file",
-                "U:\\voothi\\20241223170748-token-extraction\\en-default.csv"
+                "U:\\voothi\\20241223170748-token-extraction\\en-default.csv",
+                // "--with-fields",
+                // "--with-br"
             ],
             "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
         },
@@ -541,7 +563,9 @@
                 "--include-simple-list",
                 // "--original-form-in-simple-list",
                 "--lemma-index-file",
-                "U:\\voothi\\20241223170748-token-extraction\\en-default.csv"
+                "U:\\voothi\\20241223170748-token-extraction\\en-default.csv",
+                // "--with-fields",
+                // "--with-br"
             ],
             "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
         },
@@ -576,45 +600,49 @@
                 "--include-simple-list",
                 // "--original-form-in-simple-list",
                 "--lemma-index-file",
-                "U:\\voothi\\20241223170748-token-extraction\\en-default.csv"
+                "U:\\voothi\\20241223170748-token-extraction\\en-default.csv",
+                // "--with-fields",
+                // "--with-br"
             ],
             "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
         },
-        {
-            "name": "Run token_mix_combined.py / Test / En / type sentence / text1",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/token_mix_combined.py",
-            "console": "integratedTerminal",
-            "args": [
-                "--type",
-                "sentence",
-                "--language",
-                "en",
-                // "--text",
-                // "Whatever you do, do not ask an AI to summarize the tips we're about to go through. Because make no mistake, if you can't summarize information yourself and practice the summarization of information, you're not going to be learning on your own. It's just that simple.",
-                // "--input", ".\\in\\text.en.txt",
-                "--text1",
-                "U:\\voothi\\20241223170748-token-extraction\\in\\test\\text1.en.txt",
-                // "--text2",
-                // "U:\\voothi\\20241223170748-token-extraction\\in\\test\\text2.en.txt",
-                // "--detailed",
-                "--two-column-output",
-                // "--html"
-                "--sentence-context-size",
-                "2",
-                // "--sentence_token_limit", "5"
-                "--output",
-                ".\\out\\result-t1.sentence.en.tsv",
-                "--timestamp",
-                "--two-column-output-to-file",
-                "--include-simple-list",
-                // "--original-form-in-simple-list",
-                "--lemma-index-file",
-                "U:\\voothi\\20241223170748-token-extraction\\en-default.csv"
-            ],
-            "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
-        },
+        // {
+        //     "name": "Run token_mix_combined.py / Test / En / type sentence / text1",
+        //     "type": "debugpy",
+        //     "request": "launch",
+        //     "program": "${workspaceFolder}/token_mix_combined.py",
+        //     "console": "integratedTerminal",
+        //     "args": [
+        //         "--type",
+        //         "sentence",
+        //         "--language",
+        //         "en",
+        //         // "--text",
+        //         // "Whatever you do, do not ask an AI to summarize the tips we're about to go through. Because make no mistake, if you can't summarize information yourself and practice the summarization of information, you're not going to be learning on your own. It's just that simple.",
+        //         // "--input", ".\\in\\text.en.txt",
+        //         "--text1",
+        //         "U:\\voothi\\20241223170748-token-extraction\\in\\test\\text1.en.txt",
+        //         // "--text2",
+        //         // "U:\\voothi\\20241223170748-token-extraction\\in\\test\\text2.en.txt",
+        //         // "--detailed",
+        //         "--two-column-output",
+        //         // "--html"
+        //         "--sentence-context-size",
+        //         "2",
+        //         // "--sentence_token_limit", "5"
+        //         "--output",
+        //         ".\\out\\result-t1.sentence.en.tsv",
+        //         "--timestamp",
+        //         "--two-column-output-to-file",
+        //         "--include-simple-list",
+        //         // "--original-form-in-simple-list",
+        //         "--lemma-index-file",
+        //         "U:\\voothi\\20241223170748-token-extraction\\en-default.csv",
+        //         // "--with-fields",
+        //         // "--with-br"
+        //     ],
+        //     "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
+        // },
         {
             "name": "Run token_mix_combined.py / Test / En / type sentence / text1 text2",
             "type": "debugpy",
@@ -646,45 +674,49 @@
                 "--include-simple-list",
                 // "--original-form-in-simple-list",
                 "--lemma-index-file",
-                "U:\\voothi\\20241223170748-token-extraction\\en-default.csv"
+                "U:\\voothi\\20241223170748-token-extraction\\en-default.csv",
+                // "--with-fields",
+                // "--with-br"
             ],
             "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
         },
-        {
-            "name": "Run token_mix_combined.py / Prod / En / type sentence / text1",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/token_mix_combined.py",
-            "console": "integratedTerminal",
-            "args": [
-                "--type",
-                "sentence",
-                "--language",
-                "en",
-                // "--text",
-                // "Whatever you do, do not ask an AI to summarize the tips we're about to go through. Because make no mistake, if you can't summarize information yourself and practice the summarization of information, you're not going to be learning on your own. It's just that simple.",
-                // "--input", ".\\in\\text.en.txt",
-                "--text1",
-                "U:\\voothi\\20241223170748-token-extraction\\in\\text1.txt",
-                // "--text2",
-                // "U:\\voothi\\20241223170748-token-extraction\\in\\text2.txt",
-                // "--detailed",
-                "--two-column-output",
-                // "--html"
-                "--sentence-context-size",
-                "2",
-                // "--sentence_token_limit", "5"
-                "--output",
-                ".\\out\\result-t1.sentence.en.tsv",
-                "--timestamp",
-                "--two-column-output-to-file",
-                "--include-simple-list",
-                // "--original-form-in-simple-list",
-                "--lemma-index-file",
-                "U:\\voothi\\20241223170748-token-extraction\\en-default.csv"
-            ],
-            "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
-        },
+        // {
+        //     "name": "Run token_mix_combined.py / Prod / En / type sentence / text1",
+        //     "type": "debugpy",
+        //     "request": "launch",
+        //     "program": "${workspaceFolder}/token_mix_combined.py",
+        //     "console": "integratedTerminal",
+        //     "args": [
+        //         "--type",
+        //         "sentence",
+        //         "--language",
+        //         "en",
+        //         // "--text",
+        //         // "Whatever you do, do not ask an AI to summarize the tips we're about to go through. Because make no mistake, if you can't summarize information yourself and practice the summarization of information, you're not going to be learning on your own. It's just that simple.",
+        //         // "--input", ".\\in\\text.en.txt",
+        //         "--text1",
+        //         "U:\\voothi\\20241223170748-token-extraction\\in\\text1.txt",
+        //         // "--text2",
+        //         // "U:\\voothi\\20241223170748-token-extraction\\in\\text2.txt",
+        //         // "--detailed",
+        //         "--two-column-output",
+        //         // "--html"
+        //         "--sentence-context-size",
+        //         "2",
+        //         // "--sentence_token_limit", "5"
+        //         "--output",
+        //         ".\\out\\result-t1.sentence.en.tsv",
+        //         "--timestamp",
+        //         "--two-column-output-to-file",
+        //         "--include-simple-list",
+        //         // "--original-form-in-simple-list",
+        //         "--lemma-index-file",
+        //         "U:\\voothi\\20241223170748-token-extraction\\en-default.csv",
+        //         // "--with-fields",
+        //         // "--with-br"
+        //     ],
+        //     "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
+        // },
         {
             "name": "Run token_mix_combined.py / Prod / En / type sentence / text1 text2",
             "type": "debugpy",
@@ -716,7 +748,9 @@
                 "--include-simple-list",
                 // "--original-form-in-simple-list",
                 "--lemma-index-file",
-                "U:\\voothi\\20241223170748-token-extraction\\en-default.csv"
+                "U:\\voothi\\20241223170748-token-extraction\\en-default.csv",
+                // "--with-fields",
+                // "--with-br"
             ],
             "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
         },

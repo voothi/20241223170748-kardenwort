@@ -340,7 +340,7 @@ def process_text_v1(
                         lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp)
                         if with_br:
                             # Добавляем <br> к каждой записи, кроме последней
-                            simple_list_entry = "<br>".join(lemmas[:-1])
+                            simple_list_entry = "<br>".join(lemmas)
                         else:
                             simple_list_entry = "\n".join(lemmas)
 
@@ -889,7 +889,7 @@ def process_text_v2(
                         lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp)
                         if with_br:
                             # Добавляем <br> к каждой записи, кроме последней
-                            simple_list_entry = "<br>".join(lemmas[:-1])
+                            simple_list_entry = "<br>".join(lemmas)
                         else:
                             simple_list_entry = "\n".join(lemmas)
 
@@ -1391,7 +1391,7 @@ def process_sentences(
                     lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp)
                     if with_br:
                         # Добавляем <br> к каждой записи, кроме последней
-                        simple_list_entry = "<br>".join(lemmas[:-1])
+                        simple_list_entry = "<br>".join(lemmas)
                     else:
                         simple_list_entry = "\n".join(lemmas)
 

@@ -1686,9 +1686,20 @@ def main():
             args.with_br,
         )
 
-        # If in pipe mode and output file was created, print the filename
+        # Only print output filename in pipe mode when --output is specified
         if args.pipe and output_file:
             print(os.path.basename(output_file))
+        # Suppress all other stdout output if in pipe mode
+        elif not args.pipe:
+            if args.html:
+                # HTML output handling in process_text()
+                pass
+            elif args.two_column_output:
+                # Two-column output handling in process_text()
+                pass
+            elif args.detailed:
+                # Detailed output handling in process_text()
+                pass
 
     elif args.type == "sentence":
         if not args.text1 or not args.text2:
@@ -1711,7 +1722,7 @@ def main():
             args.with_br,
         )
 
-        # If in pipe mode and output file was created, print the filename
+        # Only print output filename in pipe mode when --output is specified
         if args.pipe and args.output:
             print(os.path.basename(final_output_file))
     else:

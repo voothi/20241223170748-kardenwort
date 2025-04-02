@@ -95,7 +95,6 @@ def process_text(
     language,
     text2=None,
     with_fields=False,
-    with_br=False,
 ):
     if text2:
         process_text_v1(
@@ -113,7 +112,6 @@ def process_text(
             language,
             text2,
             with_fields,
-            with_br,
         )
     else:
         process_text_v2(
@@ -130,7 +128,6 @@ def process_text(
             two_column_output_to_file,
             language,
             with_fields,
-            with_br,
         )
 
 
@@ -149,7 +146,6 @@ def process_text_v1(
     language,
     text2=None,
     with_fields=False,
-    with_br=False,
 ):
     # Load the lemma index
     lemma_index = load_lemma_index(lemma_index_file)
@@ -338,11 +334,7 @@ def process_text_v1(
                     if include_simple_list:
                         # Если требуется, обработайте и заполните simple_list_entry
                         lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp)
-                        if with_br:
-                            # Добавляем <br> к каждой записи, кроме последней
-                            simple_list_entry = "<br>".join(lemmas[:-1])
-                        else:
-                            simple_list_entry = "\n".join(lemmas)
+                        simple_list_entry = "\n".join(lemmas)  # Пример заполнения
 
                     # Write the row
                     original_form = token_to_original_form[token]
@@ -689,7 +681,6 @@ def process_text_v2(
     two_column_output_to_file,
     language,
     with_fields=False,
-    with_br=False,
 ):
     # Load the lemma index
     lemma_index = load_lemma_index(lemma_index_file)
@@ -861,37 +852,18 @@ def process_text_v2(
 
                 # Create simple list entry with both lemma and original form
                 if original_form_in_simple_list:
-                    if with_br:
-                        simple_list_entry = "<br>".join(
-                            f"{sentence_token}<br>{token_to_original_form[sentence_token]}"
+                    simple_list_entry = (
+                        "\n".join(
+                            f"{sentence_token}\t{token_to_original_form[sentence_token]}"
                             for sentence_token in sentence_tokens_sorted
                         )
-                    else:
-                        simple_list_entry = (
-                            "\n".join(
-                                f"{sentence_token}\t{token_to_original_form[sentence_token]}"
-                                for sentence_token in sentence_tokens_sorted
-                            )
-                            if include_simple_list
-                            else ""
-                        )
+                        if include_simple_list
+                        else ""
+                    )
                 else:
-                    if with_br:
-                        simple_list_entry = "<br>".join(sentence_tokens_sorted)
-                    else:
-                        simple_list_entry = (
-                            "\n".join(sentence_tokens_sorted) if include_simple_list else ""
-                        )
-
-                    # Внутри цикла или при обработке
-                    if include_simple_list:
-                        # Если требуется, обработайте и заполните simple_list_entry
-                        lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp)
-                        if with_br:
-                            # Добавляем <br> к каждой записи, кроме последней
-                            simple_list_entry = "<br>".join(lemmas[:-1])
-                        else:
-                            simple_list_entry = "\n".join(lemmas)
+                    simple_list_entry = (
+                        "\n".join(sentence_tokens_sorted) if include_simple_list else ""
+                    )
 
                 # Write the row
                 original_form = token_to_original_form[token]
@@ -1234,7 +1206,6 @@ def process_sentences(
     lemma_index_file,
     language,
     with_fields=False,
-    with_br=False,
 ):
     # Determine the lemma index file based on the language
     if not lemma_index_file:
@@ -1389,11 +1360,9 @@ def process_sentences(
                 simple_list_entry = ""
                 if include_simple_list:
                     lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp)
-                    if with_br:
-                        # Добавляем <br> к каждой записи, кроме последней
-                        simple_list_entry = "<br>".join(lemmas[:-1])
-                    else:
-                        simple_list_entry = "\n".join(lemmas)
+                    simple_list_entry = "\n".join(
+                        lemmas
+                    )  # Newline-separated without quotes
 
                 # Format TSV line
                 if language == "de":
@@ -1633,11 +1602,6 @@ def main():
         type=str,
         help="Path to the second text file (German/English translations)",
     )
-    parser.add_argument(
-        "--with-br",
-        action="store_true",
-        help="Replace tabs with <br> in the simple list entry",
-    )
 
     args = parser.parse_args()
 
@@ -1677,7 +1641,6 @@ def main():
             args.language,
             args.text2,
             args.with_fields,
-            args.with_br,
         )
     elif args.type == "sentence":
         if not args.text1 or not args.text2:
@@ -1697,7 +1660,6 @@ def main():
             args.lemma_index_file,
             args.language,
             args.with_fields,
-            args.with_br,
         )
     else:
         print("Error: Invalid --type specified.")

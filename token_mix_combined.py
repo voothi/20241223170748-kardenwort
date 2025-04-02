@@ -1688,7 +1688,7 @@ def main():
 
         # If in pipe mode and output file was created, print the filename
         if args.pipe and output_file:
-            print(output_file)
+            print(os.path.basename(output_file))
 
     elif args.type == "sentence":
         if not args.text1 or not args.text2:
@@ -1713,7 +1713,7 @@ def main():
 
         # If in pipe mode and output file was created, print the filename
         if args.pipe and args.output:
-            print(final_output_file)
+            print(os.path.basename(final_output_file))
     else:
         print("Error: Invalid --type specified.")
         exit(1)

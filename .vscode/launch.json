@@ -39,7 +39,8 @@
                 // "U:\\voothi\\20241223170748-token-extraction\\de-default.csv",
                 "U:\\voothi\\20241223170748-token-extraction\\deu-mixed-typical-2011-1m-words.csv",
                 "--with-fields",
-                "--with-br"
+                "--with-br",
+                "--pipe"
             ],
             "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
         },
@@ -155,7 +156,8 @@
                 "--lemma-index-file",
                 "U:\\voothi\\20241223170748-token-extraction\\deu-mixed-typical-2011-1m-words.csv",
                 "--with-fields",
-                "--with-br"
+                "--with-br",
+                "--pipe"
             ],
             "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
         },
@@ -194,7 +196,8 @@
                 "--lemma-index-file",
                 "U:\\voothi\\20241223170748-token-extraction\\deu-mixed-typical-2011-1m-words.csv",
                 // "--with-fields",
-                // "--with-br"
+                // "--with-br",
+                // "--pipe"
             ],
             "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
         },
@@ -232,7 +235,8 @@
                 "--lemma-index-file",
                 "U:\\voothi\\20241223170748-token-extraction\\de-default.csv",
                 // "--with-fields",
-                // "--with-br"
+                // "--with-br",
+                "--pipe"
             ],
             "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
         },
@@ -270,7 +274,8 @@
                 "--lemma-index-file",
                 "U:\\voothi\\20241223170748-token-extraction\\de-default.csv",
                 // "--with-fields",
-                // "--with-br"
+                // "--with-br",
+                "--pipe"
             ],
             "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
         },
@@ -308,7 +313,8 @@
                 "--lemma-index-file",
                 "U:\\voothi\\20241223170748-token-extraction\\de-default.csv",
                 // "--with-fields",
-                // "--with-br"
+                // "--with-br",
+                // "--pipe"
             ],
             "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
         },
@@ -384,7 +390,8 @@
                 "--lemma-index-file",
                 "U:\\voothi\\20241223170748-token-extraction\\de-default.csv",
                 // "--with-fields",
-                // "--with-br"
+                // "--with-br",
+                "--pipe"
             ],
             "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
         },
@@ -458,7 +465,8 @@
                 "--lemma-index-file",
                 "U:\\voothi\\20241223170748-token-extraction\\en-default.csv",
                 // "--with-fields",
-                // "--with-br"
+                // "--with-br",
+                "--pipe"
             ],
             "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
         },
@@ -495,7 +503,8 @@
                 "--lemma-index-file",
                 "U:\\voothi\\20241223170748-token-extraction\\en-default.csv",
                 // "--with-fields",
-                // "--with-br"
+                // "--with-br",
+                "--pipe"
             ],
             "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
         },
@@ -532,7 +541,8 @@
                 "--lemma-index-file",
                 "U:\\voothi\\20241223170748-token-extraction\\en-default.csv",
                 // "--with-fields",
-                // "--with-br"
+                // "--with-br",
+                "--pipe"
             ],
             "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
         },
@@ -569,7 +579,8 @@
                 "--lemma-index-file",
                 "U:\\voothi\\20241223170748-token-extraction\\en-default.csv",
                 // "--with-fields",
-                // "--with-br"
+                // "--with-br",
+                "--pipe"
             ],
             "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
         },
@@ -606,7 +617,8 @@
                 "--lemma-index-file",
                 "U:\\voothi\\20241223170748-token-extraction\\en-default.csv",
                 // "--with-fields",
-                // "--with-br"
+                // "--with-br",
+                // "--pipe"
             ],
             "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
         },

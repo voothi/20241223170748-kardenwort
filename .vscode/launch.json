@@ -30,7 +30,7 @@
                 "2",
                 // "--sentence_token_limit", "5"
                 "--output",
-                ".\\out\\result-t1.token.de.tsv",
+                ".\\out\\result.single.token.de.tsv",
                 "--timestamp",
                 "--two-column-output-to-file",
                 "--include-simple-list",
@@ -70,7 +70,7 @@
                 "2",
                 // "--sentence_token_limit", "5"
                 "--output",
-                ".\\out\\result-t1-t2.token.de.tsv",
+                ".\\out\\result.dual.token.de.tsv",
                 "--timestamp",
                 "--two-column-output-to-file",
                 "--include-simple-list",
@@ -110,7 +110,7 @@
         //         "2",
         //         // "--sentence_token_limit", "5"
         //         "--output",
-        //         ".\\out\\result-t1.sentence.de.tsv",
+        //         ".\\out\\result.single.sentence.de.tsv",
         //         "--timestamp",
         //         "--two-column-output-to-file",
         //         "--include-simple-list",
@@ -148,7 +148,7 @@
                 "2",
                 // "--sentence_token_limit", "5"
                 "--output",
-                ".\\out\\result-t1-t2.sentence.de.tsv",
+                ".\\out\\result.dual.sentence.de.tsv",
                 "--timestamp",
                 "--two-column-output-to-file",
                 "--include-simple-list",
@@ -227,7 +227,7 @@
                 "2",
                 // "--sentence_token_limit", "5"
                 "--output",
-                ".\\out\\result-t1.token.de.tsv",
+                ".\\out\\result.single.token.de.tsv",
                 "--timestamp",
                 "--two-column-output-to-file",
                 "--include-simple-list",
@@ -266,7 +266,7 @@
                 "2",
                 // "--sentence_token_limit", "5"
                 "--output",
-                ".\\out\\result-t1-t2.token.de.tsv",
+                ".\\out\\result.dual.token.de.tsv",
                 "--timestamp",
                 "--two-column-output-to-file",
                 "--include-simple-list",
@@ -344,7 +344,7 @@
         //         "2",
         //         // "--sentence_token_limit", "5"
         //         "--output",
-        //         ".\\out\\result-t1.sentence.de.tsv",
+        //         ".\\out\\result.single.sentence.de.tsv",
         //         "--timestamp",
         //         "--two-column-output-to-file",
         //         "--include-simple-list",
@@ -382,7 +382,7 @@
                 "2",
                 // "--sentence_token_limit", "5"
                 "--output",
-                ".\\out\\result-t1-t2.sentence.de.tsv",
+                ".\\out\\result.dual.sentence.de.tsv",
                 "--timestamp",
                 "--two-column-output-to-file",
                 "--include-simple-list",
@@ -457,7 +457,7 @@
                 "2",
                 // "--sentence_token_limit", "5"
                 "--output",
-                ".\\out\\result-t1.token.en.tsv",
+                ".\\out\\result.single.token.en.tsv",
                 "--timestamp",
                 "--two-column-output-to-file",
                 "--include-simple-list",
@@ -495,7 +495,7 @@
                 "2",
                 // "--sentence_token_limit", "5"
                 "--output",
-                ".\\out\\result-t1-t2.token.en.tsv",
+                ".\\out\\result.dual.token.en.tsv",
                 "--timestamp",
                 "--two-column-output-to-file",
                 "--include-simple-list",
@@ -533,7 +533,7 @@
                 "2",
                 // "--sentence_token_limit", "5"
                 "--output",
-                ".\\out\\result-t1.token.en.tsv",
+                ".\\out\\result.single.token.en.tsv",
                 "--timestamp",
                 "--two-column-output-to-file",
                 "--include-simple-list",
@@ -571,7 +571,7 @@
                 "2",
                 // "--sentence_token_limit", "5"
                 "--output",
-                ".\\out\\result-t1-t2.token.en.tsv",
+                ".\\out\\result.dual.token.en.tsv",
                 "--timestamp",
                 "--two-column-output-to-file",
                 "--include-simple-list",
@@ -647,7 +647,7 @@
         //         "2",
         //         // "--sentence_token_limit", "5"
         //         "--output",
-        //         ".\\out\\result-t1.sentence.en.tsv",
+        //         ".\\out\\result.single.sentence.en.tsv",
         //         "--timestamp",
         //         "--two-column-output-to-file",
         //         "--include-simple-list",
@@ -684,7 +684,7 @@
                 "2",
                 // "--sentence_token_limit", "5"
                 "--output",
-                ".\\out\\result-t1-t2.sentence.en.tsv",
+                ".\\out\\result.dual.sentence.en.tsv",
                 "--timestamp",
                 "--two-column-output-to-file",
                 "--include-simple-list",
@@ -721,7 +721,7 @@
         //         "2",
         //         // "--sentence_token_limit", "5"
         //         "--output",
-        //         ".\\out\\result-t1.sentence.en.tsv",
+        //         ".\\out\\result.single.sentence.en.tsv",
         //         "--timestamp",
         //         "--two-column-output-to-file",
         //         "--include-simple-list",
@@ -758,7 +758,7 @@
                 "2",
                 // "--sentence_token_limit", "5"
                 "--output",
-                ".\\out\\result-t1-t2.sentence.en.tsv",
+                ".\\out\\result.dual.sentence.en.tsv",
                 "--timestamp",
                 "--two-column-output-to-file",
                 "--include-simple-list",

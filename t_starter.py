@@ -31,7 +31,7 @@ def get_token_args(args, python_path, token_workspace):
             "--text1",
             str(token_workspace / "in/text1.txt"),
             "--output",
-            str(token_workspace / f"out/result-t1.{output_suffix}.de.tsv"),
+            str(token_workspace / f"out/result.single.{output_suffix}.de.tsv"),
         ]
     elif args.mode == "dual":
         return base_args + [
@@ -40,7 +40,7 @@ def get_token_args(args, python_path, token_workspace):
             "--text2",
             str(token_workspace / "in/text2.txt"),
             "--output",
-            str(token_workspace / f"out/result-t1-t2.{output_suffix}.de.tsv"),
+            str(token_workspace / f"out/result.dual.{output_suffix}.de.tsv"),
         ]
 
     raise ValueError(f"Unknown mode: {args.mode}")

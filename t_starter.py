@@ -5,19 +5,25 @@ import argparse
 
 def get_token_args(args, python_path, token_workspace):
     """Configure token extraction arguments based on input parameters"""
+    # Select lemma index file based on language
+    lemma_file = (
+        "en-news-2023-1m-words.csv" if args.language == "en" 
+        else "deu-mixed-typical-2011-1m-words.csv"
+    )
+    
     base_args = [
         str(python_path),
         str(token_workspace / "token_mix_combined.py"),
         "--type",
         args.type,
-        "--language",
+        "--language", 
         args.language,
         "--lemma-index-file",
-        str(token_workspace / "deu-mixed-typical-2011-1m-words.csv"),
+        str(token_workspace / lemma_file),  # Use the selected file
         "--sentence-context-size",
         "2",
         "--timestamp",
-        "--two-column-output-to-file",
+        "--two-column-output-to-file", 
         "--include-simple-list",
         "--with-fields",
         "--with-br",

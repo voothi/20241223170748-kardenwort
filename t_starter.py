@@ -11,7 +11,7 @@ def get_token_args(args, python_path, token_workspace):
         "--type",
         args.type,
         "--language",
-        "de",
+        args.language,
         "--lemma-index-file",
         str(token_workspace / "deu-mixed-typical-2011-1m-words.csv"),
         "--sentence-context-size",
@@ -31,7 +31,7 @@ def get_token_args(args, python_path, token_workspace):
             "--text1",
             str(token_workspace / "in/text1.txt"),
             "--output",
-            str(token_workspace / f"out/result.single.{output_suffix}.de.tsv"),
+            str(token_workspace / f"out/result.single.{output_suffix}.{args.language}.tsv"),
         ]
     elif args.mode == "dual":
         return base_args + [
@@ -40,7 +40,7 @@ def get_token_args(args, python_path, token_workspace):
             "--text2",
             str(token_workspace / "in/text2.txt"),
             "--output",
-            str(token_workspace / f"out/result.dual.{output_suffix}.de.tsv"),
+            str(token_workspace / f"out/result.dual.{output_suffix}.{args.language}.tsv"),
         ]
 
     raise ValueError(f"Unknown mode: {args.mode}")
@@ -64,6 +64,13 @@ def main():
         required=True,
         choices=["single", "dual"],
         help="Processing mode: single (text1) or dual (text1 + text2)",
+    )
+    parser.add_argument(
+        "--language",
+        type=str,
+        required=True,
+        choices=["de", "en"],
+        help="Language for processing: German (de) or English (en)",
     )
     args = parser.parse_args()
 

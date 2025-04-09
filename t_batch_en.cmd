@@ -28,12 +28,12 @@ echo Running token extraction in different modes...
 
 echo.
 echo 2. Dual token mode...
-call "%PYTHON_PATH%" "%SCRIPT%" --type token --mode dual
+call "%PYTHON_PATH%" "%SCRIPT%" --language en --type token --mode dual
 if errorlevel 1 goto :error
 
 echo.
 echo 3. Dual sentence mode...
-call "%PYTHON_PATH%" "%SCRIPT%" --type sentence --mode dual
+call "%PYTHON_PATH%" "%SCRIPT%" --language en --type sentence --mode dual
 if errorlevel 1 goto :error
 
 echo.

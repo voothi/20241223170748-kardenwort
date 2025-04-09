@@ -6,10 +6,12 @@ import argparse
 def get_token_args(args, python_path, token_workspace):
     """Configure token extraction arguments based on input parameters"""
     # Select lemma index file based on language
-    lemma_file = (
-        "en-news-2023-1m-words.csv" if args.language == "en" 
-        else "deu-mixed-typical-2011-1m-words.csv"
-    )
+    if args.language == "en":
+        lemma_file = "en-news-2023-1m-words.csv"
+    elif args.language == "de":
+        lemma_file = "deu-mixed-typical-2011-1m-words.csv"
+    else:
+        raise ValueError(f"Unsupported language: {args.language}")
     
     base_args = [
         str(python_path),

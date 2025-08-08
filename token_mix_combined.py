@@ -502,4 +502,57 @@ def main():
         help="Path to the third text file (e.g., alternative translation)",
     )
     parser.add_argument("--detailed", action="store_true")
-    parser.add_argument("--two-column-output", action=
+    parser.add_argument("--two-column-output", action="store_true")
+    parser.add_argument("--html", action="store_true")
+    parser.add_argument("--sentence-context-size", type=int, default=1)
+    parser.add_argument("--output", type=str, required=False)
+    parser.add_argument("--timestamp", action="store_true")
+    parser.add_argument("--two-column-output-to-file", action="store_true")
+    parser.add_argument("--include-simple-list", action="store_true")
+    parser.add_argument("--original-form-in-simple-list", action="store_true")
+    parser.add_argument("--with-fields", action="store_true")
+    parser.add_argument("--with-br", action="store_true")
+    parser.add_argument("--pipe", action="store_true")
+
+    args = parser.parse_args()
+
+    global nlp
+    nlp = spacy.load("de_core_news_lg" if args.language == "de" else "en_core_web_lg")
+
+    if args.type == "token":
+        if args.text and args.text1:
+            print("Error: Both --text and --text1 cannot be specified simultaneously."); exit(1)
+        elif args.text: input_text = args.text
+        elif args.text1: input_text = read_input_text(args.text1)
+        else: print("Error: Either --text or --text1 must be specified."); exit(1)
+
+        output_file = process_text(
+            input_text, args.type, args.language, args.lemma_index_file,
+            args.text, args.text1, args.text2, args.text3, # Pass args.text3
+            args.detailed, args.two_column_output, args.html,
+            args.sentence_context_size, args.output, args.timestamp,
+            args.two_column_output_to_file, args.include_simple_list,
+            args.original_form_in_simple_list, args.with_fields,
+            args.with_br, args.pipe
+        )
+        if args.pipe and output_file: print(os.path.basename(output_file))
+
+    elif args.type == "sentence":
+        if not args.text1 or not args.text2:
+            print("Error: Both --text1 and --text2 must be specified for sentence mode."); exit(1)
+
+        final_output_file = process_sentences(
+            args.type, args.language, args.lemma_index_file,
+            args.text, args.text1, args.text2, args.text3, # Pass args.text3
+            args.detailed, args.two_column_output, args.html,
+            args.sentence_context_size, args.output, args.timestamp,
+            args.two_column_output_to_file, args.include_simple_list,
+            args.original_form_in_simple_list, args.with_fields,
+            args.with_br, args.pipe
+        )
+        if args.pipe and args.output: print(os.path.basename(final_output_file))
+    else:
+        print("Error: Invalid --type specified."); exit(1)
+
+if __name__ == "__main__":
+    main()

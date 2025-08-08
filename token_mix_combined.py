@@ -190,11 +190,11 @@ def process_text_v1(
 
                 # Language flags (Corrected indices)
                 if language == "de":
-                    row_data[59] = "1" # 60: Source-de-DE
-                    row_data[63] = "1" # 64: Destination-de-DE
+                    row_data[58] = "1" # 59: Source-de-DE
+                    row_data[65] = "1" # 66: Destination-ru-RU
                 elif language == "en":
-                    row_data[57] = "1" # 58: Source-en-US
-                    row_data[62] = "1" # 63: Destination-en-US
+                    row_data[62] = "1" # 58: Source-en-GB
+                    row_data[65] = "1" # 66: Destination-ru-RU
                 
                 # Data from text3
                 if text3:
@@ -270,11 +270,11 @@ def process_sentences(
             row_data[12] = l1_sentence       # 13: SentenceSourceCloze
 
             if language == "de":
-                row_data[59] = "1" # 60: Source-de-DE
-                row_data[63] = "1" # 64: Destination-de-DE
+                row_data[58] = "1" # 59: Source-de-DE
+                row_data[65] = "1" # 66: Destination-ru-RU
             elif language == "en":
-                row_data[57] = "1" # 58: Source-en-US
-                row_data[62] = "1" # 63: Destination-en-US
+                row_data[62] = "1" # 58: Source-en-GB
+                row_data[65] = "1" # 66: Destination-ru-RU
             
             if text3:
                 row_data[77] = l3_left

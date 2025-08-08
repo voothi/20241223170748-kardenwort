@@ -12,20 +12,20 @@ def get_token_args(args, python_path, token_workspace):
         lemma_file = "deu-mixed-typical-2011-1m-words.csv"
     else:
         raise ValueError(f"Unsupported language: {args.language}")
-
+    
     base_args = [
         str(python_path),
         str(token_workspace / "token_mix_combined.py"),
         "--type",
         args.type,
-        "--language",
+        "--language", 
         args.language,
         "--lemma-index-file",
-        str(token_workspace / lemma_file),
+        str(token_workspace / lemma_file),  # Use the selected file
         "--sentence-context-size",
         "2",
         "--timestamp",
-        "--two-column-output-to-file",
+        "--two-column-output-to-file", 
         "--include-simple-list",
         "--with-fields",
         "--with-br",
@@ -50,18 +50,6 @@ def get_token_args(args, python_path, token_workspace):
             "--output",
             str(token_workspace / f"out/result.dual.{output_suffix}.{args.language}.tsv"),
         ]
-    # Добавлен новый режим для трех файлов
-    elif args.mode == "triple":
-        return base_args + [
-            "--text1",
-            str(token_workspace / "in/text1.txt"),
-            "--text2",
-            str(token_workspace / "in/text2.txt"),
-            "--text3",  # Добавляем ключ для третьего файла
-            str(token_workspace / "in/text3.txt"),
-            "--output",
-            str(token_workspace / f"out/result.triple.{output_suffix}.{args.language}.tsv"),
-        ]
 
     raise ValueError(f"Unknown mode: {args.mode}")
 
@@ -82,9 +70,8 @@ def main():
         "--mode",
         type=str,
         required=True,
-        # Добавляем 'triple' в список доступных режимов
-        choices=["single", "dual", "triple"],
-        help="Processing mode: single (text1), dual (text1 + text2), or triple (text1 + text2 + text3)",
+        choices=["single", "dual"],
+        help="Processing mode: single (text1) or dual (text1 + text2)",
     )
     parser.add_argument(
         "--language",
@@ -106,7 +93,6 @@ def main():
     token_args = get_token_args(args, python_path, token_workspace)
 
     # Token extraction process
-    print(f"Running token extraction with command:\n{' '.join(token_args)}\n")
     token_process = subprocess.Popen(
         token_args,
         stdout=subprocess.PIPE,
@@ -122,18 +108,19 @@ def main():
     print(f"Processing file: {output_file}")
 
     # Run Anki importer with the captured filename
-    importer_command = [
-        str(python_path),
-        str(importer_workspace / "anki-csv-importer.py"),
-        "--path",
-        str(token_workspace / "out" / output_file),
-        "--deck",
-        output_file,
-        "--note",
-        "Basic 20240218092126",
-    ]
-    print(f"Running importer with command:\n{' '.join(importer_command)}\n")
-    subprocess.run(importer_command, check=True)
+    subprocess.run(
+        [
+            str(python_path),
+            str(importer_workspace / "anki-csv-importer.py"),
+            "--path",
+            str(token_workspace / "out" / output_file),
+            "--deck",
+            output_file,
+            "--note",
+            "Basic 20240218092126",
+        ],
+        check=True,
+    )
 
 
 if __name__ == "__main__":

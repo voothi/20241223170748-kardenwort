@@ -433,6 +433,43 @@
             "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
         },
         {
+            "name": "Run token_mix_combined.py / Test / De / type sentence / text1 text2 text3",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/token_mix_combined.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--type",
+                "sentence",
+                "--language",
+                "de",
+                "--text1",
+                "U:\\voothi\\20241223170748-token-extraction\\in\\test\\text1.de.txt",
+                "--text2",
+                "U:\\voothi\\20241223170748-token-extraction\\in\\test\\text2.de.txt",
+                "--text3",
+                "U:\\voothi\\20241223170748-token-extraction\\in\\test\\text3.de.txt",
+                // "--detailed",
+                "--two-column-output",
+                // "--html"
+                "--sentence-context-size",
+                "2",
+                // "--sentence_token_limit", "5"
+                "--output",
+                ".\\out\\result.dual.sentence.de.tsv",
+                "--timestamp",
+                "--two-column-output-to-file",
+                "--include-simple-list",
+                // "--original-form-in-simple-list",
+                "--lemma-index-file",
+                "U:\\voothi\\20241223170748-token-extraction\\de-default.csv",
+                // "--with-fields",
+                // "--with-br",
+                "--pipe"
+            ],
+            "python": "C:\\Users\\voothi\\AppData\\Roaming\\Anki2\\addons21\\spacyenv\\Scripts\\python.exe"
+        },
+        {
             "name": "Run token_mix_combined.py / Test / En / type token / text",
             "type": "debugpy",
             "request": "launch",

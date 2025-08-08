@@ -226,6 +226,7 @@ def process_text_v2(
     return final_output_file
 
 
+# --- ИСПРАВЛЕННАЯ ФУНКЦИЯ process_sentences ---
 def process_sentences(
     language, lemma_index, text1, text2, text3, sentence_context_size,
     output_file, timestamp, include_simple_list, with_fields, with_br, pipe, **kwargs
@@ -240,6 +241,10 @@ def process_sentences(
     except IOError as e:
         print(f"Error reading files: {e}", file=sys.stderr); sys.exit(1)
         
+    lengths = [len(text1_lines), len(text2_lines)]
+    if text3: lengths.append(len(text3_lines))
+    min_length = min(lengths)
+
     if timestamp and output_file:
         output_dir, filename = os.path.dirname(output_file), os.path.basename(output_file)
         final_output_file = os.path.join(output_dir, f"{datetime.now().strftime('%Y%m%d%H%M%S')}-{filename}")
@@ -249,12 +254,37 @@ def process_sentences(
         if with_fields:
             tsv_writer.writerow(get_full_header())
 
-        min_length = len(text1_lines) # Assume lengths are checked/handled before
-
         for i in range(min_length):
+            # --- ЭТОТ БЛОК БЫЛ ПРОПУЩЕН ---
             row_data = [""] * 80
-            # ... (заполнение row_data, как и в других функциях)
+            l1_sentence = text1_lines[i].strip()
+            l2_sentence = text2_lines[i].strip()
             
+            start_idx, end_idx = max(0, i - sentence_context_size), i + sentence_context_size + 1
+            
+            # Заполнение полей данными
+            row_data[0] = l1_sentence # 1: Quotation
+            row_data[5] = " ".join(line.strip() for line in text1_lines[start_idx:i])     # 6: SentenceSourceContextLeft
+            row_data[6] = l1_sentence                                                      # 7: SentenceSource
+            row_data[7] = " ".join(line.strip() for line in text1_lines[i + 1:end_idx])    # 8: SentenceSourceContextRight
+            row_data[8] = " ".join(line.strip() for line in text2_lines[start_idx:i])     # 9: SentenceDestinationContextLeft
+            row_data[9] = l2_sentence                                                      # 10: SentenceDestination
+            row_data[10] = " ".join(line.strip() for line in text2_lines[i + 1:end_idx])   # 11: SentenceDestinationContextRight
+            
+            if include_simple_list:
+                lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp)
+                row_data[11] = "<br>".join(lemmas) if with_br else "\n".join(lemmas) # 12: SentenceSourceWordlist
+            
+            row_data[12] = l1_sentence       # 13: SentenceSourceCloze
+            
+            if text3:
+                row_data[77] = " ".join(line.strip() for line in text3_lines[start_idx:i])    # 78: SentenceDestination2ContextLeft
+                row_data[78] = text3_lines[i].strip()                                         # 79: SentenceDestination2
+                row_data[79] = " ".join(line.strip() for line in text3_lines[i + 1:end_idx])  # 80: SentenceDestination2ContextRight
+
+            # --- КОНЕЦ ПРОПУЩЕННОГО БЛОКА ---
+            
+            # Установка флагов (этот блок у вас был)
             if language == "de":
                 row_data[58] = "1"
                 row_data[65] = "1"

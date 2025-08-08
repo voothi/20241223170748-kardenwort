@@ -26,15 +26,15 @@ echo Running token extraction in different modes...
 @REM call "%PYTHON_PATH%" "%SCRIPT%" --type token --mode simple
 @REM if errorlevel 1 goto :error
 
-echo.
-echo 2. Dual token mode...
-call "%PYTHON_PATH%" "%SCRIPT%" --language de --type token --mode dual
-if errorlevel 1 goto :error
+@REM echo.
+@REM echo 2. Dual token mode...
+@REM call "%PYTHON_PATH%" "%SCRIPT%" --language de --type token --mode dual
+@REM if errorlevel 1 goto :error
 
-echo.
-echo 3. Dual sentence mode...
-call "%PYTHON_PATH%" "%SCRIPT%" --language de --type sentence --mode dual
-if errorlevel 1 goto :error
+@REM echo.
+@REM echo 3. Dual sentence mode...
+@REM call "%PYTHON_PATH%" "%SCRIPT%" --language de --type sentence --mode dual
+@REM if errorlevel 1 goto :error
 
 echo.
 echo 4. Triple token mode...

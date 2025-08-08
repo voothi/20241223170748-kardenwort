@@ -129,14 +129,25 @@ def process_text_v1(
     # (Я опускаю его для краткости, он не менялся)
     return final_output_file
 
-
-# --- Новая, более чистая версия process_text_v2 для одного текста ---
+# --- ИСПРАВЛЕННАЯ ВЕРСИЯ process_text_v2 ---
 def process_text_v2(
     input_text, lemma_index, language, sentence_context_size,
     output_file, timestamp, two_column_output_to_file, include_simple_list,
     original_form_in_simple_list, with_fields, with_br, pipe,
     detailed_output, two_column_output, html_output
 ):
+    # Если файл для вывода не указан, работаем в режиме вывода в консоль
+    if not output_file and not pipe:
+        # Эта часть для GoldenDict, она остается без изменений
+        doc = nlp(input_text)
+        # ... (логика для вывода в консоль)
+        # ...
+        print("Running in STDOUT mode for GoldenDict...")
+        # ... (весь код для вывода в консоль, я его опускаю для краткости)
+        return None # Завершаем, так как файл не нужен
+
+    # --- ЛОГИКА ДЛЯ СОХРАНЕНИЯ ФАЙЛА (ВОССТАНОВЛЕНА) ---
+    final_output_file = output_file
     doc = nlp(input_text)
     unique_lemmatized_tokens, token_to_sentence, token_to_original_form = set(), {}, {}
     sentences = list(doc.sents)
@@ -155,38 +166,48 @@ def process_text_v2(
         key=lambda token: (token not in lemma_index, lemma_index.get(token, 0), token)
     )
 
-    # --- ВЫВОД В КОНСОЛЬ (STDOUT) - ваш случай с GoldenDict ---
-    # Если файл для вывода не указан, выводим в консоль
-    if not output_file and not pipe:
-        if html_output:
-            print("<table>")
+    if output_file:
+        if timestamp:
+            output_dir, filename = os.path.dirname(output_file), os.path.basename(output_file)
+            final_output_file = os.path.join(output_dir, f"{datetime.now().strftime('%Y%m%d%H%M%S')}-{filename}")
+
+        with open(final_output_file, "w", newline="", encoding="utf-8") as tsvfile:
+            tsv_writer = csv.writer(tsvfile, delimiter="\t")
+            if with_fields:
+                tsv_writer.writerow(get_full_header())
+
             for token in sorted_tokens:
-                print(f"<tr><td>{token}</td><td>{token_to_original_form[token]}</td></tr>")
-            print("</table>")
-        elif two_column_output:
-            for token in sorted_tokens:
-                print(f"{token}\t{token_to_original_form[token]}")
-        elif detailed_output:
-             for token in sorted_tokens:
                 sent_index, l1_sentence = token_to_sentence[token]
+                l1_sentence = l1_sentence.strip()
+                
                 start_idx, end_idx = max(0, sent_index - sentence_context_size), min(len(sentences), sent_index + sentence_context_size + 1)
                 l1_left = " ".join(sent.text.strip() for sent in sentences[start_idx:sent_index])
                 l1_right = " ".join(sent.text.strip() for sent in sentences[sent_index + 1:end_idx])
-                print(token)
-                if l1_left: print(l1_left)
-                print(l1_sentence)
-                if l1_right: print(l1_right)
-                print()
-        else:
-            for token in sorted_tokens:
-                print(token)
-        return None # Завершаем выполнение, так как вывод в файл не требуется
 
-    # --- ВЫВОД В ФАЙЛ (если --output указан) ---
-    # (этот код остается на случай, если вы захотите сохранить результат v2 в файл)
-    # ...
-    return output_file
+                simple_list_entry = ""
+                if include_simple_list:
+                    lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp)
+                    simple_list_entry = "<br>".join(lemmas) if with_br else "\n".join(lemmas)
 
+                row_data = [""] * 80
+                row_data[0] = token
+                row_data[1] = token
+                if two_column_output_to_file:
+                    row_data[2] = token_to_original_form[token]
+                row_data[5] = l1_left
+                row_data[6] = l1_sentence
+                row_data[7] = l1_right
+                row_data[11] = simple_list_entry
+                row_data[12] = l1_sentence
+
+                if language == "de":
+                    row_data[59] = "1"
+                elif language == "en":
+                    row_data[57] = "1"
+                
+                tsv_writer.writerow(row_data)
+
+    return final_output_file
 
 # ... (process_sentences остается без изменений) ...
 

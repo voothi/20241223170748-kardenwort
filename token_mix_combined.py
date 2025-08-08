@@ -159,17 +159,13 @@ def process_text_v1(
     return final_output_file
 
 
+# --- ИСПРАВЛЕННАЯ ФУНКЦИЯ process_text_v2 ---
 def process_text_v2(
     input_text, lemma_index, language, sentence_context_size,
     output_file, timestamp, two_column_output_to_file, include_simple_list,
-    with_fields, with_br, pipe, **kwargs # kwargs для лишних аргументов из stdout (detailed, и т.д.)
+    with_fields, with_br, pipe, **kwargs 
 ):
-    if not output_file and not pipe:
-        # Логика для GoldenDict (вывод в консоль)
-        # ...
-        return None
-
-    final_output_file = output_file
+    # Извлекаем токены в любом случае
     doc = nlp(input_text)
     unique_lemmatized_tokens, token_to_sentence, token_to_original_form = set(), {}, {}
     sentences = list(doc.sents)
@@ -185,43 +181,78 @@ def process_text_v2(
     
     sorted_tokens = sorted(unique_lemmatized_tokens, key=lambda token: (token not in lemma_index, lemma_index.get(token, 0), token))
 
-    if output_file:
-        if timestamp:
-            output_dir, filename = os.path.dirname(output_file), os.path.basename(output_file)
-            final_output_file = os.path.join(output_dir, f"{datetime.now().strftime('%Y%m%d%H%M%S')}-{filename}")
+    # --- РАЗДЕЛЕНИЕ ЛОГИКИ: ВЫВОД В КОНСОЛЬ ИЛИ В ФАЙЛ ---
+    
+    # 1. Если не указан файл для вывода, работаем в режиме вывода в консоль (GoldenDict/тесты)
+    if not output_file:
+        # Извлекаем флаги для вывода в консоль из kwargs
+        detailed = kwargs.get('detailed', False)
+        two_column_output = kwargs.get('two_column_output', False)
+        html = kwargs.get('html', False)
 
-        with open(final_output_file, "w", newline="", encoding="utf-8") as tsvfile:
-            tsv_writer = csv.writer(tsvfile, delimiter="\t")
-            if with_fields:
-                tsv_writer.writerow(get_full_header())
-
+        if html:
+            print("<table>")
             for token in sorted_tokens:
-                row_data = [""] * 80
+                print(f"<tr><td>{token}</td><td>{token_to_original_form[token]}</td></tr>")
+            print("</table>")
+        elif two_column_output:
+            for token in sorted_tokens:
+                print(f"{token}\t{token_to_original_form[token]}")
+        elif detailed:
+             for token in sorted_tokens:
                 sent_index, l1_sentence = token_to_sentence[token]
-                l1_sentence = l1_sentence.strip()
-                
                 start_idx, end_idx = max(0, sent_index - sentence_context_size), min(len(sentences), sent_index + sentence_context_size + 1)
-                
-                row_data[5] = " ".join(sent.text.strip() for sent in sentences[start_idx:sent_index])
-                row_data[6] = l1_sentence
-                row_data[7] = " ".join(sent.text.strip() for sent in sentences[sent_index + 1:end_idx])
-                
-                row_data[0] = token
-                row_data[1] = token
-                if two_column_output_to_file:
-                    row_data[2] = token_to_original_form[token]
-                row_data[12] = l1_sentence
-                if include_simple_list:
-                    row_data[11] = "<br>".join(process_sentence_lemmas(l1_sentence, lemma_index, nlp)) if with_br else "\n".join(process_sentence_lemmas(l1_sentence, lemma_index, nlp))
+                l1_left = " ".join(sent.text.strip() for sent in sentences[start_idx:sent_index])
+                l1_right = " ".join(sent.text.strip() for sent in sentences[sent_index + 1:end_idx])
+                print(token)
+                if l1_left: print(l1_left)
+                print(l1_sentence)
+                if l1_right: print(l1_right)
+                print()
+        else: # По умолчанию просто список токенов
+            for token in sorted_tokens:
+                print(token)
+        
+        return None # Завершаем, так как файл не нужен
 
-                if language == "de":
-                    row_data[58] = "1"
-                    row_data[65] = "1"
-                elif language == "en":
-                    row_data[56] = "1"
-                    row_data[65] = "1"
-                
-                tsv_writer.writerow(row_data)
+    # 2. Если указан файл для вывода, сохраняем в него
+    final_output_file = output_file
+    if timestamp:
+        output_dir, filename = os.path.dirname(output_file), os.path.basename(output_file)
+        final_output_file = os.path.join(output_dir, f"{datetime.now().strftime('%Y%m%d%H%M%S')}-{filename}")
+
+    with open(final_output_file, "w", newline="", encoding="utf-8") as tsvfile:
+        tsv_writer = csv.writer(tsvfile, delimiter="\t")
+        if with_fields:
+            tsv_writer.writerow(get_full_header())
+
+        for token in sorted_tokens:
+            row_data = [""] * 80
+            sent_index, l1_sentence = token_to_sentence[token]
+            l1_sentence = l1_sentence.strip()
+            
+            start_idx, end_idx = max(0, sent_index - sentence_context_size), min(len(sentences), sent_index + sentence_context_size + 1)
+            
+            row_data[5] = " ".join(sent.text.strip() for sent in sentences[start_idx:sent_index])
+            row_data[6] = l1_sentence
+            row_data[7] = " ".join(sent.text.strip() for sent in sentences[sent_index + 1:end_idx])
+            
+            row_data[0] = token
+            row_data[1] = token
+            if two_column_output_to_file:
+                row_data[2] = token_to_original_form[token]
+            row_data[12] = l1_sentence
+            if include_simple_list:
+                row_data[11] = "<br>".join(process_sentence_lemmas(l1_sentence, lemma_index, nlp)) if with_br else "\n".join(process_sentence_lemmas(l1_sentence, lemma_index, nlp))
+
+            if language == "de":
+                row_data[58] = "1"
+                row_data[65] = "1"
+            elif language == "en":
+                row_data[56] = "1"
+                row_data[65] = "1"
+            
+            tsv_writer.writerow(row_data)
 
     return final_output_file
 

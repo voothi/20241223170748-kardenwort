@@ -159,33 +159,51 @@ def process_text_v1(
     return final_output_file
 
 
-# --- ИСПРАВЛЕННАЯ ФУНКЦИЯ process_text_v2 ---
+# --- ОБНОВЛЕННАЯ ФУНКЦИЯ process_text_v2 С ГИБРИДНОЙ ЛОГИКОЙ ---
 def process_text_v2(
     input_text, lemma_index, language, sentence_context_size,
     output_file, timestamp, two_column_output_to_file, include_simple_list,
     with_fields, with_br, pipe, **kwargs 
 ):
-    # Извлекаем токены в любом случае
-    doc = nlp(input_text)
+    # --- НАЧАЛО ГИБРИДНОЙ ЛОГИКИ ---
+    # Проверяем, как устроен текст: многострочный он или это одна сплошная строка.
+    if '\n' in input_text.strip():
+        # Режим 1: Текст многострочный. Единица обработки - строка.
+        processing_units = input_text.splitlines()
+        is_line_based = True
+    else:
+        # Режим 2: Текст - одна строка. Единица обработки - предложение, найденное spaCy.
+        doc = nlp(input_text)
+        processing_units = list(doc.sents)
+        is_line_based = False
+    # --- КОНЕЦ ГИБРИДНОЙ ЛОГИКИ ---
+
     unique_lemmatized_tokens, token_to_sentence, token_to_original_form = set(), {}, {}
-    sentences = list(doc.sents)
     
-    for sent_index, sent in enumerate(sentences):
-        for token in sent:
+    # Итерируемся по 'processing_units' (которые могут быть либо строками, либо предложениями).
+    for unit_index, unit in enumerate(processing_units):
+        # Получаем текст юнита в зависимости от режима
+        unit_text = unit if is_line_based else unit.text
+        
+        doc_unit = nlp(unit_text)
+        for token in doc_unit:
             if token.is_alpha and token.dep_ != "svp":
                 verb_form = get_verb_with_particle(token) if language == "de" and token.pos_ == "VERB" else token.lemma_
                 original_form = get_original_form_with_particle(token) if language == "de" and token.pos_ == "VERB" else token.text
                 unique_lemmatized_tokens.add(verb_form)
-                token_to_sentence[verb_form] = (sent_index, sent.text)
+                token_to_sentence[verb_form] = (unit_index, unit_text)
                 token_to_original_form[verb_form] = original_form
     
     sorted_tokens = sorted(unique_lemmatized_tokens, key=lambda token: (token not in lemma_index, lemma_index.get(token, 0), token))
 
-    # --- РАЗДЕЛЕНИЕ ЛОГИКИ: ВЫВОД В КОНСОЛЬ ИЛИ В ФАЙЛ ---
+    # Вспомогательная функция, чтобы не дублировать код получения текста юнита
+    def get_unit_text(u):
+        return u if is_line_based else u.text
+
+    # --- Логика вывода, адаптированная под 'processing_units' ---
     
-    # 1. Если не указан файл для вывода, работаем в режиме вывода в консоль (GoldenDict/тесты)
+    # 1. Вывод в консоль
     if not output_file:
-        # Извлекаем флаги для вывода в консоль из kwargs
         detailed = kwargs.get('detailed', False)
         two_column_output = kwargs.get('two_column_output', False)
         html = kwargs.get('html', False)
@@ -200,22 +218,24 @@ def process_text_v2(
                 print(f"{token}\t{token_to_original_form[token]}")
         elif detailed:
              for token in sorted_tokens:
-                sent_index, l1_sentence = token_to_sentence[token]
-                start_idx, end_idx = max(0, sent_index - sentence_context_size), min(len(sentences), sent_index + sentence_context_size + 1)
-                l1_left = " ".join(sent.text.strip() for sent in sentences[start_idx:sent_index])
-                l1_right = " ".join(sent.text.strip() for sent in sentences[sent_index + 1:end_idx])
+                unit_index, l1_sentence = token_to_sentence[token]
+                start_idx = max(0, unit_index - sentence_context_size)
+                end_idx = min(len(processing_units), unit_index + sentence_context_size + 1)
+                
+                l1_left = " ".join(get_unit_text(u).strip() for u in processing_units[start_idx:unit_index])
+                l1_right = " ".join(get_unit_text(u).strip() for u in processing_units[unit_index + 1:end_idx])
+                
                 print(token)
                 if l1_left: print(l1_left)
-                print(l1_sentence)
+                print(l1_sentence.strip())
                 if l1_right: print(l1_right)
                 print()
-        else: # По умолчанию просто список токенов
+        else:
             for token in sorted_tokens:
                 print(token)
-        
-        return None # Завершаем, так как файл не нужен
+        return None
 
-    # 2. Если указан файл для вывода, сохраняем в него
+    # 2. Вывод в файл
     final_output_file = output_file
     if timestamp:
         output_dir, filename = os.path.dirname(output_file), os.path.basename(output_file)
@@ -228,14 +248,15 @@ def process_text_v2(
 
         for token in sorted_tokens:
             row_data = [""] * 80
-            sent_index, l1_sentence = token_to_sentence[token]
+            unit_index, l1_sentence = token_to_sentence[token]
             l1_sentence = l1_sentence.strip()
             
-            start_idx, end_idx = max(0, sent_index - sentence_context_size), min(len(sentences), sent_index + sentence_context_size + 1)
+            start_idx = max(0, unit_index - sentence_context_size)
+            end_idx = min(len(processing_units), unit_index + sentence_context_size + 1)
             
-            row_data[5] = " ".join(sent.text.strip() for sent in sentences[start_idx:sent_index])
+            row_data[5] = " ".join(get_unit_text(u).strip() for u in processing_units[start_idx:unit_index])
             row_data[6] = l1_sentence
-            row_data[7] = " ".join(sent.text.strip() for sent in sentences[sent_index + 1:end_idx])
+            row_data[7] = " ".join(get_unit_text(u).strip() for u in processing_units[unit_index + 1:end_idx])
             
             row_data[0] = token
             row_data[1] = token

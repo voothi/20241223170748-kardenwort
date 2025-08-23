@@ -4,7 +4,7 @@ import csv
 import argparse
 from datetime import datetime
 import os
-import re # Импорт уже есть, отлично
+import re
 
 # --- Все вспомогательные функции (get_verb_with_particle, и т.д.) ---
 # Они остаются без изменений
@@ -79,11 +79,11 @@ def get_full_header():
         "SentenceDestination2", "SentenceDestination2ContextRight"
     ]
 
-# --- ОБНОВЛЕННАЯ ФУНКЦИЯ ДЛЯ ГЕНЕРАЦИИ ИМЕНИ ФАЙЛА ---
+# --- ИЗМЕНЕНА ТОЛЬКО ЭТА ФУНКЦИЯ ---
 def generate_autoname_prefix(text, num_words):
     """
     Извлекает первые N слов из текста для использования в имени файла,
-    обрабатывая умляуты и игнорируя цифры/пунктуацию.
+    обрабатывая умляуты и включая цифры в состав слов.
     """
     if not text:
         return ""
@@ -95,9 +95,10 @@ def generate_autoname_prefix(text, num_words):
     processed_text = processed_text.replace('ü', 'ue')
     processed_text = processed_text.replace('ß', 'ss')
 
-    # 2. Ищем все последовательности латинских букв (слова)
-    # Этот метод автоматически игнорирует цифры, дефисы, точки и другие символы.
-    words = re.findall(r'[a-z]+', processed_text)
+    # 2. Ищем все последовательности латинских букв И ЦИФР (слова)
+    #    Было: r'[a-z]+'
+    #    Стало: r'[a-z0-9]+'
+    words = re.findall(r'[a-z0-9]+', processed_text)
 
     # 3. Берем первые N слов
     selected_words = words[:num_words]
@@ -107,6 +108,7 @@ def generate_autoname_prefix(text, num_words):
         
     # 4. Соединяем их через дефис
     return "-".join(selected_words)
+# ----------------------------------------------------
 
 # --- Остальные функции process_text_v1, v2, process_sentences без изменений ---
 def process_text_v1(

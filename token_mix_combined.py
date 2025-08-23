@@ -79,36 +79,19 @@ def get_full_header():
         "SentenceDestination2", "SentenceDestination2ContextRight"
     ]
 
-# --- ИЗМЕНЕНА ТОЛЬКО ЭТА ФУНКЦИЯ ---
 def generate_autoname_prefix(text, num_words):
-    """
-    Извлекает первые N слов из текста для использования в имени файла,
-    обрабатывая умляуты и включая цифры в состав слов.
-    """
     if not text:
         return ""
-
-    # 1. Приводим к нижнему регистру и заменяем умляуты/ß
     processed_text = text.lower()
     processed_text = processed_text.replace('ä', 'ae')
     processed_text = processed_text.replace('ö', 'oe')
     processed_text = processed_text.replace('ü', 'ue')
     processed_text = processed_text.replace('ß', 'ss')
-
-    # 2. Ищем все последовательности латинских букв И ЦИФР (слова)
-    #    Было: r'[a-z]+'
-    #    Стало: r'[a-z0-9]+'
     words = re.findall(r'[a-z0-9]+', processed_text)
-
-    # 3. Берем первые N слов
     selected_words = words[:num_words]
-    
     if not selected_words:
         return ""
-        
-    # 4. Соединяем их через дефис
     return "-".join(selected_words)
-# ----------------------------------------------------
 
 # --- Остальные функции process_text_v1, v2, process_sentences без изменений ---
 def process_text_v1(
@@ -346,7 +329,7 @@ def process_sentences(
     return output_file
 
 
-# --- Функция MAIN без изменений, т.к. вся логика инкапсулирована ---
+# --- ИЗМЕНЕНИЯ В ФУНКЦИИ MAIN ---
 def main():
     parser = argparse.ArgumentParser(description="Extract and process tokens or sentences from text.")
     parser.add_argument("--type", required=True, choices=["token", "sentence"])
@@ -401,10 +384,21 @@ def main():
                     print(f"Warning: Could not read {args.text1} for autonaming: {e}", file=sys.stderr)
             
             autoname_part = generate_autoname_prefix(source_text_for_autoname, args.autoname)
+            
+            # --- НАЧАЛО ИЗМЕНЕНИЙ ---
             if autoname_part:
-                 new_filename = f"{zid}-{autoname_part}-{filename}"
+                # Находим позицию первой точки в исходном имени файла
+                first_dot_pos = filename.find('.')
+                # Если точка найдена, берем все, что после нее (включая саму точку).
+                # Иначе - пустая строка.
+                suffix = filename[first_dot_pos:] if first_dot_pos != -1 else ""
+                
+                # Собираем новое имя: ZID-autoname_part.суффиксы
+                new_filename = f"{zid}-{autoname_part}{suffix}"
             else:
+                 # Если не удалось сгенерировать autoname, работаем как обычный --timestamp
                  new_filename = f"{zid}-{filename}"
+            # --- КОНЕЦ ИЗМЕНЕНИЙ ---
 
             final_output_path = os.path.join(output_dir, new_filename)
         elif args.timestamp:

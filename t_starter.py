@@ -30,6 +30,7 @@ def get_token_args(args, python_path, token_workspace):
         "--with-fields",
         "--with-br",
         "--pipe",
+        "--autoname",
     ]
 
     output_suffix = "sentence" if args.type == "sentence" else "token"

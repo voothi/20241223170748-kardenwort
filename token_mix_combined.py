@@ -4,6 +4,7 @@ import csv
 import argparse
 from datetime import datetime
 import os
+import re # <-- Добавлен импорт для работы с регулярными выражениями
 
 # --- Все вспомогательные функции (get_verb_with_particle, и т.д.) ---
 # Они остаются без изменений
@@ -78,13 +79,26 @@ def get_full_header():
         "SentenceDestination2", "SentenceDestination2ContextRight"
     ]
 
+# --- НОВАЯ ФУНКЦИЯ ДЛЯ ГЕНЕРАЦИИ ИМЕНИ ФАЙЛА ---
+def generate_autoname_prefix(text, num_words):
+    """Извлекает первые N слов из текста для использования в имени файла."""
+    if not text:
+        return ""
+    # Ищем все последовательности букв (слова), игнорируя цифры и знаки препинания
+    words = re.findall(r'[a-zA-Z]+', text)
+    # Берем первые num_words, приводим к нижнему регистру и соединяем через дефис
+    selected_words = words[:num_words]
+    if not selected_words:
+        return ""
+    return "-".join(word.lower() for word in selected_words)
 
+# --- ИЗМЕНЕННАЯ ФУНКЦИЯ process_text_v1 ---
+# Удалена логика создания имени файла, она теперь в main
 def process_text_v1(
     input_text, lemma_index, language, text2, text3, sentence_context_size,
-    output_file, timestamp, two_column_output_to_file, include_simple_list,
+    output_file, two_column_output_to_file, include_simple_list,
     with_fields, with_br, pipe
 ):
-    final_output_file = output_file
     if "\n" in input_text or not os.path.exists(input_text):
         text1_lines = input_text.splitlines()
     else:
@@ -110,11 +124,8 @@ def process_text_v1(
     sorted_tokens = sorted(unique_lemmatized_tokens, key=lambda token: (token not in lemma_index, lemma_index.get(token, 0), token))
 
     if output_file:
-        if timestamp:
-            output_dir, filename = os.path.dirname(output_file), os.path.basename(output_file)
-            final_output_file = os.path.join(output_dir, f"{datetime.now().strftime('%Y%m%d%H%M%S')}-{filename}")
-
-        with open(final_output_file, "w", newline="", encoding="utf-8") as tsvfile:
+        # Логика с timestamp удалена, т.к. output_file уже содержит финальное имя
+        with open(output_file, "w", newline="", encoding="utf-8") as tsvfile:
             tsv_writer = csv.writer(tsvfile, delimiter="\t")
             if with_fields:
                 tsv_writer.writerow(get_full_header())
@@ -156,35 +167,28 @@ def process_text_v1(
 
                 tsv_writer.writerow(row_data)
     
-    return final_output_file
+    return output_file
 
 
-# --- ОБНОВЛЕННАЯ ФУНКЦИЯ process_text_v2 С ГИБРИДНОЙ ЛОГИКОЙ ---
+# --- ИЗМЕНЕННАЯ ФУНКЦИЯ process_text_v2 ---
+# Удалена логика создания имени файла, она теперь в main
 def process_text_v2(
     input_text, lemma_index, language, sentence_context_size,
-    output_file, timestamp, two_column_output_to_file, include_simple_list,
+    output_file, two_column_output_to_file, include_simple_list,
     with_fields, with_br, pipe, **kwargs 
 ):
-    # --- НАЧАЛО ГИБРИДНОЙ ЛОГИКИ ---
-    # Проверяем, как устроен текст: многострочный он или это одна сплошная строка.
     if '\n' in input_text.strip():
-        # Режим 1: Текст многострочный. Единица обработки - строка.
         processing_units = input_text.splitlines()
         is_line_based = True
     else:
-        # Режим 2: Текст - одна строка. Единица обработки - предложение, найденное spaCy.
         doc = nlp(input_text)
         processing_units = list(doc.sents)
         is_line_based = False
-    # --- КОНЕЦ ГИБРИДНОЙ ЛОГИКИ ---
 
     unique_lemmatized_tokens, token_to_sentence, token_to_original_form = set(), {}, {}
     
-    # Итерируемся по 'processing_units' (которые могут быть либо строками, либо предложениями).
     for unit_index, unit in enumerate(processing_units):
-        # Получаем текст юнита в зависимости от режима
         unit_text = unit if is_line_based else unit.text
-        
         doc_unit = nlp(unit_text)
         for token in doc_unit:
             if token.is_alpha and token.dep_ != "svp":
@@ -196,13 +200,9 @@ def process_text_v2(
     
     sorted_tokens = sorted(unique_lemmatized_tokens, key=lambda token: (token not in lemma_index, lemma_index.get(token, 0), token))
 
-    # Вспомогательная функция, чтобы не дублировать код получения текста юнита
     def get_unit_text(u):
         return u if is_line_based else u.text
 
-    # --- Логика вывода, адаптированная под 'processing_units' ---
-    
-    # 1. Вывод в консоль
     if not output_file:
         detailed = kwargs.get('detailed', False)
         two_column_output = kwargs.get('two_column_output', False)
@@ -235,13 +235,8 @@ def process_text_v2(
                 print(token)
         return None
 
-    # 2. Вывод в файл
-    final_output_file = output_file
-    if timestamp:
-        output_dir, filename = os.path.dirname(output_file), os.path.basename(output_file)
-        final_output_file = os.path.join(output_dir, f"{datetime.now().strftime('%Y%m%d%H%M%S')}-{filename}")
-
-    with open(final_output_file, "w", newline="", encoding="utf-8") as tsvfile:
+    # Логика с timestamp удалена, т.к. output_file уже содержит финальное имя
+    with open(output_file, "w", newline="", encoding="utf-8") as tsvfile:
         tsv_writer = csv.writer(tsvfile, delimiter="\t")
         if with_fields:
             tsv_writer.writerow(get_full_header())
@@ -275,15 +270,15 @@ def process_text_v2(
             
             tsv_writer.writerow(row_data)
 
-    return final_output_file
+    return output_file
 
 
-# --- ИСПРАВЛЕННАЯ ФУНКЦИЯ process_sentences ---
+# --- ИЗМЕНЕННАЯ ФУНКЦИЯ process_sentences ---
+# Удалена логика создания имени файла, она теперь в main
 def process_sentences(
     language, lemma_index, text1, text2, text3, sentence_context_size,
-    output_file, timestamp, include_simple_list, with_fields, with_br, pipe, **kwargs
+    output_file, include_simple_list, with_fields, with_br, pipe, **kwargs
 ):
-    final_output_file = output_file
     try:
         with open(text1, "r", encoding="utf-8") as f: text1_lines = [line.rstrip("\n") for line in f]
         with open(text2, "r", encoding="utf-8") as f: text2_lines = [line.rstrip("\n") for line in f]
@@ -297,46 +292,38 @@ def process_sentences(
     if text3: lengths.append(len(text3_lines))
     min_length = min(lengths)
 
-    if timestamp and output_file:
-        output_dir, filename = os.path.dirname(output_file), os.path.basename(output_file)
-        final_output_file = os.path.join(output_dir, f"{datetime.now().strftime('%Y%m%d%H%M%S')}-{filename}")
-
-    with open(final_output_file, "w", newline="", encoding="utf-8") as out_file:
+    # Логика с timestamp удалена, т.к. output_file уже содержит финальное имя
+    with open(output_file, "w", newline="", encoding="utf-8") as out_file:
         tsv_writer = csv.writer(out_file, delimiter="\t")
         if with_fields:
             tsv_writer.writerow(get_full_header())
 
         for i in range(min_length):
-            # --- ЭТОТ БЛОК БЫЛ ПРОПУЩЕН ---
             row_data = [""] * 80
             l1_sentence = text1_lines[i].strip()
             l2_sentence = text2_lines[i].strip()
             
             start_idx, end_idx = max(0, i - sentence_context_size), i + sentence_context_size + 1
             
-            # Заполнение полей данными
-            row_data[0] = l1_sentence # 1: Quotation
-            row_data[5] = " ".join(line.strip() for line in text1_lines[start_idx:i])     # 6: SentenceSourceContextLeft
-            row_data[6] = l1_sentence                                                      # 7: SentenceSource
-            row_data[7] = " ".join(line.strip() for line in text1_lines[i + 1:end_idx])    # 8: SentenceSourceContextRight
-            row_data[8] = " ".join(line.strip() for line in text2_lines[start_idx:i])     # 9: SentenceDestinationContextLeft
-            row_data[9] = l2_sentence                                                      # 10: SentenceDestination
-            row_data[10] = " ".join(line.strip() for line in text2_lines[i + 1:end_idx])   # 11: SentenceDestinationContextRight
+            row_data[0] = l1_sentence
+            row_data[5] = " ".join(line.strip() for line in text1_lines[start_idx:i])
+            row_data[6] = l1_sentence
+            row_data[7] = " ".join(line.strip() for line in text1_lines[i + 1:end_idx])
+            row_data[8] = " ".join(line.strip() for line in text2_lines[start_idx:i])
+            row_data[9] = l2_sentence
+            row_data[10] = " ".join(line.strip() for line in text2_lines[i + 1:end_idx])
             
             if include_simple_list:
                 lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp)
-                row_data[11] = "<br>".join(lemmas) if with_br else "\n".join(lemmas) # 12: SentenceSourceWordlist
+                row_data[11] = "<br>".join(lemmas) if with_br else "\n".join(lemmas)
             
-            row_data[12] = l1_sentence       # 13: SentenceSourceCloze
+            row_data[12] = l1_sentence
             
             if text3:
-                row_data[77] = " ".join(line.strip() for line in text3_lines[start_idx:i])    # 78: SentenceDestination2ContextLeft
-                row_data[78] = text3_lines[i].strip()                                         # 79: SentenceDestination2
-                row_data[79] = " ".join(line.strip() for line in text3_lines[i + 1:end_idx])  # 80: SentenceDestination2ContextRight
+                row_data[77] = " ".join(line.strip() for line in text3_lines[start_idx:i])
+                row_data[78] = text3_lines[i].strip()
+                row_data[79] = " ".join(line.strip() for line in text3_lines[i + 1:end_idx])
 
-            # --- КОНЕЦ ПРОПУЩЕННОГО БЛОКА ---
-            
-            # Установка флагов (этот блок у вас был)
             if language == "de":
                 row_data[58] = "1"
                 row_data[65] = "1"
@@ -346,13 +333,13 @@ def process_sentences(
 
             tsv_writer.writerow(row_data)
             
-    return final_output_file
+    return output_file
 
 
-# --- MAIN (с явными и надежными вызовами) ---
+# --- ОСНОВНЫЕ ИЗМЕНЕНИЯ В ФУНКЦИИ MAIN ---
 def main():
     parser = argparse.ArgumentParser(description="Extract and process tokens or sentences from text.")
-    # Все аргументы...
+    # Все старые аргументы...
     parser.add_argument("--type", required=True, choices=["token", "sentence"])
     parser.add_argument("--language", default="de", choices=["de", "en"])
     parser.add_argument("--lemma-index-file", default="")
@@ -363,6 +350,16 @@ def main():
     parser.add_argument("--sentence-context-size", type=int, default=1)
     parser.add_argument("--output")
     parser.add_argument("--timestamp", action="store_true")
+    # --- НОВЫЙ АРГУМЕНТ --autoname ---
+    parser.add_argument(
+        "--autoname",
+        nargs='?',          # Аргумент может быть без значения
+        type=int,           # Если значение есть, оно будет целым числом
+        const=3,            # Значение по умолчанию, если просто указан флаг --autoname
+        default=None,       # Значение, если флаг не указан
+        help="Automatically generate part of the filename from the first N words of the text. Defaults to 3 words if no number is given."
+    )
+    # ------------------------------------
     parser.add_argument("--two-column-output-to-file", action="store_true")
     parser.add_argument("--include-simple-list", action="store_true")
     parser.add_argument("--with-fields", action="store_true")
@@ -378,7 +375,38 @@ def main():
     nlp = spacy.load("de_core_news_lg" if args.language == "de" else "en_core_web_lg")
     
     lemma_index = load_lemma_index(args.lemma_index_file)
-    final_output_file = None
+    processed_output_file = None # Переменная для хранения имени файла, которое будет выведено в конце
+
+    # --- ЦЕНТРАЛИЗОВАННАЯ ЛОГИКА ГЕНЕРАЦИИ ИМЕНИ ВЫХОДНОГО ФАЙЛА ---
+    final_output_path = args.output
+    if args.output and (args.timestamp or args.autoname is not None):
+        zid = datetime.now().strftime('%Y%m%d%H%M%S')
+        output_dir, filename = os.path.dirname(args.output) or '.', os.path.basename(args.output)
+        
+        if args.autoname is not None:
+            source_text_for_autoname = ""
+            # Получаем текст для генерации имени
+            if args.text:
+                source_text_for_autoname = args.text
+            elif args.text1:
+                try:
+                    # Читаем только начало файла, чтобы не загружать большой файл в память
+                    with open(args.text1, 'r', encoding='utf-8') as f:
+                        source_text_for_autoname = f.read(1024) 
+                except Exception as e:
+                    print(f"Warning: Could not read {args.text1} for autonaming: {e}", file=sys.stderr)
+            
+            autoname_part = generate_autoname_prefix(source_text_for_autoname, args.autoname)
+            if autoname_part:
+                 new_filename = f"{zid}-{autoname_part}-{filename}"
+            else: # Если не удалось извлечь слова, работаем как обычный --timestamp
+                 new_filename = f"{zid}-{filename}"
+
+            final_output_path = os.path.join(output_dir, new_filename)
+        elif args.timestamp: # autoname имеет приоритет над timestamp
+            new_filename = f"{zid}-{filename}"
+            final_output_path = os.path.join(output_dir, new_filename)
+    # ----------------------------------------------------------------------
 
     if args.type == "token":
         if args.text and args.text1:
@@ -387,34 +415,32 @@ def main():
         if not input_text:
             print("Error: Either --text or --text1 must be specified.", file=sys.stderr); exit(1)
         
-        # Явный и надежный вызов на основе наличия --text2
         if args.text2:
-            final_output_file = process_text_v1(
+            processed_output_file = process_text_v1(
                 input_text, lemma_index, args.language, args.text2, args.text3,
-                args.sentence_context_size, args.output, args.timestamp,
+                args.sentence_context_size, final_output_path, # Передаем готовый путь
                 args.two_column_output_to_file, args.include_simple_list,
                 args.with_fields, args.with_br, args.pipe
             )
         else:
-             final_output_file = process_text_v2(
+             processed_output_file = process_text_v2(
                 input_text, lemma_index, args.language, args.sentence_context_size,
-                args.output, args.timestamp, args.two_column_output_to_file, args.include_simple_list,
+                final_output_path, args.two_column_output_to_file, args.include_simple_list, # Передаем готовый путь
                 args.with_fields, args.with_br, args.pipe,
-                # Передаем stdout-аргументы, которые v2 может использовать
                 detailed=args.detailed, two_column_output=args.two_column_output, html=args.html
             )
 
     elif args.type == "sentence":
         if not args.text1 or not args.text2:
             print("Error: --text1 and --text2 must be specified for sentence mode.", file=sys.stderr); exit(1)
-        final_output_file = process_sentences(
+        processed_output_file = process_sentences(
             args.language, lemma_index, args.text1, args.text2, args.text3,
-            args.sentence_context_size, args.output, args.timestamp,
+            args.sentence_context_size, final_output_path, # Передаем готовый путь
             args.include_simple_list, args.with_fields, args.with_br, args.pipe
         )
     
-    if args.pipe and final_output_file:
-        print(os.path.basename(final_output_file))
+    if args.pipe and processed_output_file:
+        print(os.path.basename(processed_output_file))
 
 if __name__ == "__main__":
     main()

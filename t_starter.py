@@ -34,13 +34,27 @@ def get_token_args(args, python_path, token_workspace):
 
     output_suffix = "sentence" if args.type == "sentence" else "token"
 
+    # --- ИЗМЕНЕННЫЙ БЛОК ДЛЯ РЕЖИМА 'single' ---
     if args.mode == "single":
-        return base_args + [
-            "--text1",
-            str(token_workspace / "in/text1.txt"),
+        # Создаем изменяемый список аргументов для этого режима
+        single_mode_args = []
+        
+        # Если передан текст напрямую через --text, используем его
+        if args.text:
+            single_mode_args.extend(["--text", args.text])
+        # В противном случае, используем файл text1.txt (старое поведение)
+        else:
+            single_mode_args.extend(["--text1", str(token_workspace / "in/text1.txt")])
+            
+        # Добавляем общие для режима 'single' аргументы
+        single_mode_args.extend([
             "--output",
             str(token_workspace / f"out/result.single.{output_suffix}.{args.language}.tsv"),
-        ]
+        ])
+        
+        return base_args + single_mode_args
+    # --- КОНЕЦ ИЗМЕНЕННОГО БЛОКА ---
+        
     elif args.mode == "dual":
         return base_args + [
             "--text1",
@@ -50,14 +64,13 @@ def get_token_args(args, python_path, token_workspace):
             "--output",
             str(token_workspace / f"out/result.dual.{output_suffix}.{args.language}.tsv"),
         ]
-    # Добавлен новый режим для трех файлов
     elif args.mode == "triple":
         return base_args + [
             "--text1",
             str(token_workspace / "in/text1.txt"),
             "--text2",
             str(token_workspace / "in/text2.txt"),
-            "--text3",  # Добавляем ключ для третьего файла
+            "--text3",
             str(token_workspace / "in/text3.txt"),
             "--output",
             str(token_workspace / f"out/result.triple.{output_suffix}.{args.language}.tsv"),
@@ -82,7 +95,6 @@ def main():
         "--mode",
         type=str,
         required=True,
-        # Добавляем 'triple' в список доступных режимов
         choices=["single", "dual", "triple"],
         help="Processing mode: single (text1), dual (text1 + text2), or triple (text1 + text2 + text3)",
     )
@@ -92,6 +104,12 @@ def main():
         required=True,
         choices=["de", "en"],
         help="Language for processing: German (de) or English (en)",
+    )
+    # --- НОВЫЙ АРГУМЕНТ ---
+    parser.add_argument(
+        "--text",
+        type=str,
+        help="Directly pass a text string for 'single' mode processing, bypassing the text1.txt file."
     )
     args = parser.parse_args()
 
@@ -111,12 +129,20 @@ def main():
         token_args,
         stdout=subprocess.PIPE,
         text=True,
+        encoding='utf-8', # Явно указываем кодировку для надежности
+        errors='replace'
     )
 
     # Get output filename from token extraction
     output_file = token_process.stdout.readline().strip()
     if not output_file:
-        print("ERROR: No output file was captured")
+        print("ERROR: No output file was captured from token_mix_combined.py")
+        # Выводим возможные ошибки из stderr для диагностики
+        stderr_output = token_process.communicate()[1]
+        if stderr_output:
+            print("--- Stderr from token_mix_combined.py ---")
+            print(stderr_output)
+            print("-----------------------------------------")
         return
 
     print(f"Processing file: {output_file}")

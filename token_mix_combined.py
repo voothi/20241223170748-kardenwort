@@ -346,9 +346,9 @@ def main():
         "--autoname",
         nargs='?',
         type=int,
-        const=3,
+        const=4,
         default=None,
-        help="Automatically generate part of the filename from the first N words of the text. Defaults to 3 words if no number is given."
+        help="Automatically generate part of the filename from the first N words of the text. Defaults to 4 words if no number is given."
     )
     parser.add_argument("--two-column-output-to-file", action="store_true")
     parser.add_argument("--include-simple-list", action="store_true")

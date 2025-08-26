@@ -115,15 +115,12 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, gcs=False, ahocs=None, g
                     final_components = comp_split.merge_fractions(dissection)
                     
                     if len(final_components) > 1:
-                        # --- ПРОВЕРКА ЦЕЛОСТНОСТИ ---
-                        reconstructed_lemma = "".join(part.lower() for part in final_components)
-                        if reconstructed_lemma == token.lemma_:
-                            for part in final_components:
-                                part_doc = nlp(part)
-                                if len(part_doc) > 0:
-                                    lemmatized_part = part_doc[0].lemma_
-                                    part_is_noun = nlp(lemmatized_part)[0].pos_ in ["NOUN", "PROPN"]
-                                    final_tokens.add(lemmatized_part.capitalize() if part_is_noun else lemmatized_part)
+                        for part in final_components:
+                            part_doc = nlp(part)
+                            if len(part_doc) > 0:
+                                lemmatized_part = part_doc[0].lemma_
+                                part_is_noun = nlp(lemmatized_part)[0].pos_ in ["NOUN", "PROPN"]
+                                final_tokens.add(lemmatized_part.capitalize() if part_is_noun else lemmatized_part)
                 except Exception:
                     pass
     
@@ -169,15 +166,12 @@ def process_text_v1(
                         
                         final_components = comp_split.merge_fractions(dissection)
                         if len(final_components) > 1:
-                            # --- ПРОВЕРКА ЦЕЛОСТНОСТИ ---
-                            reconstructed_lemma = "".join(part.lower() for part in final_components)
-                            if reconstructed_lemma == token.lemma_:
-                                for part in final_components:
-                                    part_doc = nlp(part)
-                                    if len(part_doc) > 0:
-                                        lemmatized_part = part_doc[0].lemma_
-                                        part_is_noun = nlp(lemmatized_part)[0].pos_ in ["NOUN", "PROPN"]
-                                        tokens_to_add.append(lemmatized_part.capitalize() if part_is_noun else lemmatized_part)
+                            for part in final_components:
+                                part_doc = nlp(part)
+                                if len(part_doc) > 0:
+                                    lemmatized_part = part_doc[0].lemma_
+                                    part_is_noun = nlp(lemmatized_part)[0].pos_ in ["NOUN", "PROPN"]
+                                    tokens_to_add.append(lemmatized_part.capitalize() if part_is_noun else lemmatized_part)
                     except Exception:
                         pass
                 
@@ -271,15 +265,12 @@ def process_text_v2(
 
                         final_components = comp_split.merge_fractions(dissection)
                         if len(final_components) > 1:
-                            # --- ПРОВЕРКА ЦЕЛОСТНОСТИ ---
-                            reconstructed_lemma = "".join(part.lower() for part in final_components)
-                            if reconstructed_lemma == token.lemma_:
-                                for part in final_components:
-                                    part_doc = nlp(part)
-                                    if len(part_doc) > 0:
-                                        lemmatized_part = part_doc[0].lemma_
-                                        part_is_noun = nlp(lemmatized_part)[0].pos_ in ["NOUN", "PROPN"]
-                                        tokens_to_add.append(lemmatized_part.capitalize() if part_is_noun else lemmatized_part)
+                            for part in final_components:
+                                part_doc = nlp(part)
+                                if len(part_doc) > 0:
+                                    lemmatized_part = part_doc[0].lemma_
+                                    part_is_noun = nlp(lemmatized_part)[0].pos_ in ["NOUN", "PROPN"]
+                                    tokens_to_add.append(lemmatized_part.capitalize() if part_is_noun else lemmatized_part)
                     except Exception:
                         pass
                 
@@ -532,7 +523,7 @@ def main():
         if not args.text1 or not args.text2:
             print("Error: --text1 and --text2 must be specified for sentence mode.", file=sys.stderr); exit(1)
         processed_output_file = process_sentences(
-            args.language, lemma_index, args.text1, args.text2, args.text3,
+            language, lemma_index, args.text1, args.text2, args.text3,
             args.sentence_context_size, final_output_path,
             args.include_simple_list, args.with_fields, args.with_br, args.pipe
         )

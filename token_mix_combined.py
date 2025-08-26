@@ -104,14 +104,37 @@ def generate_autoname_prefix(text, num_words):
         return ""
     return "-".join(selected_words)
 
+def process_sentence_lemmas(sentence, lemma_index, nlp, gcs=False, ahocs=None, gcs_in_wordlist=False):
+    doc = nlp(sentence)
+    final_tokens = set()
+
+    for token in doc:
+        if token.is_alpha and token.dep_ != "svp":
+            lemma = get_verb_with_particle(token) if token.pos_ == "VERB" else token.lemma_
+            final_tokens.add(lemma)
+
+            # Разделяем слово только если включены ОБА ключа: --gcs и --gcs-in-wordlist
+            if gcs and ahocs and gcs_in_wordlist and nlp.lang == 'de':
+                try:
+                    with redirect_stdout(io.StringIO()):
+                        dissection = comp_split.dissect(token.text, ahocs, make_singular=True)
+                    
+                    final_components = comp_split.merge_fractions(dissection)
+                    
+                    if len(final_components) > 1:
+                        for part in final_components:
+                            final_tokens.add(part)
+                except Exception:
+                    pass
+    
+    return sorted(list(final_tokens), key=lambda x: lemma_index.get(x, float("inf")))
 
 # --- НАЧАЛО ИЗМЕНЕНИЙ В process_text_v1 ---
 def process_text_v1(
     input_text, lemma_index, language, text2, text3, sentence_context_size,
     output_file, two_column_output_to_file, include_simple_list,
-    with_fields, with_br, pipe, gcs, ahocs # Новые параметры
+    with_fields, with_br, pipe, gcs, ahocs, gcs_in_wordlist
 ):
-# --- КОНЕЦ ИЗМЕНЕНИЙ В process_text_v1 ---
     if "\n" in input_text or not os.path.exists(input_text):
         text1_lines = input_text.splitlines()
     else:
@@ -131,15 +154,11 @@ def process_text_v1(
                 verb_form = get_verb_with_particle(token) if language == "de" and token.pos_ == "VERB" else token.lemma_
                 original_form = get_original_form_with_particle(token) if language == "de" and token.pos_ == "VERB" else token.text
                 
-                # --- НАЧАЛО НОВОЙ ЛОГИКИ GCS ---
                 tokens_to_add = [verb_form]
                 if gcs and ahocs and language == 'de':
                     try:
-                        # --- ИСПРАВЛЕНИЕ ЗДЕСЬ ---
-                        # Убираем verbose=False и оборачиваем в redirect_stdout
                         with redirect_stdout(io.StringIO()):
                             dissection = comp_split.dissect(token.text, ahocs, make_singular=True)
-                        # --- КОНЕЦ ИСПРАВЛЕНИЯ ---
                         
                         final_components = comp_split.merge_fractions(dissection)
                         if len(final_components) > 1:
@@ -151,10 +170,7 @@ def process_text_v1(
                     unique_lemmatized_tokens.add(t)
                     if t not in token_to_sentence:
                         token_to_sentence[t] = (i, line1)
-                        # Для родительского слова сохраняем его оригинальную форму из текста,
-                        # для дочерних - саму дочернюю форму, так как у нее нет "оригинала".
                         token_to_original_form[t] = original_form if t == verb_form else t
-                # --- КОНЕЦ НОВОЙ ЛОГИКИ GCS ---
 
     sorted_tokens = sorted(unique_lemmatized_tokens, key=lambda token: (token not in lemma_index, lemma_index.get(token, 0), token))
 
@@ -190,7 +206,11 @@ def process_text_v1(
                     row_data[2] = token_to_original_form[token]
                 row_data[12] = l1_sentence
                 if include_simple_list:
-                    row_data[11] = "<br>".join(process_sentence_lemmas(l1_sentence, lemma_index, nlp)) if with_br else "\n".join(process_sentence_lemmas(l1_sentence, lemma_index, nlp))
+                    lemmas = process_sentence_lemmas(
+                        l1_sentence, lemma_index, nlp, 
+                        gcs=gcs, ahocs=ahocs, gcs_in_wordlist=gcs_in_wordlist
+                    )
+                    row_data[11] = "<br>".join(lemmas) if with_br else "\n".join(lemmas)
                 
                 if language == "de":
                     row_data[58] = "1"
@@ -204,13 +224,13 @@ def process_text_v1(
     return output_file
 
 
+
 # --- НАЧАЛО ИЗМЕНЕНИЙ В process_text_v2 ---
 def process_text_v2(
     input_text, lemma_index, language, sentence_context_size,
     output_file, two_column_output_to_file, include_simple_list,
-    with_fields, with_br, pipe, gcs, ahocs, **kwargs # Новые параметры
+    with_fields, with_br, pipe, gcs, ahocs, gcs_in_wordlist, **kwargs
 ):
-# --- КОНЕЦ ИЗМЕНЕНИЙ В process_text_v2 ---
     if '\n' in input_text.strip():
         processing_units = input_text.splitlines()
         is_line_based = True
@@ -229,15 +249,11 @@ def process_text_v2(
                 verb_form = get_verb_with_particle(token) if language == "de" and token.pos_ == "VERB" else token.lemma_
                 original_form = get_original_form_with_particle(token) if language == "de" and token.pos_ == "VERB" else token.text
 
-                # --- НАЧАЛО НОВОЙ ЛОГИКИ GCS (аналогично v1) ---
                 tokens_to_add = [verb_form]
                 if gcs and ahocs and language == 'de':
                     try:
-                        # --- ИСПРАВЛЕНИЕ ЗДЕСЬ ---
-                        # Убираем verbose=False и оборачиваем в redirect_stdout
                         with redirect_stdout(io.StringIO()):
                             dissection = comp_split.dissect(token.text, ahocs, make_singular=True)
-                        # --- КОНЕЦ ИСПРАВЛЕНИЯ ---
 
                         final_components = comp_split.merge_fractions(dissection)
                         if len(final_components) > 1:
@@ -250,7 +266,6 @@ def process_text_v2(
                     if t not in token_to_sentence:
                         token_to_sentence[t] = (unit_index, unit_text)
                         token_to_original_form[t] = original_form if t == verb_form else t
-                # --- КОНЕЦ НОВОЙ ЛОГИКИ GCS ---
 
     sorted_tokens = sorted(unique_lemmatized_tokens, key=lambda token: (token not in lemma_index, lemma_index.get(token, 0), token))
 
@@ -312,7 +327,11 @@ def process_text_v2(
                 row_data[2] = token_to_original_form.get(token, '')
             row_data[12] = l1_sentence
             if include_simple_list:
-                row_data[11] = "<br>".join(process_sentence_lemmas(l1_sentence, lemma_index, nlp)) if with_br else "\n".join(process_sentence_lemmas(l1_sentence, lemma_index, nlp))
+                lemmas = process_sentence_lemmas(
+                    l1_sentence, lemma_index, nlp, 
+                    gcs=gcs, ahocs=ahocs, gcs_in_wordlist=gcs_in_wordlist
+                )
+                row_data[11] = "<br>".join(lemmas) if with_br else "\n".join(lemmas)
 
             if language == "de":
                 row_data[58] = "1"
@@ -324,7 +343,6 @@ def process_text_v2(
             tsv_writer.writerow(row_data)
 
     return output_file
-
 
 def process_sentences(
     language, lemma_index, text1, text2, text3, sentence_context_size,
@@ -391,7 +409,6 @@ def process_sentences(
 # --- ИЗМЕНЕНИЯ В ФУНКЦИИ MAIN ---
 def main():
     parser = argparse.ArgumentParser(description="Extract and process tokens or sentences from text.")
-    # ... все ваши аргументы парсера ...
     parser.add_argument("--type", required=True, choices=["token", "sentence"])
     parser.add_argument("--language", default="de", choices=["de", "en"])
     parser.add_argument("--lemma-index-file", default="")
@@ -421,8 +438,13 @@ def main():
     parser.add_argument("--original-form-in-simple-list", action="store_true")
     parser.add_argument("--gcs", action="store_true", help="Enable German Compound Splitting. Requires --language de.")
     parser.add_argument("--gcs-dictionary", default="german.dic", help="Path to the dictionary file for GCS.")
+    parser.add_argument("--gcs-in-wordlist", action="store_true", help="Also add German compound components to the SentenceSourceWordlist field. Requires --gcs.")
     
     args = parser.parse_args()
+
+    if args.gcs_in_wordlist and not args.gcs:
+        print("Error: --gcs-in-wordlist requires --gcs to be enabled.", file=sys.stderr)
+        exit(1)
 
     global nlp
     nlp = spacy.load("de_core_news_lg" if args.language == "de" else "en_core_web_lg")
@@ -440,12 +462,9 @@ def main():
             print("Please download it and place it in the correct directory.", file=sys.stderr)
             exit(1)
         try:
-            # --- ГАРАНТИРОВАННОЕ ПОДАВЛЕНИЕ ВЫВОДА ---
             with redirect_stdout(io.StringIO()):
                 ahocs = comp_split.read_dictionary_from_file(args.gcs_dictionary)
-            # --- КОНЕЦ ИСПРАВЛЕНИЯ ---
         except Exception as e:
-            # Выводим только реальные ошибки, а не служебные сообщения
             print(f"Error loading GCS dictionary: {e}", file=sys.stderr)
             exit(1)
 
@@ -495,14 +514,14 @@ def main():
                 args.sentence_context_size, final_output_path,
                 args.two_column_output_to_file, args.include_simple_list,
                 args.with_fields, args.with_br, args.pipe,
-                args.gcs, ahocs
+                args.gcs, ahocs, args.gcs_in_wordlist
             )
         else:
              processed_output_file = process_text_v2(
                 input_text, lemma_index, args.language, args.sentence_context_size,
                 final_output_path, args.two_column_output_to_file, args.include_simple_list,
                 args.with_fields, args.with_br, args.pipe,
-                args.gcs, ahocs,
+                args.gcs, ahocs, args.gcs_in_wordlist,
                 detailed=args.detailed, two_column_output=args.two_column_output, html=args.html
             )
 

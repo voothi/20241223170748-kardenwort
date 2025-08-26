@@ -105,8 +105,10 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, gcs=False, ahocs=None, g
 
             if gcs and ahocs and gcs_in_wordlist and nlp.lang == 'de':
                 try:
+                    # Определяем правильный режим для каждой части речи
+                    should_make_singular = (token.pos_ == 'NOUN')
                     with redirect_stdout(io.StringIO()):
-                        dissection = comp_split.dissect(token.lemma_, ahocs, make_singular=True)
+                        dissection = comp_split.dissect(token.lemma_, ahocs, make_singular=should_make_singular)
                     
                     final_components = comp_split.merge_fractions(dissection)
                     
@@ -151,8 +153,10 @@ def process_text_v1(
                 tokens_to_add = [verb_form]
                 if gcs and ahocs and language == 'de':
                     try:
+                        # Определяем правильный режим для каждой части речи
+                        should_make_singular = (token.pos_ == 'NOUN')
                         with redirect_stdout(io.StringIO()):
-                            dissection = comp_split.dissect(token.lemma_, ahocs, make_singular=True)
+                            dissection = comp_split.dissect(token.lemma_, ahocs, make_singular=should_make_singular)
                         
                         final_components = comp_split.merge_fractions(dissection)
                         if len(final_components) > 1:
@@ -244,8 +248,10 @@ def process_text_v2(
                 tokens_to_add = [verb_form]
                 if gcs and ahocs and language == 'de':
                     try:
+                        # Определяем правильный режим для каждой части речи
+                        should_make_singular = (token.pos_ == 'NOUN')
                         with redirect_stdout(io.StringIO()):
-                            dissection = comp_split.dissect(token.lemma_, ahocs, make_singular=True)
+                            dissection = comp_split.dissect(token.lemma_, ahocs, make_singular=should_make_singular)
 
                         final_components = comp_split.merge_fractions(dissection)
                         if len(final_components) > 1:

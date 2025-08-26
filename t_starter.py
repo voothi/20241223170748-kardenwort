@@ -31,6 +31,7 @@ def get_token_args(args, python_path, token_workspace):
         "--with-br",
         "--autoname",
         "--gcs",
+        "--gcs-only-nouns-false",
         "--gcs-dictionary",
         "U:/voothi/20241223170748-token-extraction/20250826000433-test/german.dic",
         "--gcs-in-wordlist",

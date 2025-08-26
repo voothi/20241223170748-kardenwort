@@ -103,7 +103,7 @@ def generate_autoname_prefix(text, num_words):
         return ""
     return "-".join(selected_words)
 
-def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, ahocs=None, gcs_in_wordlist=False):
+def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, ahocs=None, gcs_in_wordlist=False, gcs_only_nouns=True):
     doc = nlp(sentence)
     final_tokens = set()
 
@@ -137,7 +137,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, 
                     word_to_split = token.text
                     should_make_singular = (token.pos_ in ['NOUN', 'PROPN'])
                     with redirect_stdout(io.StringIO()):
-                        dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular)
+                        dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=gcs_only_nouns)
 
                     final_components = comp_split.merge_fractions(dissection)
 
@@ -161,7 +161,8 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, 
 def process_text_v1(
     input_text, lemma_index, language, text2, text3, sentence_context_size,
     output_file, two_column_output_to_file, include_simple_list,
-    with_fields, with_br, pipe, gcs, ahocs, gcs_in_wordlist, german_dict
+    with_fields, with_br, pipe, gcs, ahocs, gcs_in_wordlist, german_dict,
+    gcs_only_nouns=True
 ):
     if "\n" in input_text or not os.path.exists(input_text):
         text1_lines = input_text.splitlines()
@@ -209,7 +210,7 @@ def process_text_v1(
                         word_to_split = token.text
                         should_make_singular = (token.pos_ in ['NOUN', 'PROPN'])
                         with redirect_stdout(io.StringIO()):
-                            dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular)
+                            dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=gcs_only_nouns)
 
                         final_components = comp_split.merge_fractions(dissection)
                         if len(final_components) > 1:
@@ -270,7 +271,7 @@ def process_text_v1(
                     row_data[2] = token_to_original_form.get(token, '')
                 row_data[12] = l1_sentence
                 if include_simple_list:
-                    lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, german_dict, gcs, ahocs, gcs_in_wordlist)
+                    lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, german_dict, gcs, ahocs, gcs_in_wordlist, gcs_only_nouns)
                     row_data[11] = "<br>".join(lemmas) if with_br else "\n".join(lemmas)
 
                 if language == "de":
@@ -287,6 +288,7 @@ def process_text_v2(
     output_file, two_column_output_to_file, include_simple_list,
     with_fields, with_br, pipe, gcs, ahocs, gcs_in_wordlist, german_dict, **kwargs
 ):
+    gcs_only_nouns = kwargs.get('gcs_only_nouns', True)
     if '\n' in input_text.strip():
         processing_units = input_text.splitlines()
         is_line_based = True
@@ -331,7 +333,7 @@ def process_text_v2(
                         word_to_split = token.text
                         should_make_singular = (token.pos_ in ['NOUN', 'PROPN'])
                         with redirect_stdout(io.StringIO()):
-                            dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular)
+                            dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=gcs_only_nouns)
 
                         final_components = comp_split.merge_fractions(dissection)
                         if len(final_components) > 1:
@@ -416,7 +418,7 @@ def process_text_v2(
                 row_data[2] = token_to_original_form.get(token, '')
             row_data[12] = l1_sentence
             if include_simple_list:
-                lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, german_dict, gcs, ahocs, gcs_in_wordlist)
+                lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, german_dict, gcs, ahocs, gcs_in_wordlist, gcs_only_nouns)
                 row_data[11] = "<br>".join(lemmas) if with_br else "\n".join(lemmas)
 
             if language == "de":
@@ -510,6 +512,7 @@ def main():
     parser.add_argument("--gcs", action="store_true", help="Enable German Compound Splitting. Requires --language de.")
     parser.add_argument("--gcs-dictionary", default="german.dic", help="Path to the dictionary file for GCS.")
     parser.add_argument("--gcs-in-wordlist", action="store_true", help="Also add German compound components to the SentenceSourceWordlist field. Requires --gcs.")
+    parser.add_argument("--gcs-only-nouns-false", action="store_true", help="Allows any type of word (verb, adjective, prefix, suffix) in the dictionary to be used for GCS splitting. Sometimes the results are better than limiting to nouns only.")
 
     args = parser.parse_args()
 
@@ -578,13 +581,16 @@ def main():
         if not input_text:
             print("Error: Either --text or --text1 must be specified.", file=sys.stderr); exit(1)
 
+        gcs_only_nouns_param = not args.gcs_only_nouns_false
+
         if args.text2:
             processed_output_file = process_text_v1(
                 input_text, lemma_index, args.language, args.text2, args.text3,
                 args.sentence_context_size, final_output_path,
                 args.two_column_output_to_file, args.include_simple_list,
                 args.with_fields, args.with_br, args.pipe,
-                args.gcs, ahocs, args.gcs_in_wordlist, german_dict
+                args.gcs, ahocs, args.gcs_in_wordlist, german_dict,
+                gcs_only_nouns=gcs_only_nouns_param
             )
         else:
              processed_output_file = process_text_v2(
@@ -592,6 +598,7 @@ def main():
                 final_output_path, args.two_column_output_to_file, args.include_simple_list,
                 args.with_fields, args.with_br, args.pipe,
                 args.gcs, ahocs, args.gcs_in_wordlist, german_dict,
+                gcs_only_nouns=gcs_only_nouns_param,
                 detailed=args.detailed, two_column_output=args.two_column_output, html=args.html
             )
 

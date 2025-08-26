@@ -5,6 +5,8 @@ import argparse
 from datetime import datetime
 import os
 import re
+from contextlib import redirect_stdout
+import io
 
 # --- НОВЫЙ ИМПОРТ для GCS ---
 try:
@@ -386,10 +388,11 @@ def process_sentences(
 
 
 # --- ИЗМЕНЕНИЯ В ФУНКЦИИ MAIN ---
+# --- ИЗМЕНЕНИЯ В ФУНКЦИИ MAIN ---
+# --- ИЗМЕНЕНИЯ В ФУНКЦИИ MAIN ---
 def main():
     parser = argparse.ArgumentParser(description="Extract and process tokens or sentences from text.")
-    # ... все аргументы парсера остаются без изменений ...
-    # (здесь идет весь список ваших parser.add_argument)
+    # ... все ваши аргументы парсера ...
     parser.add_argument("--type", required=True, choices=["token", "sentence"])
     parser.add_argument("--language", default="de", choices=["de", "en"])
     parser.add_argument("--lemma-index-file", default="")
@@ -425,7 +428,6 @@ def main():
     global nlp
     nlp = spacy.load("de_core_news_lg" if args.language == "de" else "en_core_web_lg")
     
-    # --- НАЧАЛО ЛОГИКИ ЗАГРУЗКИ СЛОВАРЯ GCS (БЕЗ СООБЩЕНИЙ) ---
     ahocs = None
     if args.gcs:
         if not GCS_AVAILABLE:
@@ -439,12 +441,14 @@ def main():
             print("Please download it and place it in the correct directory.", file=sys.stderr)
             exit(1)
         try:
-            # --- СООБЩЕНИЯ О ЗАГРУЗКЕ УДАЛЕНЫ ---
-            ahocs = comp_split.read_dictionary_from_file(args.gcs_dictionary)
+            # --- ГАРАНТИРОВАННОЕ ПОДАВЛЕНИЕ ВЫВОДА ---
+            with redirect_stdout(io.StringIO()):
+                ahocs = comp_split.read_dictionary_from_file(args.gcs_dictionary)
+            # --- КОНЕЦ ИСПРАВЛЕНИЯ ---
         except Exception as e:
+            # Выводим только реальные ошибки, а не служебные сообщения
             print(f"Error loading GCS dictionary: {e}", file=sys.stderr)
             exit(1)
-    # --- КОНЕЦ ЛОГИКИ ЗАГРУЗКИ СЛОВАРЯ GCS ---
 
     lemma_index = load_lemma_index(args.lemma_index_file)
     processed_output_file = None

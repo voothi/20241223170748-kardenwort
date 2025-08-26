@@ -115,29 +115,33 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, 
 
     for token in doc:
         if token.is_alpha and token.dep_ != "svp":
-            # --- НОВЫЙ УЛУЧШЕННЫЙ БЛОК ---
-            original_form_capitalized = token.text.capitalize()
-            spacy_lemma_capitalized = token.lemma_.capitalize()
+            # --- ФИНАЛЬНЫЙ БЛОК ЛОГИКИ v3 (с учетом аббревиатур) ---
+            token_text = token.text
+            spacy_lemma = token.lemma_
 
-            if nlp.lang == "de" and token.pos_ in ["NOUN", "PROPN"]:
-                base_lemma = spacy_lemma_capitalized
+            form_to_check = token_text if token_text.isupper() else token_text.capitalize()
+            lemma_to_check = spacy_lemma if spacy_lemma.isupper() else spacy_lemma.capitalize()
+
+            if token.pos_ in ["NOUN", "PROPN"] and spacy_lemma.isupper():
+                base_lemma = spacy_lemma
+            elif nlp.lang == "de" and token.pos_ in ["NOUN", "PROPN"]:
+                base_lemma = spacy_lemma.capitalize()
             else:
                 base_lemma = get_verb_with_particle(token) if token.pos_ == "VERB" else token.lemma_
 
             lemma_to_add = ""
-            if original_form_capitalized in german_dict:
-                if spacy_lemma_capitalized in german_dict:
+            if form_to_check in german_dict:
+                if lemma_to_check in german_dict:
                     lemma_to_add = base_lemma
                 else:
-                    lemma_to_add = original_form_capitalized
+                    lemma_to_add = form_to_check
             else:
                 lemma_to_add = base_lemma
-
             final_tokens.add(lemma_to_add)
+            # --- КОНЕЦ ФИНАЛЬНОГО БЛОКА ---
 
             if gcs and ahocs and gcs_in_wordlist and nlp.lang == 'de' and len(token.text) > 7:
                 try:
-                    # Используем исходный текст токена для более точного разбора
                     word_to_split = token.text 
                     should_make_singular = (token.pos_ in ['NOUN', 'PROPN'])
                     with redirect_stdout(io.StringIO()):
@@ -147,17 +151,17 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, 
                     
                     if len(final_components) > 1:
                         for part in final_components:
-                            # Проверяем наличие компонента в словаре (с заглавной)
-                            if part.capitalize() in german_dict:
-                                final_tokens.add(part.capitalize())
-                            else: # Если нет, пытаемся лемматизировать
+                            # Улучшенная логика для компонентов, уважающая регистр
+                            part_to_check = part if part.isupper() else part.capitalize()
+                            if part_to_check in german_dict:
+                                final_tokens.add(part_to_check)
+                            else:
                                 part_doc = nlp(part)
                                 if len(part_doc) > 0:
-                                    lemmatized_part = part_doc[0].lemma_
-                                    # И снова проверяем в словаре
-                                    if lemmatized_part.capitalize() in german_dict:
-                                        final_tokens.add(lemmatized_part.capitalize())
-
+                                    lemmatized_part_str = part_doc[0].lemma_
+                                    lemma_part_to_check = lemmatized_part_str if lemmatized_part_str.isupper() else lemmatized_part_str.capitalize()
+                                    if lemma_part_to_check in german_dict:
+                                        final_tokens.add(lemma_part_to_check)
                 except Exception:
                     pass
     
@@ -187,33 +191,32 @@ def process_text_v1(
         doc = nlp(line1)
         for token in doc:
             if token.is_alpha and token.dep_ != "svp":
-                # --- НОВЫЙ УЛУЧШЕННЫЙ БЛОК ---
-                original_form_capitalized = token.text.capitalize()
-                spacy_lemma_capitalized = token.lemma_.capitalize()
+                # --- ФИНАЛЬНЫЙ БЛОК ЛОГИКИ v3 (с учетом аббревиатур) ---
+                token_text = token.text
+                spacy_lemma = token.lemma_
 
-                # Сначала получаем лемму от SpaCy для дальнейших проверок
-                if language == "de" and token.pos_ in ["NOUN", "PROPN"]:
-                    base_lemma = spacy_lemma_capitalized
+                form_to_check = token_text if token_text.isupper() else token_text.capitalize()
+                lemma_to_check = spacy_lemma if spacy_lemma.isupper() else spacy_lemma.capitalize()
+
+                if token.pos_ in ["NOUN", "PROPN"] and spacy_lemma.isupper():
+                    base_lemma = spacy_lemma
+                elif language == "de" and token.pos_ in ["NOUN", "PROPN"]:
+                    base_lemma = spacy_lemma.capitalize()
                 else:
                     base_lemma = get_verb_with_particle(token) if token.pos_ == "VERB" else token.lemma_
 
-                # Теперь применяем умную логику
-                if original_form_capitalized in german_dict:
-                    # Если оригинал в словаре, проверяем лемму
-                    if spacy_lemma_capitalized in german_dict:
-                        # Если и лемма в словаре (случай Teilgebiete -> Teilgebiet), то используем лемму.
-                        # Также обрабатываем случай, когда слово не меняется (Ananas -> Ananas).
+                if form_to_check in german_dict:
+                    if lemma_to_check in german_dict:
                         primary_token = base_lemma
                     else:
-                        # Если только оригинал в словаре (случай Ananas -> Anana), используем оригинал.
-                        primary_token = original_form_capitalized
+                        primary_token = form_to_check
                 else:
-                    # Если оригинала в словаре нет, полностью доверяем SpaCy.
                     primary_token = base_lemma
+                # --- КОНЕЦ ФИНАЛЬНОГО БЛОКА ---
 
                 original_form = get_original_form_with_particle(token)
                 
-                tokens_to_add = {primary_token} # Используем set для автоматической уникальности
+                tokens_to_add = {primary_token}
                 if gcs and ahocs and language == 'de' and len(token.text) > 7:
                     try:
                         word_to_split = token.text
@@ -224,14 +227,17 @@ def process_text_v1(
                         final_components = comp_split.merge_fractions(dissection)
                         if len(final_components) > 1:
                             for part in final_components:
-                                if part.capitalize() in german_dict:
-                                    tokens_to_add.add(part.capitalize())
+                                # Улучшенная логика для компонентов, уважающая регистр
+                                part_to_check = part if part.isupper() else part.capitalize()
+                                if part_to_check in german_dict:
+                                    tokens_to_add.add(part_to_check)
                                 else:
                                     part_doc = nlp(part)
                                     if len(part_doc) > 0:
-                                        lemmatized_part = part_doc[0].lemma_
-                                        if lemmatized_part.capitalize() in german_dict:
-                                            tokens_to_add.add(lemmatized_part.capitalize())
+                                        lemmatized_part_str = part_doc[0].lemma_
+                                        lemma_part_to_check = lemmatized_part_str if lemmatized_part_str.isupper() else lemmatized_part_str.capitalize()
+                                        if lemma_part_to_check in german_dict:
+                                            tokens_to_add.add(lemma_part_to_check)
                     except Exception:
                         pass
                 
@@ -252,7 +258,7 @@ def process_text_v1(
             for token in sorted_tokens:
                 row_data = [""] * 80
                 sent_index, l1_sentence = token_to_sentence.get(token, (-1, ""))
-                if sent_index == -1: continue # Пропускаем, если что-то пошло не так
+                if sent_index == -1: continue
                 l1_sentence = l1_sentence.strip()
                 l2_sentence = text2_lines[sent_index].strip() if text2 and sent_index < len(text2_lines) else ""
                 
@@ -310,29 +316,28 @@ def process_text_v2(
         doc_unit = nlp(unit_text)
         for token in doc_unit:
             if token.is_alpha and token.dep_ != "svp":
-                # --- НОВЫЙ УЛУЧШЕННЫЙ БЛОК ---
-                original_form_capitalized = token.text.capitalize()
-                spacy_lemma_capitalized = token.lemma_.capitalize()
+                # --- ФИНАЛЬНЫЙ БЛОК ЛОГИКИ v3 (с учетом аббревиатур) ---
+                token_text = token.text
+                spacy_lemma = token.lemma_
 
-                # Сначала получаем лемму от SpaCy для дальнейших проверок
-                if language == "de" and token.pos_ in ["NOUN", "PROPN"]:
-                    base_lemma = spacy_lemma_capitalized
+                form_to_check = token_text if token_text.isupper() else token_text.capitalize()
+                lemma_to_check = spacy_lemma if spacy_lemma.isupper() else spacy_lemma.capitalize()
+
+                if token.pos_ in ["NOUN", "PROPN"] and spacy_lemma.isupper():
+                    base_lemma = spacy_lemma
+                elif language == "de" and token.pos_ in ["NOUN", "PROPN"]:
+                    base_lemma = spacy_lemma.capitalize()
                 else:
                     base_lemma = get_verb_with_particle(token) if token.pos_ == "VERB" else token.lemma_
 
-                # Теперь применяем умную логику
-                if original_form_capitalized in german_dict:
-                    # Если оригинал в словаре, проверяем лемму
-                    if spacy_lemma_capitalized in german_dict:
-                        # Если и лемма в словаре (случай Teilgebiete -> Teilgebiet), то используем лемму.
-                        # Также обрабатываем случай, когда слово не меняется (Ananas -> Ananas).
+                if form_to_check in german_dict:
+                    if lemma_to_check in german_dict:
                         primary_token = base_lemma
                     else:
-                        # Если только оригинал в словаре (случай Ananas -> Anana), используем оригинал.
-                        primary_token = original_form_capitalized
+                        primary_token = form_to_check
                 else:
-                    # Если оригинала в словаре нет, полностью доверяем SpaCy.
                     primary_token = base_lemma
+                # --- КОНЕЦ ФИНАЛЬНОГО БЛОКА ---
                 
                 original_form = get_original_form_with_particle(token)
 
@@ -347,14 +352,17 @@ def process_text_v2(
                         final_components = comp_split.merge_fractions(dissection)
                         if len(final_components) > 1:
                             for part in final_components:
-                                if part.capitalize() in german_dict:
-                                    tokens_to_add.add(part.capitalize())
+                                # Улучшенная логика для компонентов, уважающая регистр
+                                part_to_check = part if part.isupper() else part.capitalize()
+                                if part_to_check in german_dict:
+                                    tokens_to_add.add(part_to_check)
                                 else:
                                     part_doc = nlp(part)
                                     if len(part_doc) > 0:
-                                        lemmatized_part = part_doc[0].lemma_
-                                        if lemmatized_part.capitalize() in german_dict:
-                                            tokens_to_add.add(lemmatized_part.capitalize())
+                                        lemmatized_part_str = part_doc[0].lemma_
+                                        lemma_part_to_check = lemmatized_part_str if lemmatized_part_str.isupper() else lemmatized_part_str.capitalize()
+                                        if lemma_part_to_check in german_dict:
+                                            tokens_to_add.add(lemma_part_to_check)
                     except Exception:
                         pass
                 
@@ -370,7 +378,35 @@ def process_text_v2(
         return u if is_line_based else u.text
 
     if not output_file:
-        # ... (код вывода в консоль без изменений)
+        detailed = kwargs.get('detailed', False)
+        two_column_output = kwargs.get('two_column_output', False)
+        html = kwargs.get('html', False)
+
+        if html:
+            print("<table>")
+            for token in sorted_tokens:
+                print(f"<tr><td>{token}</td><td>{token_to_original_form.get(token, '')}</td></tr>")
+            print("</table>")
+        elif two_column_output:
+            for token in sorted_tokens:
+                print(f"{token}\t{token_to_original_form.get(token, '')}")
+        elif detailed:
+             for token in sorted_tokens:
+                unit_index, l1_sentence = token_to_sentence[token]
+                start_idx = max(0, unit_index - sentence_context_size)
+                end_idx = min(len(processing_units), unit_index + sentence_context_size + 1)
+                
+                l1_left = " ".join(get_unit_text(u).strip() for u in processing_units[start_idx:unit_index])
+                l1_right = " ".join(get_unit_text(u).strip() for u in processing_units[unit_index + 1:end_idx])
+                
+                print(token)
+                if l1_left: print(l1_left)
+                print(l1_sentence.strip())
+                if l1_right: print(l1_right)
+                print()
+        else:
+            for token in sorted_tokens:
+                print(token)
         return None
 
     with open(output_file, "w", newline="", encoding="utf-8") as tsvfile:
@@ -409,11 +445,67 @@ def process_text_v2(
 
     return output_file
 
-# ... (функция process_sentences остается без изменений) ...
+def process_sentences(
+    language, lemma_index, text1, text2, text3, sentence_context_size,
+    output_file, include_simple_list, with_fields, with_br, pipe, **kwargs
+):
+    try:
+        with open(text1, "r", encoding="utf-8") as f: text1_lines = [line.rstrip("\n") for line in f]
+        with open(text2, "r", encoding="utf-8") as f: text2_lines = [line.rstrip("\n") for line in f]
+        text3_lines = []
+        if text3:
+            with open(text3, "r", encoding="utf-8") as f: text3_lines = [line.rstrip("\n") for line in f]
+    except IOError as e:
+        print(f"Error reading files: {e}", file=sys.stderr); sys.exit(1)
+        
+    lengths = [len(text1_lines), len(text2_lines)]
+    if text3: lengths.append(len(text3_lines))
+    min_length = min(lengths)
+
+    with open(output_file, "w", newline="", encoding="utf-8") as out_file:
+        tsv_writer = csv.writer(out_file, delimiter="\t")
+        if with_fields:
+            tsv_writer.writerow(get_full_header())
+
+        for i in range(min_length):
+            row_data = [""] * 80
+            l1_sentence = text1_lines[i].strip()
+            l2_sentence = text2_lines[i].strip()
+            
+            start_idx, end_idx = max(0, i - sentence_context_size), i + sentence_context_size + 1
+            
+            row_data[0] = l1_sentence
+            row_data[5] = " ".join(line.strip() for line in text1_lines[start_idx:i])
+            row_data[6] = l1_sentence
+            row_data[7] = " ".join(line.strip() for line in text1_lines[i + 1:end_idx])
+            row_data[8] = " ".join(line.strip() for line in text2_lines[start_idx:i])
+            row_data[9] = l2_sentence
+            row_data[10] = " ".join(line.strip() for line in text2_lines[i + 1:end_idx])
+            
+            if include_simple_list:
+                # ВАЖНО: передаем german_dict сюда тоже, если вдруг решим использовать
+                lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, german_dict)
+                row_data[11] = "<br>".join(lemmas) if with_br else "\n".join(lemmas)
+            
+            row_data[12] = l1_sentence
+            
+            if text3:
+                row_data[77] = " ".join(line.strip() for line in text3_lines[start_idx:i])
+                row_data[78] = text3_lines[i].strip()
+                row_data[79] = " ".join(line.strip() for line in text3_lines[i + 1:end_idx])
+
+            if language == "de":
+                row_data[58] = "1"; row_data[65] = "1"
+            elif language == "en":
+                row_data[56] = "1"; row_data[65] = "1"
+
+            tsv_writer.writerow(row_data)
+            
+    return output_file
+
 
 # --- Точка входа ---
 def main():
-    # ... (парсер аргументов без изменений) ...
     parser = argparse.ArgumentParser(description="Extract and process tokens or sentences from text.")
     parser.add_argument("--type", required=True, choices=["token", "sentence"])
     parser.add_argument("--language", default="de", choices=["de", "en"])
@@ -447,12 +539,9 @@ def main():
     global nlp
     nlp = spacy.load("de_core_news_lg" if args.language == "de" else "en_core_web_lg")
     
-    # --- ИЗМЕНЕНИЯ ЗДЕСЬ ---
-    # Загружаем словарь для gcs и для нашей новой логики верификации
     ahocs = None
-    german_dict = set() # Инициализируем пустой set
+    german_dict = set()
     if args.language == 'de':
-        # Загружаем наш главный словарь для верификации
         german_dict = load_dictionary_to_set(args.gcs_dictionary)
         if not german_dict:
              print("Warning: German dictionary for validation is empty or not loaded.", file=sys.stderr)
@@ -464,17 +553,14 @@ def main():
                 print(f"Error: GCS dictionary file '{args.gcs_dictionary}' not found!", file=sys.stderr)
                 print("Please download it and place it in the correct directory.", file=sys.stderr); exit(1)
             try:
-                # gcs использует свой собственный механизм загрузки, оставляем его
                 with redirect_stdout(io.StringIO()):
                     ahocs = comp_split.read_dictionary_from_file(args.gcs_dictionary)
             except Exception as e:
                 print(f"Error loading GCS dictionary: {e}", file=sys.stderr); exit(1)
-    # --- КОНЕЦ ИЗМЕНЕНИЙ ---
 
     lemma_index = load_lemma_index(args.lemma_index_file)
     processed_output_file = None
-    
-    # ... (код генерации имени файла без изменений) ...
+
     final_output_path = args.output
     if args.output and (args.timestamp or args.autoname is not None):
         zid = datetime.now().strftime('%Y%m%d%H%M%S')
@@ -518,18 +604,27 @@ def main():
                 args.sentence_context_size, final_output_path,
                 args.two_column_output_to_file, args.include_simple_list,
                 args.with_fields, args.with_br, args.pipe,
-                args.gcs, ahocs, args.gcs_in_wordlist, german_dict # Передаем словарь
+                args.gcs, ahocs, args.gcs_in_wordlist, german_dict
             )
         else:
              processed_output_file = process_text_v2(
                 input_text, lemma_index, args.language, args.sentence_context_size,
                 final_output_path, args.two_column_output_to_file, args.include_simple_list,
                 args.with_fields, args.with_br, args.pipe,
-                args.gcs, ahocs, args.gcs_in_wordlist, german_dict, # Передаем словарь
+                args.gcs, ahocs, args.gcs_in_wordlist, german_dict,
                 detailed=args.detailed, two_column_output=args.two_column_output, html=args.html
             )
 
-    # ... (обработка type=sentence без изменений) ...
+    elif args.type == "sentence":
+        if args.gcs:
+            print("Warning: --gcs flag is only applicable for --type token and will be ignored.", file=sys.stderr)
+        if not args.text1 or not args.text2:
+            print("Error: --text1 and --text2 must be specified for sentence mode.", file=sys.stderr); exit(1)
+        processed_output_file = process_sentences(
+            args.language, lemma_index, args.text1, args.text2, args.text3,
+            args.sentence_context_size, final_output_path,
+            args.include_simple_list, args.with_fields, args.with_br, args.pipe
+        )
     
     if args.pipe and processed_output_file:
         print(os.path.basename(processed_output_file))

@@ -8,28 +8,22 @@ import re
 from contextlib import redirect_stdout
 import io
 
-# --- ИМПОРТ для GCS ---
 try:
     from german_compound_splitter import comp_split
     GCS_AVAILABLE = True
 except ImportError:
     GCS_AVAILABLE = False
-# --- КОНЕЦ ИМПОРТА ---
-
-
-# --- Вспомогательные функции ---
 
 def load_dictionary_to_set(file_path):
-    """Загружает словарь в set для быстрого поиска."""
     dictionary = set()
     try:
         with open(file_path, "r", encoding="utf-8") as f:
             for line in f:
                 dictionary.add(line.strip())
     except FileNotFoundError:
-        print(f"Файл словаря не найден: {file_path}", file=sys.stderr)
+        print(f"Dictionary file not found: {file_path}", file=sys.stderr)
     except Exception as e:
-        print(f"Ошибка при чтении файла словаря {file_path}: {e}", file=sys.stderr)
+        print(f"Error reading dictionary file {file_path}: {e}", file=sys.stderr)
     return dictionary
 
 def get_verb_with_particle(token):
@@ -114,7 +108,6 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, 
 
     for token in doc:
         if token.is_alpha and token.dep_ != "svp":
-            # Блок основной лемматизации токена
             token_text = token.text
             spacy_lemma = token.lemma_
             form_to_check = token_text if token_text.isupper() else token_text.capitalize()
@@ -134,8 +127,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, 
                     lemma_to_add = form_to_check
             else:
                 lemma_to_add = base_lemma
-
-            # Финальная коррекция сингуляризации через GCS
+            
             if gcs and ahocs and nlp.lang == 'de' and token.pos_ in ['NOUN', 'PROPN']:
                 try:
                     with redirect_stdout(io.StringIO()):
@@ -150,7 +142,6 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, 
             
             final_tokens.add(lemma_to_add)
 
-            # Блок разбора сложных слов
             if gcs and ahocs and gcs_in_wordlist and nlp.lang == 'de' and len(token.text) > 7:
                 try:
                     word_to_split = token.text
@@ -216,7 +207,6 @@ def process_text_v1(
                 else:
                     primary_token = base_lemma
                 
-                # --- ИСПРАВЛЕННЫЙ БЛОК: ФИНАЛЬНАЯ КОРРЕКЦИЯ СИНГУЛЯРИЗАЦИИ ---
                 if gcs and ahocs and language == 'de' and token.pos_ in ['NOUN', 'PROPN']:
                     try:
                         with redirect_stdout(io.StringIO()):
@@ -228,7 +218,6 @@ def process_text_v1(
                             primary_token = singular_form_to_check
                     except Exception:
                         pass
-                # --- КОНЕЦ ИСПРАВЛЕННОГО БЛОКА ---
                 
                 original_form = get_original_form_with_particle(token)
                 tokens_to_add = {primary_token}
@@ -336,7 +325,6 @@ def process_text_v2(
                 else:
                     primary_token = base_lemma
 
-                # --- ИСПРАВЛЕННЫЙ БЛОК: ФИНАЛЬНАЯ КОРРЕКЦИЯ СИНГУЛЯРИЗАЦИИ ---
                 if gcs and ahocs and language == 'de' and token.pos_ in ['NOUN', 'PROPN']:
                     try:
                         with redirect_stdout(io.StringIO()):
@@ -348,7 +336,6 @@ def process_text_v2(
                             primary_token = singular_form_to_check
                     except Exception:
                         pass
-                # --- КОНЕЦ ИСПРАВЛЕННОГО БЛОКА ---
 
                 original_form = get_original_form_with_particle(token)
                 tokens_to_add = {primary_token}

@@ -35,6 +35,7 @@ def get_token_args(args, python_path, token_workspace):
         "--gcs-combine-noun-modes",
         # "--make-singular",
         # "--no-make-singular",
+        "--gcs-fix-genitive",
         "--gcs-dictionary",
         "U:/voothi/20241223170748-token-extraction/20250826000433-test/german.dic",
         "--gcs-in-wordlist",

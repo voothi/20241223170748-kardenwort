@@ -120,13 +120,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, 
                 base_lemma = get_verb_with_particle(token) if token.pos_ == "VERB" else token.lemma_
             
             lemma_to_add = ""
-            if form_to_check in german_dict:
-                if lemma_to_check in german_dict:
-                    lemma_to_add = base_lemma
-                else:
-                    lemma_to_add = form_to_check
-            else:
-                lemma_to_add = base_lemma
+            lemma_to_add = base_lemma
             
             if gcs and ahocs and nlp.lang == 'de' and token.pos_ in ['NOUN', 'PROPN'] and any(c in "äöü" for c in token.text.lower()):
                 try:
@@ -210,13 +204,7 @@ def process_text_v1(
                     base_lemma = spacy_lemma.capitalize()
                 else:
                     base_lemma = get_verb_with_particle(token) if token.pos_ == "VERB" else token.lemma_
-                if form_to_check in german_dict:
-                    if lemma_to_check in german_dict:
-                        primary_token = base_lemma
-                    else:
-                        primary_token = form_to_check
-                else:
-                    primary_token = base_lemma
+                primary_token = base_lemma
 
                 if gcs and ahocs and language == 'de' and token.pos_ in ['NOUN', 'PROPN'] and any(c in "äöü" for c in token.text.lower()):
                     try:
@@ -338,13 +326,7 @@ def process_text_v2(
                     base_lemma = spacy_lemma.capitalize()
                 else:
                     base_lemma = get_verb_with_particle(token) if token.pos_ == "VERB" else token.lemma_
-                if form_to_check in german_dict:
-                    if lemma_to_check in german_dict:
-                        primary_token = base_lemma
-                    else:
-                        primary_token = form_to_check
-                else:
-                    primary_token = base_lemma
+                primary_token = base_lemma
 
                 if gcs and ahocs and language == 'de' and token.pos_ in ['NOUN', 'PROPN'] and any(c in "äöü" for c in token.text.lower()):
                     try:

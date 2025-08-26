@@ -134,7 +134,11 @@ def process_text_v1(
                 if gcs and ahocs and language == 'de':
                     # Разбираем исходную форму слова, так как она не изменена
                     try:
-                        dissection = comp_split.dissect(token.text, ahocs, make_singular=True)
+                        # СТАРАЯ СТРОКА:
+                        # dissection = comp_split.dissect(token.text, ahocs, make_singular=True)
+                        
+                        # НОВАЯ СТРОКА С verbose=False:
+                        dissection = comp_split.dissect(token.text, ahocs, make_singular=True, verbose=False)
                         final_components = comp_split.merge_fractions(dissection)
                         if len(final_components) > 1:
                             tokens_to_add.extend(final_components)
@@ -229,7 +233,11 @@ def process_text_v2(
                 tokens_to_add = [verb_form]
                 if gcs and ahocs and language == 'de':
                     try:
-                        dissection = comp_split.dissect(token.text, ahocs, make_singular=True)
+                        # СТАРАЯ СТРОКА:
+                        # dissection = comp_split.dissect(token.text, ahocs, make_singular=True)
+                        
+                        # НОВАЯ СТРОКА С verbose=False:
+                        dissection = comp_split.dissect(token.text, ahocs, make_singular=True, verbose=False)
                         final_components = comp_split.merge_fractions(dissection)
                         if len(final_components) > 1:
                             tokens_to_add.extend(final_components)

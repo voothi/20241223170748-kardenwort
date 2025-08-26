@@ -119,7 +119,13 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, gcs=False, ahocs=None, g
                             part_doc = nlp(part)
                             if len(part_doc) > 0:
                                 lemmatized_part = part_doc[0].lemma_
-                                final_tokens.add(lemmatized_part)
+                                # Специальная обработка для Fugen-s
+                                if lemmatized_part.endswith('s') and part != "Bus": # Исключение для слова Bus
+                                     base_form = lemmatized_part[:-1]
+                                     base_doc = nlp(base_form)
+                                     if len(base_doc) > 0 and base_doc[0].pos_ == 'NOUN':
+                                         lemmatized_part = base_form
+                                final_tokens.add(lemmatized_part.capitalize())
                 except Exception:
                     pass
     
@@ -149,12 +155,10 @@ def process_text_v1(
         doc = nlp(line1)
         for token in doc:
             if token.is_alpha and token.dep_ != "svp":
-                if language == "de" and token.pos_ == "VERB":
-                    primary_token = get_verb_with_particle(token)
-                elif language == "de" and token.pos_ == "NOUN":
+                if language == "de" and token.pos_ == "NOUN":
                     primary_token = token.lemma_.capitalize()
                 else:
-                    primary_token = token.lemma_
+                    primary_token = get_verb_with_particle(token) if token.pos_ == "VERB" else token.lemma_
 
                 original_form = get_original_form_with_particle(token)
                 
@@ -171,7 +175,13 @@ def process_text_v1(
                                 part_doc = nlp(part)
                                 if len(part_doc) > 0:
                                     lemmatized_part = part_doc[0].lemma_
-                                    tokens_to_add.append(lemmatized_part)
+                                    # Специальная обработка для Fugen-s
+                                    if lemmatized_part.endswith('s') and part != "Bus": # Исключение для слова Bus
+                                        base_form = lemmatized_part[:-1]
+                                        base_doc = nlp(base_form)
+                                        if len(base_doc) > 0 and base_doc[0].pos_ == 'NOUN':
+                                            lemmatized_part = base_form
+                                    tokens_to_add.append(lemmatized_part.capitalize())
                     except Exception:
                         pass
                 
@@ -249,12 +259,10 @@ def process_text_v2(
         doc_unit = nlp(unit_text)
         for token in doc_unit:
             if token.is_alpha and token.dep_ != "svp":
-                if language == "de" and token.pos_ == "VERB":
-                    primary_token = get_verb_with_particle(token)
-                elif language == "de" and token.pos_ == "NOUN":
+                if language == "de" and token.pos_ == "NOUN":
                     primary_token = token.lemma_.capitalize()
                 else:
-                    primary_token = token.lemma_
+                    primary_token = get_verb_with_particle(token) if token.pos_ == "VERB" else token.lemma_
 
                 original_form = get_original_form_with_particle(token)
 
@@ -271,7 +279,13 @@ def process_text_v2(
                                 part_doc = nlp(part)
                                 if len(part_doc) > 0:
                                     lemmatized_part = part_doc[0].lemma_
-                                    tokens_to_add.append(lemmatized_part)
+                                    # Специальная обработка для Fugen-s
+                                    if lemmatized_part.endswith('s') and part != "Bus": # Исключение для слова Bus
+                                        base_form = lemmatized_part[:-1]
+                                        base_doc = nlp(base_form)
+                                        if len(base_doc) > 0 and base_doc[0].pos_ == 'NOUN':
+                                            lemmatized_part = base_form
+                                    tokens_to_add.append(lemmatized_part.capitalize())
                     except Exception:
                         pass
                 

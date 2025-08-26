@@ -208,6 +208,27 @@ def process_text_v1(
                 else:
                     primary_token = base_lemma
                 
+                if (gcs and ahocs and language == 'de' and
+                    token.pos_ in ['NOUN', 'PROPN'] and
+                    spacy_lemma == token_text and
+                    len(token_text) > 12 and
+                    token_text.endswith('s')):
+                    try:
+                        with redirect_stdout(io.StringIO()):
+                            components = comp_split.dissect(token_text, ahocs, make_singular=False)
+                        if len(components) > 1:
+                            last_component = components[-1]
+                            base_components = components[:-1]
+                            last_doc = nlp(last_component)
+                            if last_doc:
+                                lemmatized_last_component = last_doc[0].lemma_
+                                reconstructed_lemma = "".join(base_components) + lemmatized_last_component
+                                reconstructed_lemma_capitalized = reconstructed_lemma.capitalize()
+                                if reconstructed_lemma_capitalized in german_dict:
+                                    primary_token = reconstructed_lemma_capitalized
+                    except Exception:
+                        pass
+                
                 if gcs and ahocs and language == 'de' and token.pos_ in ['NOUN', 'PROPN']:
                     try:
                         with redirect_stdout(io.StringIO()):
@@ -325,6 +346,27 @@ def process_text_v2(
                         primary_token = form_to_check
                 else:
                     primary_token = base_lemma
+
+                if (gcs and ahocs and language == 'de' and
+                    token.pos_ in ['NOUN', 'PROPN'] and
+                    spacy_lemma == token_text and
+                    len(token_text) > 12 and
+                    token_text.endswith('s')):
+                    try:
+                        with redirect_stdout(io.StringIO()):
+                            components = comp_split.dissect(token_text, ahocs, make_singular=False)
+                        if len(components) > 1:
+                            last_component = components[-1]
+                            base_components = components[:-1]
+                            last_doc = nlp(last_component)
+                            if last_doc:
+                                lemmatized_last_component = last_doc[0].lemma_
+                                reconstructed_lemma = "".join(base_components) + lemmatized_last_component
+                                reconstructed_lemma_capitalized = reconstructed_lemma.capitalize()
+                                if reconstructed_lemma_capitalized in german_dict:
+                                    primary_token = reconstructed_lemma_capitalized
+                    except Exception:
+                        pass
 
                 if gcs and ahocs and language == 'de' and token.pos_ in ['NOUN', 'PROPN']:
                     try:

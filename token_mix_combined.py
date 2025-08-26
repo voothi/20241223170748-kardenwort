@@ -115,20 +115,25 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, 
 
     for token in doc:
         if token.is_alpha and token.dep_ != "svp":
-            # --- УЛУЧШЕННАЯ ЛОГИКА ЛЕММАТИЗАЦИИ ---
-            # Если исходное слово (с заглавной) есть в словаре, используем его
-            if token.text.capitalize() in german_dict:
-                lemma = token.text.capitalize()
-            # Иначе, если lemma_ от spacy есть в словаре, используем ее
-            elif token.lemma_.capitalize() in german_dict:
-                lemma = token.lemma_.capitalize()
-            # В противном случае используем стандартную лемматизацию
+            # --- НОВЫЙ УЛУЧШЕННЫЙ БЛОК ---
+            original_form_capitalized = token.text.capitalize()
+            spacy_lemma_capitalized = token.lemma_.capitalize()
+
+            if nlp.lang == "de" and token.pos_ in ["NOUN", "PROPN"]:
+                base_lemma = spacy_lemma_capitalized
             else:
-                 if nlp.lang == "de" and token.pos_ in ["NOUN", "PROPN"]:
-                    lemma = token.lemma_.capitalize()
-                 else:
-                    lemma = get_verb_with_particle(token) if token.pos_ == "VERB" else token.lemma_
-            final_tokens.add(lemma)
+                base_lemma = get_verb_with_particle(token) if token.pos_ == "VERB" else token.lemma_
+
+            lemma_to_add = ""
+            if original_form_capitalized in german_dict:
+                if spacy_lemma_capitalized in german_dict:
+                    lemma_to_add = base_lemma
+                else:
+                    lemma_to_add = original_form_capitalized
+            else:
+                lemma_to_add = base_lemma
+
+            final_tokens.add(lemma_to_add)
 
             if gcs and ahocs and gcs_in_wordlist and nlp.lang == 'de' and len(token.text) > 7:
                 try:
@@ -182,16 +187,29 @@ def process_text_v1(
         doc = nlp(line1)
         for token in doc:
             if token.is_alpha and token.dep_ != "svp":
-                # --- УЛУЧШЕННАЯ ЛОГИКА ЛЕММАТИЗАЦИИ ---
-                if token.text.capitalize() in german_dict:
-                    primary_token = token.text.capitalize()
-                elif token.lemma_.capitalize() in german_dict:
-                    primary_token = token.lemma_.capitalize()
+                # --- НОВЫЙ УЛУЧШЕННЫЙ БЛОК ---
+                original_form_capitalized = token.text.capitalize()
+                spacy_lemma_capitalized = token.lemma_.capitalize()
+
+                # Сначала получаем лемму от SpaCy для дальнейших проверок
+                if language == "de" and token.pos_ in ["NOUN", "PROPN"]:
+                    base_lemma = spacy_lemma_capitalized
                 else:
-                    if language == "de" and token.pos_ in ["NOUN", "PROPN"]:
-                        primary_token = token.lemma_.capitalize()
+                    base_lemma = get_verb_with_particle(token) if token.pos_ == "VERB" else token.lemma_
+
+                # Теперь применяем умную логику
+                if original_form_capitalized in german_dict:
+                    # Если оригинал в словаре, проверяем лемму
+                    if spacy_lemma_capitalized in german_dict:
+                        # Если и лемма в словаре (случай Teilgebiete -> Teilgebiet), то используем лемму.
+                        # Также обрабатываем случай, когда слово не меняется (Ananas -> Ananas).
+                        primary_token = base_lemma
                     else:
-                        primary_token = get_verb_with_particle(token) if token.pos_ == "VERB" else token.lemma_
+                        # Если только оригинал в словаре (случай Ananas -> Anana), используем оригинал.
+                        primary_token = original_form_capitalized
+                else:
+                    # Если оригинала в словаре нет, полностью доверяем SpaCy.
+                    primary_token = base_lemma
 
                 original_form = get_original_form_with_particle(token)
                 
@@ -292,16 +310,29 @@ def process_text_v2(
         doc_unit = nlp(unit_text)
         for token in doc_unit:
             if token.is_alpha and token.dep_ != "svp":
-                # --- УЛУЧШЕННАЯ ЛОГИКА ЛЕММАТИЗАЦИИ (аналогично v1) ---
-                if token.text.capitalize() in german_dict:
-                    primary_token = token.text.capitalize()
-                elif token.lemma_.capitalize() in german_dict:
-                    primary_token = token.lemma_.capitalize()
+                # --- НОВЫЙ УЛУЧШЕННЫЙ БЛОК ---
+                original_form_capitalized = token.text.capitalize()
+                spacy_lemma_capitalized = token.lemma_.capitalize()
+
+                # Сначала получаем лемму от SpaCy для дальнейших проверок
+                if language == "de" and token.pos_ in ["NOUN", "PROPN"]:
+                    base_lemma = spacy_lemma_capitalized
                 else:
-                    if language == "de" and token.pos_ in ["NOUN", "PROPN"]:
-                        primary_token = token.lemma_.capitalize()
+                    base_lemma = get_verb_with_particle(token) if token.pos_ == "VERB" else token.lemma_
+
+                # Теперь применяем умную логику
+                if original_form_capitalized in german_dict:
+                    # Если оригинал в словаре, проверяем лемму
+                    if spacy_lemma_capitalized in german_dict:
+                        # Если и лемма в словаре (случай Teilgebiete -> Teilgebiet), то используем лемму.
+                        # Также обрабатываем случай, когда слово не меняется (Ananas -> Ananas).
+                        primary_token = base_lemma
                     else:
-                        primary_token = get_verb_with_particle(token) if token.pos_ == "VERB" else token.lemma_
+                        # Если только оригинал в словаре (случай Ananas -> Anana), используем оригинал.
+                        primary_token = original_form_capitalized
+                else:
+                    # Если оригинала в словаре нет, полностью доверяем SpaCy.
+                    primary_token = base_lemma
                 
                 original_form = get_original_form_with_particle(token)
 

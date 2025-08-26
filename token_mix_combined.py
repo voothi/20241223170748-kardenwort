@@ -154,6 +154,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, 
                 try:
                     word_to_split = token.text
                     
+                    # Determine make_singular based on flags priority
                     if no_make_singular:
                         should_make_singular = False
                     elif make_singular:
@@ -178,7 +179,8 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, 
                         final_components = comp_split.merge_fractions(dissection)
 
                     if len(final_components) > 1:
-                        for part in final_components:
+                        # Use a set to handle unique components from combined runs
+                        for part in set(final_components):
                             part_to_check = part if part.isupper() else part.capitalize()
                             if part_to_check in german_dict:
                                 final_tokens.add(part_to_check)
@@ -265,7 +267,7 @@ def process_text_v1(
                             final_components = comp_split.merge_fractions(dissection)
 
                         if len(final_components) > 1:
-                            for part in final_components:
+                            for part in set(final_components):
                                 part_to_check = part if part.isupper() else part.capitalize()
                                 if part_to_check in german_dict:
                                     tokens_to_add.add(part_to_check)
@@ -405,7 +407,7 @@ def process_text_v2(
                             final_components = comp_split.merge_fractions(dissection)
 
                         if len(final_components) > 1:
-                            for part in final_components:
+                            for part in set(final_components):
                                 part_to_check = part if part.isupper() else part.capitalize()
                                 if part_to_check in german_dict:
                                     tokens_to_add.add(part_to_check)
@@ -430,7 +432,32 @@ def process_text_v2(
         return u if is_line_based else u.text
 
     if not output_file:
-        # ... (unchanged)
+        detailed = kwargs.get('detailed', False)
+        two_column_output = kwargs.get('two_column_output', False)
+        html = kwargs.get('html', False)
+        if html:
+            print("<table>")
+            for token in sorted_tokens:
+                print(f"<tr><td>{token}</td><td>{token_to_original_form.get(token, '')}</td></tr>")
+            print("</table>")
+        elif two_column_output:
+            for token in sorted_tokens:
+                print(f"{token}\t{token_to_original_form.get(token, '')}")
+        elif detailed:
+             for token in sorted_tokens:
+                unit_index, l1_sentence = token_to_sentence[token]
+                start_idx = max(0, unit_index - sentence_context_size)
+                end_idx = min(len(processing_units), unit_index + sentence_context_size + 1)
+                l1_left = " ".join(get_unit_text(u).strip() for u in processing_units[start_idx:unit_index])
+                l1_right = " ".join(get_unit_text(u).strip() for u in processing_units[unit_index + 1:end_idx])
+                print(token)
+                if l1_left: print(l1_left)
+                print(l1_sentence.strip())
+                if l1_right: print(l1_right)
+                print()
+        else:
+            for token in sorted_tokens:
+                print(token)
         return None
 
     with open(output_file, "w", newline="", encoding="utf-8") as tsvfile:
@@ -469,13 +496,64 @@ def process_text_v2(
 
     return output_file
 
-def process_sentences(*args, **kwargs):
-    # This function remains unchanged as it doesn't use GCS or the new lemma logic
-    pass
+def process_sentences(
+    language, lemma_index, text1, text2, text3, sentence_context_size,
+    output_file, include_simple_list, with_fields, with_br, pipe, **kwargs
+):
+    try:
+        with open(text1, "r", encoding="utf-8") as f: text1_lines = [line.rstrip("\n") for line in f]
+        with open(text2, "r", encoding="utf-8") as f: text2_lines = [line.rstrip("\n") for line in f]
+        text3_lines = []
+        if text3:
+            with open(text3, "r", encoding="utf-8") as f: text3_lines = [line.rstrip("\n") for line in f]
+    except IOError as e:
+        print(f"Error reading files: {e}", file=sys.stderr); sys.exit(1)
+
+    lengths = [len(text1_lines), len(text2_lines)]
+    if text3: lengths.append(len(text3_lines))
+    min_length = min(lengths)
+
+    with open(output_file, "w", newline="", encoding="utf-8") as out_file:
+        tsv_writer = csv.writer(out_file, delimiter="\t")
+        if with_fields:
+            tsv_writer.writerow(get_full_header())
+
+        for i in range(min_length):
+            row_data = [""] * 80
+            l1_sentence = text1_lines[i].strip()
+            l2_sentence = text2_lines[i].strip()
+
+            start_idx, end_idx = max(0, i - sentence_context_size), i + sentence_context_size + 1
+
+            row_data[0] = l1_sentence
+            row_data[5] = " ".join(line.strip() for line in text1_lines[start_idx:i])
+            row_data[6] = l1_sentence
+            row_data[7] = " ".join(line.strip() for line in text1_lines[i + 1:end_idx])
+            row_data[8] = " ".join(line.strip() for line in text2_lines[start_idx:i])
+            row_data[9] = l2_sentence
+            row_data[10] = " ".join(line.strip() for line in text2_lines[i + 1:end_idx])
+            if include_simple_list:
+                lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, german_dict)
+                row_data[11] = "<br>".join(lemmas) if with_br else "\n".join(lemmas)
+
+            row_data[12] = l1_sentence
+
+            if text3:
+                row_data[77] = " ".join(line.strip() for line in text3_lines[start_idx:i])
+                row_data[78] = text3_lines[i].strip()
+                row_data[79] = " ".join(line.strip() for line in text3_lines[i + 1:end_idx])
+
+            if language == "de":
+                row_data[58] = "1"; row_data[65] = "1"
+            elif language == "en":
+                row_data[56] = "1"; row_data[65] = "1"
+
+            tsv_writer.writerow(row_data)
+
+    return output_file
 
 def main():
     parser = argparse.ArgumentParser(description="Extract and process tokens or sentences from text.")
-    # ... (other arguments are unchanged)
     parser.add_argument("--type", required=True, choices=["token", "sentence"])
     parser.add_argument("--language", default="de", choices=["de", "en"])
     parser.add_argument("--lemma-index-file", default="")
@@ -498,17 +576,19 @@ def main():
     parser.add_argument("--original-form-in-simple-list", action="store_true")
     
     # GCS arguments
-    parser.add_argument("--gcs", action="store_true", help="Enable German Compound Splitting. Requires --language de.")
-    parser.add_argument("--gcs-dictionary", default="german.dic", help="Path to the dictionary file for GCS.")
-    parser.add_argument("--gcs-in-wordlist", action="store_true", help="Also add German compound components to the SentenceSourceWordlist field. Requires --gcs.")
-    parser.add_argument("--gcs-only-nouns-false", action="store_true", help="Allows any type of word (verb, adjective, etc.) to be used for GCS splitting. Ignored if --gcs-combine-noun-modes is used.")
-    parser.add_argument("--gcs-combine-noun-modes", action="store_true", help="Run GCS in both modes (only_nouns=True and False) and combine the unique resulting components.")
-    parser.add_argument("--gcs-fix-genitive", action="store_true", help="EXPERIMENTAL: Corrects German genitive noun lemmas (e.g., 'Hauses' -> 'Haus') by checking against the dictionary.")
-    parser.add_argument("--make-singular", action="store_true", help="Force making compound parts singular during GCS splitting, regardless of the word's part of speech. Default is to only do this for nouns.")
-    parser.add_argument("--no-make-singular", action="store_true", help="Prevent making compound parts singular during GCS splitting, keeping their original form. Overrides default behavior and --make-singular.")
+    gcs_group = parser.add_argument_group('GCS (German Compound Splitting) options')
+    gcs_group.add_argument("--gcs", action="store_true", help="Enable German Compound Splitting. Requires --language de.")
+    gcs_group.add_argument("--gcs-dictionary", default="german.dic", help="Path to the dictionary file for GCS.")
+    gcs_group.add_argument("--gcs-in-wordlist", action="store_true", help="Also add German compound components to the SentenceSourceWordlist field. Requires --gcs.")
+    gcs_group.add_argument("--gcs-only-nouns-false", action="store_true", help="Allows any type of word (verb, adjective, etc.) to be used for GCS splitting. Ignored if --gcs-combine-noun-modes is used.")
+    gcs_group.add_argument("--gcs-combine-noun-modes", action="store_true", help="Run GCS in both modes (only_nouns=True and False) and combine the unique resulting components.")
+    gcs_group.add_argument("--gcs-fix-genitive", action="store_true", help="Corrects German genitive noun lemmas (e.g., 'Hauses' -> 'Haus') by checking against the dictionary.")
+    gcs_group.add_argument("--make-singular", action="store_true", help="Force making compound parts singular during GCS splitting, regardless of the word's part of speech. Default is to only do this for nouns.")
+    gcs_group.add_argument("--no-make-singular", action="store_true", help="Prevent making compound parts singular during GCS splitting, keeping their original form. Overrides default behavior and --make-singular.")
 
     args = parser.parse_args()
     
+    # --- Argument validation ---
     if args.make_singular and args.no_make_singular:
         print("Error: --make-singular and --no-make-singular cannot be used together.", file=sys.stderr); exit(1)
     if args.gcs_combine_noun_modes and args.gcs_only_nouns_false:
@@ -540,8 +620,36 @@ def main():
     lemma_index = load_lemma_index(args.lemma_index_file)
     processed_output_file = None
     final_output_path = args.output
-    # ... (filename generation logic unchanged)
+    
+    if args.output and (args.timestamp or args.autoname is not None):
+        zid = datetime.now().strftime('%Y%m%d%H%M%S')
+        output_dir, filename = os.path.dirname(args.output) or '.', os.path.basename(args.output)
 
+        if args.autoname is not None:
+            source_text_for_autoname = ""
+            if args.text:
+                source_text_for_autoname = args.text
+            elif args.text1:
+                try:
+                    with open(args.text1, 'r', encoding='utf-8') as f:
+                        source_text_for_autoname = f.read(1024)
+                except Exception as e:
+                    print(f"Warning: Could not read {args.text1} for autonaming: {e}", file=sys.stderr)
+
+            autoname_part = generate_autoname_prefix(source_text_for_autoname, args.autoname)
+
+            if autoname_part:
+                first_dot_pos = filename.find('.')
+                suffix = filename[first_dot_pos:] if first_dot_pos != -1 else ""
+                new_filename = f"{zid}-{autoname_part}{suffix}"
+            else:
+                 new_filename = f"{zid}-{filename}"
+
+            final_output_path = os.path.join(output_dir, new_filename)
+        elif args.timestamp:
+            new_filename = f"{zid}-{filename}"
+            final_output_path = os.path.join(output_dir, new_filename)
+            
     if args.type == "token":
         if args.text and args.text1:
             print("Error: --text and --text1 are mutually exclusive.", file=sys.stderr); exit(1)
@@ -579,8 +687,15 @@ def main():
             )
 
     elif args.type == "sentence":
-        # ... (unchanged)
-        pass
+        if any([args.gcs, args.gcs_combine_noun_modes, args.gcs_only_nouns_false, args.make_singular, args.no_make_singular, args.gcs_fix_genitive]):
+            print("Warning: GCS-related flags are only applicable for --type token and will be ignored.", file=sys.stderr)
+        if not args.text1 or not args.text2:
+            print("Error: --text1 and --text2 must be specified for sentence mode.", file=sys.stderr); exit(1)
+        processed_output_file = process_sentences(
+            args.language, lemma_index, args.text1, args.text2, args.text3,
+            args.sentence_context_size, final_output_path,
+            args.include_simple_list, args.with_fields, args.with_br, args.pipe
+        )
 
     if args.pipe and processed_output_file:
         print(os.path.basename(processed_output_file))

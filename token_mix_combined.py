@@ -15,6 +15,7 @@ except ImportError:
     GCS_AVAILABLE = False
 
 def load_dictionary_to_set(file_path):
+    """Loads a dictionary into a set for fast lookups."""
     dictionary = set()
     try:
         with open(file_path, "r", encoding="utf-8") as f:
@@ -108,62 +109,35 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, 
 
     for token in doc:
         if token.is_alpha and token.dep_ != "svp":
+            token_text = token.text
             spacy_lemma = token.lemma_
+            form_to_check = token_text if token_text.isupper() else token_text.capitalize()
+            lemma_to_check = spacy_lemma if spacy_lemma.isupper() else spacy_lemma.capitalize()
             if token.pos_ in ["NOUN", "PROPN"] and spacy_lemma.isupper():
                 base_lemma = spacy_lemma
             elif nlp.lang == "de" and token.pos_ in ["NOUN", "PROPN"]:
                 base_lemma = spacy_lemma.capitalize()
             else:
                 base_lemma = get_verb_with_particle(token) if token.pos_ == "VERB" else token.lemma_
+            
+            lemma_to_add = ""
+            if form_to_check in german_dict:
+                if lemma_to_check in german_dict:
+                    lemma_to_add = base_lemma
+                else:
+                    lemma_to_add = form_to_check
+            else:
+                lemma_to_add = base_lemma
 
-            lemma_to_add = base_lemma
-
-            if (gcs and ahocs and
-                token.lemma_ == token.text and
-                token.pos_ in ['NOUN', 'PROPN'] and
-                len(token.text) > 10):
+            if gcs and ahocs and nlp.lang == 'de' and token.pos_ in ['NOUN', 'PROPN']:
                 try:
                     with redirect_stdout(io.StringIO()):
-                        dissection_inflected = comp_split.dissect(token.text, ahocs, make_singular=False)
-                    components_inflected = comp_split.merge_fractions(dissection_inflected)
-                    inflected_last_part = components_inflected[-1]
-
-                    with redirect_stdout(io.StringIO()):
-                        dissection_singular = comp_split.dissect(token.text, ahocs, make_singular=True)
-                    components_singular = comp_split.merge_fractions(dissection_singular)
-                    singular_last_part = components_singular[-1]
-
-                    singular_doc = nlp(singular_last_part)
-                    lemmatized_last_part = singular_doc[0].lemma_
-
-                    if token.text.endswith(inflected_last_part) and inflected_last_part != lemmatized_last_part:
-                        base_part_len = len(token.text) - len(inflected_last_part)
-                        base_part = token.text[:base_part_len]
-                        corrected_lemma = base_part + lemmatized_last_part
-                        lemma_to_add = corrected_lemma.capitalize()
-                except Exception:
-                    pass
-
-            if gcs and ahocs and nlp.lang == 'de' and token.pos_ in ['NOUN', 'PROPN'] and any(c in "äöü" for c in token.text.lower()):
-                try:
-                    spacy_lemma_var = lemma_to_add
-                    umlaut_in_source = any(c in "äöü" for c in token.text.lower())
-                    umlaut_in_spacy_lemma = any(c in "äöü" for c in spacy_lemma_var.lower())
-
-                    if umlaut_in_source and not umlaut_in_spacy_lemma:
-                        with redirect_stdout(io.StringIO()):
-                            dissection = comp_split.dissect(token.text, ahocs, make_singular=True)
-                        components = comp_split.merge_fractions(dissection)
-                        if components:
-                            gcs_lemma_has_umlaut = any(c in "äöü" for c in "".join(components).lower())
-                            if gcs_lemma_has_umlaut:
-                                correct_last_part = components[-1]
-                                part_without_umlauts = correct_last_part.replace('ä', 'a').replace('ö', 'o').replace('ü', 'u')
-                                if spacy_lemma_var.lower().endswith(part_without_umlauts.lower()):
-                                    base_len = len(spacy_lemma_var) - len(part_without_umlauts)
-                                    base = spacy_lemma_var[:base_len]
-                                    corrected_lemma = (base + correct_last_part).capitalize()
-                                    lemma_to_add = corrected_lemma
+                        dissection_result = comp_split.dissect(lemma_to_add, ahocs, make_singular=True)
+                    final_components = comp_split.merge_fractions(dissection_result)
+                    singular_form = "".join(final_components)
+                    singular_form_to_check = singular_form if singular_form.isupper() else singular_form.capitalize()
+                    if singular_form_to_check != lemma_to_add and singular_form_to_check in german_dict:
+                        lemma_to_add = singular_form_to_check
                 except Exception:
                     pass
             
@@ -216,67 +190,39 @@ def process_text_v1(
         doc = nlp(line1)
         for token in doc:
             if token.is_alpha and token.dep_ != "svp":
+                token_text = token.text
                 spacy_lemma = token.lemma_
+                form_to_check = token_text if token_text.isupper() else token_text.capitalize()
+                lemma_to_check = spacy_lemma if spacy_lemma.isupper() else spacy_lemma.capitalize()
                 if token.pos_ in ["NOUN", "PROPN"] and spacy_lemma.isupper():
                     base_lemma = spacy_lemma
                 elif language == "de" and token.pos_ in ["NOUN", "PROPN"]:
                     base_lemma = spacy_lemma.capitalize()
                 else:
                     base_lemma = get_verb_with_particle(token) if token.pos_ == "VERB" else token.lemma_
+                if form_to_check in german_dict:
+                    if lemma_to_check in german_dict:
+                        primary_token = base_lemma
+                    else:
+                        primary_token = form_to_check
+                else:
+                    primary_token = base_lemma
                 
-                primary_token = base_lemma
-
-                if (gcs and ahocs and
-                    token.lemma_ == token.text and
-                    token.pos_ in ['NOUN', 'PROPN'] and
-                    len(token.text) > 10):
+                if gcs and ahocs and language == 'de' and token.pos_ in ['NOUN', 'PROPN']:
                     try:
                         with redirect_stdout(io.StringIO()):
-                            dissection_inflected = comp_split.dissect(token.text, ahocs, make_singular=False)
-                        components_inflected = comp_split.merge_fractions(dissection_inflected)
-                        inflected_last_part = components_inflected[-1]
-
-                        with redirect_stdout(io.StringIO()):
-                            dissection_singular = comp_split.dissect(token.text, ahocs, make_singular=True)
-                        components_singular = comp_split.merge_fractions(dissection_singular)
-                        singular_last_part = components_singular[-1]
-
-                        singular_doc = nlp(singular_last_part)
-                        lemmatized_last_part = singular_doc[0].lemma_
-
-                        if token.text.endswith(inflected_last_part) and inflected_last_part != lemmatized_last_part:
-                            base_part_len = len(token.text) - len(inflected_last_part)
-                            base_part = token.text[:base_part_len]
-                            corrected_lemma = base_part + lemmatized_last_part
-                            primary_token = corrected_lemma.capitalize()
-                    except Exception:
-                        pass
-
-                if gcs and ahocs and language == 'de' and token.pos_ in ['NOUN', 'PROPN'] and any(c in "äöü" for c in token.text.lower()):
-                    try:
-                        spacy_lemma_var = primary_token
-                        umlaut_in_source = any(c in "äöü" for c in token.text.lower())
-                        umlaut_in_spacy_lemma = any(c in "äöü" for c in spacy_lemma_var.lower())
-                        
-                        if umlaut_in_source and not umlaut_in_spacy_lemma:
-                            with redirect_stdout(io.StringIO()):
-                                dissection = comp_split.dissect(token.text, ahocs, make_singular=True)
-                            components = comp_split.merge_fractions(dissection)
-                            if components:
-                                gcs_lemma_has_umlaut = any(c in "äöü" for c in "".join(components).lower())
-                                if gcs_lemma_has_umlaut:
-                                    correct_last_part = components[-1]
-                                    part_without_umlauts = correct_last_part.replace('ä', 'a').replace('ö', 'o').replace('ü', 'u')
-                                    if spacy_lemma_var.lower().endswith(part_without_umlauts.lower()):
-                                        base_len = len(spacy_lemma_var) - len(part_without_umlauts)
-                                        base = spacy_lemma_var[:base_len]
-                                        primary_token = (base + correct_last_part).capitalize()
+                             dissection_result = comp_split.dissect(primary_token, ahocs, make_singular=True)
+                        final_components = comp_split.merge_fractions(dissection_result)
+                        singular_form = "".join(final_components)
+                        singular_form_to_check = singular_form if singular_form.isupper() else singular_form.capitalize()
+                        if singular_form_to_check != primary_token and singular_form_to_check in german_dict:
+                            primary_token = singular_form_to_check
                     except Exception:
                         pass
                 
                 original_form = get_original_form_with_particle(token)
                 tokens_to_add = {primary_token}
-                if gcs and ahocs and gcs_in_wordlist and language == 'de' and len(token.text) > 7:
+                if gcs and ahocs and language == 'de' and len(token.text) > 7:
                     try:
                         word_to_split = token.text
                         should_make_singular = (token.pos_ in ['NOUN', 'PROPN'])
@@ -362,67 +308,39 @@ def process_text_v2(
         doc_unit = nlp(unit_text)
         for token in doc_unit:
             if token.is_alpha and token.dep_ != "svp":
+                token_text = token.text
                 spacy_lemma = token.lemma_
+                form_to_check = token_text if token_text.isupper() else token_text.capitalize()
+                lemma_to_check = spacy_lemma if spacy_lemma.isupper() else spacy_lemma.capitalize()
                 if token.pos_ in ["NOUN", "PROPN"] and spacy_lemma.isupper():
                     base_lemma = spacy_lemma
                 elif language == "de" and token.pos_ in ["NOUN", "PROPN"]:
                     base_lemma = spacy_lemma.capitalize()
                 else:
                     base_lemma = get_verb_with_particle(token) if token.pos_ == "VERB" else token.lemma_
-                
-                primary_token = base_lemma
+                if form_to_check in german_dict:
+                    if lemma_to_check in german_dict:
+                        primary_token = base_lemma
+                    else:
+                        primary_token = form_to_check
+                else:
+                    primary_token = base_lemma
 
-                if (gcs and ahocs and
-                    token.lemma_ == token.text and
-                    token.pos_ in ['NOUN', 'PROPN'] and
-                    len(token.text) > 10):
+                if gcs and ahocs and language == 'de' and token.pos_ in ['NOUN', 'PROPN']:
                     try:
                         with redirect_stdout(io.StringIO()):
-                            dissection_inflected = comp_split.dissect(token.text, ahocs, make_singular=False)
-                        components_inflected = comp_split.merge_fractions(dissection_inflected)
-                        inflected_last_part = components_inflected[-1]
-
-                        with redirect_stdout(io.StringIO()):
-                            dissection_singular = comp_split.dissect(token.text, ahocs, make_singular=True)
-                        components_singular = comp_split.merge_fractions(dissection_singular)
-                        singular_last_part = components_singular[-1]
-
-                        singular_doc = nlp(singular_last_part)
-                        lemmatized_last_part = singular_doc[0].lemma_
-
-                        if token.text.endswith(inflected_last_part) and inflected_last_part != lemmatized_last_part:
-                            base_part_len = len(token.text) - len(inflected_last_part)
-                            base_part = token.text[:base_part_len]
-                            corrected_lemma = base_part + lemmatized_last_part
-                            primary_token = corrected_lemma.capitalize()
-                    except Exception:
-                        pass
-
-                if gcs and ahocs and language == 'de' and token.pos_ in ['NOUN', 'PROPN'] and any(c in "äöü" for c in token.text.lower()):
-                    try:
-                        spacy_lemma_var = primary_token
-                        umlaut_in_source = any(c in "äöü" for c in token.text.lower())
-                        umlaut_in_spacy_lemma = any(c in "äöü" for c in spacy_lemma_var.lower())
-                        
-                        if umlaut_in_source and not umlaut_in_spacy_lemma:
-                            with redirect_stdout(io.StringIO()):
-                                dissection = comp_split.dissect(token.text, ahocs, make_singular=True)
-                            components = comp_split.merge_fractions(dissection)
-                            if components:
-                                gcs_lemma_has_umlaut = any(c in "äöü" for c in "".join(components).lower())
-                                if gcs_lemma_has_umlaut:
-                                    correct_last_part = components[-1]
-                                    part_without_umlauts = correct_last_part.replace('ä', 'a').replace('ö', 'o').replace('ü', 'u')
-                                    if spacy_lemma_var.lower().endswith(part_without_umlauts.lower()):
-                                        base_len = len(spacy_lemma_var) - len(part_without_umlauts)
-                                        base = spacy_lemma_var[:base_len]
-                                        primary_token = (base + correct_last_part).capitalize()
+                             dissection_result = comp_split.dissect(primary_token, ahocs, make_singular=True)
+                        final_components = comp_split.merge_fractions(dissection_result)
+                        singular_form = "".join(final_components)
+                        singular_form_to_check = singular_form if singular_form.isupper() else singular_form.capitalize()
+                        if singular_form_to_check != primary_token and singular_form_to_check in german_dict:
+                            primary_token = singular_form_to_check
                     except Exception:
                         pass
 
                 original_form = get_original_form_with_particle(token)
                 tokens_to_add = {primary_token}
-                if gcs and ahocs and gcs_in_wordlist and language == 'de' and len(token.text) > 7:
+                if gcs and ahocs and language == 'de' and len(token.text) > 7:
                     try:
                         word_to_split = token.text
                         should_make_singular = (token.pos_ in ['NOUN', 'PROPN'])
@@ -569,7 +487,7 @@ def main():
     parser.add_argument("--sentence-context-size", type=int, default=1)
     parser.add_argument("--output")
     parser.add_argument("--timestamp", action="store_true")
-    parser.add_argument("--autoname", nargs='?', type=int, const=4, default=None)
+    parser.add_argument("--autoname", nargs='?', type=int, const=4, default=None, help="Automatically generate part of the filename from the first N words of the text. Defaults to 4 words if no number is given.")
     parser.add_argument("--two-column-output-to-file", action="store_true")
     parser.add_argument("--include-simple-list", action="store_true")
     parser.add_argument("--with-fields", action="store_true")
@@ -579,9 +497,9 @@ def main():
     parser.add_argument("--two-column-output", action="store_true")
     parser.add_argument("--html", action="store_true")
     parser.add_argument("--original-form-in-simple-list", action="store_true")
-    parser.add_argument("--gcs", action="store_true", help="Enable German Compound Splitting.")
-    parser.add_argument("--gcs-dictionary", default="german.dic")
-    parser.add_argument("--gcs-in-wordlist", action="store_true")
+    parser.add_argument("--gcs", action="store_true", help="Enable German Compound Splitting. Requires --language de.")
+    parser.add_argument("--gcs-dictionary", default="german.dic", help="Path to the dictionary file for GCS.")
+    parser.add_argument("--gcs-in-wordlist", action="store_true", help="Also add German compound components to the SentenceSourceWordlist field. Requires --gcs.")
     args = parser.parse_args()
     if args.gcs_in_wordlist and not args.gcs:
         print("Error: --gcs-in-wordlist requires --gcs to be enabled.", file=sys.stderr); exit(1)
@@ -595,9 +513,10 @@ def main():
              print("Warning: German dictionary for validation is empty or not loaded.", file=sys.stderr)
         if args.gcs:
             if not GCS_AVAILABLE:
-                print("Error: 'german-compound-splitter' library not installed.", file=sys.stderr); exit(1)
+                print("Error: 'german-compound-splitter' library not installed. Please run 'pip install german-compound-splitter'.", file=sys.stderr); exit(1)
             if not os.path.exists(args.gcs_dictionary):
-                print(f"Error: GCS dictionary file '{args.gcs_dictionary}' not found!", file=sys.stderr); exit(1)
+                print(f"Error: GCS dictionary file '{args.gcs_dictionary}' not found!", file=sys.stderr)
+                print("Please download it and place it in the correct directory.", file=sys.stderr); exit(1)
             try:
                 with redirect_stdout(io.StringIO()):
                     ahocs = comp_split.read_dictionary_from_file(args.gcs_dictionary)

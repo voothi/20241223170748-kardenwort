@@ -103,12 +103,13 @@ def generate_autoname_prefix(text, num_words):
         return ""
     return "-".join(selected_words)
 
-def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, ahocs=None, gcs_in_wordlist=False, gcs_only_nouns=True, make_singular=False, no_make_singular=False):
+def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, ahocs=None, gcs_in_wordlist=False, gcs_only_nouns=True, make_singular=False, no_make_singular=False, gcs_combine_noun_modes=False):
     doc = nlp(sentence)
     final_tokens = set()
 
     for token in doc:
         if token.is_alpha and token.dep_ != "svp":
+            # ... (lemma processing code is unchanged)
             token_text = token.text
             spacy_lemma = token.lemma_
 
@@ -143,10 +144,21 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, 
                     else:
                         should_make_singular = (token.pos_ in ['NOUN', 'PROPN'])
 
-                    with redirect_stdout(io.StringIO()):
-                        dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=gcs_only_nouns)
-
-                    final_components = comp_split.merge_fractions(dissection)
+                    final_components = []
+                    if gcs_combine_noun_modes:
+                        # Mode 1: only_nouns=True
+                        with redirect_stdout(io.StringIO()):
+                            dissection1 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=True)
+                        final_components.extend(comp_split.merge_fractions(dissection1))
+                        # Mode 2: only_nouns=False
+                        with redirect_stdout(io.StringIO()):
+                            dissection2 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=False)
+                        final_components.extend(comp_split.merge_fractions(dissection2))
+                    else:
+                        # Single mode run
+                        with redirect_stdout(io.StringIO()):
+                            dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=gcs_only_nouns)
+                        final_components = comp_split.merge_fractions(dissection)
 
                     if len(final_components) > 1:
                         for part in final_components:
@@ -169,7 +181,7 @@ def process_text_v1(
     input_text, lemma_index, language, text2, text3, sentence_context_size,
     output_file, two_column_output_to_file, include_simple_list,
     with_fields, with_br, pipe, gcs, ahocs, gcs_in_wordlist, german_dict,
-    gcs_only_nouns=True, make_singular=False, no_make_singular=False
+    gcs_only_nouns=True, make_singular=False, no_make_singular=False, gcs_combine_noun_modes=False
 ):
     if "\n" in input_text or not os.path.exists(input_text):
         text1_lines = input_text.splitlines()
@@ -188,9 +200,9 @@ def process_text_v1(
         doc = nlp(line1)
         for token in doc:
             if token.is_alpha and token.dep_ != "svp":
+                # ... (lemma processing code is unchanged)
                 token_text = token.text
                 spacy_lemma = token.lemma_
-
                 form_to_check = token_text if token_text.isupper() else token_text.capitalize()
                 lemma_to_check = spacy_lemma if spacy_lemma.isupper() else spacy_lemma.capitalize()
 
@@ -208,9 +220,8 @@ def process_text_v1(
                         primary_token = form_to_check
                 else:
                     primary_token = base_lemma
-
                 original_form = get_original_form_with_particle(token)
-
+                
                 tokens_to_add = {primary_token}
                 if gcs and ahocs and language == 'de' and len(token.text) > 7:
                     try:
@@ -223,10 +234,22 @@ def process_text_v1(
                         else:
                             should_make_singular = (token.pos_ in ['NOUN', 'PROPN'])
 
-                        with redirect_stdout(io.StringIO()):
-                            dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=gcs_only_nouns)
+                        final_components = []
+                        if gcs_combine_noun_modes:
+                            # Mode 1: only_nouns=True
+                            with redirect_stdout(io.StringIO()):
+                                dissection1 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=True)
+                            final_components.extend(comp_split.merge_fractions(dissection1))
+                            # Mode 2: only_nouns=False
+                            with redirect_stdout(io.StringIO()):
+                                dissection2 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=False)
+                            final_components.extend(comp_split.merge_fractions(dissection2))
+                        else:
+                            # Single mode run
+                            with redirect_stdout(io.StringIO()):
+                                dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=gcs_only_nouns)
+                            final_components = comp_split.merge_fractions(dissection)
 
-                        final_components = comp_split.merge_fractions(dissection)
                         if len(final_components) > 1:
                             for part in final_components:
                                 part_to_check = part if part.isupper() else part.capitalize()
@@ -247,9 +270,9 @@ def process_text_v1(
                     if t not in token_to_sentence:
                         token_to_sentence[t] = (i, line1)
                         token_to_original_form[t] = original_form if t == primary_token else t
-
+    
+    # ... (rest of the function is unchanged)
     sorted_tokens = sorted(unique_lemmatized_tokens, key=lambda token: (token not in lemma_index, lemma_index.get(token, 0), token))
-
     if output_file:
         with open(output_file, "w", newline="", encoding="utf-8") as tsvfile:
             tsv_writer = csv.writer(tsvfile, delimiter="\t")
@@ -285,7 +308,7 @@ def process_text_v1(
                     row_data[2] = token_to_original_form.get(token, '')
                 row_data[12] = l1_sentence
                 if include_simple_list:
-                    lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, german_dict, gcs, ahocs, gcs_in_wordlist, gcs_only_nouns, make_singular, no_make_singular)
+                    lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, german_dict, gcs, ahocs, gcs_in_wordlist, gcs_only_nouns, make_singular, no_make_singular, gcs_combine_noun_modes)
                     row_data[11] = "<br>".join(lemmas) if with_br else "\n".join(lemmas)
 
                 if language == "de":
@@ -305,6 +328,7 @@ def process_text_v2(
     gcs_only_nouns = kwargs.get('gcs_only_nouns', True)
     make_singular = kwargs.get('make_singular', False)
     no_make_singular = kwargs.get('no_make_singular', False)
+    gcs_combine_noun_modes = kwargs.get('gcs_combine_noun_modes', False)
     if '\n' in input_text.strip():
         processing_units = input_text.splitlines()
         is_line_based = True
@@ -320,12 +344,11 @@ def process_text_v2(
         doc_unit = nlp(unit_text)
         for token in doc_unit:
             if token.is_alpha and token.dep_ != "svp":
+                # ... (lemma processing code is unchanged)
                 token_text = token.text
                 spacy_lemma = token.lemma_
-
                 form_to_check = token_text if token_text.isupper() else token_text.capitalize()
                 lemma_to_check = spacy_lemma if spacy_lemma.isupper() else spacy_lemma.capitalize()
-
                 if token.pos_ in ["NOUN", "PROPN"] and spacy_lemma.isupper():
                     base_lemma = spacy_lemma
                 elif language == "de" and token.pos_ in ["NOUN", "PROPN"]:
@@ -340,9 +363,8 @@ def process_text_v2(
                         primary_token = form_to_check
                 else:
                     primary_token = base_lemma
-
                 original_form = get_original_form_with_particle(token)
-
+                
                 tokens_to_add = {primary_token}
                 if gcs and ahocs and language == 'de' and len(token.text) > 7:
                     try:
@@ -355,10 +377,22 @@ def process_text_v2(
                         else:
                             should_make_singular = (token.pos_ in ['NOUN', 'PROPN'])
                             
-                        with redirect_stdout(io.StringIO()):
-                            dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=gcs_only_nouns)
+                        final_components = []
+                        if gcs_combine_noun_modes:
+                            # Mode 1: only_nouns=True
+                            with redirect_stdout(io.StringIO()):
+                                dissection1 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=True)
+                            final_components.extend(comp_split.merge_fractions(dissection1))
+                            # Mode 2: only_nouns=False
+                            with redirect_stdout(io.StringIO()):
+                                dissection2 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=False)
+                            final_components.extend(comp_split.merge_fractions(dissection2))
+                        else:
+                            # Single mode run
+                            with redirect_stdout(io.StringIO()):
+                                dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=gcs_only_nouns)
+                            final_components = comp_split.merge_fractions(dissection)
 
-                        final_components = comp_split.merge_fractions(dissection)
                         if len(final_components) > 1:
                             for part in final_components:
                                 part_to_check = part if part.isupper() else part.capitalize()
@@ -380,8 +414,8 @@ def process_text_v2(
                         token_to_sentence[t] = (unit_index, unit_text)
                         token_to_original_form[t] = original_form if t == primary_token else t
 
+    # ... (rest of the function is unchanged)
     sorted_tokens = sorted(unique_lemmatized_tokens, key=lambda token: (token not in lemma_index, lemma_index.get(token, 0), token))
-
     def get_unit_text(u):
         return u if is_line_based else u.text
 
@@ -441,7 +475,7 @@ def process_text_v2(
                 row_data[2] = token_to_original_form.get(token, '')
             row_data[12] = l1_sentence
             if include_simple_list:
-                lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, german_dict, gcs, ahocs, gcs_in_wordlist, gcs_only_nouns, make_singular, no_make_singular)
+                lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, german_dict, gcs, ahocs, gcs_in_wordlist, gcs_only_nouns, make_singular, no_make_singular, gcs_combine_noun_modes)
                 row_data[11] = "<br>".join(lemmas) if with_br else "\n".join(lemmas)
 
             if language == "de":
@@ -457,6 +491,7 @@ def process_sentences(
     language, lemma_index, text1, text2, text3, sentence_context_size,
     output_file, include_simple_list, with_fields, with_br, pipe, **kwargs
 ):
+    # This function remains unchanged as it doesn't use GCS
     try:
         with open(text1, "r", encoding="utf-8") as f: text1_lines = [line.rstrip("\n") for line in f]
         with open(text2, "r", encoding="utf-8") as f: text2_lines = [line.rstrip("\n") for line in f]
@@ -512,6 +547,7 @@ def process_sentences(
 
 def main():
     parser = argparse.ArgumentParser(description="Extract and process tokens or sentences from text.")
+    # ... (other arguments are unchanged)
     parser.add_argument("--type", required=True, choices=["token", "sentence"])
     parser.add_argument("--language", default="de", choices=["de", "en"])
     parser.add_argument("--lemma-index-file", default="")
@@ -532,18 +568,22 @@ def main():
     parser.add_argument("--two-column-output", action="store_true")
     parser.add_argument("--html", action="store_true")
     parser.add_argument("--original-form-in-simple-list", action="store_true")
+    
+    # GCS arguments
     parser.add_argument("--gcs", action="store_true", help="Enable German Compound Splitting. Requires --language de.")
     parser.add_argument("--gcs-dictionary", default="german.dic", help="Path to the dictionary file for GCS.")
     parser.add_argument("--gcs-in-wordlist", action="store_true", help="Also add German compound components to the SentenceSourceWordlist field. Requires --gcs.")
-    parser.add_argument("--gcs-only-nouns-false", action="store_true", help="Allows any type of word (verb, adjective, prefix, suffix) in the dictionary to be used for GCS splitting. Sometimes the results are better than limiting to nouns only.")
+    parser.add_argument("--gcs-only-nouns-false", action="store_true", help="Allows any type of word (verb, adjective, etc.) to be used for GCS splitting. Ignored if --gcs-combine-noun-modes is used.")
+    parser.add_argument("--gcs-combine-noun-modes", action="store_true", help="Run GCS in both modes (only_nouns=True and False) and combine the unique resulting components.")
     parser.add_argument("--make-singular", action="store_true", help="Force making compound parts singular during GCS splitting, regardless of the word's part of speech. Default is to only do this for nouns.")
     parser.add_argument("--no-make-singular", action="store_true", help="Prevent making compound parts singular during GCS splitting, keeping their original form. Overrides default behavior and --make-singular.")
 
     args = parser.parse_args()
     
     if args.make_singular and args.no_make_singular:
-        print("Error: --make-singular and --no-make-singular cannot be used together.", file=sys.stderr)
-        exit(1)
+        print("Error: --make-singular and --no-make-singular cannot be used together.", file=sys.stderr); exit(1)
+    if args.gcs_combine_noun_modes and args.gcs_only_nouns_false:
+        print("Error: --gcs-combine-noun-modes and --gcs-only-nouns-false cannot be used together.", file=sys.stderr); exit(1)
 
     if args.gcs_in_wordlist and not args.gcs:
         print("Error: --gcs-in-wordlist requires --gcs to be enabled.", file=sys.stderr); exit(1)
@@ -551,6 +591,7 @@ def main():
     global nlp
     nlp = spacy.load("de_core_news_lg" if args.language == "de" else "en_core_web_lg")
 
+    # ... (rest of main is unchanged)
     ahocs = None
     german_dict = set()
     if args.language == 'de':
@@ -602,7 +643,7 @@ def main():
         elif args.timestamp:
             new_filename = f"{zid}-{filename}"
             final_output_path = os.path.join(output_dir, new_filename)
-
+            
     if args.type == "token":
         if args.text and args.text1:
             print("Error: --text and --text1 are mutually exclusive.", file=sys.stderr); exit(1)
@@ -621,7 +662,8 @@ def main():
                 args.gcs, ahocs, args.gcs_in_wordlist, german_dict,
                 gcs_only_nouns=gcs_only_nouns_param,
                 make_singular=args.make_singular,
-                no_make_singular=args.no_make_singular
+                no_make_singular=args.no_make_singular,
+                gcs_combine_noun_modes=args.gcs_combine_noun_modes
             )
         else:
              processed_output_file = process_text_v2(
@@ -632,6 +674,7 @@ def main():
                 gcs_only_nouns=gcs_only_nouns_param,
                 make_singular=args.make_singular,
                 no_make_singular=args.no_make_singular,
+                gcs_combine_noun_modes=args.gcs_combine_noun_modes,
                 detailed=args.detailed, two_column_output=args.two_column_output, html=args.html
             )
 

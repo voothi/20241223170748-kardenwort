@@ -128,15 +128,18 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, 
             else:
                 lemma_to_add = base_lemma
             
-            if gcs and ahocs and nlp.lang == 'de' and token.pos_ in ['NOUN', 'PROPN']:
+            if gcs and ahocs and nlp.lang == 'de' and token.pos_ in ['NOUN', 'PROPN'] and "ä" in token.text:
                 try:
+                    spacy_lemma_var = lemma_to_add
                     with redirect_stdout(io.StringIO()):
-                        dissection_result = comp_split.dissect(lemma_to_add, ahocs, make_singular=True)
-                    final_components = comp_split.merge_fractions(dissection_result)
-                    singular_form = "".join(final_components)
-                    singular_form_to_check = singular_form if singular_form.isupper() else singular_form.capitalize()
-                    if singular_form_to_check != lemma_to_add and singular_form_to_check in german_dict:
-                        lemma_to_add = singular_form_to_check
+                        dissection = comp_split.dissect(token.text, ahocs, make_singular=True)
+                    components = comp_split.merge_fractions(dissection)
+                    gcs_lemma = "".join(components)
+                    if "ä" in token.text and "ä" not in spacy_lemma_var and "ä" in gcs_lemma:
+                        last_a_index = spacy_lemma_var.rfind('a')
+                        if last_a_index != -1:
+                            corrected_lemma = spacy_lemma_var[:last_a_index] + 'ä' + spacy_lemma_var[last_a_index+1:]
+                            lemma_to_add = corrected_lemma
                 except Exception:
                     pass
             
@@ -207,25 +210,27 @@ def process_text_v1(
                 else:
                     primary_token = base_lemma
 
-                if gcs and ahocs and language == 'de' and token.pos_ in ['NOUN', 'PROPN']:
+                if gcs and ahocs and language == 'de' and token.pos_ in ['NOUN', 'PROPN'] and any(c in "äöü" for c in token.text.lower()):
                     try:
+                        spacy_lemma = primary_token
+                        
                         with redirect_stdout(io.StringIO()):
-                            plural_dissection = comp_split.dissect(token.text, ahocs, make_singular=False)
-                        plural_components = comp_split.merge_fractions(plural_dissection)
+                            dissection = comp_split.dissect(token.text, ahocs, make_singular=True)
+                        components = comp_split.merge_fractions(dissection)
+                        gcs_lemma = "".join(components)
 
-                        with redirect_stdout(io.StringIO()):
-                            singular_dissection = comp_split.dissect(token.text, ahocs, make_singular=True)
-                        singular_components = comp_split.merge_fractions(singular_dissection)
-
-                        if plural_components and singular_components and plural_components[-1] != singular_components[-1]:
-                            last_part_plural = plural_components[-1]
-                            last_part_singular = singular_components[-1]
-
-                            if token.text.endswith(last_part_plural):
-                                base = token.text[:-len(last_part_plural)]
-                                corrected_lemma = base + last_part_singular
-                                
-                                primary_token = corrected_lemma
+                        umlaut_in_source = "ä" in token.text or "ö" in token.text or "ü" in token.text
+                        umlaut_in_spacy_lemma = "ä" in spacy_lemma or "ö" in spacy_lemma or "ü" in spacy_lemma
+                        
+                        if umlaut_in_source and not umlaut_in_spacy_lemma:
+                            if "ä" in gcs_lemma or "ö" in gcs_lemma or "ü" in gcs_lemma:
+                                if components:
+                                    correct_last_part = components[-1]
+                                    part_without_umlauts = correct_last_part.replace('ä', 'a').replace('ö', 'o').replace('ü', 'u')
+                                    if spacy_lemma.lower().endswith(part_without_umlauts.lower()):
+                                        base_len = len(spacy_lemma) - len(part_without_umlauts)
+                                        base = spacy_lemma[:base_len]
+                                        primary_token = base + correct_last_part
                     except Exception:
                         pass
                 
@@ -335,25 +340,27 @@ def process_text_v2(
                 else:
                     primary_token = base_lemma
 
-                if gcs and ahocs and language == 'de' and token.pos_ in ['NOUN', 'PROPN']:
+                if gcs and ahocs and language == 'de' and token.pos_ in ['NOUN', 'PROPN'] and any(c in "äöü" for c in token.text.lower()):
                     try:
+                        spacy_lemma = primary_token
+                        
                         with redirect_stdout(io.StringIO()):
-                            plural_dissection = comp_split.dissect(token.text, ahocs, make_singular=False)
-                        plural_components = comp_split.merge_fractions(plural_dissection)
+                            dissection = comp_split.dissect(token.text, ahocs, make_singular=True)
+                        components = comp_split.merge_fractions(dissection)
+                        gcs_lemma = "".join(components)
 
-                        with redirect_stdout(io.StringIO()):
-                            singular_dissection = comp_split.dissect(token.text, ahocs, make_singular=True)
-                        singular_components = comp_split.merge_fractions(singular_dissection)
-
-                        if plural_components and singular_components and plural_components[-1] != singular_components[-1]:
-                            last_part_plural = plural_components[-1]
-                            last_part_singular = singular_components[-1]
-
-                            if token.text.endswith(last_part_plural):
-                                base = token.text[:-len(last_part_plural)]
-                                corrected_lemma = base + last_part_singular
-                                
-                                primary_token = corrected_lemma
+                        umlaut_in_source = "ä" in token.text or "ö" in token.text or "ü" in token.text
+                        umlaut_in_spacy_lemma = "ä" in spacy_lemma or "ö" in spacy_lemma or "ü" in spacy_lemma
+                        
+                        if umlaut_in_source and not umlaut_in_spacy_lemma:
+                            if "ä" in gcs_lemma or "ö" in gcs_lemma or "ü" in gcs_lemma:
+                                if components:
+                                    correct_last_part = components[-1]
+                                    part_without_umlauts = correct_last_part.replace('ä', 'a').replace('ö', 'o').replace('ü', 'u')
+                                    if spacy_lemma.lower().endswith(part_without_umlauts.lower()):
+                                        base_len = len(spacy_lemma) - len(part_without_umlauts)
+                                        base = spacy_lemma[:base_len]
+                                        primary_token = base + correct_last_part
                     except Exception:
                         pass
 
@@ -506,7 +513,7 @@ def main():
     parser.add_argument("--sentence-context-size", type=int, default=1)
     parser.add_argument("--output")
     parser.add_argument("--timestamp", action="store_true")
-    parser.add_argument("--autoname", nargs='?', type=int, const=4, default=None, help="Automatically generate part of the filename from the first N words of the text. Defaults to 4 words if no number is given.")
+    parser.add_argument("--autoname", nargs='?', type=int, const=4, default=None)
     parser.add_argument("--two-column-output-to-file", action="store_true")
     parser.add_argument("--include-simple-list", action="store_true")
     parser.add_argument("--with-fields", action="store_true")
@@ -516,9 +523,9 @@ def main():
     parser.add_argument("--two-column-output", action="store_true")
     parser.add_argument("--html", action="store_true")
     parser.add_argument("--original-form-in-simple-list", action="store_true")
-    parser.add_argument("--gcs", action="store_true", help="Enable German Compound Splitting. Requires --language de.")
-    parser.add_argument("--gcs-dictionary", default="german.dic", help="Path to the dictionary file for GCS.")
-    parser.add_argument("--gcs-in-wordlist", action="store_true", help="Also add German compound components to the SentenceSourceWordlist field. Requires --gcs.")
+    parser.add_argument("--gcs", action="store_true", help="Enable German Compound Splitting.")
+    parser.add_argument("--gcs-dictionary", default="german.dic")
+    parser.add_argument("--gcs-in-wordlist", action="store_true")
     args = parser.parse_args()
     if args.gcs_in_wordlist and not args.gcs:
         print("Error: --gcs-in-wordlist requires --gcs to be enabled.", file=sys.stderr); exit(1)
@@ -532,10 +539,9 @@ def main():
              print("Warning: German dictionary for validation is empty or not loaded.", file=sys.stderr)
         if args.gcs:
             if not GCS_AVAILABLE:
-                print("Error: 'german-compound-splitter' library not installed. Please run 'pip install german-compound-splitter'.", file=sys.stderr); exit(1)
+                print("Error: 'german-compound-splitter' library not installed.", file=sys.stderr); exit(1)
             if not os.path.exists(args.gcs_dictionary):
-                print(f"Error: GCS dictionary file '{args.gcs_dictionary}' not found!", file=sys.stderr)
-                print("Please download it and place it in the correct directory.", file=sys.stderr); exit(1)
+                print(f"Error: GCS dictionary file '{args.gcs_dictionary}' not found!", file=sys.stderr); exit(1)
             try:
                 with redirect_stdout(io.StringIO()):
                     ahocs = comp_split.read_dictionary_from_file(args.gcs_dictionary)

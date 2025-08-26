@@ -103,7 +103,7 @@ def generate_autoname_prefix(text, num_words):
         return ""
     return "-".join(selected_words)
 
-def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, ahocs=None, gcs_in_wordlist=False, gcs_only_nouns=True):
+def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, ahocs=None, gcs_in_wordlist=False, gcs_only_nouns=True, make_singular=False):
     doc = nlp(sentence)
     final_tokens = set()
 
@@ -135,7 +135,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, 
             if gcs and ahocs and gcs_in_wordlist and nlp.lang == 'de' and len(token.text) > 7:
                 try:
                     word_to_split = token.text
-                    should_make_singular = (token.pos_ in ['NOUN', 'PROPN'])
+                    should_make_singular = make_singular or (token.pos_ in ['NOUN', 'PROPN'])
                     with redirect_stdout(io.StringIO()):
                         dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=gcs_only_nouns)
 
@@ -162,7 +162,7 @@ def process_text_v1(
     input_text, lemma_index, language, text2, text3, sentence_context_size,
     output_file, two_column_output_to_file, include_simple_list,
     with_fields, with_br, pipe, gcs, ahocs, gcs_in_wordlist, german_dict,
-    gcs_only_nouns=True
+    gcs_only_nouns=True, make_singular=False
 ):
     if "\n" in input_text or not os.path.exists(input_text):
         text1_lines = input_text.splitlines()
@@ -208,7 +208,7 @@ def process_text_v1(
                 if gcs and ahocs and language == 'de' and len(token.text) > 7:
                     try:
                         word_to_split = token.text
-                        should_make_singular = (token.pos_ in ['NOUN', 'PROPN'])
+                        should_make_singular = make_singular or (token.pos_ in ['NOUN', 'PROPN'])
                         with redirect_stdout(io.StringIO()):
                             dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=gcs_only_nouns)
 
@@ -271,7 +271,7 @@ def process_text_v1(
                     row_data[2] = token_to_original_form.get(token, '')
                 row_data[12] = l1_sentence
                 if include_simple_list:
-                    lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, german_dict, gcs, ahocs, gcs_in_wordlist, gcs_only_nouns)
+                    lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, german_dict, gcs, ahocs, gcs_in_wordlist, gcs_only_nouns, make_singular)
                     row_data[11] = "<br>".join(lemmas) if with_br else "\n".join(lemmas)
 
                 if language == "de":
@@ -289,6 +289,7 @@ def process_text_v2(
     with_fields, with_br, pipe, gcs, ahocs, gcs_in_wordlist, german_dict, **kwargs
 ):
     gcs_only_nouns = kwargs.get('gcs_only_nouns', True)
+    make_singular = kwargs.get('make_singular', False)
     if '\n' in input_text.strip():
         processing_units = input_text.splitlines()
         is_line_based = True
@@ -331,7 +332,7 @@ def process_text_v2(
                 if gcs and ahocs and language == 'de' and len(token.text) > 7:
                     try:
                         word_to_split = token.text
-                        should_make_singular = (token.pos_ in ['NOUN', 'PROPN'])
+                        should_make_singular = make_singular or (token.pos_ in ['NOUN', 'PROPN'])
                         with redirect_stdout(io.StringIO()):
                             dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=gcs_only_nouns)
 
@@ -418,7 +419,7 @@ def process_text_v2(
                 row_data[2] = token_to_original_form.get(token, '')
             row_data[12] = l1_sentence
             if include_simple_list:
-                lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, german_dict, gcs, ahocs, gcs_in_wordlist, gcs_only_nouns)
+                lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, german_dict, gcs, ahocs, gcs_in_wordlist, gcs_only_nouns, make_singular)
                 row_data[11] = "<br>".join(lemmas) if with_br else "\n".join(lemmas)
 
             if language == "de":
@@ -513,6 +514,7 @@ def main():
     parser.add_argument("--gcs-dictionary", default="german.dic", help="Path to the dictionary file for GCS.")
     parser.add_argument("--gcs-in-wordlist", action="store_true", help="Also add German compound components to the SentenceSourceWordlist field. Requires --gcs.")
     parser.add_argument("--gcs-only-nouns-false", action="store_true", help="Allows any type of word (verb, adjective, prefix, suffix) in the dictionary to be used for GCS splitting. Sometimes the results are better than limiting to nouns only.")
+    parser.add_argument("--make-singular", action="store_true", help="Force making compound parts singular during GCS splitting, regardless of the word's part of speech. Default is to only do this for nouns.")
 
     args = parser.parse_args()
 
@@ -590,7 +592,8 @@ def main():
                 args.two_column_output_to_file, args.include_simple_list,
                 args.with_fields, args.with_br, args.pipe,
                 args.gcs, ahocs, args.gcs_in_wordlist, german_dict,
-                gcs_only_nouns=gcs_only_nouns_param
+                gcs_only_nouns=gcs_only_nouns_param,
+                make_singular=args.make_singular
             )
         else:
              processed_output_file = process_text_v2(
@@ -599,6 +602,7 @@ def main():
                 args.with_fields, args.with_br, args.pipe,
                 args.gcs, ahocs, args.gcs_in_wordlist, german_dict,
                 gcs_only_nouns=gcs_only_nouns_param,
+                make_singular=args.make_singular,
                 detailed=args.detailed, two_column_output=args.two_column_output, html=args.html
             )
 

@@ -128,18 +128,26 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, 
             else:
                 lemma_to_add = base_lemma
             
-            if gcs and ahocs and nlp.lang == 'de' and token.pos_ in ['NOUN', 'PROPN'] and "ä" in token.text:
+            if gcs and ahocs and nlp.lang == 'de' and token.pos_ in ['NOUN', 'PROPN'] and any(c in "äöü" for c in token.text.lower()):
                 try:
                     spacy_lemma_var = lemma_to_add
-                    with redirect_stdout(io.StringIO()):
-                        dissection = comp_split.dissect(token.text, ahocs, make_singular=True)
-                    components = comp_split.merge_fractions(dissection)
-                    gcs_lemma = "".join(components)
-                    if "ä" in token.text and "ä" not in spacy_lemma_var and "ä" in gcs_lemma:
-                        last_a_index = spacy_lemma_var.rfind('a')
-                        if last_a_index != -1:
-                            corrected_lemma = spacy_lemma_var[:last_a_index] + 'ä' + spacy_lemma_var[last_a_index+1:]
-                            lemma_to_add = corrected_lemma
+                    umlaut_in_source = any(c in "äöü" for c in token.text.lower())
+                    umlaut_in_spacy_lemma = any(c in "äöü" for c in spacy_lemma_var.lower())
+
+                    if umlaut_in_source and not umlaut_in_spacy_lemma:
+                        with redirect_stdout(io.StringIO()):
+                            dissection = comp_split.dissect(token.text, ahocs, make_singular=True)
+                        components = comp_split.merge_fractions(dissection)
+                        if components:
+                            gcs_lemma_has_umlaut = any(c in "äöü" for c in "".join(components).lower())
+                            if gcs_lemma_has_umlaut:
+                                correct_last_part = components[-1]
+                                part_without_umlauts = correct_last_part.replace('ä', 'a').replace('ö', 'o').replace('ü', 'u')
+                                if spacy_lemma_var.lower().endswith(part_without_umlauts.lower()):
+                                    base_len = len(spacy_lemma_var) - len(part_without_umlauts)
+                                    base = spacy_lemma_var[:base_len]
+                                    corrected_lemma = (base + correct_last_part).capitalize()
+                                    lemma_to_add = corrected_lemma
                 except Exception:
                     pass
             
@@ -212,25 +220,23 @@ def process_text_v1(
 
                 if gcs and ahocs and language == 'de' and token.pos_ in ['NOUN', 'PROPN'] and any(c in "äöü" for c in token.text.lower()):
                     try:
-                        spacy_lemma = primary_token
-                        
-                        with redirect_stdout(io.StringIO()):
-                            dissection = comp_split.dissect(token.text, ahocs, make_singular=True)
-                        components = comp_split.merge_fractions(dissection)
-                        gcs_lemma = "".join(components)
-
-                        umlaut_in_source = "ä" in token.text or "ö" in token.text or "ü" in token.text
-                        umlaut_in_spacy_lemma = "ä" in spacy_lemma or "ö" in spacy_lemma or "ü" in spacy_lemma
+                        spacy_lemma_var = primary_token
+                        umlaut_in_source = any(c in "äöü" for c in token.text.lower())
+                        umlaut_in_spacy_lemma = any(c in "äöü" for c in spacy_lemma_var.lower())
                         
                         if umlaut_in_source and not umlaut_in_spacy_lemma:
-                            if "ä" in gcs_lemma or "ö" in gcs_lemma or "ü" in gcs_lemma:
-                                if components:
+                            with redirect_stdout(io.StringIO()):
+                                dissection = comp_split.dissect(token.text, ahocs, make_singular=True)
+                            components = comp_split.merge_fractions(dissection)
+                            if components:
+                                gcs_lemma_has_umlaut = any(c in "äöü" for c in "".join(components).lower())
+                                if gcs_lemma_has_umlaut:
                                     correct_last_part = components[-1]
                                     part_without_umlauts = correct_last_part.replace('ä', 'a').replace('ö', 'o').replace('ü', 'u')
-                                    if spacy_lemma.lower().endswith(part_without_umlauts.lower()):
-                                        base_len = len(spacy_lemma) - len(part_without_umlauts)
-                                        base = spacy_lemma[:base_len]
-                                        primary_token = base + correct_last_part
+                                    if spacy_lemma_var.lower().endswith(part_without_umlauts.lower()):
+                                        base_len = len(spacy_lemma_var) - len(part_without_umlauts)
+                                        base = spacy_lemma_var[:base_len]
+                                        primary_token = (base + correct_last_part).capitalize()
                     except Exception:
                         pass
                 
@@ -342,25 +348,23 @@ def process_text_v2(
 
                 if gcs and ahocs and language == 'de' and token.pos_ in ['NOUN', 'PROPN'] and any(c in "äöü" for c in token.text.lower()):
                     try:
-                        spacy_lemma = primary_token
-                        
-                        with redirect_stdout(io.StringIO()):
-                            dissection = comp_split.dissect(token.text, ahocs, make_singular=True)
-                        components = comp_split.merge_fractions(dissection)
-                        gcs_lemma = "".join(components)
-
-                        umlaut_in_source = "ä" in token.text or "ö" in token.text or "ü" in token.text
-                        umlaut_in_spacy_lemma = "ä" in spacy_lemma or "ö" in spacy_lemma or "ü" in spacy_lemma
+                        spacy_lemma_var = primary_token
+                        umlaut_in_source = any(c in "äöü" for c in token.text.lower())
+                        umlaut_in_spacy_lemma = any(c in "äöü" for c in spacy_lemma_var.lower())
                         
                         if umlaut_in_source and not umlaut_in_spacy_lemma:
-                            if "ä" in gcs_lemma or "ö" in gcs_lemma or "ü" in gcs_lemma:
-                                if components:
+                            with redirect_stdout(io.StringIO()):
+                                dissection = comp_split.dissect(token.text, ahocs, make_singular=True)
+                            components = comp_split.merge_fractions(dissection)
+                            if components:
+                                gcs_lemma_has_umlaut = any(c in "äöü" for c in "".join(components).lower())
+                                if gcs_lemma_has_umlaut:
                                     correct_last_part = components[-1]
                                     part_without_umlauts = correct_last_part.replace('ä', 'a').replace('ö', 'o').replace('ü', 'u')
-                                    if spacy_lemma.lower().endswith(part_without_umlauts.lower()):
-                                        base_len = len(spacy_lemma) - len(part_without_umlauts)
-                                        base = spacy_lemma[:base_len]
-                                        primary_token = base + correct_last_part
+                                    if spacy_lemma_var.lower().endswith(part_without_umlauts.lower()):
+                                        base_len = len(spacy_lemma_var) - len(part_without_umlauts)
+                                        base = spacy_lemma_var[:base_len]
+                                        primary_token = (base + correct_last_part).capitalize()
                     except Exception:
                         pass
 

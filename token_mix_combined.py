@@ -114,6 +114,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, 
 
     for token in doc:
         if token.is_alpha and token.dep_ != "svp":
+            # Блок основной лемматизации токена
             token_text = token.text
             spacy_lemma = token.lemma_
             form_to_check = token_text if token_text.isupper() else token_text.capitalize()
@@ -124,6 +125,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, 
                 base_lemma = spacy_lemma.capitalize()
             else:
                 base_lemma = get_verb_with_particle(token) if token.pos_ == "VERB" else token.lemma_
+            
             lemma_to_add = ""
             if form_to_check in german_dict:
                 if lemma_to_check in german_dict:
@@ -133,6 +135,8 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, 
             else:
                 lemma_to_add = base_lemma
             final_tokens.add(lemma_to_add)
+
+            # Блок разбора сложных слов
             if gcs and ahocs and gcs_in_wordlist and nlp.lang == 'de' and len(token.text) > 7:
                 try:
                     word_to_split = token.text
@@ -143,11 +147,9 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, 
                     if len(final_components) > 1:
                         for part in final_components:
                             part_to_check = part if part.isupper() else part.capitalize()
-                            # --- Эвристика для "Erdbeer" -> "Erdbeere" ---
                             corrected_part = part_to_check
                             if part_to_check in german_dict and not part_to_check.endswith('e') and f"{part_to_check}e" in german_dict:
                                 corrected_part = f"{part_to_check}e"
-                            # --- Конец эвристики ---
                             if corrected_part in german_dict:
                                 final_tokens.add(corrected_part)
                             else:
@@ -159,6 +161,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, 
                                         final_tokens.add(lemma_part_to_check)
                 except Exception:
                     pass
+    
     return sorted(list(final_tokens), key=lambda x: lemma_index.get(x, float("inf")))
 
 
@@ -198,6 +201,21 @@ def process_text_v1(
                         primary_token = form_to_check
                 else:
                     primary_token = base_lemma
+                
+                # --- НОВЫЙ БЛОК: ФИНАЛЬНАЯ КОРРЕКЦИЯ СИНГУЛЯРИЗАЦИИ ---
+                if gcs and ahocs and language == 'de' and token.pos_ in ['NOUN', 'PROPN']:
+                    try:
+                        with redirect_stdout(io.StringIO()):
+                             dissection = comp_split.dissect(primary_token, ahocs, make_singular=True)
+                        singular_form = "".join([d.word for d in dissection])
+                        singular_form_to_check = singular_form if singular_form.isupper() else singular_form.capitalize()
+
+                        if singular_form_to_check != primary_token and singular_form_to_check in german_dict:
+                            primary_token = singular_form_to_check
+                    except Exception:
+                        pass # Если GCS не справился, оставляем как есть
+                # --- КОНЕЦ НОВОГО БЛОКА ---
+                
                 original_form = get_original_form_with_particle(token)
                 tokens_to_add = {primary_token}
                 if gcs and ahocs and language == 'de' and len(token.text) > 7:
@@ -210,11 +228,9 @@ def process_text_v1(
                         if len(final_components) > 1:
                             for part in final_components:
                                 part_to_check = part if part.isupper() else part.capitalize()
-                                # --- Эвристика для "Erdbeer" -> "Erdbeere" ---
                                 corrected_part = part_to_check
                                 if part_to_check in german_dict and not part_to_check.endswith('e') and f"{part_to_check}e" in german_dict:
                                     corrected_part = f"{part_to_check}e"
-                                # --- Конец эвристики ---
                                 if corrected_part in german_dict:
                                     tokens_to_add.add(corrected_part)
                                 else:
@@ -233,6 +249,7 @@ def process_text_v1(
                         token_to_original_form[t] = original_form if t == primary_token else t
     sorted_tokens = sorted(unique_lemmatized_tokens, key=lambda token: (token not in lemma_index, lemma_index.get(token, 0), token))
     if output_file:
+        # ... (остальная часть функции без изменений)
         with open(output_file, "w", newline="", encoding="utf-8") as tsvfile:
             tsv_writer = csv.writer(tsvfile, delimiter="\t")
             if with_fields:
@@ -305,6 +322,21 @@ def process_text_v2(
                         primary_token = form_to_check
                 else:
                     primary_token = base_lemma
+
+                # --- НОВЫЙ БЛОК: ФИНАЛЬНАЯ КОРРЕКЦИЯ СИНГУЛЯРИЗАЦИИ ---
+                if gcs and ahocs and language == 'de' and token.pos_ in ['NOUN', 'PROPN']:
+                    try:
+                        with redirect_stdout(io.StringIO()):
+                             dissection = comp_split.dissect(primary_token, ahocs, make_singular=True)
+                        singular_form = "".join([d.word for d in dissection])
+                        singular_form_to_check = singular_form if singular_form.isupper() else singular_form.capitalize()
+
+                        if singular_form_to_check != primary_token and singular_form_to_check in german_dict:
+                            primary_token = singular_form_to_check
+                    except Exception:
+                        pass # Если GCS не справился, оставляем как есть
+                # --- КОНЕЦ НОВОГО БЛОКА ---
+
                 original_form = get_original_form_with_particle(token)
                 tokens_to_add = {primary_token}
                 if gcs and ahocs and language == 'de' and len(token.text) > 7:
@@ -317,11 +349,9 @@ def process_text_v2(
                         if len(final_components) > 1:
                             for part in final_components:
                                 part_to_check = part if part.isupper() else part.capitalize()
-                                # --- Эвристика для "Erdbeer" -> "Erdbeere" ---
                                 corrected_part = part_to_check
                                 if part_to_check in german_dict and not part_to_check.endswith('e') and f"{part_to_check}e" in german_dict:
                                     corrected_part = f"{part_to_check}e"
-                                # --- Конец эвристики ---
                                 if corrected_part in german_dict:
                                     tokens_to_add.add(corrected_part)
                                 else:
@@ -342,6 +372,7 @@ def process_text_v2(
     def get_unit_text(u):
         return u if is_line_based else u.text
     if not output_file:
+        # ... (остальная часть функции без изменений)
         detailed = kwargs.get('detailed', False)
         two_column_output = kwargs.get('two_column_output', False)
         html = kwargs.get('html', False)
@@ -370,6 +401,7 @@ def process_text_v2(
                 print(token)
         return None
     with open(output_file, "w", newline="", encoding="utf-8") as tsvfile:
+        # ... (остальная часть функции без изменений)
         tsv_writer = csv.writer(tsvfile, delimiter="\t")
         if with_fields:
             tsv_writer.writerow(get_full_header())
@@ -402,6 +434,7 @@ def process_sentences(
     language, lemma_index, text1, text2, text3, sentence_context_size,
     output_file, include_simple_list, with_fields, with_br, pipe, german_dict, **kwargs
 ):
+    # ... (функция без изменений)
     try:
         with open(text1, "r", encoding="utf-8") as f: text1_lines = [line.rstrip("\n") for line in f]
         with open(text2, "r", encoding="utf-8") as f: text2_lines = [line.rstrip("\n") for line in f]
@@ -445,6 +478,7 @@ def process_sentences(
     return output_file
 
 def main():
+    # ... (функция без изменений)
     parser = argparse.ArgumentParser(description="Extract and process tokens or sentences from text.")
     parser.add_argument("--type", required=True, choices=["token", "sentence"])
     parser.add_argument("--language", default="de", choices=["de", "en"])
@@ -549,7 +583,7 @@ def main():
             args.language, lemma_index, args.text1, args.text2, args.text3,
             args.sentence_context_size, final_output_path,
             args.include_simple_list, args.with_fields, args.with_br, args.pipe,
-            german_dict # Передаем словарь
+            german_dict
         )
     if args.pipe and processed_output_file:
         print(os.path.basename(processed_output_file))

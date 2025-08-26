@@ -108,7 +108,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, gcs=False, ahocs=None, g
                     try:
                         should_make_singular = (token.pos_ == 'NOUN')
                         with redirect_stdout(io.StringIO()):
-                            dissection = comp_split.dissect(token.lemma_, ahocs, make_singular=should_make_singular)
+                            dissection = comp_split.dissect(token.lemma_, ahocs, make_singular=True)
                         
                         final_components = comp_split.merge_fractions(dissection)
                         
@@ -154,14 +154,13 @@ def process_text_v1(
                 if gcs and ahocs and language == 'de':
                     if token.pos_ == 'NOUN' or gcs_all_pos:
                         try:
-                            should_make_singular = (token.pos_ == 'NOUN')
+                            # --- ИСПРАВЛЕНИЕ: Всегда используем make_singular=True для лучшего результата ---
                             with redirect_stdout(io.StringIO()):
-                                dissection = comp_split.dissect(token.lemma_, ahocs, make_singular=should_make_singular)
+                                dissection = comp_split.dissect(token.lemma_, ahocs, make_singular=True)
                             
                             final_components = comp_split.merge_fractions(dissection)
                             if len(final_components) > 1:
                                 for part in final_components:
-                                    # --- ИСПРАВЛЕНИЕ ЗДЕСЬ: Лематизируем каждый компонент ---
                                     part_doc = nlp(part)
                                     if len(part_doc) > 0:
                                         lemmatized_part = part_doc[0].lemma_
@@ -250,14 +249,13 @@ def process_text_v2(
                 if gcs and ahocs and language == 'de':
                     if token.pos_ == 'NOUN' or gcs_all_pos:
                         try:
-                            should_make_singular = (token.pos_ == 'NOUN')
+                            # --- ИСПРАВЛЕНИЕ: Всегда используем make_singular=True для лучшего результата ---
                             with redirect_stdout(io.StringIO()):
-                                dissection = comp_split.dissect(token.lemma_, ahocs, make_singular=should_make_singular)
+                                dissection = comp_split.dissect(token.lemma_, ahocs, make_singular=True)
 
                             final_components = comp_split.merge_fractions(dissection)
                             if len(final_components) > 1:
                                 for part in final_components:
-                                    # --- ИСПРАВЛЕНИЕ ЗДЕСЬ: Лематизируем каждый компонент ---
                                     part_doc = nlp(part)
                                     if len(part_doc) > 0:
                                         lemmatized_part = part_doc[0].lemma_

@@ -108,10 +108,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, 
 
     for token in doc:
         if token.is_alpha and token.dep_ != "svp":
-            token_text = token.text
             spacy_lemma = token.lemma_
-            form_to_check = token_text if token_text.isupper() else token_text.capitalize()
-            lemma_to_check = spacy_lemma if spacy_lemma.isupper() else spacy_lemma.capitalize()
             if token.pos_ in ["NOUN", "PROPN"] and spacy_lemma.isupper():
                 base_lemma = spacy_lemma
             elif nlp.lang == "de" and token.pos_ in ["NOUN", "PROPN"]:
@@ -119,8 +116,25 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, 
             else:
                 base_lemma = get_verb_with_particle(token) if token.pos_ == "VERB" else token.lemma_
             
-            lemma_to_add = ""
             lemma_to_add = base_lemma
+
+            if (gcs and ahocs and
+                token.lemma_ == token.text and 
+                token.pos_ in ['NOUN', 'PROPN'] and
+                len(token.text) > 10):
+                try:
+                    with redirect_stdout(io.StringIO()):
+                        dissection = comp_split.dissect(token.text, ahocs, make_singular=True)
+                    components = comp_split.merge_fractions(dissection)
+                    if len(components) > 1 and components[-1]:
+                        prefix = "".join(components[:-1])
+                        last_part = components[-1]
+                        last_part_doc = nlp(last_part)
+                        last_part_lemma = last_part_doc[0].lemma_
+                        corrected_lemma = prefix + last_part_lemma
+                        lemma_to_add = corrected_lemma.capitalize()
+                except Exception:
+                    pass
             
             if gcs and ahocs and nlp.lang == 'de' and token.pos_ in ['NOUN', 'PROPN'] and any(c in "äöü" for c in token.text.lower()):
                 try:
@@ -194,17 +208,33 @@ def process_text_v1(
         doc = nlp(line1)
         for token in doc:
             if token.is_alpha and token.dep_ != "svp":
-                token_text = token.text
                 spacy_lemma = token.lemma_
-                form_to_check = token_text if token_text.isupper() else token_text.capitalize()
-                lemma_to_check = spacy_lemma if spacy_lemma.isupper() else spacy_lemma.capitalize()
                 if token.pos_ in ["NOUN", "PROPN"] and spacy_lemma.isupper():
                     base_lemma = spacy_lemma
                 elif language == "de" and token.pos_ in ["NOUN", "PROPN"]:
                     base_lemma = spacy_lemma.capitalize()
                 else:
                     base_lemma = get_verb_with_particle(token) if token.pos_ == "VERB" else token.lemma_
+                
                 primary_token = base_lemma
+
+                if (gcs and ahocs and
+                    token.lemma_ == token.text and 
+                    token.pos_ in ['NOUN', 'PROPN'] and
+                    len(token.text) > 10):
+                    try:
+                        with redirect_stdout(io.StringIO()):
+                            dissection = comp_split.dissect(token.text, ahocs, make_singular=True)
+                        components = comp_split.merge_fractions(dissection)
+                        if len(components) > 1 and components[-1]:
+                            prefix = "".join(components[:-1])
+                            last_part = components[-1]
+                            last_part_doc = nlp(last_part)
+                            last_part_lemma = last_part_doc[0].lemma_
+                            corrected_lemma = prefix + last_part_lemma
+                            primary_token = corrected_lemma.capitalize()
+                    except Exception:
+                        pass
 
                 if gcs and ahocs and language == 'de' and token.pos_ in ['NOUN', 'PROPN'] and any(c in "äöü" for c in token.text.lower()):
                     try:
@@ -230,7 +260,7 @@ def process_text_v1(
                 
                 original_form = get_original_form_with_particle(token)
                 tokens_to_add = {primary_token}
-                if gcs and ahocs and language == 'de' and len(token.text) > 7:
+                if gcs and ahocs and gcs_in_wordlist and language == 'de' and len(token.text) > 7:
                     try:
                         word_to_split = token.text
                         should_make_singular = (token.pos_ in ['NOUN', 'PROPN'])
@@ -316,17 +346,33 @@ def process_text_v2(
         doc_unit = nlp(unit_text)
         for token in doc_unit:
             if token.is_alpha and token.dep_ != "svp":
-                token_text = token.text
                 spacy_lemma = token.lemma_
-                form_to_check = token_text if token_text.isupper() else token_text.capitalize()
-                lemma_to_check = spacy_lemma if spacy_lemma.isupper() else spacy_lemma.capitalize()
                 if token.pos_ in ["NOUN", "PROPN"] and spacy_lemma.isupper():
                     base_lemma = spacy_lemma
                 elif language == "de" and token.pos_ in ["NOUN", "PROPN"]:
                     base_lemma = spacy_lemma.capitalize()
                 else:
                     base_lemma = get_verb_with_particle(token) if token.pos_ == "VERB" else token.lemma_
+                
                 primary_token = base_lemma
+
+                if (gcs and ahocs and
+                    token.lemma_ == token.text and 
+                    token.pos_ in ['NOUN', 'PROPN'] and
+                    len(token.text) > 10):
+                    try:
+                        with redirect_stdout(io.StringIO()):
+                            dissection = comp_split.dissect(token.text, ahocs, make_singular=True)
+                        components = comp_split.merge_fractions(dissection)
+                        if len(components) > 1 and components[-1]:
+                            prefix = "".join(components[:-1])
+                            last_part = components[-1]
+                            last_part_doc = nlp(last_part)
+                            last_part_lemma = last_part_doc[0].lemma_
+                            corrected_lemma = prefix + last_part_lemma
+                            primary_token = corrected_lemma.capitalize()
+                    except Exception:
+                        pass
 
                 if gcs and ahocs and language == 'de' and token.pos_ in ['NOUN', 'PROPN'] and any(c in "äöü" for c in token.text.lower()):
                     try:
@@ -352,7 +398,7 @@ def process_text_v2(
 
                 original_form = get_original_form_with_particle(token)
                 tokens_to_add = {primary_token}
-                if gcs and ahocs and language == 'de' and len(token.text) > 7:
+                if gcs and ahocs and gcs_in_wordlist and language == 'de' and len(token.text) > 7:
                     try:
                         word_to_split = token.text
                         should_make_singular = (token.pos_ in ['NOUN', 'PROPN'])

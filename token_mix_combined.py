@@ -120,12 +120,9 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, gcs=False, ahocs=None, g
                             part_doc = nlp(part)
                             if len(part_doc) > 0:
                                 lemmatized_part = part_doc[0].lemma_
-                                if lemmatized_part.endswith('s') and part.lower() != "bus":
-                                     base_form = lemmatized_part[:-1]
-                                     base_doc = nlp(base_form)
-                                     if len(base_doc) > 0 and base_doc[0].pos_ in ['NOUN', 'PROPN']:
-                                         lemmatized_part = base_form
-                                final_tokens.add(lemmatized_part.capitalize())
+                                # Упрощенная логика: всегда капитализируем, если это существительное
+                                part_is_noun = nlp(lemmatized_part)[0].pos_ in ["NOUN", "PROPN"]
+                                final_tokens.add(lemmatized_part.capitalize() if part_is_noun else lemmatized_part)
                 except Exception:
                     pass
     
@@ -176,12 +173,9 @@ def process_text_v1(
                                 part_doc = nlp(part)
                                 if len(part_doc) > 0:
                                     lemmatized_part = part_doc[0].lemma_
-                                    if lemmatized_part.endswith('s') and part.lower() != "bus":
-                                        base_form = lemmatized_part[:-1]
-                                        base_doc = nlp(base_form)
-                                        if len(base_doc) > 0 and base_doc[0].pos_ in ['NOUN', 'PROPN']:
-                                            lemmatized_part = base_form
-                                    tokens_to_add.append(lemmatized_part.capitalize())
+                                    # Упрощенная логика: всегда капитализируем, если это существительное
+                                    part_is_noun = nlp(lemmatized_part)[0].pos_ in ["NOUN", "PROPN"]
+                                    tokens_to_add.append(lemmatized_part.capitalize() if part_is_noun else lemmatized_part)
                     except Exception:
                         pass
                 
@@ -280,12 +274,9 @@ def process_text_v2(
                                 part_doc = nlp(part)
                                 if len(part_doc) > 0:
                                     lemmatized_part = part_doc[0].lemma_
-                                    if lemmatized_part.endswith('s') and part.lower() != "bus":
-                                        base_form = lemmatized_part[:-1]
-                                        base_doc = nlp(base_form)
-                                        if len(base_doc) > 0 and base_doc[0].pos_ in ['NOUN', 'PROPN']:
-                                            lemmatized_part = base_form
-                                    tokens_to_add.append(lemmatized_part.capitalize())
+                                    # Упрощенная логика: всегда капитализируем, если это существительное
+                                    part_is_noun = nlp(lemmatized_part)[0].pos_ in ["NOUN", "PROPN"]
+                                    tokens_to_add.append(lemmatized_part.capitalize() if part_is_noun else lemmatized_part)
                     except Exception:
                         pass
                 

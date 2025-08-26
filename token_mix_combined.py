@@ -108,7 +108,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, gcs=False, ahocs=None, g
                     try:
                         should_make_singular = (token.pos_ == 'NOUN')
                         with redirect_stdout(io.StringIO()):
-                            dissection = comp_split.dissect(token.text, ahocs, make_singular=should_make_singular)
+                            dissection = comp_split.dissect(token.lemma_, ahocs, make_singular=should_make_singular)
                         
                         final_components = comp_split.merge_fractions(dissection)
                         
@@ -152,7 +152,7 @@ def process_text_v1(
                         try:
                             should_make_singular = (token.pos_ == 'NOUN')
                             with redirect_stdout(io.StringIO()):
-                                dissection = comp_split.dissect(token.text, ahocs, make_singular=should_make_singular)
+                                dissection = comp_split.dissect(token.lemma_, ahocs, make_singular=should_make_singular)
                             
                             final_components = comp_split.merge_fractions(dissection)
                             if len(final_components) > 1:
@@ -243,7 +243,7 @@ def process_text_v2(
                         try:
                             should_make_singular = (token.pos_ == 'NOUN')
                             with redirect_stdout(io.StringIO()):
-                                dissection = comp_split.dissect(token.text, ahocs, make_singular=should_make_singular)
+                                dissection = comp_split.dissect(token.lemma_, ahocs, make_singular=should_make_singular)
 
                             final_components = comp_split.merge_fractions(dissection)
                             if len(final_components) > 1:

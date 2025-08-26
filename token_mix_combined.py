@@ -134,6 +134,20 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, 
                     lemma_to_add = form_to_check
             else:
                 lemma_to_add = base_lemma
+
+            # Финальная коррекция сингуляризации через GCS
+            if gcs and ahocs and nlp.lang == 'de' and token.pos_ in ['NOUN', 'PROPN']:
+                try:
+                    with redirect_stdout(io.StringIO()):
+                        dissection_result = comp_split.dissect(lemma_to_add, ahocs, make_singular=True)
+                    final_components = comp_split.merge_fractions(dissection_result)
+                    singular_form = "".join(final_components)
+                    singular_form_to_check = singular_form if singular_form.isupper() else singular_form.capitalize()
+                    if singular_form_to_check != lemma_to_add and singular_form_to_check in german_dict:
+                        lemma_to_add = singular_form_to_check
+                except Exception:
+                    pass
+            
             final_tokens.add(lemma_to_add)
 
             # Блок разбора сложных слов
@@ -202,19 +216,19 @@ def process_text_v1(
                 else:
                     primary_token = base_lemma
                 
-                # --- НОВЫЙ БЛОК: ФИНАЛЬНАЯ КОРРЕКЦИЯ СИНГУЛЯРИЗАЦИИ ---
+                # --- ИСПРАВЛЕННЫЙ БЛОК: ФИНАЛЬНАЯ КОРРЕКЦИЯ СИНГУЛЯРИЗАЦИИ ---
                 if gcs and ahocs and language == 'de' and token.pos_ in ['NOUN', 'PROPN']:
                     try:
                         with redirect_stdout(io.StringIO()):
-                             dissection = comp_split.dissect(primary_token, ahocs, make_singular=True)
-                        singular_form = "".join([d.word for d in dissection])
+                             dissection_result = comp_split.dissect(primary_token, ahocs, make_singular=True)
+                        final_components = comp_split.merge_fractions(dissection_result)
+                        singular_form = "".join(final_components)
                         singular_form_to_check = singular_form if singular_form.isupper() else singular_form.capitalize()
-
                         if singular_form_to_check != primary_token and singular_form_to_check in german_dict:
                             primary_token = singular_form_to_check
                     except Exception:
-                        pass # Если GCS не справился, оставляем как есть
-                # --- КОНЕЦ НОВОГО БЛОКА ---
+                        pass
+                # --- КОНЕЦ ИСПРАВЛЕННОГО БЛОКА ---
                 
                 original_form = get_original_form_with_particle(token)
                 tokens_to_add = {primary_token}
@@ -249,7 +263,6 @@ def process_text_v1(
                         token_to_original_form[t] = original_form if t == primary_token else t
     sorted_tokens = sorted(unique_lemmatized_tokens, key=lambda token: (token not in lemma_index, lemma_index.get(token, 0), token))
     if output_file:
-        # ... (остальная часть функции без изменений)
         with open(output_file, "w", newline="", encoding="utf-8") as tsvfile:
             tsv_writer = csv.writer(tsvfile, delimiter="\t")
             if with_fields:
@@ -323,19 +336,19 @@ def process_text_v2(
                 else:
                     primary_token = base_lemma
 
-                # --- НОВЫЙ БЛОК: ФИНАЛЬНАЯ КОРРЕКЦИЯ СИНГУЛЯРИЗАЦИИ ---
+                # --- ИСПРАВЛЕННЫЙ БЛОК: ФИНАЛЬНАЯ КОРРЕКЦИЯ СИНГУЛЯРИЗАЦИИ ---
                 if gcs and ahocs and language == 'de' and token.pos_ in ['NOUN', 'PROPN']:
                     try:
                         with redirect_stdout(io.StringIO()):
-                             dissection = comp_split.dissect(primary_token, ahocs, make_singular=True)
-                        singular_form = "".join([d.word for d in dissection])
+                             dissection_result = comp_split.dissect(primary_token, ahocs, make_singular=True)
+                        final_components = comp_split.merge_fractions(dissection_result)
+                        singular_form = "".join(final_components)
                         singular_form_to_check = singular_form if singular_form.isupper() else singular_form.capitalize()
-
                         if singular_form_to_check != primary_token and singular_form_to_check in german_dict:
                             primary_token = singular_form_to_check
                     except Exception:
-                        pass # Если GCS не справился, оставляем как есть
-                # --- КОНЕЦ НОВОГО БЛОКА ---
+                        pass
+                # --- КОНЕЦ ИСПРАВЛЕННОГО БЛОКА ---
 
                 original_form = get_original_form_with_particle(token)
                 tokens_to_add = {primary_token}
@@ -372,7 +385,6 @@ def process_text_v2(
     def get_unit_text(u):
         return u if is_line_based else u.text
     if not output_file:
-        # ... (остальная часть функции без изменений)
         detailed = kwargs.get('detailed', False)
         two_column_output = kwargs.get('two_column_output', False)
         html = kwargs.get('html', False)
@@ -401,7 +413,6 @@ def process_text_v2(
                 print(token)
         return None
     with open(output_file, "w", newline="", encoding="utf-8") as tsvfile:
-        # ... (остальная часть функции без изменений)
         tsv_writer = csv.writer(tsvfile, delimiter="\t")
         if with_fields:
             tsv_writer.writerow(get_full_header())
@@ -434,7 +445,6 @@ def process_sentences(
     language, lemma_index, text1, text2, text3, sentence_context_size,
     output_file, include_simple_list, with_fields, with_br, pipe, german_dict, **kwargs
 ):
-    # ... (функция без изменений)
     try:
         with open(text1, "r", encoding="utf-8") as f: text1_lines = [line.rstrip("\n") for line in f]
         with open(text2, "r", encoding="utf-8") as f: text2_lines = [line.rstrip("\n") for line in f]
@@ -478,7 +488,6 @@ def process_sentences(
     return output_file
 
 def main():
-    # ... (функция без изменений)
     parser = argparse.ArgumentParser(description="Extract and process tokens or sentences from text.")
     parser.add_argument("--type", required=True, choices=["token", "sentence"])
     parser.add_argument("--language", default="de", choices=["de", "en"])

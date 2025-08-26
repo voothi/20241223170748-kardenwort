@@ -100,12 +100,14 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, gcs=False, ahocs=None, g
 
     for token in doc:
         if token.is_alpha and token.dep_ != "svp":
-            lemma = get_verb_with_particle(token) if token.pos_ == "VERB" else token.lemma_
+            if nlp.lang == "de" and token.pos_ == "NOUN":
+                lemma = token.lemma_.capitalize()
+            else:
+                lemma = get_verb_with_particle(token) if token.pos_ == "VERB" else token.lemma_
             final_tokens.add(lemma)
 
             if gcs and ahocs and gcs_in_wordlist and nlp.lang == 'de':
                 try:
-                    # Определяем правильный режим для каждой части речи
                     should_make_singular = (token.pos_ == 'NOUN')
                     with redirect_stdout(io.StringIO()):
                         dissection = comp_split.dissect(token.lemma_, ahocs, make_singular=should_make_singular)
@@ -147,13 +149,18 @@ def process_text_v1(
         doc = nlp(line1)
         for token in doc:
             if token.is_alpha and token.dep_ != "svp":
-                verb_form = get_verb_with_particle(token) if language == "de" and token.pos_ == "VERB" else token.lemma_
-                original_form = get_original_form_with_particle(token) if language == "de" and token.pos_ == "VERB" else token.text
+                if language == "de" and token.pos_ == "VERB":
+                    primary_token = get_verb_with_particle(token)
+                elif language == "de" and token.pos_ == "NOUN":
+                    primary_token = token.lemma_.capitalize()
+                else:
+                    primary_token = token.lemma_
+
+                original_form = get_original_form_with_particle(token)
                 
-                tokens_to_add = [verb_form]
+                tokens_to_add = [primary_token]
                 if gcs and ahocs and language == 'de':
                     try:
-                        # Определяем правильный режим для каждой части речи
                         should_make_singular = (token.pos_ == 'NOUN')
                         with redirect_stdout(io.StringIO()):
                             dissection = comp_split.dissect(token.lemma_, ahocs, make_singular=should_make_singular)
@@ -172,7 +179,7 @@ def process_text_v1(
                     unique_lemmatized_tokens.add(t)
                     if t not in token_to_sentence:
                         token_to_sentence[t] = (i, line1)
-                        token_to_original_form[t] = original_form if t == verb_form else t
+                        token_to_original_form[t] = original_form if t == primary_token else t
 
     sorted_tokens = sorted(unique_lemmatized_tokens, key=lambda token: (token not in lemma_index, lemma_index.get(token, 0), token))
 
@@ -242,13 +249,18 @@ def process_text_v2(
         doc_unit = nlp(unit_text)
         for token in doc_unit:
             if token.is_alpha and token.dep_ != "svp":
-                verb_form = get_verb_with_particle(token) if language == "de" and token.pos_ == "VERB" else token.lemma_
-                original_form = get_original_form_with_particle(token) if language == "de" and token.pos_ == "VERB" else token.text
+                if language == "de" and token.pos_ == "VERB":
+                    primary_token = get_verb_with_particle(token)
+                elif language == "de" and token.pos_ == "NOUN":
+                    primary_token = token.lemma_.capitalize()
+                else:
+                    primary_token = token.lemma_
 
-                tokens_to_add = [verb_form]
+                original_form = get_original_form_with_particle(token)
+
+                tokens_to_add = [primary_token]
                 if gcs and ahocs and language == 'de':
                     try:
-                        # Определяем правильный режим для каждой части речи
                         should_make_singular = (token.pos_ == 'NOUN')
                         with redirect_stdout(io.StringIO()):
                             dissection = comp_split.dissect(token.lemma_, ahocs, make_singular=should_make_singular)
@@ -267,7 +279,7 @@ def process_text_v2(
                     unique_lemmatized_tokens.add(t)
                     if t not in token_to_sentence:
                         token_to_sentence[t] = (unit_index, unit_text)
-                        token_to_original_form[t] = original_form if t == verb_form else t
+                        token_to_original_form[t] = original_form if t == primary_token else t
 
     sorted_tokens = sorted(unique_lemmatized_tokens, key=lambda token: (token not in lemma_index, lemma_index.get(token, 0), token))
 

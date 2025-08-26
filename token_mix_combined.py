@@ -114,7 +114,11 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, gcs=False, ahocs=None, g
                         
                         if len(final_components) > 1:
                             for part in final_components:
-                                final_tokens.add(part)
+                                # --- ИСПРАВЛЕНИЕ ЗДЕСЬ: Лематизируем каждый компонент ---
+                                part_doc = nlp(part)
+                                if len(part_doc) > 0:
+                                    lemmatized_part = part_doc[0].lemma_
+                                    final_tokens.add(lemmatized_part)
                     except Exception:
                         pass
     
@@ -156,7 +160,12 @@ def process_text_v1(
                             
                             final_components = comp_split.merge_fractions(dissection)
                             if len(final_components) > 1:
-                                tokens_to_add.extend(final_components)
+                                for part in final_components:
+                                    # --- ИСПРАВЛЕНИЕ ЗДЕСЬ: Лематизируем каждый компонент ---
+                                    part_doc = nlp(part)
+                                    if len(part_doc) > 0:
+                                        lemmatized_part = part_doc[0].lemma_
+                                        tokens_to_add.append(lemmatized_part)
                         except Exception:
                             pass
                 
@@ -247,7 +256,12 @@ def process_text_v2(
 
                             final_components = comp_split.merge_fractions(dissection)
                             if len(final_components) > 1:
-                                tokens_to_add.extend(final_components)
+                                for part in final_components:
+                                    # --- ИСПРАВЛЕНИЕ ЗДЕСЬ: Лематизируем каждый компонент ---
+                                    part_doc = nlp(part)
+                                    if len(part_doc) > 0:
+                                        lemmatized_part = part_doc[0].lemma_
+                                        tokens_to_add.append(lemmatized_part)
                         except Exception:
                             pass
                 

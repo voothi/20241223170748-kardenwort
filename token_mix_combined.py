@@ -380,6 +380,8 @@ def process_sentences(
 # --- ИЗМЕНЕНИЯ В ФУНКЦИИ MAIN ---
 def main():
     parser = argparse.ArgumentParser(description="Extract and process tokens or sentences from text.")
+    # ... все аргументы парсера остаются без изменений ...
+    # (здесь идет весь список ваших parser.add_argument)
     parser.add_argument("--type", required=True, choices=["token", "sentence"])
     parser.add_argument("--language", default="de", choices=["de", "en"])
     parser.add_argument("--lemma-index-file", default="")
@@ -407,18 +409,15 @@ def main():
     parser.add_argument("--two-column-output", action="store_true")
     parser.add_argument("--html", action="store_true")
     parser.add_argument("--original-form-in-simple-list", action="store_true")
-    
-    # --- НАЧАЛО НОВЫХ АРГУМЕНТОВ GCS ---
     parser.add_argument("--gcs", action="store_true", help="Enable German Compound Splitting. Requires --language de.")
     parser.add_argument("--gcs-dictionary", default="german.dic", help="Path to the dictionary file for GCS.")
-    # --- КОНЕЦ НОВЫХ АРГУМЕНТОВ GCS ---
-
+    
     args = parser.parse_args()
 
     global nlp
     nlp = spacy.load("de_core_news_lg" if args.language == "de" else "en_core_web_lg")
     
-    # --- НАЧАЛО НОВОЙ ЛОГИКИ ЗАГРУЗКИ СЛОВАРЯ GCS ---
+    # --- НАЧАЛО ЛОГИКИ ЗАГРУЗКИ СЛОВАРЯ GCS (БЕЗ СООБЩЕНИЙ) ---
     ahocs = None
     if args.gcs:
         if not GCS_AVAILABLE:
@@ -432,13 +431,12 @@ def main():
             print("Please download it and place it in the correct directory.", file=sys.stderr)
             exit(1)
         try:
-            print(f"Loading GCS dictionary from '{args.gcs_dictionary}'...", file=sys.stderr)
+            # --- СООБЩЕНИЯ О ЗАГРУЗКЕ УДАЛЕНЫ ---
             ahocs = comp_split.read_dictionary_from_file(args.gcs_dictionary)
-            print("GCS dictionary loaded successfully.", file=sys.stderr)
         except Exception as e:
             print(f"Error loading GCS dictionary: {e}", file=sys.stderr)
             exit(1)
-    # --- КОНЕЦ НОВОЙ ЛОГИКИ ЗАГРУЗКИ СЛОВАРЯ GCS ---
+    # --- КОНЕЦ ЛОГИКИ ЗАГРУЗКИ СЛОВАРЯ GCS ---
 
     lemma_index = load_lemma_index(args.lemma_index_file)
     processed_output_file = None
@@ -486,21 +484,22 @@ def main():
                 args.sentence_context_size, final_output_path,
                 args.two_column_output_to_file, args.include_simple_list,
                 args.with_fields, args.with_br, args.pipe,
-                args.gcs, ahocs  # <-- Передаем новые параметры
+                args.gcs, ahocs
             )
         else:
              processed_output_file = process_text_v2(
                 input_text, lemma_index, args.language, args.sentence_context_size,
                 final_output_path, args.two_column_output_to_file, args.include_simple_list,
                 args.with_fields, args.with_br, args.pipe,
-                args.gcs, ahocs, # <-- Передаем новые параметры
+                args.gcs, ahocs,
                 detailed=args.detailed, two_column_output=args.two_column_output, html=args.html
             )
 
     elif args.type == "sentence":
-        # Обратите внимание: GCS применяется только к режиму "token", так как он работает с отдельными словами.
         if args.gcs:
             print("Warning: --gcs flag is only applicable for --type token and will be ignored.", file=sys.stderr)
+        if not args.text1 or not args.text2:
+            print("Error: --text1 and --text2 must be specified for sentence mode.", file=sys.stderr); exit(1)
         processed_output_file = process_sentences(
             args.language, lemma_index, args.text1, args.text2, args.text3,
             args.sentence_context_size, final_output_path,

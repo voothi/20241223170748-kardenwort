@@ -31,6 +31,9 @@ def get_token_args(args, python_path, token_workspace):
         "--with-br",
         "--pipe",
         "--autoname",
+        "--gcs",
+        "--gcs-dictionary",
+        "U:\\voothi\\20241223170748-token-extraction\\20250826000433-test\\german.dic"
     ]
 
     output_suffix = "sentence" if args.type == "sentence" else "token"

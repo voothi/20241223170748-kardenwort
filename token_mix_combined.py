@@ -94,7 +94,7 @@ def generate_autoname_prefix(text, num_words):
         return ""
     return "-".join(selected_words)
 
-def process_sentence_lemmas(sentence, lemma_index, nlp, gcs=False, ahocs=None, gcs_in_wordlist=False, gcs_all_pos=False):
+def process_sentence_lemmas(sentence, lemma_index, nlp, gcs=False, ahocs=None, gcs_in_wordlist=False):
     doc = nlp(sentence)
     final_tokens = set()
 
@@ -104,23 +104,20 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, gcs=False, ahocs=None, g
             final_tokens.add(lemma)
 
             if gcs and ahocs and gcs_in_wordlist and nlp.lang == 'de':
-                if token.pos_ == 'NOUN' or gcs_all_pos:
-                    try:
-                        should_make_singular = (token.pos_ == 'NOUN')
-                        with redirect_stdout(io.StringIO()):
-                            dissection = comp_split.dissect(token.lemma_, ahocs, make_singular=True)
-                        
-                        final_components = comp_split.merge_fractions(dissection)
-                        
-                        if len(final_components) > 1:
-                            for part in final_components:
-                                # --- ИСПРАВЛЕНИЕ ЗДЕСЬ: Лематизируем каждый компонент ---
-                                part_doc = nlp(part)
-                                if len(part_doc) > 0:
-                                    lemmatized_part = part_doc[0].lemma_
-                                    final_tokens.add(lemmatized_part)
-                    except Exception:
-                        pass
+                try:
+                    with redirect_stdout(io.StringIO()):
+                        dissection = comp_split.dissect(token.lemma_, ahocs, make_singular=True)
+                    
+                    final_components = comp_split.merge_fractions(dissection)
+                    
+                    if len(final_components) > 1:
+                        for part in final_components:
+                            part_doc = nlp(part)
+                            if len(part_doc) > 0:
+                                lemmatized_part = part_doc[0].lemma_
+                                final_tokens.add(lemmatized_part)
+                except Exception:
+                    pass
     
     return sorted(list(final_tokens), key=lambda x: lemma_index.get(x, float("inf")))
 
@@ -129,15 +126,16 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, gcs=False, ahocs=None, g
 def process_text_v1(
     input_text, lemma_index, language, text2, text3, sentence_context_size,
     output_file, two_column_output_to_file, include_simple_list,
-    with_fields, with_br, pipe, gcs, ahocs, gcs_in_wordlist, gcs_all_pos
+    with_fields, with_br, pipe, gcs, ahocs, gcs_in_wordlist
 ):
     if "\n" in input_text or not os.path.exists(input_text):
         text1_lines = input_text.splitlines()
     else:
         with open(input_text, "r", encoding="utf-8") as f1: text1_lines = [line.rstrip("\n") for line in f1]
 
-    with open(text2, "r", encoding="utf-8") as f2: text2_lines = [line.rstrip("\n") for line in f2]
-
+    if text2:
+        with open(text2, "r", encoding="utf-8") as f2: text2_lines = [line.rstrip("\n") for line in f2]
+    
     text3_lines = []
     if text3:
         with open(text3, "r", encoding="utf-8") as f3: text3_lines = [line.rstrip("\n") for line in f3]
@@ -152,21 +150,19 @@ def process_text_v1(
                 
                 tokens_to_add = [verb_form]
                 if gcs and ahocs and language == 'de':
-                    if token.pos_ == 'NOUN' or gcs_all_pos:
-                        try:
-                            # --- ИСПРАВЛЕНИЕ: Всегда используем make_singular=True для лучшего результата ---
-                            with redirect_stdout(io.StringIO()):
-                                dissection = comp_split.dissect(token.lemma_, ahocs, make_singular=True)
-                            
-                            final_components = comp_split.merge_fractions(dissection)
-                            if len(final_components) > 1:
-                                for part in final_components:
-                                    part_doc = nlp(part)
-                                    if len(part_doc) > 0:
-                                        lemmatized_part = part_doc[0].lemma_
-                                        tokens_to_add.append(lemmatized_part)
-                        except Exception:
-                            pass
+                    try:
+                        with redirect_stdout(io.StringIO()):
+                            dissection = comp_split.dissect(token.lemma_, ahocs, make_singular=True)
+                        
+                        final_components = comp_split.merge_fractions(dissection)
+                        if len(final_components) > 1:
+                            for part in final_components:
+                                part_doc = nlp(part)
+                                if len(part_doc) > 0:
+                                    lemmatized_part = part_doc[0].lemma_
+                                    tokens_to_add.append(lemmatized_part)
+                    except Exception:
+                        pass
                 
                 for t in tokens_to_add:
                     unique_lemmatized_tokens.add(t)
@@ -186,16 +182,18 @@ def process_text_v1(
                 row_data = [""] * 80
                 sent_index, l1_sentence = token_to_sentence[token]
                 l1_sentence = l1_sentence.strip()
-                l2_sentence = text2_lines[sent_index].strip()
+                l2_sentence = text2_lines[sent_index].strip() if text2 else ""
                 
                 start_idx, end_idx = max(0, sent_index - sentence_context_size), sent_index + sentence_context_size + 1
                 
                 row_data[5] = " ".join(line.strip() for line in text1_lines[start_idx:sent_index])
                 row_data[6] = l1_sentence
                 row_data[7] = " ".join(line.strip() for line in text1_lines[sent_index + 1:end_idx])
-                row_data[8] = " ".join(line.strip() for line in text2_lines[start_idx:sent_index])
-                row_data[9] = l2_sentence
-                row_data[10] = " ".join(line.strip() for line in text2_lines[sent_index + 1:end_idx])
+                
+                if text2:
+                    row_data[8] = " ".join(line.strip() for line in text2_lines[start_idx:sent_index])
+                    row_data[9] = l2_sentence
+                    row_data[10] = " ".join(line.strip() for line in text2_lines[sent_index + 1:end_idx])
                 
                 if text3:
                     row_data[77] = " ".join(line.strip() for line in text3_lines[start_idx:sent_index])
@@ -205,18 +203,16 @@ def process_text_v1(
                 row_data[0] = token
                 row_data[1] = token
                 if two_column_output_to_file:
-                    row_data[2] = token_to_original_form[token]
+                    row_data[2] = token_to_original_form.get(token, '')
                 row_data[12] = l1_sentence
                 if include_simple_list:
-                    lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, gcs, ahocs, gcs_in_wordlist, gcs_all_pos)
+                    lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, gcs, ahocs, gcs_in_wordlist)
                     row_data[11] = "<br>".join(lemmas) if with_br else "\n".join(lemmas)
                 
                 if language == "de":
-                    row_data[58] = "1"
-                    row_data[65] = "1"
+                    row_data[58] = "1"; row_data[65] = "1"
                 elif language == "en":
-                    row_data[56] = "1"
-                    row_data[65] = "1"
+                    row_data[56] = "1"; row_data[65] = "1"
 
                 tsv_writer.writerow(row_data)
     
@@ -225,7 +221,7 @@ def process_text_v1(
 def process_text_v2(
     input_text, lemma_index, language, sentence_context_size,
     output_file, two_column_output_to_file, include_simple_list,
-    with_fields, with_br, pipe, gcs, ahocs, gcs_in_wordlist, gcs_all_pos, **kwargs
+    with_fields, with_br, pipe, gcs, ahocs, gcs_in_wordlist, **kwargs
 ):
     if '\n' in input_text.strip():
         processing_units = input_text.splitlines()
@@ -247,21 +243,19 @@ def process_text_v2(
 
                 tokens_to_add = [verb_form]
                 if gcs and ahocs and language == 'de':
-                    if token.pos_ == 'NOUN' or gcs_all_pos:
-                        try:
-                            # --- ИСПРАВЛЕНИЕ: Всегда используем make_singular=True для лучшего результата ---
-                            with redirect_stdout(io.StringIO()):
-                                dissection = comp_split.dissect(token.lemma_, ahocs, make_singular=True)
+                    try:
+                        with redirect_stdout(io.StringIO()):
+                            dissection = comp_split.dissect(token.lemma_, ahocs, make_singular=True)
 
-                            final_components = comp_split.merge_fractions(dissection)
-                            if len(final_components) > 1:
-                                for part in final_components:
-                                    part_doc = nlp(part)
-                                    if len(part_doc) > 0:
-                                        lemmatized_part = part_doc[0].lemma_
-                                        tokens_to_add.append(lemmatized_part)
-                        except Exception:
-                            pass
+                        final_components = comp_split.merge_fractions(dissection)
+                        if len(final_components) > 1:
+                            for part in final_components:
+                                part_doc = nlp(part)
+                                if len(part_doc) > 0:
+                                    lemmatized_part = part_doc[0].lemma_
+                                    tokens_to_add.append(lemmatized_part)
+                    except Exception:
+                        pass
                 
                 for t in tokens_to_add:
                     unique_lemmatized_tokens.add(t)
@@ -329,15 +323,13 @@ def process_text_v2(
                 row_data[2] = token_to_original_form.get(token, '')
             row_data[12] = l1_sentence
             if include_simple_list:
-                lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, gcs, ahocs, gcs_in_wordlist, gcs_all_pos)
+                lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, gcs, ahocs, gcs_in_wordlist)
                 row_data[11] = "<br>".join(lemmas) if with_br else "\n".join(lemmas)
 
             if language == "de":
-                row_data[58] = "1"
-                row_data[65] = "1"
+                row_data[58] = "1"; row_data[65] = "1"
             elif language == "en":
-                row_data[56] = "1"
-                row_data[65] = "1"
+                row_data[56] = "1"; row_data[65] = "1"
             
             tsv_writer.writerow(row_data)
 
@@ -392,11 +384,9 @@ def process_sentences(
                 row_data[79] = " ".join(line.strip() for line in text3_lines[i + 1:end_idx])
 
             if language == "de":
-                row_data[58] = "1"
-                row_data[65] = "1"
+                row_data[58] = "1"; row_data[65] = "1"
             elif language == "en":
-                row_data[56] = "1"
-                row_data[65] = "1"
+                row_data[56] = "1"; row_data[65] = "1"
 
             tsv_writer.writerow(row_data)
             
@@ -429,14 +419,11 @@ def main():
     parser.add_argument("--gcs", action="store_true", help="Enable German Compound Splitting. Requires --language de.")
     parser.add_argument("--gcs-dictionary", default="german.dic", help="Path to the dictionary file for GCS.")
     parser.add_argument("--gcs-in-wordlist", action="store_true", help="Also add German compound components to the SentenceSourceWordlist field. Requires --gcs.")
-    parser.add_argument("--gcs-all-pos", action="store_true", help="Attempt to split compounds for all parts of speech (not just nouns). Requires --gcs.")
     
     args = parser.parse_args()
 
     if args.gcs_in_wordlist and not args.gcs:
         print("Error: --gcs-in-wordlist requires --gcs to be enabled.", file=sys.stderr); exit(1)
-    if args.gcs_all_pos and not args.gcs:
-        print("Error: --gcs-all-pos requires --gcs to be enabled.", file=sys.stderr); exit(1)
 
     global nlp
     nlp = spacy.load("de_core_news_lg" if args.language == "de" else "en_core_web_lg")
@@ -502,14 +489,14 @@ def main():
                 args.sentence_context_size, final_output_path,
                 args.two_column_output_to_file, args.include_simple_list,
                 args.with_fields, args.with_br, args.pipe,
-                args.gcs, ahocs, args.gcs_in_wordlist, args.gcs_all_pos
+                args.gcs, ahocs, args.gcs_in_wordlist
             )
         else:
              processed_output_file = process_text_v2(
                 input_text, lemma_index, args.language, args.sentence_context_size,
                 final_output_path, args.two_column_output_to_file, args.include_simple_list,
                 args.with_fields, args.with_br, args.pipe,
-                args.gcs, ahocs, args.gcs_in_wordlist, args.gcs_all_pos,
+                args.gcs, ahocs, args.gcs_in_wordlist,
                 detailed=args.detailed, two_column_output=args.two_column_output, html=args.html
             )
 

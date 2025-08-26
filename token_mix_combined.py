@@ -184,7 +184,6 @@ def process_text_v1(
                 spacy_lemma = token.lemma_
 
                 form_to_check = token_text if token_text.isupper() else token_text.capitalize()
-                lemma_to_check = spacy_lemma if spacy_lemma.isupper() else spacy_lemma.capitalize()
 
                 if token.pos_ in ["NOUN", "PROPN"] and spacy_lemma.isupper():
                     base_lemma = spacy_lemma
@@ -205,11 +204,21 @@ def process_text_v1(
                         final_components = comp_split.merge_fractions(dissection)
 
                         if len(final_components) > 1:
-                            original_last_part = dissection[-1][0]
+                            # CORRECTED LOGIC START
+                            original_last_component_parts = []
+                            temp_dissection = list(dissection)
+                            while temp_dissection:
+                                part, is_fraction = temp_dissection.pop()
+                                original_last_component_parts.insert(0, part)
+                                if not is_fraction:
+                                    break
+                            full_original_last_component = "".join(original_last_component_parts)
+                            # CORRECTED LOGIC END
+
                             processed_last_part = final_components[-1]
 
-                            if original_last_part != processed_last_part:
-                                original_stem = token.text[:-len(original_last_part)]
+                            if full_original_last_component.lower() != processed_last_part.lower():
+                                original_stem = token.text[:-len(full_original_last_component)]
                                 reconstructed_lemma_from_gcs = original_stem + processed_last_part
                     except Exception:
                         pass
@@ -321,7 +330,6 @@ def process_text_v2(
                 spacy_lemma = token.lemma_
 
                 form_to_check = token_text if token_text.isupper() else token_text.capitalize()
-                lemma_to_check = spacy_lemma if spacy_lemma.isupper() else spacy_lemma.capitalize()
 
                 if token.pos_ in ["NOUN", "PROPN"] and spacy_lemma.isupper():
                     base_lemma = spacy_lemma
@@ -342,11 +350,21 @@ def process_text_v2(
                         final_components = comp_split.merge_fractions(dissection)
 
                         if len(final_components) > 1:
-                            original_last_part = dissection[-1][0]
+                            # CORRECTED LOGIC START
+                            original_last_component_parts = []
+                            temp_dissection = list(dissection)
+                            while temp_dissection:
+                                part, is_fraction = temp_dissection.pop()
+                                original_last_component_parts.insert(0, part)
+                                if not is_fraction:
+                                    break
+                            full_original_last_component = "".join(original_last_component_parts)
+                            # CORRECTED LOGIC END
+
                             processed_last_part = final_components[-1]
 
-                            if original_last_part != processed_last_part:
-                                original_stem = token.text[:-len(original_last_part)]
+                            if full_original_last_component.lower() != processed_last_part.lower():
+                                original_stem = token.text[:-len(full_original_last_component)]
                                 reconstructed_lemma_from_gcs = original_stem + processed_last_part
                     except Exception:
                         pass

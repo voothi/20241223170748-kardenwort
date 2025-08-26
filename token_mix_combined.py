@@ -206,16 +206,26 @@ def process_text_v1(
                         primary_token = form_to_check
                 else:
                     primary_token = base_lemma
-                
+
                 if gcs and ahocs and language == 'de' and token.pos_ in ['NOUN', 'PROPN']:
                     try:
                         with redirect_stdout(io.StringIO()):
-                             dissection_result = comp_split.dissect(primary_token, ahocs, make_singular=True)
-                        final_components = comp_split.merge_fractions(dissection_result)
-                        singular_form = "".join(final_components)
-                        singular_form_to_check = singular_form if singular_form.isupper() else singular_form.capitalize()
-                        if singular_form_to_check != primary_token and singular_form_to_check in german_dict:
-                            primary_token = singular_form_to_check
+                            plural_dissection = comp_split.dissect(token.text, ahocs, make_singular=False)
+                        plural_components = comp_split.merge_fractions(plural_dissection)
+
+                        with redirect_stdout(io.StringIO()):
+                            singular_dissection = comp_split.dissect(token.text, ahocs, make_singular=True)
+                        singular_components = comp_split.merge_fractions(singular_dissection)
+
+                        if plural_components and singular_components and plural_components[-1] != singular_components[-1]:
+                            last_part_plural = plural_components[-1]
+                            last_part_singular = singular_components[-1]
+
+                            if token.text.endswith(last_part_plural):
+                                base = token.text[:-len(last_part_plural)]
+                                corrected_lemma = base + last_part_singular
+                                
+                                primary_token = corrected_lemma
                     except Exception:
                         pass
                 
@@ -328,12 +338,22 @@ def process_text_v2(
                 if gcs and ahocs and language == 'de' and token.pos_ in ['NOUN', 'PROPN']:
                     try:
                         with redirect_stdout(io.StringIO()):
-                             dissection_result = comp_split.dissect(primary_token, ahocs, make_singular=True)
-                        final_components = comp_split.merge_fractions(dissection_result)
-                        singular_form = "".join(final_components)
-                        singular_form_to_check = singular_form if singular_form.isupper() else singular_form.capitalize()
-                        if singular_form_to_check != primary_token and singular_form_to_check in german_dict:
-                            primary_token = singular_form_to_check
+                            plural_dissection = comp_split.dissect(token.text, ahocs, make_singular=False)
+                        plural_components = comp_split.merge_fractions(plural_dissection)
+
+                        with redirect_stdout(io.StringIO()):
+                            singular_dissection = comp_split.dissect(token.text, ahocs, make_singular=True)
+                        singular_components = comp_split.merge_fractions(singular_dissection)
+
+                        if plural_components and singular_components and plural_components[-1] != singular_components[-1]:
+                            last_part_plural = plural_components[-1]
+                            last_part_singular = singular_components[-1]
+
+                            if token.text.endswith(last_part_plural):
+                                base = token.text[:-len(last_part_plural)]
+                                corrected_lemma = base + last_part_singular
+                                
+                                primary_token = corrected_lemma
                     except Exception:
                         pass
 

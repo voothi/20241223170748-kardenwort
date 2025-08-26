@@ -134,19 +134,17 @@ def process_text_v1(
                 # --- НАЧАЛО НОВОЙ ЛОГИКИ GCS ---
                 tokens_to_add = [verb_form]
                 if gcs and ahocs and language == 'de':
-                    # Разбираем исходную форму слова, так как она не изменена
                     try:
-                        # СТАРАЯ СТРОКА:
-                        # dissection = comp_split.dissect(token.text, ahocs, make_singular=True)
+                        # --- ИСПРАВЛЕНИЕ ЗДЕСЬ ---
+                        # Убираем verbose=False и оборачиваем в redirect_stdout
+                        with redirect_stdout(io.StringIO()):
+                            dissection = comp_split.dissect(token.text, ahocs, make_singular=True)
+                        # --- КОНЕЦ ИСПРАВЛЕНИЯ ---
                         
-                        # НОВАЯ СТРОКА С verbose=False:
-                        dissection = comp_split.dissect(token.text, ahocs, make_singular=True, verbose=False)
                         final_components = comp_split.merge_fractions(dissection)
                         if len(final_components) > 1:
                             tokens_to_add.extend(final_components)
                     except Exception as e:
-                        # Можно добавить логирование ошибки при необходимости
-                        # print(f"GCS failed for '{token.text}': {e}", file=sys.stderr)
                         pass
                 
                 for t in tokens_to_add:
@@ -235,11 +233,12 @@ def process_text_v2(
                 tokens_to_add = [verb_form]
                 if gcs and ahocs and language == 'de':
                     try:
-                        # СТАРАЯ СТРОКА:
-                        # dissection = comp_split.dissect(token.text, ahocs, make_singular=True)
-                        
-                        # НОВАЯ СТРОКА С verbose=False:
-                        dissection = comp_split.dissect(token.text, ahocs, make_singular=True, verbose=False)
+                        # --- ИСПРАВЛЕНИЕ ЗДЕСЬ ---
+                        # Убираем verbose=False и оборачиваем в redirect_stdout
+                        with redirect_stdout(io.StringIO()):
+                            dissection = comp_split.dissect(token.text, ahocs, make_singular=True)
+                        # --- КОНЕЦ ИСПРАВЛЕНИЯ ---
+
                         final_components = comp_split.merge_fractions(dissection)
                         if len(final_components) > 1:
                             tokens_to_add.extend(final_components)

@@ -29,11 +29,11 @@ def get_token_args(args, python_path, token_workspace):
         "--include-simple-list",
         "--with-fields",
         "--with-br",
-        "--pipe",
         "--autoname",
         "--gcs",
         "--gcs-dictionary",
-        "U:\\voothi\\20241223170748-token-extraction\\20250826000433-test\\german.dic"
+        "U:/voothi/20241223170748-token-extraction/20250826000433-test/german.dic",
+        "--pipe"
     ]
 
     output_suffix = "sentence" if args.type == "sentence" else "token"
@@ -119,7 +119,7 @@ def main():
 
     # Configure paths
     python_path = Path(
-        r"C:/Users/voothi/AppData/Roaming/Anki2/addons21/spacyenv/Scripts/python.exe"
+        r"U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
     )
     token_workspace = Path(r"U:/voothi/20241223170748-token-extraction")
     importer_workspace = Path(r"U:/voothi/20250401192017-anki-csv-importer")

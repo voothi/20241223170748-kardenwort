@@ -104,7 +104,7 @@ def generate_autoname_prefix(text, num_words):
         return ""
     return "-".join(selected_words)
 
-def process_sentence_lemmas(sentence, lemma_index, nlp, gcs=False, ahocs=None, gcs_in_wordlist=False):
+def process_sentence_lemmas(sentence, lemma_index, nlp, gcs=False, ahocs=None, gcs_in_wordlist=False, gcs_all_pos=False):
     doc = nlp(sentence)
     final_tokens = set()
 
@@ -115,17 +115,20 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, gcs=False, ahocs=None, g
 
             # Разделяем слово только если включены ОБА ключа: --gcs и --gcs-in-wordlist
             if gcs and ahocs and gcs_in_wordlist and nlp.lang == 'de':
-                try:
-                    with redirect_stdout(io.StringIO()):
-                        dissection = comp_split.dissect(token.text, ahocs, make_singular=True)
-                    
-                    final_components = comp_split.merge_fractions(dissection)
-                    
-                    if len(final_components) > 1:
-                        for part in final_components:
-                            final_tokens.add(part)
-                except Exception:
-                    pass
+                # --- УМНАЯ ЛОГИКА РАЗДЕЛЕНИЯ ---
+                if token.pos_ == 'NOUN' or gcs_all_pos:
+                    try:
+                        should_make_singular = (token.pos_ == 'NOUN')
+                        with redirect_stdout(io.StringIO()):
+                            dissection = comp_split.dissect(token.text, ahocs, make_singular=should_make_singular)
+                        
+                        final_components = comp_split.merge_fractions(dissection)
+                        
+                        if len(final_components) > 1:
+                            for part in final_components:
+                                final_tokens.add(part)
+                    except Exception:
+                        pass
     
     return sorted(list(final_tokens), key=lambda x: lemma_index.get(x, float("inf")))
 
@@ -133,7 +136,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, gcs=False, ahocs=None, g
 def process_text_v1(
     input_text, lemma_index, language, text2, text3, sentence_context_size,
     output_file, two_column_output_to_file, include_simple_list,
-    with_fields, with_br, pipe, gcs, ahocs, gcs_in_wordlist
+    with_fields, with_br, pipe, gcs, ahocs, gcs_in_wordlist, gcs_all_pos
 ):
     if "\n" in input_text or not os.path.exists(input_text):
         text1_lines = input_text.splitlines()
@@ -147,6 +150,7 @@ def process_text_v1(
         with open(text3, "r", encoding="utf-8") as f3: text3_lines = [line.rstrip("\n") for line in f3]
     
     unique_lemmatized_tokens, token_to_sentence, token_to_original_form = set(), {}, {}
+   # ... (код до цикла for token in doc) ...
     for i, line1 in enumerate(text1_lines):
         doc = nlp(line1)
         for token in doc:
@@ -156,15 +160,20 @@ def process_text_v1(
                 
                 tokens_to_add = [verb_form]
                 if gcs and ahocs and language == 'de':
-                    try:
-                        with redirect_stdout(io.StringIO()):
-                            dissection = comp_split.dissect(token.text, ahocs, make_singular=True)
-                        
-                        final_components = comp_split.merge_fractions(dissection)
-                        if len(final_components) > 1:
-                            tokens_to_add.extend(final_components)
-                    except Exception as e:
-                        pass
+                    # --- УМНАЯ ЛОГИКА РАЗДЕЛЕНИЯ ---
+                    # Пытаемся разделить, только если это существительное, ИЛИ если включен флаг для всех частей речи
+                    if token.pos_ == 'NOUN' or gcs_all_pos:
+                        try:
+                            # Для существительных используем make_singular=True, для остальных - False
+                            should_make_singular = (token.pos_ == 'NOUN')
+                            with redirect_stdout(io.StringIO()):
+                                dissection = comp_split.dissect(token.text, ahocs, make_singular=should_make_singular)
+                            
+                            final_components = comp_split.merge_fractions(dissection)
+                            if len(final_components) > 1:
+                                tokens_to_add.extend(final_components)
+                        except Exception:
+                            pass
                 
                 for t in tokens_to_add:
                     unique_lemmatized_tokens.add(t)
@@ -229,7 +238,7 @@ def process_text_v1(
 def process_text_v2(
     input_text, lemma_index, language, sentence_context_size,
     output_file, two_column_output_to_file, include_simple_list,
-    with_fields, with_br, pipe, gcs, ahocs, gcs_in_wordlist, **kwargs
+    with_fields, with_br, pipe, gcs, ahocs, gcs_in_wordlist, gcs_all_pos, **kwargs
 ):
     if '\n' in input_text.strip():
         processing_units = input_text.splitlines()
@@ -241,25 +250,26 @@ def process_text_v2(
 
     unique_lemmatized_tokens, token_to_sentence, token_to_original_form = set(), {}, {}
     
+    # ... (код до цикла for token in doc_unit) ...
     for unit_index, unit in enumerate(processing_units):
-        unit_text = unit if is_line_based else unit.text
         doc_unit = nlp(unit_text)
         for token in doc_unit:
             if token.is_alpha and token.dep_ != "svp":
-                verb_form = get_verb_with_particle(token) if language == "de" and token.pos_ == "VERB" else token.lemma_
-                original_form = get_original_form_with_particle(token) if language == "de" and token.pos_ == "VERB" else token.text
-
+                # ... (код получения verb_form и original_form) ...
                 tokens_to_add = [verb_form]
                 if gcs and ahocs and language == 'de':
-                    try:
-                        with redirect_stdout(io.StringIO()):
-                            dissection = comp_split.dissect(token.text, ahocs, make_singular=True)
+                    # --- УМНАЯ ЛОГИКА РАЗДЕЛЕНИЯ ---
+                    if token.pos_ == 'NOUN' or gcs_all_pos:
+                        try:
+                            should_make_singular = (token.pos_ == 'NOUN')
+                            with redirect_stdout(io.StringIO()):
+                                dissection = comp_split.dissect(token.text, ahocs, make_singular=should_make_singular)
 
-                        final_components = comp_split.merge_fractions(dissection)
-                        if len(final_components) > 1:
-                            tokens_to_add.extend(final_components)
-                    except Exception as e:
-                        pass
+                            final_components = comp_split.merge_fractions(dissection)
+                            if len(final_components) > 1:
+                                tokens_to_add.extend(final_components)
+                        except Exception:
+                            pass
                 
                 for t in tokens_to_add:
                     unique_lemmatized_tokens.add(t)
@@ -439,11 +449,14 @@ def main():
     parser.add_argument("--gcs", action="store_true", help="Enable German Compound Splitting. Requires --language de.")
     parser.add_argument("--gcs-dictionary", default="german.dic", help="Path to the dictionary file for GCS.")
     parser.add_argument("--gcs-in-wordlist", action="store_true", help="Also add German compound components to the SentenceSourceWordlist field. Requires --gcs.")
+    # --- НОВЫЙ КЛЮЧ ---
+    parser.add_argument("--gcs-all-pos", action="store_true", help="Attempt to split compounds for all parts of speech (not just nouns). Requires --gcs.")
     
     args = parser.parse_args()
 
-    if args.gcs_in_wordlist and not args.gcs:
-        print("Error: --gcs-in-wordlist requires --gcs to be enabled.", file=sys.stderr)
+    # --- НОВАЯ ПРОВЕРКА ---
+    if args.gcs_all_pos and not args.gcs:
+        print("Error: --gcs-all-pos requires --gcs to be enabled.", file=sys.stderr)
         exit(1)
 
     global nlp
@@ -451,6 +464,7 @@ def main():
     
     ahocs = None
     if args.gcs:
+        # ... (код загрузки словаря остается прежним) ...
         if not GCS_AVAILABLE:
             print("Error: 'german-compound-splitter' library not installed. Please run 'pip install german-compound-splitter'.", file=sys.stderr)
             exit(1)
@@ -514,16 +528,17 @@ def main():
                 args.sentence_context_size, final_output_path,
                 args.two_column_output_to_file, args.include_simple_list,
                 args.with_fields, args.with_br, args.pipe,
-                args.gcs, ahocs, args.gcs_in_wordlist
+                args.gcs, ahocs, args.gcs_in_wordlist, args.gcs_all_pos # <-- Передаем новый аргумент
             )
         else:
              processed_output_file = process_text_v2(
                 input_text, lemma_index, args.language, args.sentence_context_size,
                 final_output_path, args.two_column_output_to_file, args.include_simple_list,
                 args.with_fields, args.with_br, args.pipe,
-                args.gcs, ahocs, args.gcs_in_wordlist,
+                args.gcs, ahocs, args.gcs_in_wordlist, args.gcs_all_pos, # <-- Передаем новый аргумент
                 detailed=args.detailed, two_column_output=args.two_column_output, html=args.html
             )
+    # ... (остальной код функции без изменений) ...
 
     elif args.type == "sentence":
         if args.gcs:

@@ -100,7 +100,6 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, gcs=False, ahocs=None, g
 
     for token in doc:
         if token.is_alpha and token.dep_ != "svp":
-            # ИСПРАВЛЕНИЕ: Проверяем NOUN и PROPN
             if nlp.lang == "de" and token.pos_ in ["NOUN", "PROPN"]:
                 lemma = token.lemma_.capitalize()
             else:
@@ -120,7 +119,6 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, gcs=False, ahocs=None, g
                             part_doc = nlp(part)
                             if len(part_doc) > 0:
                                 lemmatized_part = part_doc[0].lemma_
-                                # Упрощенная логика: всегда капитализируем, если это существительное
                                 part_is_noun = nlp(lemmatized_part)[0].pos_ in ["NOUN", "PROPN"]
                                 final_tokens.add(lemmatized_part.capitalize() if part_is_noun else lemmatized_part)
                 except Exception:
@@ -152,7 +150,6 @@ def process_text_v1(
         doc = nlp(line1)
         for token in doc:
             if token.is_alpha and token.dep_ != "svp":
-                # ИСПРАВЛЕНИЕ: Проверяем NOUN и PROPN
                 if language == "de" and token.pos_ in ["NOUN", "PROPN"]:
                     primary_token = token.lemma_.capitalize()
                 else:
@@ -173,7 +170,6 @@ def process_text_v1(
                                 part_doc = nlp(part)
                                 if len(part_doc) > 0:
                                     lemmatized_part = part_doc[0].lemma_
-                                    # Упрощенная логика: всегда капитализируем, если это существительное
                                     part_is_noun = nlp(lemmatized_part)[0].pos_ in ["NOUN", "PROPN"]
                                     tokens_to_add.append(lemmatized_part.capitalize() if part_is_noun else lemmatized_part)
                     except Exception:
@@ -253,7 +249,6 @@ def process_text_v2(
         doc_unit = nlp(unit_text)
         for token in doc_unit:
             if token.is_alpha and token.dep_ != "svp":
-                # ИСПРАВЛЕНИЕ: Проверяем NOUN и PROPN
                 if language == "de" and token.pos_ in ["NOUN", "PROPN"]:
                     primary_token = token.lemma_.capitalize()
                 else:
@@ -274,7 +269,6 @@ def process_text_v2(
                                 part_doc = nlp(part)
                                 if len(part_doc) > 0:
                                     lemmatized_part = part_doc[0].lemma_
-                                    # Упрощенная логика: всегда капитализируем, если это существительное
                                     part_is_noun = nlp(lemmatized_part)[0].pos_ in ["NOUN", "PROPN"]
                                     tokens_to_add.append(lemmatized_part.capitalize() if part_is_noun else lemmatized_part)
                     except Exception:

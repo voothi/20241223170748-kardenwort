@@ -193,7 +193,32 @@ def process_text_v1(
                 else:
                     base_lemma = get_verb_with_particle(token) if token.pos_ == "VERB" else token.lemma_
 
+                reconstructed_lemma_from_gcs = None
+                final_components = []
+                if gcs and ahocs and language == 'de' and len(token.text) > 7:
+                    try:
+                        word_to_split = token.text
+                        should_make_singular = (token.pos_ in ['NOUN', 'PROPN'])
+                        with redirect_stdout(io.StringIO()):
+                            dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular)
+
+                        final_components = comp_split.merge_fractions(dissection)
+
+                        if len(final_components) > 1:
+                            original_last_part = dissection[-1][0]
+                            processed_last_part = final_components[-1]
+
+                            if original_last_part != processed_last_part:
+                                original_stem = token.text[:-len(original_last_part)]
+                                reconstructed_lemma_from_gcs = original_stem + processed_last_part
+                    except Exception:
+                        pass
+
+                if reconstructed_lemma_from_gcs:
+                    base_lemma = reconstructed_lemma_from_gcs.capitalize()
+
                 if form_to_check in german_dict:
+                    lemma_to_check = base_lemma if base_lemma.isupper() else base_lemma.capitalize()
                     if lemma_to_check in german_dict:
                         primary_token = base_lemma
                     else:
@@ -204,28 +229,18 @@ def process_text_v1(
                 original_form = get_original_form_with_particle(token)
 
                 tokens_to_add = {primary_token}
-                if gcs and ahocs and language == 'de' and len(token.text) > 7:
-                    try:
-                        word_to_split = token.text
-                        should_make_singular = (token.pos_ in ['NOUN', 'PROPN'])
-                        with redirect_stdout(io.StringIO()):
-                            dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular)
-
-                        final_components = comp_split.merge_fractions(dissection)
-                        if len(final_components) > 1:
-                            for part in final_components:
-                                part_to_check = part if part.isupper() else part.capitalize()
-                                if part_to_check in german_dict:
-                                    tokens_to_add.add(part_to_check)
-                                else:
-                                    part_doc = nlp(part)
-                                    if len(part_doc) > 0:
-                                        lemmatized_part_str = part_doc[0].lemma_
-                                        lemma_part_to_check = lemmatized_part_str if lemmatized_part_str.isupper() else lemmatized_part_str.capitalize()
-                                        if lemma_part_to_check in german_dict:
-                                            tokens_to_add.add(lemma_part_to_check)
-                    except Exception:
-                        pass
+                if final_components:
+                    for part in final_components:
+                        part_to_check = part if part.isupper() else part.capitalize()
+                        if part_to_check in german_dict:
+                            tokens_to_add.add(part_to_check)
+                        else:
+                            part_doc = nlp(part)
+                            if len(part_doc) > 0:
+                                lemmatized_part_str = part_doc[0].lemma_
+                                lemma_part_to_check = lemmatized_part_str if lemmatized_part_str.isupper() else lemmatized_part_str.capitalize()
+                                if lemma_part_to_check in german_dict:
+                                    tokens_to_add.add(lemma_part_to_check)
 
                 for t in tokens_to_add:
                     unique_lemmatized_tokens.add(t)
@@ -315,7 +330,32 @@ def process_text_v2(
                 else:
                     base_lemma = get_verb_with_particle(token) if token.pos_ == "VERB" else token.lemma_
 
+                reconstructed_lemma_from_gcs = None
+                final_components = []
+                if gcs and ahocs and language == 'de' and len(token.text) > 7:
+                    try:
+                        word_to_split = token.text
+                        should_make_singular = (token.pos_ in ['NOUN', 'PROPN'])
+                        with redirect_stdout(io.StringIO()):
+                            dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular)
+
+                        final_components = comp_split.merge_fractions(dissection)
+
+                        if len(final_components) > 1:
+                            original_last_part = dissection[-1][0]
+                            processed_last_part = final_components[-1]
+
+                            if original_last_part != processed_last_part:
+                                original_stem = token.text[:-len(original_last_part)]
+                                reconstructed_lemma_from_gcs = original_stem + processed_last_part
+                    except Exception:
+                        pass
+
+                if reconstructed_lemma_from_gcs:
+                    base_lemma = reconstructed_lemma_from_gcs.capitalize()
+
                 if form_to_check in german_dict:
+                    lemma_to_check = base_lemma if base_lemma.isupper() else base_lemma.capitalize()
                     if lemma_to_check in german_dict:
                         primary_token = base_lemma
                     else:
@@ -326,28 +366,18 @@ def process_text_v2(
                 original_form = get_original_form_with_particle(token)
 
                 tokens_to_add = {primary_token}
-                if gcs and ahocs and language == 'de' and len(token.text) > 7:
-                    try:
-                        word_to_split = token.text
-                        should_make_singular = (token.pos_ in ['NOUN', 'PROPN'])
-                        with redirect_stdout(io.StringIO()):
-                            dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular)
-
-                        final_components = comp_split.merge_fractions(dissection)
-                        if len(final_components) > 1:
-                            for part in final_components:
-                                part_to_check = part if part.isupper() else part.capitalize()
-                                if part_to_check in german_dict:
-                                    tokens_to_add.add(part_to_check)
-                                else:
-                                    part_doc = nlp(part)
-                                    if len(part_doc) > 0:
-                                        lemmatized_part_str = part_doc[0].lemma_
-                                        lemma_part_to_check = lemmatized_part_str if lemmatized_part_str.isupper() else lemmatized_part_str.capitalize()
-                                        if lemma_part_to_check in german_dict:
-                                            tokens_to_add.add(lemma_part_to_check)
-                    except Exception:
-                        pass
+                if final_components:
+                    for part in final_components:
+                        part_to_check = part if part.isupper() else part.capitalize()
+                        if part_to_check in german_dict:
+                            tokens_to_add.add(part_to_check)
+                        else:
+                            part_doc = nlp(part)
+                            if len(part_doc) > 0:
+                                lemmatized_part_str = part_doc[0].lemma_
+                                lemma_part_to_check = lemmatized_part_str if lemmatized_part_str.isupper() else lemmatized_part_str.capitalize()
+                                if lemma_part_to_check in german_dict:
+                                    tokens_to_add.add(lemma_part_to_check)
 
                 for t in tokens_to_add:
                     unique_lemmatized_tokens.add(t)

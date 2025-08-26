@@ -108,7 +108,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, gcs=False, ahocs=None, g
 
             if gcs and ahocs and gcs_in_wordlist and nlp.lang == 'de':
                 try:
-                    should_make_singular = (token.pos_ == 'NOUN')
+                    should_make_singular = (token.pos_ in ['NOUN', 'PROPN'])
                     with redirect_stdout(io.StringIO()):
                         dissection = comp_split.dissect(token.lemma_, ahocs, make_singular=should_make_singular)
                     
@@ -160,7 +160,7 @@ def process_text_v1(
                 tokens_to_add = [primary_token]
                 if gcs and ahocs and language == 'de':
                     try:
-                        should_make_singular = (token.pos_ == 'NOUN')
+                        should_make_singular = (token.pos_ in ['NOUN', 'PROPN'])
                         with redirect_stdout(io.StringIO()):
                             dissection = comp_split.dissect(token.lemma_, ahocs, make_singular=should_make_singular)
                         
@@ -259,7 +259,7 @@ def process_text_v2(
                 tokens_to_add = [primary_token]
                 if gcs and ahocs and language == 'de':
                     try:
-                        should_make_singular = (token.pos_ == 'NOUN')
+                        should_make_singular = (token.pos_ in ['NOUN', 'PROPN'])
                         with redirect_stdout(io.StringIO()):
                             dissection = comp_split.dissect(token.lemma_, ahocs, make_singular=should_make_singular)
 

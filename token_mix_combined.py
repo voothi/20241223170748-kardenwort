@@ -115,27 +115,35 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, 
                 base_lemma = spacy_lemma.capitalize()
             else:
                 base_lemma = get_verb_with_particle(token) if token.pos_ == "VERB" else token.lemma_
-            
+
             lemma_to_add = base_lemma
 
             if (gcs and ahocs and
-                token.lemma_ == token.text and 
+                token.lemma_ == token.text and
                 token.pos_ in ['NOUN', 'PROPN'] and
                 len(token.text) > 10):
                 try:
                     with redirect_stdout(io.StringIO()):
-                        dissection = comp_split.dissect(token.text, ahocs, make_singular=True)
-                    components = comp_split.merge_fractions(dissection)
-                    if len(components) > 1 and components[-1]:
-                        prefix = "".join(components[:-1])
-                        last_part = components[-1]
-                        last_part_doc = nlp(last_part)
-                        last_part_lemma = last_part_doc[0].lemma_
-                        corrected_lemma = prefix + last_part_lemma
+                        dissection_inflected = comp_split.dissect(token.text, ahocs, make_singular=False)
+                    components_inflected = comp_split.merge_fractions(dissection_inflected)
+                    inflected_last_part = components_inflected[-1]
+
+                    with redirect_stdout(io.StringIO()):
+                        dissection_singular = comp_split.dissect(token.text, ahocs, make_singular=True)
+                    components_singular = comp_split.merge_fractions(dissection_singular)
+                    singular_last_part = components_singular[-1]
+
+                    singular_doc = nlp(singular_last_part)
+                    lemmatized_last_part = singular_doc[0].lemma_
+
+                    if token.text.endswith(inflected_last_part) and inflected_last_part != lemmatized_last_part:
+                        base_part_len = len(token.text) - len(inflected_last_part)
+                        base_part = token.text[:base_part_len]
+                        corrected_lemma = base_part + lemmatized_last_part
                         lemma_to_add = corrected_lemma.capitalize()
                 except Exception:
                     pass
-            
+
             if gcs and ahocs and nlp.lang == 'de' and token.pos_ in ['NOUN', 'PROPN'] and any(c in "äöü" for c in token.text.lower()):
                 try:
                     spacy_lemma_var = lemma_to_add
@@ -219,19 +227,27 @@ def process_text_v1(
                 primary_token = base_lemma
 
                 if (gcs and ahocs and
-                    token.lemma_ == token.text and 
+                    token.lemma_ == token.text and
                     token.pos_ in ['NOUN', 'PROPN'] and
                     len(token.text) > 10):
                     try:
                         with redirect_stdout(io.StringIO()):
-                            dissection = comp_split.dissect(token.text, ahocs, make_singular=True)
-                        components = comp_split.merge_fractions(dissection)
-                        if len(components) > 1 and components[-1]:
-                            prefix = "".join(components[:-1])
-                            last_part = components[-1]
-                            last_part_doc = nlp(last_part)
-                            last_part_lemma = last_part_doc[0].lemma_
-                            corrected_lemma = prefix + last_part_lemma
+                            dissection_inflected = comp_split.dissect(token.text, ahocs, make_singular=False)
+                        components_inflected = comp_split.merge_fractions(dissection_inflected)
+                        inflected_last_part = components_inflected[-1]
+
+                        with redirect_stdout(io.StringIO()):
+                            dissection_singular = comp_split.dissect(token.text, ahocs, make_singular=True)
+                        components_singular = comp_split.merge_fractions(dissection_singular)
+                        singular_last_part = components_singular[-1]
+
+                        singular_doc = nlp(singular_last_part)
+                        lemmatized_last_part = singular_doc[0].lemma_
+
+                        if token.text.endswith(inflected_last_part) and inflected_last_part != lemmatized_last_part:
+                            base_part_len = len(token.text) - len(inflected_last_part)
+                            base_part = token.text[:base_part_len]
+                            corrected_lemma = base_part + lemmatized_last_part
                             primary_token = corrected_lemma.capitalize()
                     except Exception:
                         pass
@@ -357,19 +373,27 @@ def process_text_v2(
                 primary_token = base_lemma
 
                 if (gcs and ahocs and
-                    token.lemma_ == token.text and 
+                    token.lemma_ == token.text and
                     token.pos_ in ['NOUN', 'PROPN'] and
                     len(token.text) > 10):
                     try:
                         with redirect_stdout(io.StringIO()):
-                            dissection = comp_split.dissect(token.text, ahocs, make_singular=True)
-                        components = comp_split.merge_fractions(dissection)
-                        if len(components) > 1 and components[-1]:
-                            prefix = "".join(components[:-1])
-                            last_part = components[-1]
-                            last_part_doc = nlp(last_part)
-                            last_part_lemma = last_part_doc[0].lemma_
-                            corrected_lemma = prefix + last_part_lemma
+                            dissection_inflected = comp_split.dissect(token.text, ahocs, make_singular=False)
+                        components_inflected = comp_split.merge_fractions(dissection_inflected)
+                        inflected_last_part = components_inflected[-1]
+
+                        with redirect_stdout(io.StringIO()):
+                            dissection_singular = comp_split.dissect(token.text, ahocs, make_singular=True)
+                        components_singular = comp_split.merge_fractions(dissection_singular)
+                        singular_last_part = components_singular[-1]
+
+                        singular_doc = nlp(singular_last_part)
+                        lemmatized_last_part = singular_doc[0].lemma_
+
+                        if token.text.endswith(inflected_last_part) and inflected_last_part != lemmatized_last_part:
+                            base_part_len = len(token.text) - len(inflected_last_part)
+                            base_part = token.text[:base_part_len]
+                            corrected_lemma = base_part + lemmatized_last_part
                             primary_token = corrected_lemma.capitalize()
                     except Exception:
                         pass

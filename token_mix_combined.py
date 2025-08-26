@@ -6,6 +6,15 @@ from datetime import datetime
 import os
 import re
 
+# --- НОВЫЙ ИМПОРТ для GCS ---
+try:
+    from german_compound_splitter import comp_split
+    GCS_AVAILABLE = True
+except ImportError:
+    GCS_AVAILABLE = False
+# --- КОНЕЦ НОВОГО ИМПОРТА ---
+
+
 # --- Все вспомогательные функции (get_verb_with_particle, и т.д.) ---
 # Они остаются без изменений
 def get_verb_with_particle(token):
@@ -93,12 +102,14 @@ def generate_autoname_prefix(text, num_words):
         return ""
     return "-".join(selected_words)
 
-# --- Остальные функции process_text_v1, v2, process_sentences без изменений ---
+
+# --- НАЧАЛО ИЗМЕНЕНИЙ В process_text_v1 ---
 def process_text_v1(
     input_text, lemma_index, language, text2, text3, sentence_context_size,
     output_file, two_column_output_to_file, include_simple_list,
-    with_fields, with_br, pipe
+    with_fields, with_br, pipe, gcs, ahocs # Новые параметры
 ):
+# --- КОНЕЦ ИЗМЕНЕНИЙ В process_text_v1 ---
     if "\n" in input_text or not os.path.exists(input_text):
         text1_lines = input_text.splitlines()
     else:
@@ -117,9 +128,29 @@ def process_text_v1(
             if token.is_alpha and token.dep_ != "svp":
                 verb_form = get_verb_with_particle(token) if language == "de" and token.pos_ == "VERB" else token.lemma_
                 original_form = get_original_form_with_particle(token) if language == "de" and token.pos_ == "VERB" else token.text
-                unique_lemmatized_tokens.add(verb_form)
-                token_to_sentence[verb_form] = (i, line1)
-                token_to_original_form[verb_form] = original_form
+                
+                # --- НАЧАЛО НОВОЙ ЛОГИКИ GCS ---
+                tokens_to_add = [verb_form]
+                if gcs and ahocs and language == 'de':
+                    # Разбираем исходную форму слова, так как она не изменена
+                    try:
+                        dissection = comp_split.dissect(token.text, ahocs, make_singular=True)
+                        final_components = comp_split.merge_fractions(dissection)
+                        if len(final_components) > 1:
+                            tokens_to_add.extend(final_components)
+                    except Exception as e:
+                        # Можно добавить логирование ошибки при необходимости
+                        # print(f"GCS failed for '{token.text}': {e}", file=sys.stderr)
+                        pass
+                
+                for t in tokens_to_add:
+                    unique_lemmatized_tokens.add(t)
+                    if t not in token_to_sentence:
+                        token_to_sentence[t] = (i, line1)
+                        # Для родительского слова сохраняем его оригинальную форму из текста,
+                        # для дочерних - саму дочернюю форму, так как у нее нет "оригинала".
+                        token_to_original_form[t] = original_form if t == verb_form else t
+                # --- КОНЕЦ НОВОЙ ЛОГИКИ GCS ---
 
     sorted_tokens = sorted(unique_lemmatized_tokens, key=lambda token: (token not in lemma_index, lemma_index.get(token, 0), token))
 
@@ -169,11 +200,13 @@ def process_text_v1(
     return output_file
 
 
+# --- НАЧАЛО ИЗМЕНЕНИЙ В process_text_v2 ---
 def process_text_v2(
     input_text, lemma_index, language, sentence_context_size,
     output_file, two_column_output_to_file, include_simple_list,
-    with_fields, with_br, pipe, **kwargs 
+    with_fields, with_br, pipe, gcs, ahocs, **kwargs # Новые параметры
 ):
+# --- КОНЕЦ ИЗМЕНЕНИЙ В process_text_v2 ---
     if '\n' in input_text.strip():
         processing_units = input_text.splitlines()
         is_line_based = True
@@ -191,10 +224,25 @@ def process_text_v2(
             if token.is_alpha and token.dep_ != "svp":
                 verb_form = get_verb_with_particle(token) if language == "de" and token.pos_ == "VERB" else token.lemma_
                 original_form = get_original_form_with_particle(token) if language == "de" and token.pos_ == "VERB" else token.text
-                unique_lemmatized_tokens.add(verb_form)
-                token_to_sentence[verb_form] = (unit_index, unit_text)
-                token_to_original_form[verb_form] = original_form
-    
+
+                # --- НАЧАЛО НОВОЙ ЛОГИКИ GCS (аналогично v1) ---
+                tokens_to_add = [verb_form]
+                if gcs and ahocs and language == 'de':
+                    try:
+                        dissection = comp_split.dissect(token.text, ahocs, make_singular=True)
+                        final_components = comp_split.merge_fractions(dissection)
+                        if len(final_components) > 1:
+                            tokens_to_add.extend(final_components)
+                    except Exception as e:
+                        pass
+                
+                for t in tokens_to_add:
+                    unique_lemmatized_tokens.add(t)
+                    if t not in token_to_sentence:
+                        token_to_sentence[t] = (unit_index, unit_text)
+                        token_to_original_form[t] = original_form if t == verb_form else t
+                # --- КОНЕЦ НОВОЙ ЛОГИКИ GCS ---
+
     sorted_tokens = sorted(unique_lemmatized_tokens, key=lambda token: (token not in lemma_index, lemma_index.get(token, 0), token))
 
     def get_unit_text(u):
@@ -208,11 +256,11 @@ def process_text_v2(
         if html:
             print("<table>")
             for token in sorted_tokens:
-                print(f"<tr><td>{token}</td><td>{token_to_original_form[token]}</td></tr>")
+                print(f"<tr><td>{token}</td><td>{token_to_original_form.get(token, '')}</td></tr>")
             print("</table>")
         elif two_column_output:
             for token in sorted_tokens:
-                print(f"{token}\t{token_to_original_form[token]}")
+                print(f"{token}\t{token_to_original_form.get(token, '')}")
         elif detailed:
              for token in sorted_tokens:
                 unit_index, l1_sentence = token_to_sentence[token]
@@ -252,7 +300,7 @@ def process_text_v2(
             row_data[0] = token
             row_data[1] = token
             if two_column_output_to_file:
-                row_data[2] = token_to_original_form[token]
+                row_data[2] = token_to_original_form.get(token, '')
             row_data[12] = l1_sentence
             if include_simple_list:
                 row_data[11] = "<br>".join(process_sentence_lemmas(l1_sentence, lemma_index, nlp)) if with_br else "\n".join(process_sentence_lemmas(l1_sentence, lemma_index, nlp))
@@ -359,11 +407,39 @@ def main():
     parser.add_argument("--two-column-output", action="store_true")
     parser.add_argument("--html", action="store_true")
     parser.add_argument("--original-form-in-simple-list", action="store_true")
+    
+    # --- НАЧАЛО НОВЫХ АРГУМЕНТОВ GCS ---
+    parser.add_argument("--gcs", action="store_true", help="Enable German Compound Splitting. Requires --language de.")
+    parser.add_argument("--gcs-dictionary", default="german.dic", help="Path to the dictionary file for GCS.")
+    # --- КОНЕЦ НОВЫХ АРГУМЕНТОВ GCS ---
+
     args = parser.parse_args()
 
     global nlp
     nlp = spacy.load("de_core_news_lg" if args.language == "de" else "en_core_web_lg")
     
+    # --- НАЧАЛО НОВОЙ ЛОГИКИ ЗАГРУЗКИ СЛОВАРЯ GCS ---
+    ahocs = None
+    if args.gcs:
+        if not GCS_AVAILABLE:
+            print("Error: 'german-compound-splitter' library not installed. Please run 'pip install german-compound-splitter'.", file=sys.stderr)
+            exit(1)
+        if args.language != 'de':
+            print("Error: --gcs flag is only supported for German language (--language de).", file=sys.stderr)
+            exit(1)
+        if not os.path.exists(args.gcs_dictionary):
+            print(f"Error: GCS dictionary file '{args.gcs_dictionary}' not found!", file=sys.stderr)
+            print("Please download it and place it in the correct directory.", file=sys.stderr)
+            exit(1)
+        try:
+            print(f"Loading GCS dictionary from '{args.gcs_dictionary}'...", file=sys.stderr)
+            ahocs = comp_split.read_dictionary_from_file(args.gcs_dictionary)
+            print("GCS dictionary loaded successfully.", file=sys.stderr)
+        except Exception as e:
+            print(f"Error loading GCS dictionary: {e}", file=sys.stderr)
+            exit(1)
+    # --- КОНЕЦ НОВОЙ ЛОГИКИ ЗАГРУЗКИ СЛОВАРЯ GCS ---
+
     lemma_index = load_lemma_index(args.lemma_index_file)
     processed_output_file = None
 
@@ -385,20 +461,12 @@ def main():
             
             autoname_part = generate_autoname_prefix(source_text_for_autoname, args.autoname)
             
-            # --- НАЧАЛО ИЗМЕНЕНИЙ ---
             if autoname_part:
-                # Находим позицию первой точки в исходном имени файла
                 first_dot_pos = filename.find('.')
-                # Если точка найдена, берем все, что после нее (включая саму точку).
-                # Иначе - пустая строка.
                 suffix = filename[first_dot_pos:] if first_dot_pos != -1 else ""
-                
-                # Собираем новое имя: ZID-autoname_part.суффиксы
                 new_filename = f"{zid}-{autoname_part}{suffix}"
             else:
-                 # Если не удалось сгенерировать autoname, работаем как обычный --timestamp
                  new_filename = f"{zid}-{filename}"
-            # --- КОНЕЦ ИЗМЕНЕНИЙ ---
 
             final_output_path = os.path.join(output_dir, new_filename)
         elif args.timestamp:
@@ -417,19 +485,22 @@ def main():
                 input_text, lemma_index, args.language, args.text2, args.text3,
                 args.sentence_context_size, final_output_path,
                 args.two_column_output_to_file, args.include_simple_list,
-                args.with_fields, args.with_br, args.pipe
+                args.with_fields, args.with_br, args.pipe,
+                args.gcs, ahocs  # <-- Передаем новые параметры
             )
         else:
              processed_output_file = process_text_v2(
                 input_text, lemma_index, args.language, args.sentence_context_size,
                 final_output_path, args.two_column_output_to_file, args.include_simple_list,
                 args.with_fields, args.with_br, args.pipe,
+                args.gcs, ahocs, # <-- Передаем новые параметры
                 detailed=args.detailed, two_column_output=args.two_column_output, html=args.html
             )
 
     elif args.type == "sentence":
-        if not args.text1 or not args.text2:
-            print("Error: --text1 and --text2 must be specified for sentence mode.", file=sys.stderr); exit(1)
+        # Обратите внимание: GCS применяется только к режиму "token", так как он работает с отдельными словами.
+        if args.gcs:
+            print("Warning: --gcs flag is only applicable for --type token and will be ignored.", file=sys.stderr)
         processed_output_file = process_sentences(
             args.language, lemma_index, args.text1, args.text2, args.text3,
             args.sentence_context_size, final_output_path,

@@ -123,7 +123,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, 
     final_tokens = set()
 
     for token in doc:
-        if token.is_alpha and token.dep_ != "svp":
+        if (token.is_alpha or '-' in token.text) and token.dep_ != "svp":
             token_text = token.text
             spacy_lemma = get_corrected_lemma(token, german_dict, fix_genitive_flag=gcs_fix_genitive)
 
@@ -210,7 +210,7 @@ def process_text_v1(
     for i, line1 in enumerate(text1_lines):
         doc = nlp(line1)
         for token in doc:
-            if token.is_alpha and token.dep_ != "svp":
+            if (token.is_alpha or '-' in token.text) and token.dep_ != "svp":
                 token_text = token.text
                 spacy_lemma = get_corrected_lemma(token, german_dict, fix_genitive_flag=gcs_fix_genitive)
                 
@@ -344,7 +344,7 @@ def process_text_v2(
         unit_text = unit if is_line_based else unit.text
         doc_unit = nlp(unit_text)
         for token in doc_unit:
-            if token.is_alpha and token.dep_ != "svp":
+            if (token.is_alpha or '-' in token.text) and token.dep_ != "svp":
                 token_text = token.text
                 spacy_lemma = get_corrected_lemma(token, german_dict, fix_genitive_flag=gcs_fix_genitive)
                 

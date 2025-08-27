@@ -152,11 +152,14 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, 
                 particle = verb_particle_map[token.i]
                 stem_lemma = f"{particle.text.lower()}{token.lemma_}"
                 
-                infinitive_candidate = stem_lemma + "en"
-                if infinitive_candidate in german_dict:
-                    base_lemma = infinitive_candidate.lower()
+                final_lemma = stem_lemma
+                if stem_lemma in german_dict:
+                    final_lemma = stem_lemma
                 else:
-                    base_lemma = stem_lemma.lower()
+                    infinitive_candidate = stem_lemma + "en"
+                    if infinitive_candidate in german_dict:
+                        final_lemma = infinitive_candidate
+                base_lemma = final_lemma.lower()
             else:
                 spacy_lemma = get_corrected_lemma(token, german_dict, fix_genitive_flag=gcs_fix_genitive)
                 base_lemma = get_capitalized_lemma(token, spacy_lemma)
@@ -303,11 +306,14 @@ def process_text_v1(
                         particle = verb_particle_map[token.i]
                         stem_lemma = f"{particle.text.lower()}{token.lemma_}"
                         
-                        infinitive_candidate = stem_lemma + "en"
-                        if infinitive_candidate in german_dict:
-                            primary_lemma = infinitive_candidate.lower()
+                        final_lemma = stem_lemma
+                        if stem_lemma in german_dict:
+                            final_lemma = stem_lemma
                         else:
-                            primary_lemma = stem_lemma.lower()
+                            infinitive_candidate = stem_lemma + "en"
+                            if infinitive_candidate in german_dict:
+                                final_lemma = infinitive_candidate
+                        primary_lemma = final_lemma.lower()
                         
                         original_inflected_form = f"{token.text} {particle.text}"
                     else:
@@ -452,11 +458,14 @@ def process_text_v2(
                         particle = verb_particle_map[token.i]
                         stem_lemma = f"{particle.text.lower()}{token.lemma_}"
 
-                        infinitive_candidate = stem_lemma + "en"
-                        if infinitive_candidate in german_dict:
-                            primary_lemma = infinitive_candidate.lower()
+                        final_lemma = stem_lemma
+                        if stem_lemma in german_dict:
+                            final_lemma = stem_lemma
                         else:
-                            primary_lemma = stem_lemma.lower()
+                            infinitive_candidate = stem_lemma + "en"
+                            if infinitive_candidate in german_dict:
+                                final_lemma = infinitive_candidate
+                        primary_lemma = final_lemma.lower()
 
                         original_inflected_form = f"{token.text} {particle.text}"
                     else:

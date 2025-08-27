@@ -331,7 +331,7 @@ def process_text_v2(
     gcs_fix_genitive = kwargs.get('gcs_fix_genitive', False)
     gcs_mask_unknown = kwargs.get('gcs_mask_unknown', False)
     assume_genitive = kwargs.get('assume_genitive_for_single_words', False)
-    
+
     text_to_process = input_text
     if assume_genitive and gcs_fix_genitive and ' ' not in input_text.strip() and '\n' not in input_text.strip():
         text_to_process = f"des {input_text}"
@@ -637,6 +637,19 @@ def main():
             print("Error: Either --text or --text1 must be specified.", file=sys.stderr); exit(1)
 
         gcs_only_nouns_param = not args.gcs_only_nouns_false
+        
+        kwargs_for_processing = {
+            'gcs_only_nouns': gcs_only_nouns_param,
+            'make_singular': args.make_singular,
+            'no_make_singular': args.no_make_singular,
+            'gcs_combine_noun_modes': args.gcs_combine_noun_modes,
+            'gcs_fix_genitive': args.gcs_fix_genitive,
+            'gcs_mask_unknown': args.gcs_mask_unknown,
+            'assume_genitive_for_single_words': args.assume_genitive_for_single_words,
+            'detailed': args.detailed,
+            'two_column_output': args.two_column_output,
+            'html': args.html
+        }
 
         if args.text2:
             processed_output_file = process_text_v1(
@@ -645,12 +658,7 @@ def main():
                 args.two_column_output_to_file, args.include_simple_list,
                 args.with_fields, args.with_br, args.pipe,
                 args.gcs, ahocs, args.gcs_in_wordlist, german_dict,
-                gcs_only_nouns=gcs_only_nouns_param,
-                make_singular=args.make_singular,
-                no_make_singular=args.no_make_singular,
-                gcs_combine_noun_modes=args.gcs_combine_noun_modes,
-                gcs_fix_genitive=args.gcs_fix_genitive,
-                gcs_mask_unknown=args.gcs_mask_unknown
+                **kwargs_for_processing
             )
         else:
              processed_output_file = process_text_v2(
@@ -658,18 +666,11 @@ def main():
                 final_output_path, args.two_column_output_to_file, args.include_simple_list,
                 args.with_fields, args.with_br, args.pipe,
                 args.gcs, ahocs, args.gcs_in_wordlist, german_dict,
-                gcs_only_nouns=gcs_only_nouns_param,
-                make_singular=args.make_singular,
-                no_make_singular=args.no_make_singular,
-                gcs_combine_noun_modes=args.gcs_combine_noun_modes,
-                gcs_fix_genitive=args.gcs_fix_genitive,
-                gcs_mask_unknown=args.gcs_mask_unknown,
-                assume_genitive_for_single_words=args.assume_genitive_for_single_words,
-                detailed=args.detailed, two_column_output=args.two_column_output, html=args.html
+                **kwargs_for_processing
             )
 
     elif args.type == "sentence":
-        if any([args.gcs, args.gcs_combine_noun_modes, args.gcs_only_nouns_false, args.make_singular, args.no_make_singular, args.gcs_fix_genitive, args.gcs_mask_unknown]):
+        if any([args.gcs, args.gcs_combine_noun_modes, args.gcs_only_nouns_false, args.make_singular, args.no_make_singular, args.gcs_fix_genitive, args.gcs_mask_unknown, args.assume_genitive_for_single_words]):
             print("Warning: GCS-related flags are only applicable for --type token and will be ignored.", file=sys.stderr)
         if not args.text1 or not args.text2:
             print("Error: --text1 and --text2 must be specified for sentence mode.", file=sys.stderr); exit(1)

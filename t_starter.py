@@ -36,6 +36,7 @@ def get_token_args(args, python_path, token_workspace):
         # "--make-singular",
         # "--no-make-singular",
         # "--gcs-mask-unknown",
+        "--gcs-fix-genitive",
         "--assume-genitive-for-single-words",
         "--gcs-dictionary",
         "U:/voothi/20241223170748-token-extraction/20250826000433-test/german.dic",

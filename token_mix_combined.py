@@ -46,7 +46,8 @@ def get_verb_with_particle(token):
     if token.pos_ == "VERB":
         for particle in token.rights:
             if particle.dep_ == "svp":
-                return f"{particle.text}{token.lemma_}"
+                # Убедимся, что приставка в нижнем регистре перед соединением
+                return f"{particle.text.lower()}{token.lemma_}"
     return token.lemma_
 
 def get_original_form_with_particle(token):
@@ -125,13 +126,13 @@ def get_capitalized_lemma(token):
     """
     original_text = token.text
 
-    # --- ИЗМЕНЕНИЕ НАЧАЛО ---
+    # --- ИСПРАВЛЕННАЯ ЛОГИКА ---
     # Сначала получаем правильную лемму (с приставкой, если это глагол)
     if token.pos_ == "VERB":
         spacy_lemma = get_verb_with_particle(token)
     else:
         spacy_lemma = token.lemma_
-    # --- ИЗМЕНЕНИЕ КОНЕЦ ---
+    # --- КОНЕЦ ИСПРАВЛЕНИЯ ---
 
     is_all_caps = original_text.isupper() and len(original_text) > 1
     has_internal_caps = any(c.isupper() for c in original_text[1:])
@@ -153,28 +154,27 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, 
 
     for token in doc:
         if (token.is_alpha or '-' in token.text) and token.dep_ != "svp":
+            # Используем исправленную функцию для получения леммы
+            base_lemma = get_capitalized_lemma(token)
+            
+            # Остальная логика здесь больше для wordlist и может быть упрощена,
+            # но для консистентности оставим ее как есть, т.к. основная проблема решена в get_capitalized_lemma
             token_text = token.text
             spacy_lemma = get_corrected_lemma(token, german_dict, fix_genitive_flag=gcs_fix_genitive)
-
             form_to_check = token_text if token_text.isupper() else token_text.capitalize()
             lemma_to_check = spacy_lemma if spacy_lemma.isupper() else spacy_lemma.capitalize()
 
-            if token.pos_ in ["NOUN", "PROPN"] and spacy_lemma.isupper():
-                base_lemma = spacy_lemma
-            elif nlp.lang == "de" and token.pos_ in ["NOUN", "PROPN"]:
-                base_lemma = spacy_lemma.capitalize()
-            else:
-                base_lemma = get_verb_with_particle(token) if token.pos_ == "VERB" else token.lemma_
-
-            lemma_to_add = ""
+            lemma_to_add = base_lemma # Основная лемма уже правильная
+            
+            # Проверка по словарю (можно оставить для дополнительной валидации)
             if form_to_check in german_dict:
                 if lemma_to_check in german_dict:
-                    lemma_to_add = base_lemma
+                    final_tokens.add(base_lemma)
                 else:
-                    lemma_to_add = form_to_check
+                    final_tokens.add(form_to_check)
             else:
-                lemma_to_add = base_lemma
-            final_tokens.add(lemma_to_add)
+                final_tokens.add(base_lemma)
+
 
             if gcs and ahocs and gcs_in_wordlist and nlp.lang == 'de' and len(token.text) > 7:
                 try:
@@ -243,15 +243,13 @@ def process_text_v1(
         doc = nlp(line1)
         for token in doc:
             if (token.is_alpha or '-' in token.text) and token.dep_ != "svp":
-                # --- ИЗМЕНЕНИЕ НАЧАЛО ---
-                # Вместо добавления строк в set, будем собирать пары (лемма, исходная_форма)
                 lemmas_to_process = []
                 was_split = False
                 
                 if gcs and ahocs and language == 'de' and len(token.text) > 3 and (token.pos_ in ["NOUN", "PROPN"] or '-' in token.text):
                     try:
                         word_to_split = token.text
-                        original_compound_word = token.text # Запоминаем исходное составное слово
+                        original_compound_word = token.text
                         
                         if no_make_singular:
                             should_make_singular = False
@@ -291,24 +289,20 @@ def process_text_v1(
                                             part_lemma = lemma_part_to_check
                                 
                                 if part_lemma:
-                                    # Для каждой части добавляем пару (часть_лемма, исходное_сложное_слово)
                                     lemmas_to_process.append((part_lemma, original_compound_word))
                     except Exception:
-                        pass # Если GCS падает, просто обрабатываем слово как обычно
+                        pass 
 
-                # Если слово не было разделено, обрабатываем его как одно целое
                 if not was_split:
                     primary_lemma = get_capitalized_lemma(token)
                     original_inflected_form = get_original_form_with_particle(token)
                     lemmas_to_process.append((primary_lemma, original_inflected_form))
 
-                # Теперь обрабатываем собранные леммы и их исходные формы
                 for lemma, original_form in lemmas_to_process:
                     unique_lemmatized_tokens.add(lemma)
                     if lemma not in token_to_sentence:
                         token_to_sentence[lemma] = (i, line1)
                         token_to_original_form[lemma] = original_form
-                # --- ИЗМЕНЕНИЕ КОНЕЦ ---
 
     sorted_tokens = sorted(unique_lemmatized_tokens, key=lambda token: (token not in lemma_index, lemma_index.get(token, 0), token))
     if output_file:
@@ -337,7 +331,6 @@ def process_text_v1(
                     row_data[79] = " ".join(line.strip() for line in text3_lines[sent_index + 1:end_idx])
                 row_data[0] = token
                 row_data[1] = token
-                # --- ИЗМЕНЕНИЕ: Теперь здесь будет правильное значение для частей ---
                 if two_column_output_to_file:
                     row_data[2] = token_to_original_form.get(token, '')
                 row_data[12] = l1_sentence
@@ -377,15 +370,13 @@ def process_text_v2(
         doc_unit = nlp(unit_text)
         for token in doc_unit:
             if (token.is_alpha or '-' in token.text) and token.dep_ != "svp":
-                # --- ИЗМЕНЕНИЕ НАЧАЛО ---
-                # Аналогично v1, собираем пары (лемма, исходная_форма)
                 lemmas_to_process = []
                 was_split = False
 
                 if gcs and ahocs and language == 'de' and len(token.text) > 3 and (token.pos_ in ["NOUN", "PROPN"] or '-' in token.text):
                     try:
                         word_to_split = token.text
-                        original_compound_word = token.text # Запоминаем исходное составное слово
+                        original_compound_word = token.text
 
                         if no_make_singular:
                             should_make_singular = False
@@ -425,24 +416,20 @@ def process_text_v2(
                                             part_lemma = lemma_part_to_check
                                 
                                 if part_lemma:
-                                    # Для каждой части добавляем пару (часть_лемма, исходное_сложное_слово)
                                     lemmas_to_process.append((part_lemma, original_compound_word))
                     except Exception:
-                        pass # Если GCS падает, просто обрабатываем слово как обычно
+                        pass
 
-                # Если слово не было разделено, обрабатываем его как одно целое
                 if not was_split:
                     primary_lemma = get_capitalized_lemma(token)
                     original_inflected_form = get_original_form_with_particle(token)
                     lemmas_to_process.append((primary_lemma, original_inflected_form))
 
-                # Теперь обрабатываем собранные леммы и их исходные формы
                 for lemma, original_form in lemmas_to_process:
                     unique_lemmatized_tokens.add(lemma)
                     if lemma not in token_to_sentence:
                         token_to_sentence[lemma] = (unit_index, unit_text)
                         token_to_original_form[lemma] = original_form
-                # --- ИЗМЕНЕНИЕ КОНЕЦ ---
 
     sorted_tokens = sorted(unique_lemmatized_tokens, key=lambda token: (token not in lemma_index, lemma_index.get(token, 0), token))
     def get_unit_text(u):
@@ -494,7 +481,6 @@ def process_text_v2(
             row_data[7] = " ".join(get_unit_text(u).strip() for u in processing_units[unit_index + 1:end_idx])
             row_data[0] = token
             row_data[1] = token
-            # --- ИЗМЕНЕНИЕ: Теперь здесь будет правильное значение для частей ---
             if two_column_output_to_file:
                 row_data[2] = token_to_original_form.get(token, '')
             row_data[12] = l1_sentence

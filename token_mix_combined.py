@@ -173,6 +173,13 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, 
 
                     if len(final_components) > 1:
                         for part in set(final_components):
+                            # ---> ВОТ ЭТО ИЗМЕНЕНИЕ <---
+                            # Очищаем компонент от возможных дефисов по краям
+                            part = part.strip('-') 
+                            # Пропускаем, если после очистки осталась пустая строка
+                            if not part:
+                                continue
+                            # ---> КОНЕЦ ИЗМЕНЕНИЯ <---
                             part_to_check = part if part.isupper() else part.capitalize()
                             if part_to_check in german_dict:
                                 final_tokens.add(part_to_check)
@@ -260,6 +267,13 @@ def process_text_v1(
 
                         if len(final_components) > 1:
                             for part in set(final_components):
+                                # ---> ВОТ ЭТО ИЗМЕНЕНИЕ <---
+                                # Очищаем компонент от возможных дефисов по краям
+                                part = part.strip('-') 
+                                # Пропускаем, если после очистки осталась пустая строка
+                                if not part:
+                                    continue
+                                # ---> КОНЕЦ ИЗМЕНЕНИЯ <---
                                 part_to_check = part if part.isupper() else part.capitalize()
                                 if part_to_check in german_dict:
                                     tokens_to_add.add(part_to_check)
@@ -393,6 +407,13 @@ def process_text_v2(
 
                         if len(final_components) > 1:
                             for part in set(final_components):
+                                # ---> ВОТ ЭТО ИЗМЕНЕНИЕ <---
+                                # Очищаем компонент от возможных дефисов по краям
+                                part = part.strip('-') 
+                                # Пропускаем, если после очистки осталась пустая строка
+                                if not part:
+                                    continue
+                                # ---> КОНЕЦ ИЗМЕНЕНИЯ <---
                                 part_to_check = part if part.isupper() else part.capitalize()
                                 if part_to_check in german_dict:
                                     tokens_to_add.add(part_to_check)

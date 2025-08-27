@@ -635,7 +635,6 @@ def main():
             'gcs_combine_noun_modes': args.gcs_combine_noun_modes,
             'gcs_fix_genitive': args.gcs_fix_genitive,
             'gcs_mask_unknown': args.gcs_mask_unknown,
-            'assume_genitive_for_single_words': args.assume_genitive_for_single_words,
             'detailed': args.detailed,
             'two_column_output': args.two_column_output,
             'html': args.html

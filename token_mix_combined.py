@@ -120,10 +120,18 @@ def generate_autoname_prefix(text, num_words):
 
 def get_capitalized_lemma(token):
     """
-    Определяет правильную капитализацию для леммы на основе иерархии правил.
+    Определяет правильную капитализацию для леммы на основе иерархии правил,
+    а также соединяет глаголы с отделяемыми приставками.
     """
     original_text = token.text
-    spacy_lemma = token.lemma_
+
+    # --- ИЗМЕНЕНИЕ НАЧАЛО ---
+    # Сначала получаем правильную лемму (с приставкой, если это глагол)
+    if token.pos_ == "VERB":
+        spacy_lemma = get_verb_with_particle(token)
+    else:
+        spacy_lemma = token.lemma_
+    # --- ИЗМЕНЕНИЕ КОНЕЦ ---
 
     is_all_caps = original_text.isupper() and len(original_text) > 1
     has_internal_caps = any(c.isupper() for c in original_text[1:])

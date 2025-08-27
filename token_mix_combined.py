@@ -192,7 +192,7 @@ def process_text_v1(
     input_text, lemma_index, language, text2, text3, sentence_context_size,
     output_file, two_column_output_to_file, include_simple_list,
     with_fields, with_br, pipe, gcs, ahocs, gcs_in_wordlist, german_dict,
-    gcs_only_nouns=True, make_singular=False, no_make_singular=False, gcs_combine_noun_modes=False, gcs_fix_genitive=False, gcs_mask_unknown=False, **kwargs
+    gcs_only_nouns=True, make_singular=False, no_make_singular=False, gcs_combine_noun_modes=False, gcs_fix_genitive=False, gcs_mask_unknown=False
 ):
     if "\n" in input_text or not os.path.exists(input_text):
         text1_lines = input_text.splitlines()
@@ -330,17 +330,11 @@ def process_text_v2(
     gcs_combine_noun_modes = kwargs.get('gcs_combine_noun_modes', False)
     gcs_fix_genitive = kwargs.get('gcs_fix_genitive', False)
     gcs_mask_unknown = kwargs.get('gcs_mask_unknown', False)
-    assume_genitive = kwargs.get('assume_genitive_for_single_words', False)
-
-    text_to_process = input_text
-    if assume_genitive and gcs_fix_genitive and ' ' not in input_text.strip() and '\n' not in input_text.strip():
-        text_to_process = f"des {input_text}"
-
-    if '\n' in text_to_process.strip():
-        processing_units = text_to_process.splitlines()
+    if '\n' in input_text.strip():
+        processing_units = input_text.splitlines()
         is_line_based = True
     else:
-        doc = nlp(text_to_process)
+        doc = nlp(input_text)
         processing_units = list(doc.sents)
         is_line_based = False
 
@@ -415,8 +409,7 @@ def process_text_v2(
                 for t in tokens_to_add:
                     unique_lemmatized_tokens.add(t)
                     if t not in token_to_sentence:
-                        original_unit_text = unit_text.replace("des ", "", 1) if assume_genitive and unit_text.startswith("des ") else unit_text
-                        token_to_sentence[t] = (unit_index, original_unit_text)
+                        token_to_sentence[t] = (unit_index, unit_text)
                         token_to_original_form[t] = original_form if t == primary_token else t
 
     sorted_tokens = sorted(unique_lemmatized_tokens, key=lambda token: (token not in lemma_index, lemma_index.get(token, 0), token))
@@ -562,7 +555,6 @@ def main():
     gcs_group.add_argument("--gcs-only-nouns-false", action="store_true", help="Allows any type of word (verb, adjective, etc.) to be used for GCS splitting. Ignored if --gcs-combine-noun-modes is used.")
     gcs_group.add_argument("--gcs-combine-noun-modes", action="store_true", help="Run GCS in both modes (only_nouns=True and False) and combine the unique resulting components.")
     gcs_group.add_argument("--gcs-fix-genitive", action="store_true", help="Corrects German genitive noun lemmas (e.g., 'Hauses' -> 'Haus') by checking against the dictionary.")
-    gcs_group.add_argument("--assume-genitive-for-single-words", action="store_true", help="For single-word input, assume genitive case to aid lemmatization. Requires --gcs-fix-genitive.")
     gcs_group.add_argument("--gcs-mask-unknown", action="store_true", help="During GCS splitting, mask word parts not found in the dictionary as 'unknown'.")
     gcs_group.add_argument("--make-singular", action="store_true", help="Force making compound parts singular during GCS splitting, regardless of the word's part of speech. Default is to only do this for nouns.")
     gcs_group.add_argument("--no-make-singular", action="store_true", help="Prevent making compound parts singular during GCS splitting, keeping their original form. Overrides default behavior and --make-singular.")
@@ -575,8 +567,6 @@ def main():
         print("Error: --gcs-combine-noun-modes and --gcs-only-nouns-false cannot be used together.", file=sys.stderr); exit(1)
     if args.gcs_in_wordlist and not args.gcs:
         print("Error: --gcs-in-wordlist requires --gcs to be enabled.", file=sys.stderr); exit(1)
-    if args.assume_genitive_for_single_words and not args.gcs_fix_genitive:
-        print("Warning: --assume-genitive-for-single-words is only effective when --gcs-fix-genitive is also used.", file=sys.stderr)
 
     global nlp
     nlp = spacy.load("de_core_news_lg" if args.language == "de" else "en_core_web_lg")
@@ -637,7 +627,7 @@ def main():
             print("Error: Either --text or --text1 must be specified.", file=sys.stderr); exit(1)
 
         gcs_only_nouns_param = not args.gcs_only_nouns_false
-        
+
         kwargs_for_processing = {
             'gcs_only_nouns': gcs_only_nouns_param,
             'make_singular': args.make_singular,
@@ -670,7 +660,7 @@ def main():
             )
 
     elif args.type == "sentence":
-        if any([args.gcs, args.gcs_combine_noun_modes, args.gcs_only_nouns_false, args.make_singular, args.no_make_singular, args.gcs_fix_genitive, args.gcs_mask_unknown, args.assume_genitive_for_single_words]):
+        if any([args.gcs, args.gcs_combine_noun_modes, args.gcs_only_nouns_false, args.make_singular, args.no_make_singular, args.gcs_fix_genitive, args.gcs_mask_unknown]):
             print("Warning: GCS-related flags are only applicable for --type token and will be ignored.", file=sys.stderr)
         if not args.text1 or not args.text2:
             print("Error: --text1 and --text2 must be specified for sentence mode.", file=sys.stderr); exit(1)

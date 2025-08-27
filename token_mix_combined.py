@@ -42,20 +42,17 @@ def get_corrected_lemma(token, german_dict, fix_genitive_flag=False):
 
     return spacy_lemma
 
-def get_verb_with_particle(token):
-    if token.pos_ == "VERB":
-        for particle in token.rights:
-            if particle.dep_ == "svp":
-                # Убедимся, что приставка в нижнем регистре перед соединением
-                return f"{particle.text.lower()}{token.lemma_}"
-    return token.lemma_
-
-def get_original_form_with_particle(token):
-    if token.pos_ == "VERB":
-        particle = next((child for child in token.children if child.dep_ == "svp"), None)
-        if particle:
-            return f"{token.text} {particle.text}"
-    return token.text
+def find_verb_particle_pairs(doc):
+    """
+    Scans a spaCy doc and returns a map of verb index to its particle token.
+    This is a reliable way to connect separable verbs across clauses.
+    """
+    pairs = {}
+    for token in doc:
+        if token.dep_ == "svp":
+            if token.head.pos_ == "VERB":
+                pairs[token.head.i] = token
+    return pairs
 
 def load_lemma_index(file_path):
     lemma_index = {}
@@ -119,21 +116,12 @@ def generate_autoname_prefix(text, num_words):
         return ""
     return "-".join(selected_words)
 
-def get_capitalized_lemma(token):
+def get_capitalized_lemma(token, spacy_lemma):
     """
-    Определяет правильную капитализацию для леммы на основе иерархии правил,
-    а также соединяет глаголы с отделяемыми приставками.
+    Определяет правильную капитализацию для леммы на основе иерархии правил.
+    Логика с глаголами вынесена.
     """
     original_text = token.text
-
-    # --- ИСПРАВЛЕННАЯ ЛОГИКА ---
-    # Сначала получаем правильную лемму (с приставкой, если это глагол)
-    if token.pos_ == "VERB":
-        spacy_lemma = get_verb_with_particle(token)
-    else:
-        spacy_lemma = token.lemma_
-    # --- КОНЕЦ ИСПРАВЛЕНИЯ ---
-
     is_all_caps = original_text.isupper() and len(original_text) > 1
     has_internal_caps = any(c.isupper() for c in original_text[1:])
 
@@ -144,6 +132,7 @@ def get_capitalized_lemma(token):
         return spacy_lemma.capitalize()
 
     if token.is_sent_start and token.pos_ not in ["NOUN", "PROPN"]:
+        # Для глаголов с приставками капитализация обрабатывается отдельно
         return spacy_lemma.lower()
 
     return spacy_lemma
@@ -152,21 +141,30 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, 
     doc = nlp(sentence)
     final_tokens = set()
 
-    for token in doc:
-        if (token.is_alpha or '-' in token.text) and token.dep_ != "svp":
-            # Используем исправленную функцию для получения леммы
-            base_lemma = get_capitalized_lemma(token)
-            
-            # Остальная логика здесь больше для wordlist и может быть упрощена,
-            # но для консистентности оставим ее как есть, т.к. основная проблема решена в get_capitalized_lemma
-            token_text = token.text
-            spacy_lemma = get_corrected_lemma(token, german_dict, fix_genitive_flag=gcs_fix_genitive)
-            form_to_check = token_text if token_text.isupper() else token_text.capitalize()
-            lemma_to_check = spacy_lemma if spacy_lemma.isupper() else spacy_lemma.capitalize()
+    verb_particle_map = find_verb_particle_pairs(doc)
+    processed_particles_indices = {p.i for p in verb_particle_map.values()}
 
-            lemma_to_add = base_lemma # Основная лемма уже правильная
-            
-            # Проверка по словарю (можно оставить для дополнительной валидации)
+    for token in doc:
+        if token.i in processed_particles_indices:
+            continue
+
+        if (token.is_alpha or '-' in token.text):
+            base_lemma = ""
+            if token.pos_ == "VERB" and token.i in verb_particle_map:
+                particle = verb_particle_map[token.i]
+                lemma = f"{particle.text.lower()}{token.lemma_}"
+                # Глаголы в списке лемм всегда с маленькой буквы, если это не субстантивированные глаголы,
+                # которые spaCy обычно помечает как NOUN.
+                base_lemma = lemma.lower()
+            else:
+                spacy_lemma = get_corrected_lemma(token, german_dict, fix_genitive_flag=gcs_fix_genitive)
+                base_lemma = get_capitalized_lemma(token, spacy_lemma)
+
+            # Логика для GCS и добавления в final_tokens
+            token_text = token.text
+            form_to_check = token_text if token_text.isupper() else token_text.capitalize()
+            lemma_to_check = base_lemma if base_lemma.isupper() else base_lemma.capitalize()
+
             if form_to_check in german_dict:
                 if lemma_to_check in german_dict:
                     final_tokens.add(base_lemma)
@@ -241,8 +239,16 @@ def process_text_v1(
     unique_lemmatized_tokens, token_to_sentence, token_to_original_form = set(), {}, {}
     for i, line1 in enumerate(text1_lines):
         doc = nlp(line1)
+        # --- НОВЫЙ МЕХАНИЗМ ---
+        verb_particle_map = find_verb_particle_pairs(doc)
+        processed_particles_indices = {p.i for p in verb_particle_map.values()}
+
         for token in doc:
-            if (token.is_alpha or '-' in token.text) and token.dep_ != "svp":
+            if token.i in processed_particles_indices:
+                continue # Пропускаем частицы, так как они будут обработаны вместе с глаголом
+            # --- КОНЕЦ ИЗМЕНЕНИЙ ---
+
+            if (token.is_alpha or '-' in token.text):
                 lemmas_to_process = []
                 was_split = False
                 
@@ -294,9 +300,20 @@ def process_text_v1(
                         pass 
 
                 if not was_split:
-                    primary_lemma = get_capitalized_lemma(token)
-                    original_inflected_form = get_original_form_with_particle(token)
+                    # --- НОВЫЙ МЕХАНИЗМ ---
+                    primary_lemma = ""
+                    original_inflected_form = ""
+                    if token.pos_ == "VERB" and token.i in verb_particle_map:
+                        particle = verb_particle_map[token.i]
+                        lemma = f"{particle.text.lower()}{token.lemma_}"
+                        primary_lemma = lemma.capitalize() if token.is_sent_start else lemma.lower()
+                        original_inflected_form = f"{token.text} {particle.text}"
+                    else:
+                        spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
+                        primary_lemma = get_capitalized_lemma(token, spacy_lemma)
+                        original_inflected_form = token.text
                     lemmas_to_process.append((primary_lemma, original_inflected_form))
+                    # --- КОНЕЦ ИЗМЕНЕНИЙ ---
 
                 for lemma, original_form in lemmas_to_process:
                     unique_lemmatized_tokens.add(lemma)
@@ -368,8 +385,17 @@ def process_text_v2(
     for unit_index, unit in enumerate(processing_units):
         unit_text = unit if is_line_based else unit.text
         doc_unit = nlp(unit_text)
+
+        # --- НОВЫЙ МЕХАНИЗМ ---
+        verb_particle_map = find_verb_particle_pairs(doc_unit)
+        processed_particles_indices = {p.i for p in verb_particle_map.values()}
+
         for token in doc_unit:
-            if (token.is_alpha or '-' in token.text) and token.dep_ != "svp":
+            if token.i in processed_particles_indices:
+                continue
+            # --- КОНЕЦ ИЗМЕНЕНИЙ ---
+
+            if (token.is_alpha or '-' in token.text):
                 lemmas_to_process = []
                 was_split = False
 
@@ -421,9 +447,20 @@ def process_text_v2(
                         pass
 
                 if not was_split:
-                    primary_lemma = get_capitalized_lemma(token)
-                    original_inflected_form = get_original_form_with_particle(token)
+                    # --- НОВЫЙ МЕХАНИЗМ ---
+                    primary_lemma = ""
+                    original_inflected_form = ""
+                    if token.pos_ == "VERB" and token.i in verb_particle_map:
+                        particle = verb_particle_map[token.i]
+                        lemma = f"{particle.text.lower()}{token.lemma_}"
+                        primary_lemma = lemma.capitalize() if token.is_sent_start else lemma.lower()
+                        original_inflected_form = f"{token.text} {particle.text}"
+                    else:
+                        spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
+                        primary_lemma = get_capitalized_lemma(token, spacy_lemma)
+                        original_inflected_form = token.text
                     lemmas_to_process.append((primary_lemma, original_inflected_form))
+                    # --- КОНЕЦ ИЗМЕНЕНИЙ ---
 
                 for lemma, original_form in lemmas_to_process:
                     unique_lemmatized_tokens.add(lemma)

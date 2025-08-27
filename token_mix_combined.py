@@ -234,7 +234,7 @@ def process_text_v1(
                 original_form = get_original_form_with_particle(token)
                 
                 tokens_to_add = {primary_token}
-                if gcs and ahocs and language == 'de' and len(token.text) > 3 and token.pos_ in ["NOUN", "PROPN"]:
+                if gcs and ahocs and language == 'de' and len(token.text) > 3 and (token.pos_ in ["NOUN", "PROPN"] or '-' in token.text):
                     try:
                         word_to_split = token.text
                         
@@ -367,7 +367,7 @@ def process_text_v2(
                 original_form = get_original_form_with_particle(token)
                 
                 tokens_to_add = {primary_token}
-                if gcs and ahocs and language == 'de' and len(token.text) > 3 and token.pos_ in ["NOUN", "PROPN"]:
+                if gcs and ahocs and language == 'de' and len(token.text) > 3 and (token.pos_ in ["NOUN", "PROPN"] or '-' in token.text):
                     try:
                         word_to_split = token.text
                         

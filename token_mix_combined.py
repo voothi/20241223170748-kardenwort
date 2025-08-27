@@ -118,6 +118,32 @@ def generate_autoname_prefix(text, num_words):
         return ""
     return "-".join(selected_words)
 
+def get_capitalized_lemma(token):
+    """
+    Определяет правильную капитализацию для леммы на основе иерархии правил.
+    """
+    original_text = token.text
+    spacy_lemma = token.lemma_
+
+    # Правило 1: Сохраняем "особый" регистр для акронимов, брендов и т.д.
+    # Эвристика: полностью ВЕРХНИЙ РЕГИСТР или есть заглавные буквы после первой.
+    is_all_caps = original_text.isupper() and len(original_text) > 1
+    has_internal_caps = any(c.isupper() for c in original_text[1:])
+
+    if is_all_caps or has_internal_caps:
+        return original_text # Используем оригинальный текст как лемму
+
+    # Правило 2: Стандартные существительные всегда с большой буквы.
+    if token.pos_ in ["NOUN", "PROPN"]:
+        return spacy_lemma.capitalize()
+
+    # Правило 3: Слова в начале предложения (не существительные) - в нижний регистр.
+    if token.is_sent_start and token.pos_ not in ["NOUN", "PROPN"]:
+        return spacy_lemma.lower()
+
+    # Правило 4: Поведение по умолчанию
+    return spacy_lemma
+
 def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, ahocs=None, gcs_in_wordlist=False, gcs_only_nouns=True, make_singular=False, no_make_singular=False, gcs_combine_noun_modes=False, gcs_fix_genitive=False, gcs_mask_unknown=False):
     doc = nlp(sentence)
     final_tokens = set()
@@ -219,25 +245,7 @@ def process_text_v1(
         for token in doc:
             if (token.is_alpha or '-' in token.text) and token.dep_ != "svp":
                 token_text = token.text
-                spacy_lemma = get_corrected_lemma(token, german_dict, fix_genitive_flag=gcs_fix_genitive)
-                
-                form_to_check = token_text if token_text.isupper() else token_text.capitalize()
-                lemma_to_check = spacy_lemma if spacy_lemma.isupper() else spacy_lemma.capitalize()
-
-                if token.pos_ in ["NOUN", "PROPN"] and spacy_lemma.isupper():
-                    base_lemma = spacy_lemma
-                elif language == "de" and token.pos_ in ["NOUN", "PROPN"]:
-                    base_lemma = spacy_lemma.capitalize()
-                else:
-                    base_lemma = get_verb_with_particle(token) if token.pos_ == "VERB" else token.lemma_
-
-                if form_to_check in german_dict:
-                    if lemma_to_check in german_dict:
-                        primary_token = base_lemma
-                    else:
-                        primary_token = form_to_check
-                else:
-                    primary_token = base_lemma
+                primary_token = get_capitalized_lemma(token)
                 original_form = get_original_form_with_particle(token)
                 
                 tokens_to_add = {primary_token}
@@ -360,24 +368,7 @@ def process_text_v2(
         for token in doc_unit:
             if (token.is_alpha or '-' in token.text) and token.dep_ != "svp":
                 token_text = token.text
-                spacy_lemma = get_corrected_lemma(token, german_dict, fix_genitive_flag=gcs_fix_genitive)
-                
-                form_to_check = token_text if token_text.isupper() else token_text.capitalize()
-                lemma_to_check = spacy_lemma if spacy_lemma.isupper() else spacy_lemma.capitalize()
-                if token.pos_ in ["NOUN", "PROPN"] and spacy_lemma.isupper():
-                    base_lemma = spacy_lemma
-                elif language == "de" and token.pos_ in ["NOUN", "PROPN"]:
-                    base_lemma = spacy_lemma.capitalize()
-                else:
-                    base_lemma = get_verb_with_particle(token) if token.pos_ == "VERB" else token.lemma_
-
-                if form_to_check in german_dict:
-                    if lemma_to_check in german_dict:
-                        primary_token = base_lemma
-                    else:
-                        primary_token = form_to_check
-                else:
-                    primary_token = base_lemma
+                primary_token = get_capitalized_lemma(token)
                 original_form = get_original_form_with_particle(token)
                 
                 tokens_to_add = {primary_token}

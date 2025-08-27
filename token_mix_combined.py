@@ -125,23 +125,18 @@ def get_capitalized_lemma(token):
     original_text = token.text
     spacy_lemma = token.lemma_
 
-    # Правило 1: Сохраняем "особый" регистр для акронимов, брендов и т.д.
-    # Эвристика: полностью ВЕРХНИЙ РЕГИСТР или есть заглавные буквы после первой.
     is_all_caps = original_text.isupper() and len(original_text) > 1
     has_internal_caps = any(c.isupper() for c in original_text[1:])
 
     if is_all_caps or has_internal_caps:
-        return original_text # Используем оригинальный текст как лемму
+        return original_text
 
-    # Правило 2: Стандартные существительные всегда с большой буквы.
     if token.pos_ in ["NOUN", "PROPN"]:
         return spacy_lemma.capitalize()
 
-    # Правило 3: Слова в начале предложения (не существительные) - в нижний регистр.
     if token.is_sent_start and token.pos_ not in ["NOUN", "PROPN"]:
         return spacy_lemma.lower()
 
-    # Правило 4: Поведение по умолчанию
     return spacy_lemma
 
 def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, ahocs=None, gcs_in_wordlist=False, gcs_only_nouns=True, make_singular=False, no_make_singular=False, gcs_combine_noun_modes=False, gcs_fix_genitive=False, gcs_mask_unknown=False):
@@ -199,13 +194,9 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, 
 
                     if len(final_components) > 1:
                         for part in set(final_components):
-                            # ---> ВОТ ЭТО ИЗМЕНЕНИЕ <---
-                            # Очищаем компонент от возможных дефисов по краям
                             part = part.strip('-') 
-                            # Пропускаем, если после очистки осталась пустая строка
                             if not part:
                                 continue
-                            # ---> КОНЕЦ ИЗМЕНЕНИЯ <---
                             part_to_check = part if part.isupper() else part.capitalize()
                             if part_to_check in german_dict:
                                 final_tokens.add(part_to_check)
@@ -275,13 +266,9 @@ def process_text_v1(
 
                         if len(final_components) > 1:
                             for part in set(final_components):
-                                # ---> ВОТ ЭТО ИЗМЕНЕНИЕ <---
-                                # Очищаем компонент от возможных дефисов по краям
                                 part = part.strip('-') 
-                                # Пропускаем, если после очистки осталась пустая строка
                                 if not part:
                                     continue
-                                # ---> КОНЕЦ ИЗМЕНЕНИЯ <---
                                 part_to_check = part if part.isupper() else part.capitalize()
                                 if part_to_check in german_dict:
                                     tokens_to_add.add(part_to_check)
@@ -398,13 +385,9 @@ def process_text_v2(
 
                         if len(final_components) > 1:
                             for part in set(final_components):
-                                # ---> ВОТ ЭТО ИЗМЕНЕНИЕ <---
-                                # Очищаем компонент от возможных дефисов по краям
                                 part = part.strip('-') 
-                                # Пропускаем, если после очистки осталась пустая строка
                                 if not part:
                                     continue
-                                # ---> КОНЕЦ ИЗМЕНЕНИЯ <---
                                 part_to_check = part if part.isupper() else part.capitalize()
                                 if part_to_check in german_dict:
                                     tokens_to_add.add(part_to_check)

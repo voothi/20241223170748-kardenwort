@@ -9,9 +9,10 @@
 # 2. Contextual Rule: If the 3rd column has text, the rule ONLY applies if 'Optional_Context_Substring' is also found in the same sentence.
 #
 # --- EXAMPLES ---
-
+#
 # --- Global Rules ---
 # The following rules will always be applied, regardless of context.
+#
 # They solve the issue of substantivized adjectives being incorrectly lemmatized by spaCy.
 # dritte	dritte	
 # Angestellte	Angestellte	
@@ -19,6 +20,8 @@ Dritte	Dritte
 
 # --- Contextual Rules ---
 # The following rule will only be applied if the context in the 3rd column is met.
-# This corrects 'Bank' to 'Sitzbank' (bench) only in sentences containing 'im Park'.
-# In all other sentences (e.g., about finance), 'Bank' will be lemmatized by spaCy as usual.
-# Bank	Sitzbank	im Park auf der Bank
+#
+# Corrects the lemma for 'Austernbanken' (oyster beds) to 'Austernbanke' (feminine noun)
+# only when it appears in the specific context of 'ertragreichen Austernbanken'.
+# This is necessary to fix lemmatizer errors for this specific maritime term.
+Austernbanken	Austernbanke	ertragreichen Austernbanken

@@ -6,30 +6,167 @@ LinguaCard Creator is a powerful command-line utility designed to accelerate lan
 
 This tool is perfect for language learners who want to build personalized decks from books, articles, subtitles, or any other text they are studying.
 
+## Quick Start
+
+Get your first Anki deck in 5 minutes:
+
+1.  **Prerequisites**: Make sure **Anki Desktop is running** with the [AnkiConnect](https://ankiweb.net/shared/info/2055492159) add-on installed.
+2.  **Clone & Setup**: Clone all three required projects and set up the Python environment.
+    ```bash
+    # Clone repositories
+    git clone <url-for-this-repo>
+    git clone <url-for-anki-csv-importer-repo>
+    git clone <url-for-anki-template-repo>
+
+    # Create and activate virtual environment
+    python -m venv venv
+    .\venv\Scripts\activate  # Windows
+
+    # Install dependencies
+    pip install spacy "german-compound-splitter>=2.0.0" requests
+    python -m spacy download de_core_news_lg
+    ```
+3.  **Import Anki Template**: Import the `basic-20240218092126` note type from the `20241106211123-anki-template` project into Anki.
+4.  **Prepare Text**: Open the file `in/text1.txt` and add some German sentences. For example:
+    ```
+    Die Fischer kennen die Austernbanken vor der Küste sehr gut.
+    Sie fahren sie gezielt an.
+    ```
+5.  **Run**: Execute the batch script.
+    ```bash
+    t_batch_de.single.bat
+    ```
+**Done!** Check Anki for a new deck filled with cards created from your text.
+
 ## Key Features
+*   **Dual Card Types**: Create both vocabulary cards (single words) and sentence cards (full phrases).
+*   **Multiple Processing Modes**: `single`, `dual`, and `triple` text processing for monolingual, bilingual, or trilingual contexts.
+*   **Multi-Language Support**: Currently supports **English (en)** and **German (de)**.
+*   **Advanced NLP**: Uses `spaCy` for accurate lemmatization (finding the base form of words).
+*   **German Compound Splitting (GCS)**: Intelligently breaks down long German compound words into their components.
+*   **Direct Anki Integration**: Automatically imports the generated cards into your Anki collection using AnkiConnect.
+*   **GoldenDict-ng Integration**: Create Anki cards directly from your favorite dictionary application.
 
--   **Dual Card Types**: Create both vocabulary cards (single words) and sentence cards (full phrases).
--   **Multiple Processing Modes**:
-    -   **Single Mode**: Process a single source text (e.g., for monolingual cards).
-    -   **Dual Mode**: Process a source text and its translation.
-    -   **Triple Mode**: Process a source text and two other versions (e.g., two different translations or a phonetic transcription).
--   **Multi-Language Support**: Currently supports **English (en)** and **German (de)**.
--   **Advanced NLP**: Uses `spaCy` for accurate lemmatization (finding the base form of words).
--   **German Compound Splitting**: Intelligently breaks down long German compound words into their components (e.g., "Donaudampfschifffahrtsgesellschaft" -> "Donau", "Dampf", "Schiff", "Fahrt", "Gesellschaft").
--   **Direct Anki Integration**: Automatically imports the generated cards into your Anki collection using the AnkiConnect add-on.
+---
 
-## How It Works
+## Usage Scenarios
 
-The workflow is simple and automated:
+You can use LinguaCard Creator in several ways, from simple batch files to direct command-line calls for advanced integration.
 
-1.  **Prepare Input**: You provide text files (e.g., `text1.txt` for the source language, `text2.txt` for the translation).
-2.  **Run the Script**: Execute a batch file (like `t_batch_de.dual.bat`) to start the process.
-3.  **Text Processing**: `token_mix_combined.py` analyzes the text, extracts tokens or sentences, and creates a structured `.tsv` file.
-4.  **Anki Import**: The `anki-csv-importer.py` script is automatically called to import the `.tsv` file into Anki, creating a new deck with your cards.
+### 1. Basic Usage (Using Batch Files)
 
-```
-[Text Files] -> [LinguaCard Creator] -> [Generated TSV File] -> [Anki Importer] -> [New Anki Deck]
-```
+This is the easiest way to get started.
+
+1.  **Prepare your input files** in the `in/` directory (`text1.txt`, `text2.txt`, etc.).
+2.  **Ensure Anki is running** with AnkiConnect.
+3.  **Run the appropriate `.bat` script**. The filename indicates its function: `t_batch_{language}.{mode}.bat`.
+    *   `t_batch_de.dual.bat`: Creates German cards from `in/text1.txt` and `in/text2.txt`.
+    *   `t_batch_en.single.bat`: Creates English cards from `in/text1.txt` only.
+
+### 2. GoldenDict-ng Integration
+
+Instantly create Anki cards from any word or phrase you look up in GoldenDict. This creates a seamless workflow from discovery to study.
+
+
+
+**Setup:**
+
+1.  In GoldenDict-ng, go to `Edit` -> `Dictionaries`.
+2.  Go to the **Programs** tab.
+3.  Click **Add**, and configure a new program:
+    *   **Type**: `Plain Text`
+    *   **Enabled**: ☑️
+    *   **Name**: `Create Anki Card (DE Token)` (or any name you like)
+    *   **Command Line**:
+        ```
+        U:\voothi\20250825231214-spacy-env\Scripts\python.exe U:\voothi\20241223170748-token-extraction\t_starter.py --language de --type token --mode single --text "%GDWORD%"
+        ```
+        **Important:** You **must** replace the paths to `python.exe` and `t_starter.py` with the absolute paths on your system.
+
+        
+
+4.  Click **OK** to save.
+
+**How to Use:**
+Now, when you look up a word or highlight a sentence in GoldenDict, a new dictionary tab `Create Anki Card (DE Token)` will appear. Clicking on it will run the script in the background and automatically add the new cards to Anki.
+
+### 3. Advanced Usage (Direct Command-Line)
+
+For maximum flexibility, you can call the scripts directly. The main entry point is `t_starter.py`, which handles both processing and importing.
+
+#### Command-Line Examples
+
+*   **Create German token cards from a single text file:**
+    ```bash
+    python t_starter.py --language de --type token --mode single --text "Die Fischer kennen die Austernbanken."
+    ```
+
+*   **Create English sentence cards from parallel files:**
+    ```bash
+    # Ensure in/text1.txt and in/text2.txt are populated
+    python t_starter.py --language en --type sentence --mode dual
+    ```
+
+*   **Create German cards from three files:**
+    ```bash
+    python t_starter.py --language de --type token --mode triple
+    ```
+
+---
+
+## Command-Line Arguments (`token_mix_combined.py`)
+
+Below is a detailed list of all available arguments for the core processing script, `token_mix_combined.py`. These can be passed through `t_starter.py`.
+
+### Core Arguments
+
+| Argument | Description | Example |
+| :--- | :--- | :--- |
+| `--type` | **(Required)** The type of cards to create. | `token` or `sentence` |
+| `--language` | **(Required)** The source language of the text. | `de` or `en` |
+| `--mode` | **(Required)** The processing mode based on the number of input files. | `single`, `dual`, `triple` |
+
+### Input & Output
+
+| Argument | Description | Example |
+| :--- | :--- | :--- |
+| `--text` | Process a string directly instead of a file. For `single` mode only. | `--text "This is a test."` |
+| `--text1` | Path to the primary source text file. | `--text1 "in/source.txt"` |
+| `--text2` | Path to the second text file (e.g., translation). For `dual`/`triple` modes. | `--text2 "in/target.txt"` |
+| `--text3` | Path to the third text file. For `triple` mode only. | `--text3 "in/extra.txt"` |
+| `--output` | The path for the output `.tsv` file. | `--output "out/my_deck.tsv"` |
+| `--timestamp` | Prepend a `YYYYMMDDHHMMSS-` timestamp to the output filename. | `--timestamp` |
+| `--autoname [N]` | Automatically generate part of the filename from the first `N` words of the text (default is 4). | `--autoname 3` |
+| `--pipe` | Print the final output filename to standard output. Useful for chaining scripts. | `--pipe` |
+
+### Card Content & Formatting
+
+| Argument | Description | Example |
+| :--- | :--- | :--- |
+| `--sentence-context-size N` | Number of preceding and succeeding sentences to include as context. | `--sentence-context-size 2` |
+| `--include-simple-list` | Include a simple list of all unique words from the source sentence in the `SentenceSourceWordlist` field. | `--include-simple-list` |
+| `--with-fields` | Include the header row with all field names in the output TSV file. | `--with-fields` |
+| `--with-br` | Use `<br>` tags instead of newlines for the `SentenceSourceWordlist`. | `--with-br` |
+| `--two-column-output-to-file` | Add the inflected (original) form of a word to the `WordSourceInflectedForm` field. | `--two-column-output-to-file` |
+
+### German Compound Splitting (GCS) Options
+
+These options are only for `--language de`.
+
+| Argument | Description | Example |
+| :--- | :--- | :--- |
+| `--gcs` | **Enable** German Compound Splitting. | `--gcs` |
+| `--gcs-dictionary` | Path to the dictionary file used by GCS for validation. | `--gcs-dictionary "dicts/german.dic"` |
+| `--gcs-include-compound` | Include the original compound word in the card list along with its split parts. | `--gcs-include-compound` |
+| `--gcs-combine-noun-modes` | Runs GCS in two modes (splitting on nouns-only and any word type) and merges the results for more comprehensive splitting. | `--gcs-combine-noun-modes` |
+| `--gcs-fix-genitive` | Attempts to correct German genitive noun lemmas (e.g., 'Hauses' -> 'Haus'). | `--gcs-fix-genitive` |
+| `--gcs-in-wordlist` | Also add the split components to the `SentenceSourceWordlist` field. | `--gcs-in-wordlist` |
+
+---
+
+## Project Ecosystem & Template
+
+(The rest of the README remains the same: Project Ecosystem, The Anki Card Template, Requirements, Installation, License, etc.)
 
 ## Project Ecosystem
 

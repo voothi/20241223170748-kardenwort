@@ -4,24 +4,44 @@
 # Format:
 # OriginalWord_FromText <TAB> Desired_Lemma <TAB> [Optional_Context_Substring]
 #
-# How it works:
-# 1. Global Rule: If the 3rd column is empty, the rule applies every time 'OriginalWord_FromText' is found.
-# 2. Contextual Rule: If the 3rd column has text, the rule ONLY applies if 'Optional_Context_Substring' is also found in the same sentence.
+# ---------------------------------------------------------------------------
+# How it works & Rule Precedence
+# ---------------------------------------------------------------------------
+# The system processes rules in the following order of priority:
 #
+# 1. Contextual Match (Highest Priority):
+#    The system first checks for contextual rules (where the 3rd column is not empty).
+#    If 'OriginalWord_FromText' is found AND its 'Optional_Context_Substring' also
+#    exists in the sentence, the corresponding 'Desired_Lemma' is applied.
+#
+# 2. Global Match (Fallback):
+#    If no contextual rule's condition is met (either because none exist for the word,
+#    or their context was not found), the system then looks for a global rule
+#    (where the 3rd column is empty) for the same 'OriginalWord_FromText'.
+#    If a global rule is found, it is applied.
+#
+# 3. Default Lemmatizer:
+#    If no override rules match at all, the default lemmatizer (e.g., spaCy) is used.
+# ---------------------------------------------------------------------------
+
+
 # --- EXAMPLES ---
-#
+
 # --- Global Rules ---
-# The following rules will always be applied, regardless of context.
-#
-# They solve the issue of substantivized adjectives being incorrectly lemmatized by spaCy.
-# dritte	dritte	
-# Angestellte	Angestellte	
+# The following rules will always be applied, unless a contextual rule for the same
+# word takes precedence.
 Dritte	Dritte	
 
 # --- Contextual Rules ---
-# The following rule will only be applied if the context in the 3rd column is met.
+# The following rules are checked first and only applied if the context in the
+# 3rd column is met.
+
+# Corrects the lemma for 'Austernbanken' (oyster beds) to 'Austernbanke' (feminine noun).
+# This rule is contextual and applies ONLY if the exact phrase 'ertragreichen Austernbanken'
+# is found in the sentence.
 #
-# Corrects the lemma for 'Austernbanken' (oyster beds) to 'Austernbanke' (feminine noun)
-# only when it appears in the specific context of 'ertragreichen Austernbanken'.
-# This is necessary to fix lemmatizer errors for this specific maritime term.
+# TESTING EXAMPLE:
+# - Will trigger for: "Die Fischer kennen die ertragreichen Austernbanken vor der Küste..."
+# - Will not trigger for: "Die Fischer kennen die Austernbanken vor der Küste..." (because the context is missing).
+#   If a global rule like 'Austernbanken<TAB>GlobalLemma' existed, it would be applied in the second case.
 Austernbanken	Austernbanke	ertragreichen Austernbanken

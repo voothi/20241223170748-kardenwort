@@ -269,11 +269,18 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
                 spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                 default_lemma = get_capitalized_lemma(token, spacy_lemma)
             
+            # 1. Начинаем с леммы по умолчанию.
             final_lemma_to_add = default_lemma
             
-            # <<< ИСПРАВЛЕННАЯ ЛОГИКА >>>
-            if original_inflected_form in lemma_overrides:
-                final_lemma_to_add = apply_lemma_override(original_inflected_form, sentence, lemma_overrides)
+            # 2. Пытаемся применить правило. Функция вернет либо новую лемму, 
+            #    либо исходное слово, если правило не сработало.
+            maybe_overridden = apply_lemma_override(original_inflected_form, sentence, lemma_overrides)
+            
+            # 3. Если правило сработало (результат отличается от исходного слова),
+            #    то используем новую лемму. В противном случае, final_lemma_to_add
+            #    останется равной default_lemma.
+            if maybe_overridden != original_inflected_form:
+                final_lemma_to_add = maybe_overridden
             
             final_tokens.add(final_lemma_to_add)
 
@@ -384,10 +391,17 @@ def process_text_v1(
                         spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                         default_lemma = get_capitalized_lemma(token, spacy_lemma)
                     
+                    # 1. Начинаем с леммы по умолчанию, полученной от spaCy.
                     final_lemma_to_add = default_lemma
-                    # <<< ИСПРАВЛЕННАЯ ЛОГИКА >>>
-                    if original_inflected_form in lemma_overrides:
-                        final_lemma_to_add = apply_lemma_override(original_inflected_form, line1, lemma_overrides)
+                    
+                    # 2. Проверяем, не нужно ли ее перезаписать правилом.
+                    #    Функция вернет либо новую лемму, либо исходное слово, если правило не сработало.
+                    maybe_overridden = apply_lemma_override(original_inflected_form, line1, lemma_overrides)
+                    
+                    # 3. Ключевая проверка: используем результат, только если он изменился.
+                    #    Это предотвращает затирание default_lemma исходной словоформой.
+                    if maybe_overridden != original_inflected_form:
+                        final_lemma_to_add = maybe_overridden
                     
                     lemmas_to_process.append((final_lemma_to_add, original_inflected_form))
 
@@ -544,11 +558,18 @@ def process_text_v2(
                         spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                         default_lemma = get_capitalized_lemma(token, spacy_lemma)
                     
+                    # 1. Начинаем с леммы по умолчанию, полученной от spaCy.
                     final_lemma_to_add = default_lemma
-                    # <<< ИСПРАВЛЕННАЯ ЛОГИКА >>>
-                    if original_inflected_form in lemma_overrides:
-                        final_lemma_to_add = apply_lemma_override(original_inflected_form, unit_text, lemma_overrides)
-
+                    
+                    # 2. Проверяем, не нужно ли ее перезаписать правилом.
+                    #    Функция вернет либо новую лемму, либо исходное слово, если правило не сработало.
+                    maybe_overridden = apply_lemma_override(original_inflected_form, line1, lemma_overrides)
+                    
+                    # 3. Ключевая проверка: используем результат, только если он изменился.
+                    #    Это предотвращает затирание default_lemma исходной словоформой.
+                    if maybe_overridden != original_inflected_form:
+                        final_lemma_to_add = maybe_overridden
+                    
                     lemmas_to_process.append((final_lemma_to_add, original_inflected_form))
 
                 for lemma, original_form in lemmas_to_process:

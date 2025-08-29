@@ -308,11 +308,10 @@ def process_text_v1(
                 lemmas_to_process = []
                 was_split = False
                 
+                # START OF FIXED BLOCK
                 if gcs and ahocs and language == 'de' and len(token.text) > 3 and (token.pos_ in ["NOUN", "PROPN"] or '-' in token.text):
                     try:
                         word_to_split = token.text
-                        original_compound_word = token.text
-                        
                         if no_make_singular: should_make_singular = False
                         elif make_singular: should_make_singular = True
                         else: should_make_singular = (token.pos_ in ['NOUN', 'PROPN'])
@@ -333,11 +332,25 @@ def process_text_v1(
                         if len(final_components) > 1:
                             was_split = True
                             if gcs_include_compound:
-                                spacy_lemma_original = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
-                                primary_lemma_original = get_capitalized_lemma(token, spacy_lemma_original)
-                                if primary_lemma_original:
-                                    lemmas_to_process.append((primary_lemma_original, original_compound_word))
-                            
+                                # Process the original compound word itself, including override logic
+                                spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
+                                default_lemma = get_capitalized_lemma(token, spacy_lemma)
+                                final_lemma = default_lemma
+                                if token.text in lemma_overrides:
+                                    rules = lemma_overrides[token.text]
+                                    context_rules = [r for r in rules if r[1]]
+                                    global_rule = next((r for r in rules if not r[1]), None)
+                                    found_match = False
+                                    for desired, context in context_rules:
+                                        if context in line1:
+                                            final_lemma = desired
+                                            found_match = True
+                                            break
+                                    if not found_match and global_rule:
+                                        final_lemma = global_rule[0]
+                                lemmas_to_process.append((final_lemma, token.text))
+
+                            # Process split components
                             for part in set(final_components):
                                 part = part.strip('-')
                                 if not part: continue
@@ -353,13 +366,13 @@ def process_text_v1(
                                         if lemma_part_to_check in german_dict:
                                             part_lemma = lemma_part_to_check
                                 if part_lemma:
-                                    lemmas_to_process.append((part_lemma, original_compound_word))
+                                    lemmas_to_process.append((part_lemma, token.text))
                     except Exception:
                         was_split = False
-
+                
                 if not was_split:
                     original_inflected_form = token.text
-                    
+                    default_lemma = ""
                     if token.i in verb_particle_map:
                         particle = verb_particle_map[token.i]
                         default_lemma = f"{particle.text.lower()}{token.lemma_}".lower()
@@ -373,26 +386,26 @@ def process_text_v1(
                         rules = lemma_overrides[original_inflected_form]
                         context_rules = [r for r in rules if r[1]]
                         global_rule = next((r for r in rules if not r[1]), None)
-                        
                         found_context_match = False
                         for desired_lemma, context in context_rules:
                             if context in line1:
                                 final_lemma_to_add = desired_lemma
                                 found_context_match = True
                                 break
-                        
                         if not found_context_match and global_rule:
                             final_lemma_to_add = global_rule[0]
                     
                     lemmas_to_process.append((final_lemma_to_add, original_inflected_form))
+                # END OF FIXED BLOCK
 
                 for lemma, original_form in lemmas_to_process:
-                    unique_lemmatized_tokens.add(lemma)
-                    if lemma not in token_to_sentence:
-                        token_to_sentence[lemma] = (i, line1)
-                        token_to_original_form[lemma] = original_form
+                    if lemma: # Ensure empty lemmas are not added
+                        unique_lemmatized_tokens.add(lemma)
+                        if lemma not in token_to_sentence:
+                            token_to_sentence[lemma] = (i, line1)
+                            token_to_original_form[lemma] = original_form
 
-    sorted_tokens = sorted(unique_lemmatized_tokens, key=lambda token: (token not in lemma_index, lemma_index.get(token, 0), token))
+    sorted_tokens = sorted(list(unique_lemmatized_tokens), key=lambda token: (token not in lemma_index, lemma_index.get(token, 0), token))
     if output_file:
         with open(output_file, "w", newline="", encoding="utf-8") as tsvfile:
             tsv_writer = csv.writer(tsvfile, delimiter="\t")
@@ -470,11 +483,10 @@ def process_text_v2(
                 lemmas_to_process = []
                 was_split = False
 
+                # START OF FIXED BLOCK
                 if gcs and ahocs and language == 'de' and len(token.text) > 3 and (token.pos_ in ["NOUN", "PROPN"] or '-' in token.text):
                     try:
                         word_to_split = token.text
-                        original_compound_word = token.text
-
                         if no_make_singular: should_make_singular = False
                         elif make_singular: should_make_singular = True
                         else: should_make_singular = (token.pos_ in ['NOUN', 'PROPN'])
@@ -495,11 +507,25 @@ def process_text_v2(
                         if len(final_components) > 1:
                             was_split = True
                             if gcs_include_compound:
-                                spacy_lemma_original = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
-                                primary_lemma_original = get_capitalized_lemma(token, spacy_lemma_original)
-                                if primary_lemma_original:
-                                    lemmas_to_process.append((primary_lemma_original, original_compound_word))
+                                # Process the original compound word itself, including override logic
+                                spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
+                                default_lemma = get_capitalized_lemma(token, spacy_lemma)
+                                final_lemma = default_lemma
+                                if token.text in lemma_overrides:
+                                    rules = lemma_overrides[token.text]
+                                    context_rules = [r for r in rules if r[1]]
+                                    global_rule = next((r for r in rules if not r[1]), None)
+                                    found_match = False
+                                    for desired, context in context_rules:
+                                        if context in unit_text:
+                                            final_lemma = desired
+                                            found_match = True
+                                            break
+                                    if not found_match and global_rule:
+                                        final_lemma = global_rule[0]
+                                lemmas_to_process.append((final_lemma, token.text))
                             
+                            # Process split components
                             for part in set(final_components):
                                 part = part.strip('-')
                                 if not part: continue
@@ -515,13 +541,13 @@ def process_text_v2(
                                         if lemma_part_to_check in german_dict:
                                             part_lemma = lemma_part_to_check
                                 if part_lemma:
-                                    lemmas_to_process.append((part_lemma, original_compound_word))
+                                    lemmas_to_process.append((part_lemma, token.text))
                     except Exception:
                         was_split = False
 
                 if not was_split:
                     original_inflected_form = token.text
-
+                    default_lemma = ""
                     if token.i in verb_particle_map:
                         particle = verb_particle_map[token.i]
                         default_lemma = f"{particle.text.lower()}{token.lemma_}".lower()
@@ -547,14 +573,16 @@ def process_text_v2(
                             final_lemma_to_add = global_rule[0]
 
                     lemmas_to_process.append((final_lemma_to_add, original_inflected_form))
+                # END OF FIXED BLOCK
 
                 for lemma, original_form in lemmas_to_process:
-                    unique_lemmatized_tokens.add(lemma)
-                    if lemma not in token_to_sentence:
-                        token_to_sentence[lemma] = (unit_index, unit_text)
-                        token_to_original_form[lemma] = original_form
+                    if lemma: # Ensure empty lemmas are not added
+                        unique_lemmatized_tokens.add(lemma)
+                        if lemma not in token_to_sentence:
+                            token_to_sentence[lemma] = (unit_index, unit_text)
+                            token_to_original_form[lemma] = original_form
 
-    sorted_tokens = sorted(unique_lemmatized_tokens, key=lambda token: (token not in lemma_index, lemma_index.get(token, 0), token))
+    sorted_tokens = sorted(list(unique_lemmatized_tokens), key=lambda token: (token not in lemma_index, lemma_index.get(token, 0), token))
     def get_unit_text(u):
         return u if is_line_based else u.text
 

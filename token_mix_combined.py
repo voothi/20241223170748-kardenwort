@@ -14,7 +14,6 @@ try:
 except ImportError:
     GCS_AVAILABLE = False
 
-# ... (все функции до process_sentence_lemmas без изменений) ...
 def load_dictionary_to_set(file_path):
     """Loads a dictionary into a set for fast lookups."""
     dictionary = set()
@@ -269,16 +268,8 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
                 spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                 default_lemma = get_capitalized_lemma(token, spacy_lemma)
             
-            # 1. Начинаем с леммы по умолчанию.
             final_lemma_to_add = default_lemma
-            
-            # 2. Пытаемся применить правило. Функция вернет либо новую лемму, 
-            #    либо исходное слово, если правило не сработало.
             maybe_overridden = apply_lemma_override(original_inflected_form, sentence, lemma_overrides)
-            
-            # 3. Если правило сработало (результат отличается от исходного слова),
-            #    то используем новую лемму. В противном случае, final_lemma_to_add
-            #    останется равной default_lemma.
             if maybe_overridden != original_inflected_form:
                 final_lemma_to_add = maybe_overridden
             
@@ -353,9 +344,9 @@ def process_text_v1(
                                 default_lemma = get_capitalized_lemma(token, spacy_lemma)
                                 
                                 final_lemma = default_lemma
-                                # <<< ИСПРАВЛЕННАЯ ЛОГИКА >>>
-                                if token.text in lemma_overrides:
-                                    final_lemma = apply_lemma_override(token.text, line1, lemma_overrides)
+                                maybe_overridden = apply_lemma_override(token.text, line1, lemma_overrides)
+                                if maybe_overridden != token.text:
+                                    final_lemma = maybe_overridden
                                 lemmas_to_process.append((final_lemma, token.text))
 
                             for part in set(final_components):
@@ -391,15 +382,8 @@ def process_text_v1(
                         spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                         default_lemma = get_capitalized_lemma(token, spacy_lemma)
                     
-                    # 1. Начинаем с леммы по умолчанию, полученной от spaCy.
                     final_lemma_to_add = default_lemma
-                    
-                    # 2. Проверяем, не нужно ли ее перезаписать правилом.
-                    #    Функция вернет либо новую лемму, либо исходное слово, если правило не сработало.
                     maybe_overridden = apply_lemma_override(original_inflected_form, line1, lemma_overrides)
-                    
-                    # 3. Ключевая проверка: используем результат, только если он изменился.
-                    #    Это предотвращает затирание default_lemma исходной словоформой.
                     if maybe_overridden != original_inflected_form:
                         final_lemma_to_add = maybe_overridden
                     
@@ -413,7 +397,6 @@ def process_text_v1(
                         elif len(original_form) < len(unique_lemmatized_tokens[lemma]):
                              unique_lemmatized_tokens[lemma] = original_form
 
-    # ... (rest of function is unchanged)
     sorted_tokens = sorted(list(unique_lemmatized_tokens.keys()), key=lambda token: (token not in lemma_index, lemma_index.get(token, 0), token.lower()))
     if output_file:
         with open(output_file, "w", newline="", encoding="utf-8") as tsvfile:
@@ -520,9 +503,9 @@ def process_text_v2(
                                 default_lemma = get_capitalized_lemma(token, spacy_lemma)
 
                                 final_lemma = default_lemma
-                                # <<< ИСПРАВЛЕННАЯ ЛОГИКА >>>
-                                if token.text in lemma_overrides:
-                                    final_lemma = apply_lemma_override(token.text, unit_text, lemma_overrides)
+                                maybe_overridden = apply_lemma_override(token.text, unit_text, lemma_overrides)
+                                if maybe_overridden != token.text:
+                                    final_lemma = maybe_overridden
                                 lemmas_to_process.append((final_lemma, token.text))
                             
                             for part in set(final_components):
@@ -558,15 +541,8 @@ def process_text_v2(
                         spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                         default_lemma = get_capitalized_lemma(token, spacy_lemma)
                     
-                    # 1. Начинаем с леммы по умолчанию, полученной от spaCy.
                     final_lemma_to_add = default_lemma
-                    
-                    # 2. Проверяем, не нужно ли ее перезаписать правилом.
-                    #    Функция вернет либо новую лемму, либо исходное слово, если правило не сработало.
-                    maybe_overridden = apply_lemma_override(original_inflected_form, line1, lemma_overrides)
-                    
-                    # 3. Ключевая проверка: используем результат, только если он изменился.
-                    #    Это предотвращает затирание default_lemma исходной словоформой.
+                    maybe_overridden = apply_lemma_override(original_inflected_form, unit_text, lemma_overrides)
                     if maybe_overridden != original_inflected_form:
                         final_lemma_to_add = maybe_overridden
                     
@@ -580,7 +556,6 @@ def process_text_v2(
                         elif len(original_form) < len(unique_lemmatized_tokens[lemma]):
                              unique_lemmatized_tokens[lemma] = original_form
 
-    # ... (rest of function is unchanged)
     sorted_tokens = sorted(list(unique_lemmatized_tokens.keys()), key=lambda token: (token not in lemma_index, lemma_index.get(token, 0), token.lower()))
     def get_unit_text(u):
         return u if is_line_based else u.text
@@ -646,7 +621,6 @@ def process_text_v2(
 
     return output_file
 
-# ... (остальные функции, включая main, без изменений) ...
 def process_sentences(
     language, lemma_index, text1, text2, text3, sentence_context_size,
     output_file, include_simple_list, with_fields, with_br, pipe, **kwargs

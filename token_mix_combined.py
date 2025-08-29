@@ -27,6 +27,39 @@ def load_dictionary_to_set(file_path):
         print(f"Error reading dictionary file {file_path}: {e}", file=sys.stderr)
     return dictionary
 
+def load_lemma_overrides(file_path):
+    """Loads a TSV file with lemma override rules into a dictionary."""
+    overrides = {}
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            reader = csv.reader(f, delimiter="\t")
+            for i, row in enumerate(reader):
+                if not row or row[0].startswith('#'):
+                    continue
+
+                if len(row) < 2:
+                    print(f"Warning: Skipping malformed line {i+1} in {file_path}: expected at least 2 columns.", file=sys.stderr)
+                    continue
+                
+                original_word = row[0].strip()
+                desired_lemma = row[1].strip()
+                context = row[2].strip() if len(row) > 2 and row[2].strip() else None
+
+                if not original_word or not desired_lemma:
+                    print(f"Warning: Skipping rule on line {i+1} in {file_path} due to empty original word or desired lemma.", file=sys.stderr)
+                    continue
+                
+                if original_word not in overrides:
+                    overrides[original_word] = []
+                
+                overrides[original_word].append((desired_lemma, context))
+
+    except FileNotFoundError:
+        print(f"Lemma override file not found: {file_path}", file=sys.stderr)
+    except Exception as e:
+        print(f"Error reading lemma override file {file_path}: {e}", file=sys.stderr)
+    return overrides
+
 def get_corrected_lemma(token, german_dict, fix_genitive_flag=False):
     """Corrects spaCy's lemmatization for German genitive nouns if the flag is set."""
     spacy_lemma = token.lemma_
@@ -131,7 +164,18 @@ def get_capitalized_lemma(token, spacy_lemma):
 
     return spacy_lemma
 
-def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, ahocs=None, gcs_in_wordlist=False, gcs_only_nouns=True, make_singular=False, no_make_singular=False, gcs_combine_noun_modes=False, gcs_fix_genitive=False, gcs_mask_unknown=False, gcs_include_compound=False):
+def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overrides, **kwargs):
+    gcs = kwargs.get('gcs', False)
+    ahocs = kwargs.get('ahocs', None)
+    gcs_in_wordlist = kwargs.get('gcs_in_wordlist', False)
+    gcs_only_nouns = kwargs.get('gcs_only_nouns', True)
+    make_singular = kwargs.get('make_singular', False)
+    no_make_singular = kwargs.get('no_make_singular', False)
+    gcs_combine_noun_modes = kwargs.get('gcs_combine_noun_modes', False)
+    gcs_fix_genitive = kwargs.get('gcs_fix_genitive', False)
+    gcs_mask_unknown = kwargs.get('gcs_mask_unknown', False)
+    gcs_include_compound = kwargs.get('gcs_include_compound', False)
+
     doc = nlp(sentence)
     final_tokens = set()
 
@@ -196,38 +240,48 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, 
                     pass
             
             if not was_split:
-                primary_lemma = ""
-                if token.i in verb_particle_map:
-                    particle = verb_particle_map[token.i]
-                    lemma = f"{particle.text.lower()}{token.lemma_}"
-                    primary_lemma = lemma.lower()
-                else:
-                    spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
-                    primary_lemma = get_capitalized_lemma(token, spacy_lemma)
+                original_inflected_form = token.text
                 
-                token_text = token.text
-                form_to_check = token_text.capitalize()
-                lemma_to_check_cap = primary_lemma.capitalize()
-                lemma_to_check_low = primary_lemma.lower()
+                # Default behavior
+                spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
+                default_lemma = get_capitalized_lemma(token, spacy_lemma)
+                
+                final_lemma_to_add = default_lemma
 
-                if form_to_check in german_dict:
-                    if lemma_to_check_cap in german_dict or lemma_to_check_low in german_dict:
-                        final_tokens.add(primary_lemma)
-                    else:
-                        final_tokens.add(form_to_check)
-                elif lemma_to_check_cap in german_dict or lemma_to_check_low in german_dict:
-                    final_tokens.add(primary_lemma)
-                else:
-                    final_tokens.add(primary_lemma)
+                # Check for overrides
+                if original_inflected_form in lemma_overrides:
+                    rules = lemma_overrides[original_inflected_form]
+                    context_rules = [r for r in rules if r[1]]
+                    global_rule = next((r for r in rules if not r[1]), None)
+                    
+                    found_context_match = False
+                    for desired_lemma, context in context_rules:
+                        if context in sentence:
+                            final_lemma_to_add = desired_lemma
+                            found_context_match = True
+                            break
+                    
+                    if not found_context_match and global_rule:
+                        final_lemma_to_add = global_rule[0]
+
+                final_tokens.add(final_lemma_to_add)
 
     return sorted(list(final_tokens), key=lambda x: lemma_index.get(x, float("inf")))
 
 def process_text_v1(
     input_text, lemma_index, language, text2, text3, sentence_context_size,
     output_file, two_column_output_to_file, include_simple_list,
-    with_fields, with_br, pipe, gcs, ahocs, gcs_in_wordlist, german_dict,
-    gcs_only_nouns=True, make_singular=False, no_make_singular=False, gcs_combine_noun_modes=False, gcs_fix_genitive=False, gcs_mask_unknown=False, gcs_include_compound=False
+    with_fields, with_br, pipe, gcs, ahocs, gcs_in_wordlist, german_dict, lemma_overrides,
+    **kwargs
 ):
+    gcs_only_nouns = kwargs.get('gcs_only_nouns', True)
+    make_singular = kwargs.get('make_singular', False)
+    no_make_singular = kwargs.get('no_make_singular', False)
+    gcs_combine_noun_modes = kwargs.get('gcs_combine_noun_modes', False)
+    gcs_fix_genitive = kwargs.get('gcs_fix_genitive', False)
+    gcs_mask_unknown = kwargs.get('gcs_mask_unknown', False)
+    gcs_include_compound = kwargs.get('gcs_include_compound', False)
+    
     if "\n" in input_text or not os.path.exists(input_text):
         text1_lines = input_text.splitlines()
     else:
@@ -319,21 +373,25 @@ def process_text_v1(
                         spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                         primary_lemma = get_capitalized_lemma(token, spacy_lemma)
                         original_inflected_form = token.text
-                    
-                    form_to_check = original_inflected_form.capitalize()
-                    lemma_to_check_cap = primary_lemma.capitalize()
-                    lemma_to_check_low = primary_lemma.lower()
-                    
-                    if form_to_check in german_dict:
-                        if lemma_to_check_cap in german_dict or lemma_to_check_low in german_dict:
-                            lemmas_to_process.append((primary_lemma, original_inflected_form))
-                        else:
-                            lemmas_to_process.append((form_to_check, original_inflected_form))
-                    elif lemma_to_check_cap in german_dict or lemma_to_check_low in german_dict:
-                        lemmas_to_process.append((primary_lemma, original_inflected_form))
-                    else: # Fallback to add words not in dictionary
-                        lemmas_to_process.append((primary_lemma, original_inflected_form))
 
+                    # Override logic
+                    final_lemma_to_add = primary_lemma
+                    if original_inflected_form in lemma_overrides:
+                        rules = lemma_overrides[original_inflected_form]
+                        context_rules = [r for r in rules if r[1]]
+                        global_rule = next((r for r in rules if not r[1]), None)
+                        
+                        found_context_match = False
+                        for desired_lemma, context in context_rules:
+                            if context in line1:
+                                final_lemma_to_add = desired_lemma
+                                found_context_match = True
+                                break
+                        
+                        if not found_context_match and global_rule:
+                            final_lemma_to_add = global_rule[0]
+                    
+                    lemmas_to_process.append((final_lemma_to_add, original_inflected_form))
 
                 for lemma, original_form in lemmas_to_process:
                     unique_lemmatized_tokens.add(lemma)
@@ -372,7 +430,7 @@ def process_text_v1(
                     row_data[2] = token_to_original_form.get(token, '')
                 row_data[12] = l1_sentence
                 if include_simple_list:
-                    lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, german_dict, gcs, ahocs, gcs_in_wordlist, gcs_only_nouns, make_singular, no_make_singular, gcs_combine_noun_modes, gcs_fix_genitive, gcs_mask_unknown, gcs_include_compound)
+                    lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, german_dict, lemma_overrides, **kwargs)
                     row_data[11] = "<br>".join(lemmas) if with_br else "\n".join(lemmas)
                 if language == "de":
                     row_data[58] = "1"; row_data[65] = "1"
@@ -384,7 +442,7 @@ def process_text_v1(
 def process_text_v2(
     input_text, lemma_index, language, sentence_context_size,
     output_file, two_column_output_to_file, include_simple_list,
-    with_fields, with_br, pipe, gcs, ahocs, gcs_in_wordlist, german_dict, **kwargs
+    with_fields, with_br, pipe, gcs, ahocs, gcs_in_wordlist, german_dict, lemma_overrides, **kwargs
 ):
     gcs_only_nouns = kwargs.get('gcs_only_nouns', True)
     make_singular = kwargs.get('make_singular', False)
@@ -484,21 +542,24 @@ def process_text_v2(
                         spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                         primary_lemma = get_capitalized_lemma(token, spacy_lemma)
                         original_inflected_form = token.text
+                    
+                    final_lemma_to_add = primary_lemma
+                    if original_inflected_form in lemma_overrides:
+                        rules = lemma_overrides[original_inflected_form]
+                        context_rules = [r for r in rules if r[1]]
+                        global_rule = next((r for r in rules if not r[1]), None)
+                        
+                        found_context_match = False
+                        for desired_lemma, context in context_rules:
+                            if context in unit_text:
+                                final_lemma_to_add = desired_lemma
+                                found_context_match = True
+                                break
+                        
+                        if not found_context_match and global_rule:
+                            final_lemma_to_add = global_rule[0]
 
-                    form_to_check = original_inflected_form.capitalize()
-                    lemma_to_check_cap = primary_lemma.capitalize()
-                    lemma_to_check_low = primary_lemma.lower()
-
-                    if form_to_check in german_dict:
-                        if lemma_to_check_cap in german_dict or lemma_to_check_low in german_dict:
-                            lemmas_to_process.append((primary_lemma, original_inflected_form))
-                        else:
-                            lemmas_to_process.append((form_to_check, original_inflected_form))
-                    elif lemma_to_check_cap in german_dict or lemma_to_check_low in german_dict:
-                        lemmas_to_process.append((primary_lemma, original_inflected_form))
-                    else: # Fallback to add words not in dictionary
-                        lemmas_to_process.append((primary_lemma, original_inflected_form))
-
+                    lemmas_to_process.append((final_lemma_to_add, original_inflected_form))
 
                 for lemma, original_form in lemmas_to_process:
                     unique_lemmatized_tokens.add(lemma)
@@ -560,7 +621,7 @@ def process_text_v2(
                 row_data[2] = token_to_original_form.get(token, '')
             row_data[12] = l1_sentence
             if include_simple_list:
-                lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, german_dict, gcs, ahocs, gcs_in_wordlist, gcs_only_nouns, make_singular, no_make_singular, gcs_combine_noun_modes, gcs_fix_genitive, gcs_mask_unknown, gcs_include_compound)
+                lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, german_dict, lemma_overrides, **kwargs)
                 row_data[11] = "<br>".join(lemmas) if with_br else "\n".join(lemmas)
             if language == "de":
                 row_data[58] = "1"; row_data[65] = "1"
@@ -574,6 +635,10 @@ def process_sentences(
     language, lemma_index, text1, text2, text3, sentence_context_size,
     output_file, include_simple_list, with_fields, with_br, pipe, **kwargs
 ):
+    # This function creates sentence-level cards and does not lemmatize tokens individually for the main output.
+    # The override logic is only needed for the `SentenceSourceWordlist` field.
+    lemma_overrides = kwargs.get('lemma_overrides', {})
+    
     try:
         with open(text1, "r", encoding="utf-8") as f: text1_lines = [line.rstrip("\n") for line in f]
         with open(text2, "r", encoding="utf-8") as f: text2_lines = [line.rstrip("\n") for line in f]
@@ -605,7 +670,7 @@ def process_sentences(
             row_data[9] = l2_sentence
             row_data[10] = " ".join(line.strip() for line in text2_lines[i + 1:end_idx])
             if include_simple_list:
-                lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, german_dict)
+                lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, german_dict, lemma_overrides, **kwargs)
                 row_data[11] = "<br>".join(lemmas) if with_br else "\n".join(lemmas)
             row_data[12] = l1_sentence
             if text3:
@@ -641,6 +706,7 @@ def main():
     parser.add_argument("--two-column-output", action="store_true")
     parser.add_argument("--html", action="store_true")
     parser.add_argument("--original-form-in-simple-list", action="store_true")
+    parser.add_argument("--lemma-override-file", help="Path to a TSV file for context-aware lemma overrides.")
     
     gcs_group = parser.add_argument_group('GCS (German Compound Splitting) options')
     gcs_group.add_argument("--gcs", action="store_true", help="Enable German Compound Splitting. Requires --language de.")
@@ -667,6 +733,8 @@ def main():
 
     global nlp
     nlp = spacy.load("de_core_news_lg" if args.language == "de" else "en_core_web_lg")
+
+    lemma_overrides = load_lemma_overrides(args.lemma_override_file) if args.lemma_override_file else {}
 
     ahocs = None
     global german_dict
@@ -745,7 +813,7 @@ def main():
                 args.sentence_context_size, final_output_path,
                 args.two_column_output_to_file, args.include_simple_list,
                 args.with_fields, args.with_br, args.pipe,
-                args.gcs, ahocs, args.gcs_in_wordlist, german_dict,
+                args.gcs, ahocs, args.gcs_in_wordlist, german_dict, lemma_overrides,
                 **kwargs_for_processing
             )
         else:
@@ -753,7 +821,7 @@ def main():
                 input_text, lemma_index, args.language, args.sentence_context_size,
                 final_output_path, args.two_column_output_to_file, args.include_simple_list,
                 args.with_fields, args.with_br, args.pipe,
-                args.gcs, ahocs, args.gcs_in_wordlist, german_dict,
+                args.gcs, ahocs, args.gcs_in_wordlist, german_dict, lemma_overrides,
                 **kwargs_for_processing
             )
 
@@ -762,10 +830,13 @@ def main():
             print("Warning: GCS-related flags are only applicable for --type token and will be ignored.", file=sys.stderr)
         if not args.text1 or not args.text2:
             print("Error: --text1 and --text2 must be specified for sentence mode.", file=sys.stderr); exit(1)
+        
+        kwargs_for_processing = {'lemma_overrides': lemma_overrides}
         processed_output_file = process_sentences(
             args.language, lemma_index, args.text1, args.text2, args.text3,
             args.sentence_context_size, final_output_path,
-            args.include_simple_list, args.with_fields, args.with_br, args.pipe
+            args.include_simple_list, args.with_fields, args.with_br, args.pipe,
+            **kwargs_for_processing
         )
 
     if args.pipe and processed_output_file:

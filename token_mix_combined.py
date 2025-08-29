@@ -271,8 +271,9 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
             
             final_lemma_to_add = default_lemma
             
-            if original_inflected_form in lemma_overrides:
-                final_lemma_to_add = apply_lemma_override(original_inflected_form, sentence, lemma_overrides)
+            maybe_overridden = apply_lemma_override(original_inflected_form, sentence, lemma_overrides)
+            if maybe_overridden != original_inflected_form:
+                final_lemma_to_add = maybe_overridden
             
             final_tokens.add(final_lemma_to_add)
 
@@ -345,8 +346,9 @@ def process_text_v1(
                                 default_lemma = get_capitalized_lemma(token, spacy_lemma)
                                 
                                 final_lemma = default_lemma
-                                if token.text in lemma_overrides:
-                                    final_lemma = apply_lemma_override(token.text, line1, lemma_overrides)
+                                maybe_overridden = apply_lemma_override(token.text, line1, lemma_overrides)
+                                if maybe_overridden != token.text:
+                                    final_lemma = maybe_overridden
                                 lemmas_to_process.append((final_lemma, token.text))
 
                             for part in set(final_components):
@@ -383,8 +385,9 @@ def process_text_v1(
                         default_lemma = get_capitalized_lemma(token, spacy_lemma)
                     
                     final_lemma_to_add = default_lemma
-                    if original_inflected_form in lemma_overrides:
-                        final_lemma_to_add = apply_lemma_override(original_inflected_form, line1, lemma_overrides)
+                    maybe_overridden = apply_lemma_override(original_inflected_form, line1, lemma_overrides)
+                    if maybe_overridden != original_inflected_form:
+                        final_lemma_to_add = maybe_overridden
                     
                     lemmas_to_process.append((final_lemma_to_add, original_inflected_form))
 
@@ -503,8 +506,9 @@ def process_text_v2(
                                 default_lemma = get_capitalized_lemma(token, spacy_lemma)
 
                                 final_lemma = default_lemma
-                                if token.text in lemma_overrides:
-                                    final_lemma = apply_lemma_override(token.text, unit_text, lemma_overrides)
+                                maybe_overridden = apply_lemma_override(token.text, unit_text, lemma_overrides)
+                                if maybe_overridden != token.text:
+                                    final_lemma = maybe_overridden
                                 lemmas_to_process.append((final_lemma, token.text))
                             
                             for part in set(final_components):
@@ -541,8 +545,9 @@ def process_text_v2(
                         default_lemma = get_capitalized_lemma(token, spacy_lemma)
                     
                     final_lemma_to_add = default_lemma
-                    if original_inflected_form in lemma_overrides:
-                        final_lemma_to_add = apply_lemma_override(original_inflected_form, unit_text, lemma_overrides)
+                    maybe_overridden = apply_lemma_override(original_inflected_form, unit_text, lemma_overrides)
+                    if maybe_overridden != original_inflected_form:
+                        final_lemma_to_add = maybe_overridden
 
                     lemmas_to_process.append((final_lemma_to_add, original_inflected_form))
 

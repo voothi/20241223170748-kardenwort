@@ -317,7 +317,12 @@ def process_text_v1(
                 lemmas_to_process = []
                 was_split = False
                 
-                if gcs and ahocs and language == 'de' and len(token.text) > 3 and (token.pos_ in ["NOUN", "PROPN"] or '-' in token.text):
+                is_keep_as_is_override = False
+                if token.text in lemma_overrides:
+                    if any(lemma == token.text and context is None for lemma, context in lemma_overrides[token.text]):
+                        is_keep_as_is_override = True
+
+                if gcs and ahocs and not is_keep_as_is_override and language == 'de' and len(token.text) > 3 and (token.pos_ in ["NOUN", "PROPN"] or '-' in token.text):
                     try:
                         word_to_split = token.text
                         if no_make_singular: should_make_singular = False
@@ -476,7 +481,12 @@ def process_text_v2(
                 lemmas_to_process = []
                 was_split = False
 
-                if gcs and ahocs and language == 'de' and len(token.text) > 3 and (token.pos_ in ["NOUN", "PROPN"] or '-' in token.text):
+                is_keep_as_is_override = False
+                if token.text in lemma_overrides:
+                    if any(lemma == token.text and context is None for lemma, context in lemma_overrides[token.text]):
+                        is_keep_as_is_override = True
+
+                if gcs and ahocs and not is_keep_as_is_override and language == 'de' and len(token.text) > 3 and (token.pos_ in ["NOUN", "PROPN"] or '-' in token.text):
                     try:
                         word_to_split = token.text
                         if no_make_singular: should_make_singular = False

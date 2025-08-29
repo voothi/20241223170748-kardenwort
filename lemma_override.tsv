@@ -33,20 +33,43 @@
 #    The context in the 3rd column is a literal substring. The search is
 #    performed anywhere within the full sentence.
 #
+#    - Example: For the sentence "...ertragreichen Austernbanken vor der Küste..."
+#    - Context 'ichen Austernbanken vo' will match.
+#    - Context 'vor der Küste' will also match, even though it is not
+#      adjacent to the original word.
+#
 # 2. Matching is Case-Sensitive:
 #    All matching is strictly case-sensitive. This is critical for languages
 #    like German where nouns are capitalized.
 #
+#    - Example: For the text "...vor der Küste..."
+#    - Context 'vor der Küste' will match.
+#    - Context 'vor der küste' (with lowercase 'k') will not match.
+#
 # 3. Rule Order Matters:
 #    The file is processed top-to-bottom. The first matching rule for a word
-#    is applied. Place more specific rules before general ones.
+#    is applied. Place more specific rules before more general ones.
 #
-# 4. Syntax Examples:
-#    # This is a global rule:
-#    # Dritte	Dritte
+#    - Example:
+#      # Specific rule (should be placed first to be effective)
+#      Austernbanken	LemmaA	schönen Austernbanken
+#      # General rule (will be ignored if the one above has already matched)
+#      Austernbanken	LemmaB	Austernbanken
 #
-#    # This is a contextual rule:
+# 4. Behavior of a Contextual Rule (Test Case):
+#    A contextual rule corrects a lemma only in a specific phrase. Consider
+#    the following rule:
+#
 #    # Austernbanken	Austernbanke	ertragreichen Austernbanken
+#
+#    This rule demonstrates the following behavior:
+#
+#    - The rule triggers for the sentence:
+#      "Die Fischer kennen die ertragreichen Austernbanken vor der Küste..."
+#
+#    - The rule does not trigger for the sentence:
+#      "Die Fischer kennen die Austernbanken vor der Küste..."
+#      (because the required context 'ertragreichen Austernbanken' is missing).
 
 # ==============================================================================
 #  User-Defined Override Rules
@@ -58,6 +81,8 @@
 
 # --- Global Rules ---
 #Dritte	Dritte	
+Dritte	Dritte	
 
 # --- Contextual Rules ---
-#Austernbanken	Austernbanke	ertragreichen Austernbanken
+#Austernbanken	Austernbanke	Küste
+Austernbanken	Austernbanke	Küste

@@ -1,0 +1,24 @@
+# Lemma Override Rules
+# This file allows for precise control over the lemmatization process.
+#
+# Format:
+# OriginalWord_FromText <TAB> Desired_Lemma <TAB> [Optional_Context_Substring]
+#
+# How it works:
+# 1. Global Rule: If the 3rd column is empty, the rule applies every time 'OriginalWord_FromText' is found.
+# 2. Contextual Rule: If the 3rd column has text, the rule ONLY applies if 'Optional_Context_Substring' is also found in the same sentence.
+#
+# --- EXAMPLES ---
+
+# --- Global Rules ---
+# The following rules will always be applied, regardless of context.
+# They solve the issue of substantivized adjectives being incorrectly lemmatized by spaCy.
+Dritte	Dritte	
+dritte	dritte	
+Angestellte	Angestellte	
+
+# --- Contextual Rules ---
+# The following rule will only be applied if the context in the 3rd column is met.
+# This corrects 'Bank' to 'Sitzbank' (bench) only in sentences containing 'im Park'.
+# In all other sentences (e.g., about finance), 'Bank' will be lemmatized by spaCy as usual.
+Bank	Sitzbank	im Park auf der Bank

@@ -41,6 +41,8 @@ def get_token_args(args, python_path, token_workspace):
         "--gcs-dictionary",
         "U:/voothi/20241223170748-token-extraction/20250826000433-test/german.dic",
         "--gcs-in-wordlist",
+        "--lemma-override-file",
+        "U:/voothi/20241223170748-token-extraction/lemma_override.tsv",
         "--pipe"
     ]
 

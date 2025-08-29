@@ -206,14 +206,17 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, 
                     primary_lemma = get_capitalized_lemma(token, spacy_lemma)
                 
                 token_text = token.text
-                form_to_check = token_text if token_text.isupper() else token_text.capitalize()
-                lemma_to_check = primary_lemma if primary_lemma.isupper() else primary_lemma.capitalize()
+                form_to_check = token_text.capitalize()
+                lemma_to_check_cap = primary_lemma.capitalize()
+                lemma_to_check_low = primary_lemma.lower()
 
                 if form_to_check in german_dict:
-                    if lemma_to_check in german_dict:
+                    if lemma_to_check_cap in german_dict or lemma_to_check_low in german_dict:
                         final_tokens.add(primary_lemma)
                     else:
                         final_tokens.add(form_to_check)
+                elif lemma_to_check_cap in german_dict or lemma_to_check_low in german_dict:
+                    final_tokens.add(primary_lemma)
                 else:
                     final_tokens.add(primary_lemma)
 
@@ -316,7 +319,21 @@ def process_text_v1(
                         spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                         primary_lemma = get_capitalized_lemma(token, spacy_lemma)
                         original_inflected_form = token.text
-                    lemmas_to_process.append((primary_lemma, original_inflected_form))
+                    
+                    form_to_check = original_inflected_form.capitalize()
+                    lemma_to_check_cap = primary_lemma.capitalize()
+                    lemma_to_check_low = primary_lemma.lower()
+                    
+                    if form_to_check in german_dict:
+                        if lemma_to_check_cap in german_dict or lemma_to_check_low in german_dict:
+                            lemmas_to_process.append((primary_lemma, original_inflected_form))
+                        else:
+                            lemmas_to_process.append((form_to_check, original_inflected_form))
+                    elif lemma_to_check_cap in german_dict or lemma_to_check_low in german_dict:
+                        lemmas_to_process.append((primary_lemma, original_inflected_form))
+                    else: # Fallback to add words not in dictionary
+                        lemmas_to_process.append((primary_lemma, original_inflected_form))
+
 
                 for lemma, original_form in lemmas_to_process:
                     unique_lemmatized_tokens.add(lemma)
@@ -467,7 +484,21 @@ def process_text_v2(
                         spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                         primary_lemma = get_capitalized_lemma(token, spacy_lemma)
                         original_inflected_form = token.text
-                    lemmas_to_process.append((primary_lemma, original_inflected_form))
+
+                    form_to_check = original_inflected_form.capitalize()
+                    lemma_to_check_cap = primary_lemma.capitalize()
+                    lemma_to_check_low = primary_lemma.lower()
+
+                    if form_to_check in german_dict:
+                        if lemma_to_check_cap in german_dict or lemma_to_check_low in german_dict:
+                            lemmas_to_process.append((primary_lemma, original_inflected_form))
+                        else:
+                            lemmas_to_process.append((form_to_check, original_inflected_form))
+                    elif lemma_to_check_cap in german_dict or lemma_to_check_low in german_dict:
+                        lemmas_to_process.append((primary_lemma, original_inflected_form))
+                    else: # Fallback to add words not in dictionary
+                        lemmas_to_process.append((primary_lemma, original_inflected_form))
+
 
                 for lemma, original_form in lemmas_to_process:
                     unique_lemmatized_tokens.add(lemma)

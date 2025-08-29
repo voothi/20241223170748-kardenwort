@@ -13,9 +13,9 @@
 # --- Global Rules ---
 # The following rules will always be applied, regardless of context.
 # They solve the issue of substantivized adjectives being incorrectly lemmatized by spaCy.
-Dritte	Dritte	
 #dritte	dritte	
 #Angestellte	Angestellte	
+Dritte	Dritte	
 
 # --- Contextual Rules ---
 # The following rule will only be applied if the context in the 3rd column is met.

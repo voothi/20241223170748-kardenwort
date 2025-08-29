@@ -265,7 +265,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
 
             final_tokens.add(final_lemma_to_add)
 
-    return sorted(list(final_tokens), key=lambda x: lemma_index.get(x, float("inf")))
+    return sorted(list(final_tokens), key=lambda x: (x not in lemma_index, lemma_index.get(x, 0), x))
 
 def process_text_v1(
     input_text, lemma_index, language, text2, text3, sentence_context_size,

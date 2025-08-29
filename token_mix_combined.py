@@ -14,6 +14,7 @@ try:
 except ImportError:
     GCS_AVAILABLE = False
 
+# ... (все функции до process_sentence_lemmas без изменений) ...
 def load_dictionary_to_set(file_path):
     """Loads a dictionary into a set for fast lookups."""
     dictionary = set()
@@ -60,7 +61,6 @@ def load_lemma_overrides(file_path):
         print(f"Error reading lemma override file {file_path}: {e}", file=sys.stderr)
     return overrides
 
-# <<< НОВЫЙ БЛОК: Рефакторинг логики применения правил в отдельную функцию >>>
 def apply_lemma_override(word_to_check, sentence_context, overrides):
     """
     Applies lemma override rules to a word.
@@ -73,18 +73,14 @@ def apply_lemma_override(word_to_check, sentence_context, overrides):
     context_rules = [r for r in rules if r[1]]
     global_rule = next((r for r in rules if not r[1]), None)
 
-    # 1. Check contextual rules first (highest priority)
     for desired_lemma, context in context_rules:
         if context in sentence_context:
-            return desired_lemma  # Return the corrected lemma and stop
+            return desired_lemma
 
-    # 2. If no context rule matched, check for a global rule
     if global_rule:
         return global_rule[0]
-
-    # 3. If no rules matched at all, return the original word
+        
     return word_to_check
-# <<< КОНЕЦ НОВОГО БЛОКА >>>
 
 def get_corrected_lemma(token, german_dict, fix_genitive_flag=False):
     """Corrects spaCy's lemmatization for German genitive nouns if the flag is set."""
@@ -190,7 +186,6 @@ def get_capitalized_lemma(token, spacy_lemma):
 
     return spacy_lemma
 
-# <<< ИЗМЕНЕННЫЙ БЛОК: process_sentence_lemmas >>>
 def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overrides, **kwargs):
     gcs = kwargs.get('gcs', False)
     ahocs = kwargs.get('ahocs', None)
@@ -218,7 +213,6 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
 
         was_split = False
         
-        # GCS splitting logic
         if gcs and ahocs and gcs_in_wordlist and nlp.lang == 'de' and len(token.text) > 3 and (token.pos_ in ["NOUN", "PROPN"] or '-' in token.text):
             try:
                 word_to_split = token.text
@@ -241,12 +235,10 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
 
                 if len(final_components) > 1:
                     was_split = True
-                    # Add split components to the list
                     for part in set(final_components):
                         part = part.strip('-') 
                         if not part: continue
-
-                        # >>>>> ГЛАВНОЕ ИЗМЕНЕНИЕ: Применяем правила к компоненту GCS <<<<<
+                        
                         corrected_part = apply_lemma_override(part, sentence, lemma_overrides)
                         
                         part_to_check = corrected_part.capitalize()
@@ -263,7 +255,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
                         if part_lemma:
                             final_tokens.add(part_lemma)
             except Exception:
-                pass # Silently fail on GCS error
+                pass
 
         if not (was_split and not gcs_include_compound):
             original_inflected_form = token.text
@@ -277,21 +269,15 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
                 spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                 default_lemma = get_capitalized_lemma(token, spacy_lemma)
             
-            # >>>>> ИЗМЕНЕНИЕ: Используем новую функцию для чистоты кода <<<<<
-            # Сначала получаем лемму по умолчанию
             final_lemma_to_add = default_lemma
-            # Затем проверяем, не нужно ли ее перезаписать правилом
-            maybe_overridden = apply_lemma_override(original_inflected_form, sentence, lemma_overrides)
-            # Правило сработало, если результат отличается от исходного слова
-            if maybe_overridden != original_inflected_form:
-                final_lemma_to_add = maybe_overridden
-
+            
+            if original_inflected_form in lemma_overrides:
+                final_lemma_to_add = apply_lemma_override(original_inflected_form, sentence, lemma_overrides)
+            
             final_tokens.add(final_lemma_to_add)
 
     return sorted(list(final_tokens), key=lambda x: (x not in lemma_index, lemma_index.get(x, 0), x.lower()))
-# <<< КОНЕЦ ИЗМЕНЕННОГО БЛОКА >>>
 
-# <<< ИЗМЕНЕННЫЙ БЛОК: process_text_v1 >>>
 def process_text_v1(
     input_text, lemma_index, language, text2, text3, sentence_context_size,
     output_file, two_column_output_to_file, include_simple_list,
@@ -358,18 +344,15 @@ def process_text_v1(
                                 spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                                 default_lemma = get_capitalized_lemma(token, spacy_lemma)
                                 
-                                # Применяем override к исходному сложному слову
                                 final_lemma = default_lemma
-                                maybe_overridden = apply_lemma_override(token.text, line1, lemma_overrides)
-                                if maybe_overridden != token.text:
-                                    final_lemma = maybe_overridden
+                                if token.text in lemma_overrides:
+                                    final_lemma = apply_lemma_override(token.text, line1, lemma_overrides)
                                 lemmas_to_process.append((final_lemma, token.text))
 
                             for part in set(final_components):
                                 part = part.strip('-')
                                 if not part: continue
 
-                                # >>>>> ГЛАВНОЕ ИЗМЕНЕНИЕ: Применяем правила к компоненту GCS <<<<<
                                 corrected_part = apply_lemma_override(part, line1, lemma_overrides)
                                 
                                 part_to_check = corrected_part.capitalize()
@@ -399,11 +382,9 @@ def process_text_v1(
                         spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                         default_lemma = get_capitalized_lemma(token, spacy_lemma)
                     
-                    # >>>>> ИЗМЕНЕНИЕ: Используем новую функцию для чистоты кода <<<<<
                     final_lemma_to_add = default_lemma
-                    maybe_overridden = apply_lemma_override(original_inflected_form, line1, lemma_overrides)
-                    if maybe_overridden != original_inflected_form:
-                        final_lemma_to_add = maybe_overridden
+                    if original_inflected_form in lemma_overrides:
+                        final_lemma_to_add = apply_lemma_override(original_inflected_form, line1, lemma_overrides)
                     
                     lemmas_to_process.append((final_lemma_to_add, original_inflected_form))
 
@@ -415,7 +396,7 @@ def process_text_v1(
                         elif len(original_form) < len(unique_lemmatized_tokens[lemma]):
                              unique_lemmatized_tokens[lemma] = original_form
 
-    # ... (остальная часть функции без изменений)
+    # ... (rest of function is unchanged)
     sorted_tokens = sorted(list(unique_lemmatized_tokens.keys()), key=lambda token: (token not in lemma_index, lemma_index.get(token, 0), token.lower()))
     if output_file:
         with open(output_file, "w", newline="", encoding="utf-8") as tsvfile:
@@ -456,9 +437,7 @@ def process_text_v1(
                     row_data[56] = "1"; row_data[65] = "1"
                 tsv_writer.writerow(row_data)
     return output_file
-# <<< КОНЕЦ ИЗМЕНЕННОГО БЛОКА >>>
 
-# <<< ИЗМЕНЕННЫЙ БЛОК: process_text_v2 >>>
 def process_text_v2(
     input_text, lemma_index, language, sentence_context_size,
     output_file, two_column_output_to_file, include_simple_list,
@@ -523,18 +502,15 @@ def process_text_v2(
                                 spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                                 default_lemma = get_capitalized_lemma(token, spacy_lemma)
 
-                                # Применяем override к исходному сложному слову
                                 final_lemma = default_lemma
-                                maybe_overridden = apply_lemma_override(token.text, unit_text, lemma_overrides)
-                                if maybe_overridden != token.text:
-                                    final_lemma = maybe_overridden
+                                if token.text in lemma_overrides:
+                                    final_lemma = apply_lemma_override(token.text, unit_text, lemma_overrides)
                                 lemmas_to_process.append((final_lemma, token.text))
                             
                             for part in set(final_components):
                                 part = part.strip('-')
                                 if not part: continue
 
-                                # >>>>> ГЛАВНОЕ ИЗМЕНЕНИЕ: Применяем правила к компоненту GCS <<<<<
                                 corrected_part = apply_lemma_override(part, unit_text, lemma_overrides)
                                 
                                 part_to_check = corrected_part.capitalize()
@@ -564,11 +540,9 @@ def process_text_v2(
                         spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                         default_lemma = get_capitalized_lemma(token, spacy_lemma)
                     
-                    # >>>>> ИЗМЕНЕНИЕ: Используем новую функцию для чистоты кода <<<<<
                     final_lemma_to_add = default_lemma
-                    maybe_overridden = apply_lemma_override(original_inflected_form, unit_text, lemma_overrides)
-                    if maybe_overridden != original_inflected_form:
-                        final_lemma_to_add = maybe_overridden
+                    if original_inflected_form in lemma_overrides:
+                        final_lemma_to_add = apply_lemma_override(original_inflected_form, unit_text, lemma_overrides)
 
                     lemmas_to_process.append((final_lemma_to_add, original_inflected_form))
 
@@ -580,7 +554,7 @@ def process_text_v2(
                         elif len(original_form) < len(unique_lemmatized_tokens[lemma]):
                              unique_lemmatized_tokens[lemma] = original_form
 
-    # ... (остальная часть функции без изменений)
+    # ... (rest of function is unchanged)
     sorted_tokens = sorted(list(unique_lemmatized_tokens.keys()), key=lambda token: (token not in lemma_index, lemma_index.get(token, 0), token.lower()))
     def get_unit_text(u):
         return u if is_line_based else u.text
@@ -645,8 +619,8 @@ def process_text_v2(
             tsv_writer.writerow(row_data)
 
     return output_file
-# <<< КОНЕЦ ИЗМЕНЕННОГО БЛОКА >>>
 
+# ... (остальные функции, включая main, без изменений) ...
 def process_sentences(
     language, lemma_index, text1, text2, text3, sentence_context_size,
     output_file, include_simple_list, with_fields, with_br, pipe, **kwargs
@@ -699,7 +673,6 @@ def process_sentences(
     return output_file
 
 def main():
-    # ... (функция main без изменений) ...
     parser = argparse.ArgumentParser(description="Extract and process tokens or sentences from text.")
     parser.add_argument("--type", required=True, choices=["token", "sentence"])
     parser.add_argument("--language", default="de", choices=["de", "en"])
@@ -846,7 +819,6 @@ def main():
         if not args.text1 or not args.text2:
             print("Error: --text1 and --text2 must be specified for sentence mode.", file=sys.stderr); exit(1)
         
-        # We need to pass down GCS flags even for sentences, because they might affect the wordlist.
         kwargs_for_processing = {
             'lemma_overrides': lemma_overrides,
             'gcs': args.gcs,

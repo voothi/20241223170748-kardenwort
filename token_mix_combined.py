@@ -309,8 +309,53 @@ def process_text_v1(
                 was_split = False
                 
                 if gcs and ahocs and language == 'de' and len(token.text) > 3 and (token.pos_ in ["NOUN", "PROPN"] or '-' in token.text):
-                    # GCS logic remains unchanged...
-                    pass
+                    try:
+                        word_to_split = token.text
+                        original_compound_word = token.text
+                        
+                        if no_make_singular: should_make_singular = False
+                        elif make_singular: should_make_singular = True
+                        else: should_make_singular = (token.pos_ in ['NOUN', 'PROPN'])
+
+                        final_components = []
+                        if gcs_combine_noun_modes:
+                            with redirect_stdout(io.StringIO()):
+                                dissection1 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=True, mask_unknown=gcs_mask_unknown)
+                            final_components.extend(comp_split.merge_fractions(dissection1))
+                            with redirect_stdout(io.StringIO()):
+                                dissection2 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=False, mask_unknown=gcs_mask_unknown)
+                            final_components.extend(comp_split.merge_fractions(dissection2))
+                        else:
+                            with redirect_stdout(io.StringIO()):
+                                dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=gcs_only_nouns, mask_unknown=gcs_mask_unknown)
+                            final_components = comp_split.merge_fractions(dissection)
+
+                        if len(final_components) > 1:
+                            was_split = True
+                            if gcs_include_compound:
+                                spacy_lemma_original = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
+                                primary_lemma_original = get_capitalized_lemma(token, spacy_lemma_original)
+                                if primary_lemma_original:
+                                    lemmas_to_process.append((primary_lemma_original, original_compound_word))
+                            
+                            for part in set(final_components):
+                                part = part.strip('-')
+                                if not part: continue
+                                part_to_check = part.capitalize()
+                                part_lemma = ""
+                                if part_to_check in german_dict:
+                                    part_lemma = part_to_check
+                                else:
+                                    part_doc = nlp(part)
+                                    if len(part_doc) > 0:
+                                        lemmatized_part_str = part_doc[0].lemma_
+                                        lemma_part_to_check = lemmatized_part_str.capitalize()
+                                        if lemma_part_to_check in german_dict:
+                                            part_lemma = lemma_part_to_check
+                                if part_lemma:
+                                    lemmas_to_process.append((part_lemma, original_compound_word))
+                    except Exception:
+                        was_split = False
 
                 if not was_split:
                     original_inflected_form = token.text
@@ -347,7 +392,6 @@ def process_text_v1(
                         token_to_sentence[lemma] = (i, line1)
                         token_to_original_form[lemma] = original_form
 
-    # The rest of the function remains the same...
     sorted_tokens = sorted(unique_lemmatized_tokens, key=lambda token: (token not in lemma_index, lemma_index.get(token, 0), token))
     if output_file:
         with open(output_file, "w", newline="", encoding="utf-8") as tsvfile:
@@ -427,8 +471,53 @@ def process_text_v2(
                 was_split = False
 
                 if gcs and ahocs and language == 'de' and len(token.text) > 3 and (token.pos_ in ["NOUN", "PROPN"] or '-' in token.text):
-                    # GCS logic remains unchanged...
-                    pass
+                    try:
+                        word_to_split = token.text
+                        original_compound_word = token.text
+
+                        if no_make_singular: should_make_singular = False
+                        elif make_singular: should_make_singular = True
+                        else: should_make_singular = (token.pos_ in ['NOUN', 'PROPN'])
+                            
+                        final_components = []
+                        if gcs_combine_noun_modes:
+                            with redirect_stdout(io.StringIO()):
+                                dissection1 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=True, mask_unknown=gcs_mask_unknown)
+                            final_components.extend(comp_split.merge_fractions(dissection1))
+                            with redirect_stdout(io.StringIO()):
+                                dissection2 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=False, mask_unknown=gcs_mask_unknown)
+                            final_components.extend(comp_split.merge_fractions(dissection2))
+                        else:
+                            with redirect_stdout(io.StringIO()):
+                                dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=gcs_only_nouns, mask_unknown=gcs_mask_unknown)
+                            final_components = comp_split.merge_fractions(dissection)
+
+                        if len(final_components) > 1:
+                            was_split = True
+                            if gcs_include_compound:
+                                spacy_lemma_original = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
+                                primary_lemma_original = get_capitalized_lemma(token, spacy_lemma_original)
+                                if primary_lemma_original:
+                                    lemmas_to_process.append((primary_lemma_original, original_compound_word))
+                            
+                            for part in set(final_components):
+                                part = part.strip('-')
+                                if not part: continue
+                                part_to_check = part.capitalize()
+                                part_lemma = ""
+                                if part_to_check in german_dict:
+                                    part_lemma = part_to_check
+                                else:
+                                    part_doc = nlp(part)
+                                    if len(part_doc) > 0:
+                                        lemmatized_part_str = part_doc[0].lemma_
+                                        lemma_part_to_check = lemmatized_part_str.capitalize()
+                                        if lemma_part_to_check in german_dict:
+                                            part_lemma = lemma_part_to_check
+                                if part_lemma:
+                                    lemmas_to_process.append((part_lemma, original_compound_word))
+                    except Exception:
+                        was_split = False
 
                 if not was_split:
                     original_inflected_form = token.text
@@ -465,7 +554,6 @@ def process_text_v2(
                         token_to_sentence[lemma] = (unit_index, unit_text)
                         token_to_original_form[lemma] = original_form
 
-    # The rest of the function remains the same...
     sorted_tokens = sorted(unique_lemmatized_tokens, key=lambda token: (token not in lemma_index, lemma_index.get(token, 0), token))
     def get_unit_text(u):
         return u if is_line_based else u.text

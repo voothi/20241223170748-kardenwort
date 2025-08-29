@@ -545,7 +545,6 @@ def process_text_v2(
                     
                     final_lemma_to_add = primary_lemma
                     if original_inflected_form in lemma_overrides:
-                        print(f"DEBUG: Found override rule for '{original_inflected_form}'. Applying.")
                         rules = lemma_overrides[original_inflected_form]
                         context_rules = [r for r in rules if r[1]]
                         global_rule = next((r for r in rules if not r[1]), None)

@@ -50,8 +50,6 @@ def find_verb_particle_pairs(doc):
     pairs = {}
     for token in doc:
         if token.dep_ == "svp":
-            # We trust the 'svp' dependency completely. If a token is 'svp',
-            # its head is the verb it belongs to, regardless of the head's POS tag.
             pairs[token.head.i] = token
     return pairs
 
@@ -118,10 +116,6 @@ def generate_autoname_prefix(text, num_words):
     return "-".join(selected_words)
 
 def get_capitalized_lemma(token, spacy_lemma):
-    """
-    Determines the correct capitalization for a lemma based on a hierarchy of rules.
-    Verb logic is handled separately.
-    """
     original_text = token.text
     is_all_caps = original_text.isupper() and len(original_text) > 1
     has_internal_caps = any(c.isupper() for c in original_text[1:])
@@ -137,7 +131,7 @@ def get_capitalized_lemma(token, spacy_lemma):
 
     return spacy_lemma
 
-def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, ahocs=None, gcs_in_wordlist=False, gcs_only_nouns=True, make_singular=False, no_make_singular=False, gcs_combine_noun_modes=False, gcs_fix_genitive=False, gcs_mask_unknown=False):
+def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, ahocs=None, gcs_in_wordlist=False, gcs_only_nouns=True, make_singular=False, no_make_singular=False, gcs_combine_noun_modes=False, gcs_fix_genitive=False, gcs_mask_unknown=False, gcs_include_compound=False):
     doc = nlp(sentence)
     final_tokens = set()
 
@@ -195,6 +189,9 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, 
                         final_components = comp_split.merge_fractions(dissection)
 
                     if len(final_components) > 1:
+                        if gcs_include_compound:
+                             final_tokens.add(base_lemma)
+
                         for part in set(final_components):
                             part = part.strip('-') 
                             if not part:
@@ -218,7 +215,7 @@ def process_text_v1(
     input_text, lemma_index, language, text2, text3, sentence_context_size,
     output_file, two_column_output_to_file, include_simple_list,
     with_fields, with_br, pipe, gcs, ahocs, gcs_in_wordlist, german_dict,
-    gcs_only_nouns=True, make_singular=False, no_make_singular=False, gcs_combine_noun_modes=False, gcs_fix_genitive=False, gcs_mask_unknown=False
+    gcs_only_nouns=True, make_singular=False, no_make_singular=False, gcs_combine_noun_modes=False, gcs_fix_genitive=False, gcs_mask_unknown=False, gcs_include_compound=False
 ):
     if "\n" in input_text or not os.path.exists(input_text):
         text1_lines = input_text.splitlines()
@@ -273,6 +270,12 @@ def process_text_v1(
 
                         if len(final_components) > 1:
                             was_split = True
+                            if gcs_include_compound:
+                                spacy_lemma_original = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
+                                primary_lemma_original = get_capitalized_lemma(token, spacy_lemma_original)
+                                if primary_lemma_original:
+                                    lemmas_to_process.append((primary_lemma_original, original_compound_word))
+
                             for part in set(final_components):
                                 part = part.strip('-') 
                                 if not part: continue
@@ -344,7 +347,7 @@ def process_text_v1(
                     row_data[2] = token_to_original_form.get(token, '')
                 row_data[12] = l1_sentence
                 if include_simple_list:
-                    lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, german_dict, gcs, ahocs, gcs_in_wordlist, gcs_only_nouns, make_singular, no_make_singular, gcs_combine_noun_modes, gcs_fix_genitive, gcs_mask_unknown)
+                    lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, german_dict, gcs, ahocs, gcs_in_wordlist, gcs_only_nouns, make_singular, no_make_singular, gcs_combine_noun_modes, gcs_fix_genitive, gcs_mask_unknown, gcs_include_compound)
                     row_data[11] = "<br>".join(lemmas) if with_br else "\n".join(lemmas)
                 if language == "de":
                     row_data[58] = "1"; row_data[65] = "1"
@@ -364,6 +367,8 @@ def process_text_v2(
     gcs_combine_noun_modes = kwargs.get('gcs_combine_noun_modes', False)
     gcs_fix_genitive = kwargs.get('gcs_fix_genitive', False)
     gcs_mask_unknown = kwargs.get('gcs_mask_unknown', False)
+    gcs_include_compound = kwargs.get('gcs_include_compound', False)
+    
     if '\n' in input_text.strip():
         processing_units = input_text.splitlines()
         is_line_based = True
@@ -416,6 +421,12 @@ def process_text_v2(
 
                         if len(final_components) > 1:
                             was_split = True
+                            if gcs_include_compound:
+                                spacy_lemma_original = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
+                                primary_lemma_original = get_capitalized_lemma(token, spacy_lemma_original)
+                                if primary_lemma_original:
+                                    lemmas_to_process.append((primary_lemma_original, original_compound_word))
+                            
                             for part in set(final_components):
                                 part = part.strip('-')
                                 if not part: continue
@@ -510,7 +521,7 @@ def process_text_v2(
                 row_data[2] = token_to_original_form.get(token, '')
             row_data[12] = l1_sentence
             if include_simple_list:
-                lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, german_dict, gcs, ahocs, gcs_in_wordlist, gcs_only_nouns, make_singular, no_make_singular, gcs_combine_noun_modes, gcs_fix_genitive, gcs_mask_unknown)
+                lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, german_dict, gcs, ahocs, gcs_in_wordlist, gcs_only_nouns, make_singular, no_make_singular, gcs_combine_noun_modes, gcs_fix_genitive, gcs_mask_unknown, gcs_include_compound)
                 row_data[11] = "<br>".join(lemmas) if with_br else "\n".join(lemmas)
             if language == "de":
                 row_data[58] = "1"; row_data[65] = "1"
@@ -596,6 +607,7 @@ def main():
     gcs_group.add_argument("--gcs", action="store_true", help="Enable German Compound Splitting. Requires --language de.")
     gcs_group.add_argument("--gcs-dictionary", default="german.dic", help="Path to the dictionary file for GCS.")
     gcs_group.add_argument("--gcs-in-wordlist", action="store_true", help="Also add German compound components to the SentenceSourceWordlist field. Requires --gcs.")
+    gcs_group.add_argument("--gcs-include-compound", action="store_true", help="Include the original compound word in the lemma list along with its split components. Requires --gcs.")
     gcs_group.add_argument("--gcs-only-nouns-false", action="store_true", help="Allows any type of word (verb, adjective, etc.) to be used for GCS splitting. Ignored if --gcs-combine-noun-modes is used.")
     gcs_group.add_argument("--gcs-combine-noun-modes", action="store_true", help="Run GCS in both modes (only_nouns=True and False) and combine the unique resulting components.")
     gcs_group.add_argument("--gcs-fix-genitive", action="store_true", help="Corrects German genitive noun lemmas (e.g., 'Hauses' -> 'Haus') by checking against the dictionary.")
@@ -611,6 +623,8 @@ def main():
         print("Error: --gcs-combine-noun-modes and --gcs-only-nouns-false cannot be used together.", file=sys.stderr); exit(1)
     if args.gcs_in_wordlist and not args.gcs:
         print("Error: --gcs-in-wordlist requires --gcs to be enabled.", file=sys.stderr); exit(1)
+    if args.gcs_include_compound and not args.gcs:
+        print("Error: --gcs-include-compound requires --gcs to be enabled.", file=sys.stderr); exit(1)
 
     global nlp
     nlp = spacy.load("de_core_news_lg" if args.language == "de" else "en_core_web_lg")
@@ -680,6 +694,7 @@ def main():
             'gcs_combine_noun_modes': args.gcs_combine_noun_modes,
             'gcs_fix_genitive': args.gcs_fix_genitive,
             'gcs_mask_unknown': args.gcs_mask_unknown,
+            'gcs_include_compound': args.gcs_include_compound,
             'detailed': args.detailed,
             'two_column_output': args.two_column_output,
             'html': args.html

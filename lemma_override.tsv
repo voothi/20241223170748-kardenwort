@@ -13,8 +13,8 @@
 # --- Global Rules ---
 # The following rules will always be applied, regardless of context.
 # They solve the issue of substantivized adjectives being incorrectly lemmatized by spaCy.
-#dritte	dritte	
-#Angestellte	Angestellte	
+# dritte	dritte	
+# Angestellte	Angestellte	
 Dritte	Dritte	
 
 # --- Contextual Rules ---

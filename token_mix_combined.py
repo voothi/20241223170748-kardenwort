@@ -233,21 +233,21 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
                             final_tokens.add(part_lemma)
             except Exception:
                 pass # Silently fail on GCS error
-        
-        # Standard lemmatization for the original word.
-        # This block runs for:
-        # 1. All non-compound words.
-        # 2. Compound words that failed to split.
-        # 3. Compound words that were successfully split IF gcs_include_compound is True.
+
         if not (was_split and not gcs_include_compound):
             original_inflected_form = token.text
+            default_lemma = ""
+
+            if token.i in verb_particle_map:
+                particle = verb_particle_map[token.i]
+                default_lemma = f"{particle.text.lower()}{token.lemma_}".lower()
+                original_inflected_form = f"{token.text} {particle.text}"
+            else:
+                spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
+                default_lemma = get_capitalized_lemma(token, spacy_lemma)
             
-            # Default behavior
-            spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
-            default_lemma = get_capitalized_lemma(token, spacy_lemma)
             final_lemma_to_add = default_lemma
 
-            # Check for overrides
             if original_inflected_form in lemma_overrides:
                 rules = lemma_overrides[original_inflected_form]
                 context_rules = [r for r in rules if r[1]]

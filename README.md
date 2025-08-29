@@ -84,8 +84,6 @@ Instantly create Anki cards from any word or phrase you look up in GoldenDict. T
         ```
         **Important:** You **must** replace the paths to `python.exe` and `t_starter.py` with the absolute paths on your system.
 
-        
-
 4.  Click **OK** to save.
 
 **How to Use:**
@@ -177,13 +175,29 @@ LinguaCard Creator is part of a larger ecosystem of tools designed to work toget
 -   [**Anki Template (20241106211123-anki-template)**](https://github.com/user/repo-link) (*link placeholder*): A specialized Anki card template is **required** for the generated files to display correctly. It provides the feature-rich layout shown below.
 -   [**Anki CSV Importer (20250401192017-anki-csv-importer)**](https://github.com/user/repo-link) (*link placeholder*): A standalone script that communicates with Anki via the AnkiConnect add-on to perform the import.
 
+## Related Utilities
+
+The generated TSV files are designed to be used with a specific, feature-rich Anki template named `basic-20240218092126`. This template organizes the information into a clean, interactive, and powerful layout for effective learning.
+
+-   `20250421115831-gtts-player`
+-   `20250212113752-intellifilter`
+-   `20250228230803-whisper`
+-   `20250311224733-search-py`
+-   `deep-translator`
+-   `gTTS`
+-   `argotranslate`
+-   `fabric`
+-   `piper-tts`
+-   `merge_media`
+-   `split_media_by_subtitles`
+-   and others.
+
 ## The Anki Card Template
 
 The generated TSV files are designed to be used with a specific, feature-rich Anki template named `basic-20240218092126`. This template organizes the information into a clean, interactive, and powerful layout for effective learning.
 
-
-![*(An example of a generated German vocabulary card using the template)*](assets\20250829204605.png)
-
+![An example of a generated German vocabulary card using the template](assets/20250829200342.png)
+*(Note: To display this image, create an `assets` folder in your repository and place the image file inside.)*
 
 **Template Features:**
 

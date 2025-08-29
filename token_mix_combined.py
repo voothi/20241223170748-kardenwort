@@ -143,28 +143,9 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, 
             continue
 
         if (token.is_alpha or '-' in token.text):
-            base_lemma = ""
-            if token.i in verb_particle_map:
-                particle = verb_particle_map[token.i]
-                lemma = f"{particle.text.lower()}{token.lemma_}"
-                base_lemma = lemma.lower()
-            else:
-                spacy_lemma = get_corrected_lemma(token, german_dict, fix_genitive_flag=gcs_fix_genitive)
-                base_lemma = get_capitalized_lemma(token, spacy_lemma)
-
-            token_text = token.text
-            form_to_check = token_text if token_text.isupper() else token_text.capitalize()
-            lemma_to_check = base_lemma if base_lemma.isupper() else base_lemma.capitalize()
-
-            if form_to_check in german_dict:
-                if lemma_to_check in german_dict:
-                    final_tokens.add(base_lemma)
-                else:
-                    final_tokens.add(form_to_check)
-            else:
-                final_tokens.add(base_lemma)
-
-            if gcs and ahocs and gcs_in_wordlist and nlp.lang == 'de' and len(token.text) > 7:
+            was_split = False
+            
+            if gcs and ahocs and gcs_in_wordlist and nlp.lang == 'de' and len(token.text) > 3 and (token.pos_ in ["NOUN", "PROPN"] or '-' in token.text):
                 try:
                     word_to_split = token.text
                     
@@ -189,25 +170,52 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, gcs=False, 
                         final_components = comp_split.merge_fractions(dissection)
 
                     if len(final_components) > 1:
+                        was_split = True
                         if gcs_include_compound:
-                             final_tokens.add(base_lemma)
+                            spacy_lemma_original = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
+                            primary_lemma_original = get_capitalized_lemma(token, spacy_lemma_original)
+                            final_tokens.add(primary_lemma_original)
 
                         for part in set(final_components):
                             part = part.strip('-') 
-                            if not part:
-                                continue
+                            if not part: continue
                             part_to_check = part if part.isupper() else part.capitalize()
+                            part_lemma = ""
                             if part_to_check in german_dict:
-                                final_tokens.add(part_to_check)
+                                part_lemma = part_to_check
                             else:
                                 part_doc = nlp(part)
                                 if len(part_doc) > 0:
                                     lemmatized_part_str = part_doc[0].lemma_
                                     lemma_part_to_check = lemmatized_part_str if lemmatized_part_str.isupper() else lemmatized_part_str.capitalize()
                                     if lemma_part_to_check in german_dict:
-                                        final_tokens.add(lemma_part_to_check)
+                                        part_lemma = lemma_part_to_check
+                            if part_lemma:
+                                final_tokens.add(part_lemma)
                 except Exception:
                     pass
+            
+            if not was_split:
+                primary_lemma = ""
+                if token.i in verb_particle_map:
+                    particle = verb_particle_map[token.i]
+                    lemma = f"{particle.text.lower()}{token.lemma_}"
+                    primary_lemma = lemma.lower()
+                else:
+                    spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
+                    primary_lemma = get_capitalized_lemma(token, spacy_lemma)
+                
+                token_text = token.text
+                form_to_check = token_text if token_text.isupper() else token_text.capitalize()
+                lemma_to_check = primary_lemma if primary_lemma.isupper() else primary_lemma.capitalize()
+
+                if form_to_check in german_dict:
+                    if lemma_to_check in german_dict:
+                        final_tokens.add(primary_lemma)
+                    else:
+                        final_tokens.add(form_to_check)
+                else:
+                    final_tokens.add(primary_lemma)
 
     return sorted(list(final_tokens), key=lambda x: lemma_index.get(x, float("inf")))
 

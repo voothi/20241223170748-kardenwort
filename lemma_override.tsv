@@ -21,4 +21,4 @@ Dritte	Dritte
 # The following rule will only be applied if the context in the 3rd column is met.
 # This corrects 'Bank' to 'Sitzbank' (bench) only in sentences containing 'im Park'.
 # In all other sentences (e.g., about finance), 'Bank' will be lemmatized by spaCy as usual.
-#Bank	Sitzbank	im Park auf der Bank
+# Bank	Sitzbank	im Park auf der Bank

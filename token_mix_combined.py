@@ -367,7 +367,7 @@ def process_text_v1(
                                         if lemma_part_to_check in german_dict:
                                             part_lemma = lemma_part_to_check
                                 if part_lemma:
-                                    lemmas_to_process.append((part_lemma, token.text))
+                                    lemmas_to_process.append((part_lemma, part))
                     except Exception:
                         was_split = False
                 
@@ -526,7 +526,7 @@ def process_text_v2(
                                         if lemma_part_to_check in german_dict:
                                             part_lemma = lemma_part_to_check
                                 if part_lemma:
-                                    lemmas_to_process.append((part_lemma, token.text))
+                                    lemmas_to_process.append((part_lemma, part)) 
                     except Exception:
                         was_split = False
 

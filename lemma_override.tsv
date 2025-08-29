@@ -1,47 +1,63 @@
-# Lemma Override Rules
+# ==============================================================================
+#  Lemma Override Rules
+# ==============================================================================
+#
 # This file allows for precise control over the lemmatization process.
 #
 # Format:
 # OriginalWord_FromText <TAB> Desired_Lemma <TAB> [Optional_Context_Substring]
+
+# ==============================================================================
+#  How it works & Rule Precedence
+# ==============================================================================
 #
-# ---------------------------------------------------------------------------
-# How it works & Rule Precedence
-# ---------------------------------------------------------------------------
 # The system processes rules in the following order of priority:
 #
 # 1. Contextual Match (Highest Priority):
-#    The system first checks for contextual rules (where the 3rd column is not empty).
-#    If 'OriginalWord_FromText' is found AND its 'Optional_Context_Substring' also
-#    exists in the sentence, the corresponding 'Desired_Lemma' is applied.
+#    The system first checks for contextual rules (where the 3rd column is not
+#    empty). If a rule's conditions are met, it is applied and the search
+#    for the current word stops.
 #
 # 2. Global Match (Fallback):
-#    If no contextual rule's condition is met (either because none exist for the word,
-#    or their context was not found), the system then looks for a global rule
-#    (where the 3rd column is empty) for the same 'OriginalWord_FromText'.
-#    If a global rule is found, it is applied.
+#    If no contextual rule's condition is met, the system then looks for a
+#    global rule (where the 3rd column is empty).
 #
 # 3. Default Lemmatizer:
-#    If no override rules match at all, the default lemmatizer (e.g., spaCy) is used.
-# ---------------------------------------------------------------------------
+#    If no override rules match at all, the default lemmatizer is used.
 
+# ==============================================================================
+#  Key Mechanics & Best Practices
+# ==============================================================================
+#
+# 1. Context is a Substring Search:
+#    The context in the 3rd column is a literal substring. The search is
+#    performed anywhere within the full sentence.
+#
+# 2. Matching is Case-Sensitive:
+#    All matching is strictly case-sensitive. This is critical for languages
+#    like German where nouns are capitalized.
+#
+# 3. Rule Order Matters:
+#    The file is processed top-to-bottom. The first matching rule for a word
+#    is applied. Place more specific rules before general ones.
+#
+# 4. Syntax Examples:
+#    # This is a global rule:
+#    # Dritte	Dritte
+#
+#    # This is a contextual rule:
+#    # Austernbanken	Austernbanke	ertragreichen Austernbanken
 
-# --- EXAMPLES ---
+# ==============================================================================
+#  User-Defined Override Rules
+# ==============================================================================
+#
+# Add your global and contextual override rules below.
+# The following common examples are provided to get you started.
+# To activate a rule, remove the '#' at the beginning of the line.
 
 # --- Global Rules ---
-# The following rules will always be applied, unless a contextual rule for the same
-# word takes precedence.
-Dritte	Dritte	
+#Dritte	Dritte	
 
 # --- Contextual Rules ---
-# The following rules are checked first and only applied if the context in the
-# 3rd column is met.
-
-# Corrects the lemma for 'Austernbanken' (oyster beds) to 'Austernbanke' (feminine noun).
-# This rule is contextual and applies ONLY if the exact phrase 'ertragreichen Austernbanken'
-# is found in the sentence.
-#
-# TESTING EXAMPLE:
-# - Will trigger for: "Die Fischer kennen die ertragreichen Austernbanken vor der Küste..."
-# - Will not trigger for: "Die Fischer kennen die Austernbanken vor der Küste..." (because the context is missing).
-#   If a global rule like 'Austernbanken<TAB>GlobalLemma' existed, it would be applied in the second case.
-Austernbanken	Austernbanke	ertragreichen Austernbanken
+#Austernbanken	Austernbanke	ertragreichen Austernbanken

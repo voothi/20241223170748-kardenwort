@@ -265,7 +265,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
 
             final_tokens.add(final_lemma_to_add)
 
-    return sorted(list(final_tokens), key=lambda x: (x not in lemma_index, lemma_index.get(x, 0), x))
+    return sorted(list(final_tokens), key=lambda x: (x not in lemma_index, lemma_index.get(x, 0), x.lower()))
 
 def process_text_v1(
     input_text, lemma_index, language, text2, text3, sentence_context_size,
@@ -404,7 +404,7 @@ def process_text_v1(
                              unique_lemmatized_tokens[lemma] = original_form
 
 
-    sorted_tokens = sorted(list(unique_lemmatized_tokens.keys()), key=lambda token: (token not in lemma_index, lemma_index.get(token, 0), token))
+    sorted_tokens = sorted(list(unique_lemmatized_tokens.keys()), key=lambda token: (token not in lemma_index, lemma_index.get(token, 0), token.lower()))
     if output_file:
         with open(output_file, "w", newline="", encoding="utf-8") as tsvfile:
             tsv_writer = csv.writer(tsvfile, delimiter="\t")
@@ -580,7 +580,7 @@ def process_text_v2(
                         elif len(original_form) < len(unique_lemmatized_tokens[lemma]):
                              unique_lemmatized_tokens[lemma] = original_form
 
-    sorted_tokens = sorted(list(unique_lemmatized_tokens.keys()), key=lambda token: (token not in lemma_index, lemma_index.get(token, 0), token))
+    sorted_tokens = sorted(list(unique_lemmatized_tokens.keys()), key=lambda token: (token not in lemma_index, lemma_index.get(token, 0), token.lower()))
     def get_unit_text(u):
         return u if is_line_based else u.text
 

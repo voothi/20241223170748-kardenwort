@@ -196,7 +196,7 @@ The generated TSV files are designed to be used with a specific, feature-rich An
 
 The generated TSV files are designed to be used with a specific, feature-rich Anki template named `basic-20240218092126`. This template organizes the information into a clean, interactive, and powerful layout for effective learning.
 
-![An example of a generated German vocabulary card using the template](assets/20250829200342.png)
+![An example of a generated German vocabulary card using the template](assets/20250829204605.png)
 *(Note: To display this image, create an `assets` folder in your repository and place the image file inside.)*
 
 **Template Features:**

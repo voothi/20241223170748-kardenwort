@@ -67,6 +67,7 @@ This is the easiest way to get started.
 
 Instantly create Anki cards from any word or phrase you look up in GoldenDict. This creates a seamless workflow from discovery to study.
 
+![*(GoldenDict-ng Main Window)*](assets\20250829201257.png)
 
 
 **Setup:**
@@ -181,7 +182,8 @@ LinguaCard Creator is part of a larger ecosystem of tools designed to work toget
 The generated TSV files are designed to be used with a specific, feature-rich Anki template named `basic-20240218092126`. This template organizes the information into a clean, interactive, and powerful layout for effective learning.
 
 
-*(An example of a generated German vocabulary card using the template)*
+![*(An example of a generated German vocabulary card using the template)*](assets\20250829204605.png)
+
 
 **Template Features:**
 

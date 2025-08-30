@@ -60,7 +60,6 @@ def load_lemma_overrides(file_path):
         print(f"Error reading lemma override file {file_path}: {e}", file=sys.stderr)
     return overrides
 
-# <<< НОВЫЙ БЛОК: Рефакторинг логики применения правил в отдельную функцию >>>
 def apply_lemma_override(word_to_check, sentence_context, overrides):
     """
     Applies lemma override rules to a word.
@@ -186,7 +185,6 @@ def get_capitalized_lemma(token, spacy_lemma):
 
     return spacy_lemma
 
-# <<< ИЗМЕНЕННЫЙ БЛОК: process_sentence_lemmas >>>
 def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overrides, **kwargs):
     gcs = kwargs.get('gcs', False)
     ahocs = kwargs.get('ahocs', None)
@@ -239,22 +237,25 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
                     for part in set(final_components):
                         part = part.strip('-') 
                         if not part: continue
-
-                        corrected_part = apply_lemma_override(part, sentence, lemma_overrides)
                         
-                        part_to_check = corrected_part.capitalize()
-                        part_lemma = ""
-                        if part_to_check in german_dict:
-                            part_lemma = part_to_check
+                        maybe_overridden = apply_lemma_override(part, sentence, lemma_overrides)
+                        
+                        if maybe_overridden != part:
+                            final_tokens.add(maybe_overridden)
                         else:
-                            part_doc = nlp(corrected_part)
-                            if len(part_doc) > 0:
-                                lemmatized_part_str = part_doc[0].lemma_
-                                lemma_part_to_check = lemmatized_part_str.capitalize()
-                                if lemma_part_to_check in german_dict:
-                                    part_lemma = lemma_part_to_check
-                        if part_lemma:
-                            final_tokens.add(part_lemma)
+                            part_to_check = part.capitalize()
+                            part_lemma = ""
+                            if part_to_check in german_dict:
+                                part_lemma = part_to_check
+                            else:
+                                part_doc = nlp(part)
+                                if len(part_doc) > 0:
+                                    lemmatized_part_str = part_doc[0].lemma_
+                                    lemma_part_to_check = lemmatized_part_str.capitalize()
+                                    if lemma_part_to_check in german_dict:
+                                        part_lemma = lemma_part_to_check
+                            if part_lemma:
+                                final_tokens.add(part_lemma)
             except Exception:
                 pass
 
@@ -355,21 +356,24 @@ def process_text_v1(
                                 part = part.strip('-')
                                 if not part: continue
 
-                                corrected_part = apply_lemma_override(part, line1, lemma_overrides)
-                                
-                                part_to_check = corrected_part.capitalize()
-                                part_lemma = ""
-                                if part_to_check in german_dict:
-                                    part_lemma = part_to_check
-                                else:
-                                    part_doc = nlp(corrected_part)
-                                    if len(part_doc) > 0:
-                                        lemmatized_part_str = part_doc[0].lemma_
-                                        lemma_part_to_check = lemmatized_part_str.capitalize()
-                                        if lemma_part_to_check in german_dict:
-                                            part_lemma = lemma_part_to_check
-                                if part_lemma:
+                                maybe_overridden = apply_lemma_override(part, line1, lemma_overrides)
+                                if maybe_overridden != part:
+                                    part_lemma = maybe_overridden
                                     lemmas_to_process.append((part_lemma, token.text))
+                                else:
+                                    part_to_check = part.capitalize()
+                                    part_lemma = ""
+                                    if part_to_check in german_dict:
+                                        part_lemma = part_to_check
+                                    else:
+                                        part_doc = nlp(part)
+                                        if len(part_doc) > 0:
+                                            lemmatized_part_str = part_doc[0].lemma_
+                                            lemma_part_to_check = lemmatized_part_str.capitalize()
+                                            if lemma_part_to_check in german_dict:
+                                                part_lemma = lemma_part_to_check
+                                    if part_lemma:
+                                        lemmas_to_process.append((part_lemma, token.text))
                     except Exception:
                         was_split = False
                 
@@ -514,21 +518,24 @@ def process_text_v2(
                                 part = part.strip('-')
                                 if not part: continue
 
-                                corrected_part = apply_lemma_override(part, unit_text, lemma_overrides)
-                                
-                                part_to_check = corrected_part.capitalize()
-                                part_lemma = ""
-                                if part_to_check in german_dict:
-                                    part_lemma = part_to_check
-                                else:
-                                    part_doc = nlp(corrected_part)
-                                    if len(part_doc) > 0:
-                                        lemmatized_part_str = part_doc[0].lemma_
-                                        lemma_part_to_check = lemmatized_part_str.capitalize()
-                                        if lemma_part_to_check in german_dict:
-                                            part_lemma = lemma_part_to_check
-                                if part_lemma:
+                                maybe_overridden = apply_lemma_override(part, unit_text, lemma_overrides)
+                                if maybe_overridden != part:
+                                    part_lemma = maybe_overridden
                                     lemmas_to_process.append((part_lemma, token.text))
+                                else:
+                                    part_to_check = part.capitalize()
+                                    part_lemma = ""
+                                    if part_to_check in german_dict:
+                                        part_lemma = part_to_check
+                                    else:
+                                        part_doc = nlp(part)
+                                        if len(part_doc) > 0:
+                                            lemmatized_part_str = part_doc[0].lemma_
+                                            lemma_part_to_check = lemmatized_part_str.capitalize()
+                                            if lemma_part_to_check in german_dict:
+                                                part_lemma = lemma_part_to_check
+                                    if part_lemma:
+                                        lemmas_to_process.append((part_lemma, token.text))
                     except Exception:
                         was_split = False
 
@@ -622,7 +629,6 @@ def process_text_v2(
             tsv_writer.writerow(row_data)
 
     return output_file
-# <<< КОНЕЦ ИЗМЕНЕННОГО БЛОКА >>>
 
 def process_sentences(
     language, lemma_index, text1, text2, text3, sentence_context_size,
@@ -822,7 +828,6 @@ def main():
         if not args.text1 or not args.text2:
             print("Error: --text1 and --text2 must be specified for sentence mode.", file=sys.stderr); exit(1)
         
-        # We need to pass down GCS flags even for sentences, because they might affect the wordlist.
         kwargs_for_processing = {
             'lemma_overrides': lemma_overrides,
             'gcs': args.gcs,

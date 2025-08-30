@@ -1,4 +1,11 @@
-# Kardenwort
+<p align="center">
+  <!-- ЗАГЛУШКА ДЛЯ ЛОГОТИПА: Замените src на путь к вашему файлу логотипа -->
+  <img src="assets/logo-placeholder.png" alt="Kardenwort Logo" width="150">
+</p>
+
+# **Kardenwort**
+
+> *Kontext. Kern. Karte.*
 
 ![Version](https://img.shields.io/badge/version-v1.0.0-blue)
 
@@ -10,9 +17,15 @@ This tool is perfect for language learners who want to build personalized decks 
 
 The Kardenwort project was created with one main goal: to provide an effective and flexible tool for mastering foreign language vocabulary by working with authentic text. At the heart of the project is `token_mix_combined.py`—a powerful command-line utility (CLI) developed for deep linguistic analysis of texts and the automatic creation of structured data for spaced repetition systems (SRS).
 
-It is important to understand the context of its creation: the utility was initially developed for personal use by a native Russian and Ukrainian speaker to study German and English. This has defined its key strengths, especially in the meticulous processing of German grammar. The current development and testing environment is Windows 11.
+Our philosophy can be summarized in three words:
 
-**The project's philosophy is built on three pillars:**
+**Kontext. Kern. Karte.**
+
+*   **Kontext:** We believe that words cannot be learned in a vacuum. Language is context. Kardenwort ensures that every vocabulary card retains the original sentence and surrounding phrases, allowing you to understand usage, nuance, and grammar naturally.
+*   **Kern:** Our core engine, powered by advanced NLP, drills down to find the lexical kernel (the lemma or base form) of every word. It intelligently handles complex grammar, such as German compound nouns and separable verbs, to give you the most accurate and useful information.
+*   **Karte:** The final output is a perfectly structured card (`Karte`), ready for import into Anki. It's not just a word and its translation; it's a rich, data-filled canvas for learning, complete with context, inflectional forms, and word lists.
+
+This philosophy is supported by three core principles:
 
 1.  **Openness and Free Access:** This is an open-source development that can be used anywhere without restrictions.
 2.  **Your Data in Your Hands:** The project does not require registration or subscriptions. You are not dependent on third-party services that might one day charge a fee for access to the very cards you spent hours creating.

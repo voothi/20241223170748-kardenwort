@@ -6,6 +6,28 @@ LinguaCard Creator is a powerful command-line utility designed to accelerate lan
 
 This tool is perfect for language learners who want to build personalized decks from books, articles, subtitles, or any other text they are studying.
 
+## Project Philosophy and Core Concepts
+
+The LinguaCard Creator project was created with one main goal: to provide an effective and flexible tool for mastering foreign language vocabulary by working with authentic text. At the heart of the project is `token_mix_combined.py`—a powerful command-line utility (CLI) developed for deep linguistic analysis of texts and the automatic creation of structured data for spaced repetition systems (SRS).
+
+It is important to understand the context of its creation: the utility was initially developed for personal use by a native Russian and Ukrainian speaker to study German and English. This has defined its key strengths, especially in the meticulous processing of German grammar. The current development and testing environment is Windows 11.
+
+**The project's philosophy is built on three pillars:**
+
+1.  **Openness and Free Access:** This is an open-source development that can be used anywhere without restrictions.
+2.  **Your Data in Your Hands:** The project does not require registration or subscriptions. You are not dependent on third-party services that might one day charge a fee for access to the very cards you spent hours creating.
+3.  **Maximum Flexibility:** The output of the utility is a starting point, not a rigid system. You get full control over your learning materials.
+
+### Key Advantages and Differences from Alternatives
+
+There are many solutions on the market for working with texts: LWT, Lute, LinguaCafe, VocabSieve, LingQ, Readlang, AnkiMorphs, lemmatize, alexandria-reader, LanguageCrush, Smart Book - KursX, KOReader, and others. However, `LinguaCard Creator` offers a unique combination of capabilities:
+
+*   **Intelligent German Language Processing:** None of the listed applications provide such a high level of German vocabulary processing. The utility correctly parses compound nouns, finds verbs with separable prefixes, and properly handles capitalization, which is a constant problem in other systems (e.g., nouns starting with a lowercase letter that cannot be corrected).
+*   **Complete Freedom After Export:** Unlike readers where a card is rigidly tied to the source text, here you receive completely autonomous data. With all the necessary context in the card, you can edit any field in Anki on both PC and mobile. This truly frees you up and allows you to adapt the material to your needs.
+*   **Quality You Can Influence:** The accuracy of the analysis depends on the capabilities of the `spaCy` library—a compromise between speed, resource consumption, and quality. However, you can directly influence the result by training the system through a rules/exceptions file (`lemma_override.tsv`), achieving perfect processing for your specific texts.
+
+---
+
 ## Quick Start
 
 Get your first Anki deck in 5 minutes:
@@ -46,6 +68,107 @@ Get your first Anki deck in 5 minutes:
 *   **German Compound Splitting (GCS)**: Intelligently breaks down long German compound words into their components.
 *   **Direct Anki Integration**: Automatically imports the generated cards into your Anki collection using AnkiConnect.
 *   **GoldenDict-ng Integration**: Create Anki cards directly from your favorite dictionary application.
+
+---
+
+## Core Functionality: In-Depth
+
+To analyze text, advanced NLP libraries are used:
+*   **`spaCy`**: for tokenization, lemmatization, part-of-speech tagging, and morphological analysis.
+*   **`german-compound-splitter`**: for the complex task of parsing German compound nouns.
+
+The utility's primary goal is to extract material from the source text to create two types of cards. This is achieved through two fundamental modes of operation, determined by the `--type` parameter:
+
+1.  **`--type token` (Vocabulary Cards):**
+    *   **Goal:** To create cards for studying individual words (one word per card).
+    *   **Mechanism:** The script analyzes the entire input text, extracts all unique words, reduces them to their base form (lemma), and creates a separate row in the output file for each unique lemma. Each row contains the lemma itself, its original inflected form, the sentence in which it first appeared, and the surrounding context.
+    *   **Special Feature:** This mode includes complex logic such as compound word splitting (GCS) and handling of separable prefixes for German verbs, making it particularly powerful for learning German.
+
+2.  **`--type sentence` (Sentence Cards):**
+    *   **Goal:** To create cards with sentences for studying phrases and grammar in context.
+    *   **Mechanism:** The script processes input files line by line, assuming each line is a complete sentence. For each line from the first file (`--text1`), one record is created in the output file. If parallel texts are provided (`--text2`, `--text3`), the corresponding lines from them are added to the same record, creating a card with a translation.
+    *   **Special Feature:** In this mode, a list of all lemmas found in the sentence can also be generated for the `SentenceSourceWordlist` field.
+
+### The Result of Processing
+
+The result of the script's execution is a **TSV (Tab-Separated Values) file**, which:
+*   Is fully ready for direct import into **Anki** when used with the corresponding template.
+*   Can be easily opened and analyzed in any spreadsheet application (e.g., MS Excel, LibreOffice Calc) or an editor like VS Code with the `vscode-edit-csv` plugin. This allows using the exports to create custom word lists and other study materials.
+
+---
+
+## Understanding Input Processing
+
+Understanding how the utility receives and interprets input data is key to its effective use.
+
+### Ways to Provide Data
+
+*   **`--text "..."`**: Directly providing text as a string. This method is ideal for integration with other programs (e.g., GoldenDict, where the selected word `%GDWORD%` is passed) or for quickly processing short phrases. **Mutually exclusive with `--text1`**.
+*   **`--text1 <path_to_file>`**: Specifying the path to the main text file. This is the standard method for processing large volumes of text (books, articles, subtitles).
+*   **`--text2 <path_to_file>`** and **`--text3 <path_to_file>`**: Specifying paths to files with parallel texts (e.g., translations).
+
+### File Format Requirements
+
+*   **Format:** Plain text file (`.txt`).
+*   **Encoding:** **UTF-8**. Using another encoding may lead to reading errors.
+*   **Structure for Parallel Texts:** When using `--text2` or `--text3`, it is crucial to ensure **strict line-by-line correspondence**. Line N in `text2.txt` must be the exact translation of line N in `text1.txt`. Violating this rule will lead to incorrect sentence matching on Anki cards.
+
+### The Hybrid Mechanism for Defining "Processing Units"
+
+This is one of the most important features of the utility, directly affecting how context is formed in the final TSV file. The utility automatically chooses one of two ways to split the text into "processing units" (essentially, sentences):
+
+1.  **"Line-by-Line" Mode:**
+    *   **Trigger Condition:** Activates if the input text (from `--text` or `--text1`) contains at least one newline character (`\n`).
+    *   **Logic:** The script treats each line as a separate and complete "processing unit." It does not attempt to further divide lines into sentences.
+    *   **Application:** This mode is primary for working with parallel texts and subtitles, where each line is a self-contained phrase.
+
+2.  **"Sentence Tokenization" Mode:**
+    *   **Trigger Condition:** Activates if the entire input text is a single block without any newline characters.
+    *   **Logic:** The script uses `spaCy`'s built-in sentence tokenizer to grammatically and correctly split the continuous text into individual sentences. Each detected sentence becomes a "processing unit."
+    *   **Application:** This mode is ideal for processing prose—articles, paragraphs from books, etc.
+
+**How this affects Anki cards:** The `SentenceSource` field on the card will contain the "processing unit" where the word was found. The context fields (`SentenceSourceContextLeft` and `SentenceSourceContextRight`) will contain the preceding and succeeding "processing units," respectively. Thus, how your source file was structured (line-by-line or as continuous text) directly determines what you will see as context on your Anki card.
+
+---
+
+## Deep Dive: The Processing Pipeline
+
+The utility's workflow can be broken down into the following stages:
+
+#### Step 1: Initialization and Setup
+
+1.  **Argument Parsing:** Using `argparse`, the script reads all command-line parameters (`--type`, `--language`, file paths, GCS flags, etc.).
+2.  **Loading the NLP Model:** Based on the `--language` parameter, the corresponding "large" `spaCy` model is loaded (`de_core_news_lg` for German or `en_core_web_lg` for English).
+3.  **Loading Auxiliary Data:**
+    *   **GCS Dictionary (`--gcs-dictionary`):** Used to validate the correctness of compound word splitting and to correct lemmas of genitive nouns.
+    *   **Lemma Override Rules (`--lemma-override-file`):** A TSV file (`lemma_override.tsv`) is loaded, allowing the user to manually define lemmatization rules (globally or with context).
+    *   **Lemma Index (`--lemma-index-file`):** A CSV file (e.g., a frequency dictionary) is loaded, which is used to sort the output data so that known words appear in a predictable order.
+
+#### Step 2: Input Processing and Main Loop
+
+1.  **Text Splitting:** The input text is divided into "processing units" according to the hybrid mechanism described above.
+2.  **Token Iteration:** The script iterates through each token (word or punctuation mark) in every processing unit, using `spaCy` metadata (lemma, part of speech, morphology).
+3.  **Filtering:** Tokens that are not words (punctuation, numbers, spaces) are discarded.
+4.  **Lemmatization and Processing:** A complex sequence of actions is performed for each word:
+    a. **Compound Word Splitting (GCS):** If the `--gcs` flag is enabled for German, the script attempts to break down long nouns into their component parts.
+    b. **Standard Lemmatization:** If the word was not split by GCS, its lemma is determined using `spaCy`.
+    c. **Correction and Normalization:**
+        *   **Separable Prefixes (German):** Finds verbs with separable prefixes (e.g., `...fahren sie ... an`) and correctly combines them into a single lemma (`anfahren`).
+        *   **Genitive Case (German):** Corrects lemmas of nouns in the genitive case (e.g., `Hauses` -> `Haus`).
+        *   **Capitalization:** Correctly sets capitalization: nouns are always capitalized, other words are lowercase.
+    d. **Applying Override Rules:** After all automatic transformations, the rules from `lemma_override.tsv` are checked, and if a match is found, the standard lemma is replaced with the user-defined one.
+5.  **Collecting Unique Lemmas:** All resulting lemmas are collected into a dictionary, ensuring that only one card is created for each unique word.
+
+#### Step 3: Sorting
+
+Before writing to the file, the final list of unique lemmas is sorted: new words first, then known words (in the order from `--lemma-index-file`), and finally, alphabetically.
+
+#### Step 4: Generating the Output TSV File
+
+1.  **File Creation:** An output filename is generated.
+2.  **Writing Headers:** If the `--with-fields` flag is specified, the first line with the names of all 80 fields corresponding to the Anki template is written to the file.
+3.  **Writing Data:** A row is created in the TSV file for each sorted lemma.
+4.  **Output to `stdout`:** If the `--pipe` flag is specified or no output file (`--output`) is provided, the result is printed directly to the standard output stream (important for integration with GoldenDict).
 
 ---
 
@@ -185,17 +308,29 @@ These flags are primarily for debugging and direct console output, not for gener
 
 ---
 
-## Project Ecosystem & Template
+## Project Ecosystem: Integration and Automation
 
-(The rest of the README remains the same: Project Ecosystem, The Anki Card Template, Requirements, Installation, License, etc.)
+The power of `LinguaCard Creator` is fully unlocked through its integration with other tools, creating a seamless and fully automated pipeline from the source text to ready-to-study flashcards.
 
-## Project Ecosystem
+### The Complete Workflow with Anki
 
-LinguaCard Creator is part of a larger ecosystem of tools designed to work together:
+This tight integration is managed by the `t_starter.py` script and involves three key components:
 
--   **LinguaCard Creator (This Project)**: The core engine for text processing and TSV file generation.
--   [**Anki Template (20241106211123-anki-template)**](https://github.com/user/repo-link) (*link placeholder*): A specialized Anki card template is **required** for the generated files to display correctly. It provides the feature-rich layout shown below.
--   [**Anki CSV Importer (20250401192017-anki-csv-importer)**](https://github.com/user/repo-link) (*link placeholder*): A standalone script that communicates with Anki via the AnkiConnect add-on to perform the import.
+1.  **LinguaCard Creator (This Project)**
+    *   **Role:** The "brain" of the operation. It performs all the heavy lifting of text processing (NLP) and generates a highly structured `.tsv` file.
+
+2.  **Anki CSV Importer (project `20250401192017-anki-csv-importer`)**
+    *   **Role:** The "bridge" to Anki. A separate script that uses the AnkiConnect add-on to programmatically import the `.tsv` file into a specified Anki deck without manual intervention.
+
+3.  **Anki Template (project `20241106211123-anki-template`)**
+    *   **Role:** The "canvas" for the cards. A specially designed Anki note type (`basic-20240218092126`) containing over 80 fields that perfectly match the columns in the `.tsv` file and transform the data into an interactive card.
+
+**The Automated Process:**
+By running a single command (e.g., `t_batch_de.dual.bat`), you trigger a chain reaction: `t_starter.py` calls `token_mix_combined.py` to create the `.tsv` file, and then immediately calls `anki-csv-importer.py` to import that file into Anki using the correct template.
+
+### AI-Powered Enrichment
+
+The rich and structured context generated for each card provides an ideal foundation for further processing with large language models. Using the Anki plugin **IntelliFilter** (ID: `20250212113752-intellifilter`), you can send requests directly from Anki to OpenAI to automatically add translations, synonyms, usage examples, and any other information, significantly enriching your study materials.
 
 ## Related Utilities
 

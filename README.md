@@ -129,7 +129,7 @@ Below is a detailed list of all available arguments for the core processing scri
 
 | Argument | Description | Example |
 | :--- | :--- | :--- |
-| `--text` | Process a string directly instead of a file. For `single` mode only. | `--text "This is a test."` |
+| `--text` | Process a string directly instead of a file. For `single` mode only. **Mutually exclusive with `--text1`**. | `--text "This is a test."` |
 | `--text1` | Path to the primary source text file. | `--text1 "in/source.txt"` |
 | `--text2` | Path to the second text file (e.g., translation). For `dual`/`triple` modes. | `--text2 "in/target.txt"` |
 | `--text3` | Path to the third text file. For `triple` mode only. | `--text3 "in/extra.txt"` |
@@ -158,7 +158,7 @@ Below is a detailed list of all available arguments for the core processing scri
 
 ### German Compound Splitting (GCS) Options
 
-These options are only for `--language de`.
+**Note:** All GCS options require `--gcs` to be enabled and are only effective when using `--type token`. They will be ignored in `sentence` mode.
 
 | Argument | Description | Example |
 | :--- | :--- | :--- |
@@ -167,11 +167,11 @@ These options are only for `--language de`.
 | `--gcs-include-compound` | Include the original compound word in the card list along with its split parts. | `--gcs-include-compound` |
 | `--gcs-in-wordlist` | Also add the split components to the `SentenceSourceWordlist` field. | `--gcs-in-wordlist` |
 | `--gcs-combine-noun-modes` | Runs GCS in two modes (splitting on nouns-only and any word type) and merges the results for more comprehensive splitting. | `--gcs-combine-noun-modes` |
-| `--gcs-only-nouns-false` | Allows any word type (verb, adjective, etc.) to be used for GCS splitting. Ignored if `--gcs-combine-noun-modes` is used. | `--gcs-only-nouns-false` |
+| `--gcs-only-nouns-false` | Allows any word type (verb, adjective, etc.) to be used for GCS splitting. **Ignored if `--gcs-combine-noun-modes` is used**. | `--gcs-only-nouns-false` |
 | `--gcs-fix-genitive` | Attempts to correct German genitive noun lemmas (e.g., 'Hauses' -> 'Haus'). | `--gcs-fix-genitive` |
 | `--gcs-mask-unknown` | During GCS splitting, mask word parts not found in the dictionary as 'unknown'. | `--gcs-mask-unknown` |
 | `--make-singular` | Force making compound parts singular during GCS splitting, regardless of the word's part of speech. | `--make-singular` |
-| `--no-make-singular` | Prevent making compound parts singular, keeping their original form. Overrides `--make-singular`. | `--no-make-singular` |
+| `--no-make-singular` | Prevent making compound parts singular, keeping their original form. **Overrides `--make-singular`**. | `--no-make-singular` |
 
 ### Debugging & Console Output
 These flags are primarily for debugging and direct console output, not for generating the final Anki `.tsv` file.

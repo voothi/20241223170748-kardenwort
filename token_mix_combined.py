@@ -15,7 +15,6 @@ except ImportError:
     GCS_AVAILABLE = False
 
 def load_dictionary_to_set(file_path):
-    """Loads a dictionary into a set for fast lookups."""
     dictionary = set()
     try:
         with open(file_path, "r", encoding="utf-8") as f:
@@ -28,7 +27,6 @@ def load_dictionary_to_set(file_path):
     return dictionary
 
 def load_lemma_overrides(file_path):
-    """Loads a TSV file with lemma override rules into a dictionary."""
     overrides = {}
     try:
         with open(file_path, "r", encoding="utf-8") as f:
@@ -61,7 +59,6 @@ def load_lemma_overrides(file_path):
     return overrides
 
 def get_corrected_lemma(token, german_dict, fix_genitive_flag=False):
-    """Corrects spaCy's lemmatization for German genitive nouns if the flag is set."""
     spacy_lemma = token.lemma_
     if (fix_genitive_flag and
         nlp.lang == 'de' and
@@ -76,10 +73,6 @@ def get_corrected_lemma(token, german_dict, fix_genitive_flag=False):
     return spacy_lemma
 
 def find_verb_particle_pairs(doc):
-    """
-    Scans a spaCy doc and returns a map of verb index to its particle token.
-    Relies on the 'svp' dependency, which is more reliable than POS tags.
-    """
     pairs = {}
     for token in doc:
         if token.dep_ == "svp":
@@ -214,23 +207,42 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
                 if len(final_components) > 1:
                     was_split = True
                     for part in set(final_components):
-                        part = part.strip('-') 
+                        part = part.strip('-')
                         if not part: continue
+                        
                         part_to_check = part.capitalize()
-                        part_lemma = ""
+                        default_part_lemma = ""
                         if part_to_check in german_dict:
-                            part_lemma = part_to_check
+                            default_part_lemma = part_to_check
                         else:
                             part_doc = nlp(part)
                             if len(part_doc) > 0:
                                 lemmatized_part_str = part_doc[0].lemma_
                                 lemma_part_to_check = lemmatized_part_str.capitalize()
                                 if lemma_part_to_check in german_dict:
-                                    part_lemma = lemma_part_to_check
-                        if part_lemma:
-                            final_tokens.add(part_lemma)
+                                    default_part_lemma = lemma_part_to_check
+                        
+                        final_part_lemma = default_part_lemma
+
+                        if part in lemma_overrides:
+                            rules = lemma_overrides[part]
+                            context_rules = [r for r in rules if r[1]]
+                            global_rule = next((r for r in rules if not r[1]), None)
+                            
+                            found_context_match = False
+                            for desired_lemma, context in context_rules:
+                                if context in token.text:
+                                    final_part_lemma = desired_lemma
+                                    found_context_match = True
+                                    break
+                            
+                            if not found_context_match and global_rule:
+                                final_part_lemma = global_rule[0]
+
+                        if final_part_lemma:
+                            final_tokens.add(final_part_lemma)
             except Exception:
-                pass # Silently fail on GCS error
+                pass
 
         if not (was_split and not gcs_include_compound):
             original_inflected_form = token.text
@@ -348,19 +360,38 @@ def process_text_v1(
                             for part in set(final_components):
                                 part = part.strip('-')
                                 if not part: continue
+
                                 part_to_check = part.capitalize()
-                                part_lemma = ""
+                                default_part_lemma = ""
                                 if part_to_check in german_dict:
-                                    part_lemma = part_to_check
+                                    default_part_lemma = part_to_check
                                 else:
                                     part_doc = nlp(part)
                                     if len(part_doc) > 0:
                                         lemmatized_part_str = part_doc[0].lemma_
                                         lemma_part_to_check = lemmatized_part_str.capitalize()
                                         if lemma_part_to_check in german_dict:
-                                            part_lemma = lemma_part_to_check
-                                if part_lemma:
-                                    lemmas_to_process.append((part_lemma, token.text))
+                                            default_part_lemma = lemma_part_to_check
+                                
+                                final_part_lemma = default_part_lemma
+
+                                if part in lemma_overrides:
+                                    rules = lemma_overrides[part]
+                                    context_rules = [r for r in rules if r[1]]
+                                    global_rule = next((r for r in rules if not r[1]), None)
+                                    
+                                    found_context_match = False
+                                    for desired_lemma, context in context_rules:
+                                        if context in token.text:
+                                            final_part_lemma = desired_lemma
+                                            found_context_match = True
+                                            break
+                                    
+                                    if not found_context_match and global_rule:
+                                        final_part_lemma = global_rule[0]
+
+                                if final_part_lemma:
+                                    lemmas_to_process.append((final_part_lemma, token.text))
                     except Exception:
                         was_split = False
                 
@@ -521,19 +552,38 @@ def process_text_v2(
                             for part in set(final_components):
                                 part = part.strip('-')
                                 if not part: continue
+
                                 part_to_check = part.capitalize()
-                                part_lemma = ""
+                                default_part_lemma = ""
                                 if part_to_check in german_dict:
-                                    part_lemma = part_to_check
+                                    default_part_lemma = part_to_check
                                 else:
                                     part_doc = nlp(part)
                                     if len(part_doc) > 0:
                                         lemmatized_part_str = part_doc[0].lemma_
                                         lemma_part_to_check = lemmatized_part_str.capitalize()
                                         if lemma_part_to_check in german_dict:
-                                            part_lemma = lemma_part_to_check
-                                if part_lemma:
-                                    lemmas_to_process.append((part_lemma, token.text))
+                                            default_part_lemma = lemma_part_to_check
+                                
+                                final_part_lemma = default_part_lemma
+
+                                if part in lemma_overrides:
+                                    rules = lemma_overrides[part]
+                                    context_rules = [r for r in rules if r[1]]
+                                    global_rule = next((r for r in rules if not r[1]), None)
+                                    
+                                    found_context_match = False
+                                    for desired_lemma, context in context_rules:
+                                        if context in token.text:
+                                            final_part_lemma = desired_lemma
+                                            found_context_match = True
+                                            break
+                                    
+                                    if not found_context_match and global_rule:
+                                        final_part_lemma = global_rule[0]
+
+                                if final_part_lemma:
+                                    lemmas_to_process.append((final_part_lemma, token.text))
                     except Exception:
                         was_split = False
 

@@ -1,6 +1,6 @@
 <p align="center">
   <!-- ЗАГЛУШКА ДЛЯ ЛОГОТИПА: Замените src на путь к вашему файлу логотипа -->
-  <img src="assets/logo-placeholder.png" alt="Kardenwort Logo" width="150">
+  <img src="assets/20250831013923.png" alt="Kardenwort Logo" width="300">
 </p>
 
 # **Kardenwort**

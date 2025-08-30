@@ -60,6 +60,7 @@ def load_lemma_overrides(file_path):
         print(f"Error reading lemma override file {file_path}: {e}", file=sys.stderr)
     return overrides
 
+# <<< НОВЫЙ БЛОК: Рефакторинг логики применения правил в отдельную функцию >>>
 def apply_lemma_override(word_to_check, sentence_context, overrides):
     """
     Applies lemma override rules to a word.
@@ -78,7 +79,7 @@ def apply_lemma_override(word_to_check, sentence_context, overrides):
 
     if global_rule:
         return global_rule[0]
-        
+
     return word_to_check
 
 def get_corrected_lemma(token, german_dict, fix_genitive_flag=False):
@@ -185,6 +186,7 @@ def get_capitalized_lemma(token, spacy_lemma):
 
     return spacy_lemma
 
+# <<< ИЗМЕНЕННЫЙ БЛОК: process_sentence_lemmas >>>
 def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overrides, **kwargs):
     gcs = kwargs.get('gcs', False)
     ahocs = kwargs.get('ahocs', None)
@@ -237,7 +239,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
                     for part in set(final_components):
                         part = part.strip('-') 
                         if not part: continue
-                        
+
                         corrected_part = apply_lemma_override(part, sentence, lemma_overrides)
                         
                         part_to_check = corrected_part.capitalize()
@@ -272,7 +274,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
             maybe_overridden = apply_lemma_override(original_inflected_form, sentence, lemma_overrides)
             if maybe_overridden != original_inflected_form:
                 final_lemma_to_add = maybe_overridden
-            
+
             final_tokens.add(final_lemma_to_add)
 
     return sorted(list(final_tokens), key=lambda x: (x not in lemma_index, lemma_index.get(x, 0), x.lower()))
@@ -317,12 +319,7 @@ def process_text_v1(
                 lemmas_to_process = []
                 was_split = False
                 
-                is_keep_as_is_override = False
-                if token.text in lemma_overrides:
-                    if any(lemma == token.text and context is None for lemma, context in lemma_overrides[token.text]):
-                        is_keep_as_is_override = True
-
-                if gcs and ahocs and not is_keep_as_is_override and language == 'de' and len(token.text) > 3 and (token.pos_ in ["NOUN", "PROPN"] or '-' in token.text):
+                if gcs and ahocs and language == 'de' and len(token.text) > 3 and (token.pos_ in ["NOUN", "PROPN"] or '-' in token.text):
                     try:
                         word_to_split = token.text
                         if no_make_singular: should_make_singular = False
@@ -372,7 +369,7 @@ def process_text_v1(
                                         if lemma_part_to_check in german_dict:
                                             part_lemma = lemma_part_to_check
                                 if part_lemma:
-                                    lemmas_to_process.append((part_lemma, part))
+                                    lemmas_to_process.append((part_lemma, token.text))
                     except Exception:
                         was_split = False
                 
@@ -481,12 +478,7 @@ def process_text_v2(
                 lemmas_to_process = []
                 was_split = False
 
-                is_keep_as_is_override = False
-                if token.text in lemma_overrides:
-                    if any(lemma == token.text and context is None for lemma, context in lemma_overrides[token.text]):
-                        is_keep_as_is_override = True
-
-                if gcs and ahocs and not is_keep_as_is_override and language == 'de' and len(token.text) > 3 and (token.pos_ in ["NOUN", "PROPN"] or '-' in token.text):
+                if gcs and ahocs and language == 'de' and len(token.text) > 3 and (token.pos_ in ["NOUN", "PROPN"] or '-' in token.text):
                     try:
                         word_to_split = token.text
                         if no_make_singular: should_make_singular = False
@@ -536,7 +528,7 @@ def process_text_v2(
                                         if lemma_part_to_check in german_dict:
                                             part_lemma = lemma_part_to_check
                                 if part_lemma:
-                                    lemmas_to_process.append((part_lemma, part)) 
+                                    lemmas_to_process.append((part_lemma, token.text))
                     except Exception:
                         was_split = False
 
@@ -555,7 +547,7 @@ def process_text_v2(
                     maybe_overridden = apply_lemma_override(original_inflected_form, unit_text, lemma_overrides)
                     if maybe_overridden != original_inflected_form:
                         final_lemma_to_add = maybe_overridden
-                    
+
                     lemmas_to_process.append((final_lemma_to_add, original_inflected_form))
 
                 for lemma, original_form in lemmas_to_process:
@@ -630,6 +622,7 @@ def process_text_v2(
             tsv_writer.writerow(row_data)
 
     return output_file
+# <<< КОНЕЦ ИЗМЕНЕННОГО БЛОКА >>>
 
 def process_sentences(
     language, lemma_index, text1, text2, text3, sentence_context_size,
@@ -829,6 +822,7 @@ def main():
         if not args.text1 or not args.text2:
             print("Error: --text1 and --text2 must be specified for sentence mode.", file=sys.stderr); exit(1)
         
+        # We need to pass down GCS flags even for sentences, because they might affect the wordlist.
         kwargs_for_processing = {
             'lemma_overrides': lemma_overrides,
             'gcs': args.gcs,

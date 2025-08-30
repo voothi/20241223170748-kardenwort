@@ -82,12 +82,12 @@
 # --- Global Rules ---
 #Dritte	Dritte	
 #Dritte	Dritte	
-#Übungsaufgaben	Übungsaufgabe	
-#Bilddaten	Bilddaten	
-#Audiodaten	Audiodaten	
+Übungsaufgaben	Übungsaufgabe	
+Bilddaten	Bilddaten	
+Audiodaten	Audiodaten	
 
 # --- Contextual Rules ---
 #Austernbanken	Austernbanke	Küste
-#Austernbanken	Austernbanke	test
-#Date	Daten	Bilddaten
-#Date	Daten	Audiodaten
+Austernbanken	Austernbanke	Küste
+Date	Daten	Bilddaten
+Date	Daten	Audiodaten

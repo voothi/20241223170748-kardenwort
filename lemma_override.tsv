@@ -4,49 +4,77 @@
 #
 # This file allows for precise control over the lemmatization process.
 #
-# Format:
-# OriginalWord_FromText <TAB> Desired_Lemma <TAB> [Optional_Context_Substring]
+# There are two formats for rules, depending on what you want to target.
+#
+# Format (for a simple word):
+# Word <TAB> Desired_Lemma <TAB> [Optional_Context_Substring]
+#
+# Format (for a compound word part):
+# CompoundWord:Part <TAB> Desired_Lemma <TAB> [Optional_Context_Substring]
+#
+# See the 'Mechanics & Best Practices' section for detailed examples.
 
 # ==============================================================================
 #  How it works & Rule Precedence
 # ==============================================================================
 #
-# The system processes rules in the following order of priority:
+# The system applies rules with the following priority:
 #
 # 1. Contextual Match (Highest Priority):
-#    The system first checks for contextual rules (where the 3rd column is not
-#    empty). If a rule's conditions are met, it is applied and the search
-#    for the current word stops.
+#    The system first checks for rules where the 3rd column (context) is not
+#    empty. If a rule's conditions match, it is applied, and the search
+#    for the current word or part stops.
 #
 # 2. Global Match (Fallback):
-#    If no contextual rule's condition is met, the system then looks for a
-#    global rule (where the 3rd column is empty).
+#    If no contextual rule matches, the system looks for a global rule for
+#    the same word or part (where the 3rd column is empty).
 #
 # 3. Default Lemmatizer:
-#    If no override rules match at all, the default lemmatizer is used.
+#    If no override rules match, the default lemmatizer is used.
 
 # ==============================================================================
-#  Key Mechanics & Best Practices
+#  Mechanics & Best Practices
 # ==============================================================================
 #
-# 1. Context is a Substring Search:
+# 1. Targeting Words and Compound Parts:
+#    The first column of a rule determines what is being replaced.
+#
+#    - To target a simple word, use the word itself:
+#      Dritte	Dritte
+#
+#    - To target a part of a compound word, use the format 'CompoundWord:Part':
+#      Bilddaten:Date	Daten
+#
+#      This rule targets the component 'Date' only when it originates from
+#      the compound 'Bilddaten'. This is the recommended way to handle compounds
+#      as it is explicit and unambiguous.
+#
+# 2. Context is a Substring Search in the Sentence:
 #    The context in the 3rd column is a literal substring. The search is
-#    performed anywhere within the full sentence.
+#    always performed anywhere within the full sentence for all rule types.
 #
 #    - Example: For the sentence "...ertragreichen Austernbanken vor der Küste..."
 #    - Context 'ichen Austernbanken vo' will match.
 #    - Context 'vor der Küste' will also match, even though it is not
 #      adjacent to the original word.
 #
-# 2. Matching is Case-Sensitive:
-#    All matching is strictly case-sensitive. This is critical for languages
-#    like German where nouns are capitalized.
+#    - Example of a contextual rule in action:
+#      The rule 'Austernbanken <TAB> Austernbanke <TAB> ertragreichen Austernbanken'
+#      will trigger for the sentence:
+#      "Die Fischer kennen die ertragreichen Austernbanken vor der Küste..."
+#      but will not trigger for:
+#      "Die Fischer kennen die Austernbanken vor der Küste..."
+#      because the required context is missing.
+#
+# 3. Matching is Case-Sensitive:
+#    All matching for words, parts, and contexts is strictly case-sensitive. This
+#    is critical for languages like German where nouns are capitalized.
 #
 #    - Example: For the text "...vor der Küste..."
 #    - Context 'vor der Küste' will match.
 #    - Context 'vor der küste' (with lowercase 'k') will not match.
 #
-# 3. Rule Order Matters:
+# 4. Rule Order Can Matter:
 #    The file is processed top-to-bottom. The first matching rule for a word
 #    is applied. Place more specific rules before more general ones.
 #
@@ -54,40 +82,33 @@
 #      # Specific rule (should be placed first to be effective)
 #      Austernbanken	LemmaA	schönen Austernbanken
 #      # General rule (will be ignored if the one above has already matched)
-#      Austernbanken	LemmaB	Austernbanken
+#      Austernbanken	LemmaB	
 #
-# 4. Behavior of a Contextual Rule (Test Case):
-#    A contextual rule corrects a lemma only in a specific phrase. Consider
-#    the following rule:
-#
-#    # Austernbanken	Austernbanke	ertragreichen Austernbanken
-#
-#    This rule demonstrates the following behavior:
-#
-#    - The rule triggers for the sentence:
-#      "Die Fischer kennen die ertragreichen Austernbanken vor der Küste..."
-#
-#    - The rule does not trigger for the sentence:
-#      "Die Fischer kennen die Austernbanken vor der Küste..."
-#      (because the required context 'ertragreichen Austernbanken' is missing).
+# 5. Backward Compatibility for Compound Parts:
+#    For backward compatibility, rules targeting only a component part (e.g., 'Date')
+#    are still supported. However, their context (the third column) is matched only
+#    against the original compound word ('Bilddaten'), not the full sentence.
+#    The new 'CompoundWord:Part' format is recommended for its clarity and
+#    consistent context handling.
 
 # ==============================================================================
 #  User-Defined Override Rules
 # ==============================================================================
 #
 # Add your global and contextual override rules below.
-# The following common examples are provided to get you started.
 # To activate a rule, remove the '#' at the beginning of the line.
 
-# --- Global Rules ---
-#Dritte	Dritte	
+# --- Global Rules for simple words ---
 Dritte	Dritte	
 Übungsaufgaben	Übungsaufgabe	
 Bilddaten	Bilddaten	
 Audiodaten	Audiodaten	
 
 # --- Contextual Rules ---
-#Austernbanken	Austernbanke	Küste
+# Example: Lemmatize 'Austernbanken' differently only if 'Küste' is in the sentence.
 Austernbanken	Austernbanke	Küste
-Date	Daten	Bilddaten
-Date	Daten	Audiodaten
+
+# --- Rules for Compound Word Parts (Recommended Format) ---
+# Example: Change the lemma for the 'Date' part of 'Bilddaten' and 'Audiodaten'.
+Bilddaten:Date	Daten
+Audiodaten:Date	Daten

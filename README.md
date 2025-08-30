@@ -1,14 +1,14 @@
-# LinguaCard Creator
+# Kardenwort
 
 ![Version](https://img.shields.io/badge/version-v1.0.0-blue)
 
-LinguaCard Creator is a powerful command-line utility designed to accelerate language learning by automatically creating Anki flashcards from any text. It intelligently processes your source material, extracts vocabulary (tokens) and full sentences, and generates a structured file ready for direct import into Anki.
+Kardenwort is a powerful command-line utility designed to accelerate language learning by automatically creating Anki flashcards from any text. It intelligently processes your source material, extracts vocabulary (tokens) and full sentences, and generates a structured file ready for direct import into Anki.
 
 This tool is perfect for language learners who want to build personalized decks from books, articles, subtitles, or any other text they are studying.
 
 ## Project Philosophy and Core Concepts
 
-The LinguaCard Creator project was created with one main goal: to provide an effective and flexible tool for mastering foreign language vocabulary by working with authentic text. At the heart of the project is `token_mix_combined.py`—a powerful command-line utility (CLI) developed for deep linguistic analysis of texts and the automatic creation of structured data for spaced repetition systems (SRS).
+The Kardenwort project was created with one main goal: to provide an effective and flexible tool for mastering foreign language vocabulary by working with authentic text. At the heart of the project is `token_mix_combined.py`—a powerful command-line utility (CLI) developed for deep linguistic analysis of texts and the automatic creation of structured data for spaced repetition systems (SRS).
 
 It is important to understand the context of its creation: the utility was initially developed for personal use by a native Russian and Ukrainian speaker to study German and English. This has defined its key strengths, especially in the meticulous processing of German grammar. The current development and testing environment is Windows 11.
 
@@ -20,7 +20,7 @@ It is important to understand the context of its creation: the utility was initi
 
 ### Key Advantages and Differences from Alternatives
 
-There are many solutions on the market for working with texts: LWT, Lute, LinguaCafe, VocabSieve, LingQ, Readlang, AnkiMorphs, lemmatize, alexandria-reader, LanguageCrush, Smart Book - KursX, KOReader, and others. However, `LinguaCard Creator` offers a unique combination of capabilities:
+There are many solutions on the market for working with texts: LWT, Lute, LinguaCafe, VocabSieve, LingQ, Readlang, AnkiMorphs, lemmatize, alexandria-reader, LanguageCrush, Smart Book - KursX, KOReader, and others. However, `Kardenwort` offers a unique combination of capabilities:
 
 *   **Intelligent German Language Processing:** None of the listed applications provide such a high level of German vocabulary processing. The utility correctly parses compound nouns, finds verbs with separable prefixes, and properly handles capitalization, which is a constant problem in other systems (e.g., nouns starting with a lowercase letter that cannot be corrected).
 *   **Complete Freedom After Export:** Unlike readers where a card is rigidly tied to the source text, here you receive completely autonomous data. With all the necessary context in the card, you can edit any field in Anki on both PC and mobile. This truly frees you up and allows you to adapt the material to your needs.
@@ -174,7 +174,7 @@ Before writing to the file, the final list of unique lemmas is sorted: new words
 
 ## Usage Scenarios
 
-You can use LinguaCard Creator in several ways, from simple batch files to direct command-line calls for advanced integration.
+You can use Kardenwort in several ways, from simple batch files to direct command-line calls for advanced integration.
 
 ### 1. Basic Usage (Using Batch Files)
 
@@ -310,13 +310,13 @@ These flags are primarily for debugging and direct console output, not for gener
 
 ## Project Ecosystem: Integration and Automation
 
-The power of `LinguaCard Creator` is fully unlocked through its integration with other tools, creating a seamless and fully automated pipeline from the source text to ready-to-study flashcards.
+The power of `Kardenwort` is fully unlocked through its integration with other tools, creating a seamless and fully automated pipeline from the source text to ready-to-study flashcards.
 
 ### The Complete Workflow with Anki
 
 This tight integration is managed by the `t_starter.py` script and involves three key components:
 
-1.  **LinguaCard Creator (This Project)**
+1.  **Kardenwort (This Project)**
     *   **Role:** The "brain" of the operation. It performs all the heavy lifting of text processing (NLP) and generates a highly structured `.tsv` file.
 
 2.  **Anki CSV Importer (project `20250401192017-anki-csv-importer`)**
@@ -419,7 +419,7 @@ Before running the scripts, you need to update the hardcoded paths to match your
 
 -   **In all `.bat` files** (e.g., `t_batch_de.dual.bat.txt`):
     -   `PYTHON_PATH`: Set this to the path of the Python executable inside your virtual environment.
-    -   `WORKSPACE`: Set this to the root directory of the `LinguaCard Creator` project.
+    -   `WORKSPACE`: Set this to the root directory of the `Kardenwort` project.
 -   **In `t_starter.py`**:
     -   Update the paths for `python_path`, `token_workspace`, and `importer_workspace` if you did not clone the projects into the same parent folder.
 -   **In `anki-csv-importer.py` (from the importer project)**:

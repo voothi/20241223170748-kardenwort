@@ -224,14 +224,24 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
                         
                         final_part_lemma = default_part_lemma
 
-                        if part in lemma_overrides:
-                            rules = lemma_overrides[part]
+                        specific_key = f"{token.text}:{part}"
+                        rule_key_to_use = None
+                        context_scope = sentence
+
+                        if specific_key in lemma_overrides:
+                            rule_key_to_use = specific_key
+                        elif part in lemma_overrides:
+                            rule_key_to_use = part
+                            context_scope = token.text
+
+                        if rule_key_to_use:
+                            rules = lemma_overrides[rule_key_to_use]
                             context_rules = [r for r in rules if r[1]]
                             global_rule = next((r for r in rules if not r[1]), None)
                             
                             found_context_match = False
                             for desired_lemma, context in context_rules:
-                                if context in token.text:
+                                if context in context_scope:
                                     final_part_lemma = desired_lemma
                                     found_context_match = True
                                     break
@@ -375,14 +385,24 @@ def process_text_v1(
                                 
                                 final_part_lemma = default_part_lemma
 
-                                if part in lemma_overrides:
-                                    rules = lemma_overrides[part]
+                                specific_key = f"{token.text}:{part}"
+                                rule_key_to_use = None
+                                context_scope = line1
+
+                                if specific_key in lemma_overrides:
+                                    rule_key_to_use = specific_key
+                                elif part in lemma_overrides:
+                                    rule_key_to_use = part
+                                    context_scope = token.text
+
+                                if rule_key_to_use:
+                                    rules = lemma_overrides[rule_key_to_use]
                                     context_rules = [r for r in rules if r[1]]
                                     global_rule = next((r for r in rules if not r[1]), None)
                                     
                                     found_context_match = False
                                     for desired_lemma, context in context_rules:
-                                        if context in token.text:
+                                        if context in context_scope:
                                             final_part_lemma = desired_lemma
                                             found_context_match = True
                                             break
@@ -567,14 +587,24 @@ def process_text_v2(
                                 
                                 final_part_lemma = default_part_lemma
 
-                                if part in lemma_overrides:
-                                    rules = lemma_overrides[part]
+                                specific_key = f"{token.text}:{part}"
+                                rule_key_to_use = None
+                                context_scope = unit_text
+
+                                if specific_key in lemma_overrides:
+                                    rule_key_to_use = specific_key
+                                elif part in lemma_overrides:
+                                    rule_key_to_use = part
+                                    context_scope = token.text
+                                
+                                if rule_key_to_use:
+                                    rules = lemma_overrides[rule_key_to_use]
                                     context_rules = [r for r in rules if r[1]]
                                     global_rule = next((r for r in rules if not r[1]), None)
                                     
                                     found_context_match = False
                                     for desired_lemma, context in context_rules:
-                                        if context in token.text:
+                                        if context in context_scope:
                                             final_part_lemma = desired_lemma
                                             found_context_match = True
                                             break

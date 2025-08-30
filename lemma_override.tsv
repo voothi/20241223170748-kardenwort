@@ -36,37 +36,57 @@
 #  Mechanics & Best Practices
 # ==============================================================================
 #
-# 1. Targeting Words and Compound Parts:
-#    The first column of a rule determines what is being replaced.
+# 1. Understanding Context: The Key to Powerful Rules
 #
-#    - To target a simple word, use the word itself:
-#      Dritte	Dritte
+# The most important concept to understand is how the optional third column
+# (the context) is applied. Its behavior depends on the format of the key
+# in the first column.
 #
-#    - To target a part of a compound word, use the format 'CompoundWord:Part':
-#      Bilddaten:Date	Daten
+# A) The Consistent Method: Context from the Entire Sentence (Recommended)
 #
-#      This rule targets the component 'Date' only when it originates from
-#      the compound 'Bilddaten'. This is the recommended way to handle compounds
-#      as it is explicit and unambiguous.
+# This applies to rules for simple words and the recommended 'CompoundWord:Part' format.
+# For these rule types, the context is always searched for within the entire sentence.
+# This provides a predictable and powerful way to define conditions.
 #
-# 2. Context is a Substring Search in the Sentence:
-#    The context in the 3rd column is a literal substring. The search is
-#    always performed anywhere within the full sentence for all rule types.
+#    - Example for a simple word:
+#      Rule:     Austernbanken	Austernbanke	Küste
+#      Sentence: "Die ertragreichen Austernbanken vor der Küste sind berühmt."
+#      Result:   Match. The context 'Küste' is found in the sentence.
 #
-#    - Example: For the sentence "...ertragreichen Austernbanken vor der Küste..."
-#    - Context 'ichen Austernbanken vo' will match.
-#    - Context 'vor der Küste' will also match, even though it is not
-#      adjacent to the original word.
+#    - Example for a compound part:
+#      Rule:     Bilddaten:Date	Daten	Analyse
+#      Sentence: "Die Analyse der Bilddaten hat begonnen."
+#      Result:   Match. The key 'Bilddaten:Date' matches the word, and the
+#                context 'Analyse' is found in the sentence.
 #
-#    - Example of a contextual rule in action:
-#      The rule 'Austernbanken <TAB> Austernbanke <TAB> ertragreichen Austernbanken'
-#      will trigger for the sentence:
-#      "Die Fischer kennen die ertragreichen Austernbanken vor der Küste..."
-#      but will not trigger for:
-#      "Die Fischer kennen die Austernbanken vor der Küste..."
-#      because the required context is missing.
+# B) The Special Case: Context from the Compound Word Itself
 #
-# 3. Matching is Case-Sensitive:
+# This applies only to the alternative format where a rule targets just a component 'Part'.
+#
+# When a rule targets only a component part (e.g., 'Date'), the context in the
+# third column is searched for only within the original compound word itself,
+# not the full sentence. This makes it a filter for the parent word.
+#
+#    - Example 1 (This works):
+#      Rule:     Date	Daten	Bild
+#      Word:     'Bilddaten'
+#      Result:   Match. The key 'Date' matches the part, and the context 'Bild'
+#                is a substring of the original word 'Bilddaten'.
+#
+#    - Example 2 (This will not work):
+#      Rule:     Date	Daten	Analyse der Bilddaten
+#      Word:     'Bilddaten'
+#      Result:   No Match. The key 'Date' matches the part, but the context
+#                'Analyse der Bilddaten' is not a substring of the original
+#                word 'Bilddaten'.
+#
+# Recommendation:
+# For clarity and consistent behavior, the 'CompoundWord:Part' format is
+# strongly recommended. It ensures the context always refers to the full sentence,
+# making your rules easier to write, read, and maintain.
+#
+# 2. Matching is Case-Sensitive
+
 #    All matching for words, parts, and contexts is strictly case-sensitive. This
 #    is critical for languages like German where nouns are capitalized.
 #
@@ -74,9 +94,10 @@
 #    - Context 'vor der Küste' will match.
 #    - Context 'vor der küste' (with lowercase 'k') will not match.
 #
-# 4. Rule Order Can Matter:
-#    The file is processed top-to-bottom. The first matching rule for a word
-#    is applied. Place more specific rules before more general ones.
+# 3. Rule Order Can Matter
+#
+# The file is processed top-to-bottom. The first matching rule for a word
+# is applied. Place more specific rules before more general ones.
 #
 #    - Example:
 #      # Specific rule (should be placed first to be effective)
@@ -84,13 +105,6 @@
 #      # General rule (will be ignored if the one above has already matched)
 #      Austernbanken	LemmaB	
 #
-# 5. Backward Compatibility for Compound Parts:
-#    For backward compatibility, rules targeting only a component part (e.g., 'Date')
-#    are still supported. However, their context (the third column) is matched only
-#    against the original compound word ('Bilddaten'), not the full sentence.
-#    The new 'CompoundWord:Part' format is recommended for its clarity and
-#    consistent context handling.
-
 # ==============================================================================
 #  User-Defined Override Rules
 # ==============================================================================

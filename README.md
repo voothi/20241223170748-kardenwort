@@ -138,12 +138,20 @@ Below is a detailed list of all available arguments for the core processing scri
 | `--autoname [N]` | Automatically generate part of the filename from the first `N` words of the text (default is 4). | `--autoname 3` |
 | `--pipe` | Print the final output filename to standard output. Useful for chaining scripts. | `--pipe` |
 
+### NLP & Lemmatization Control
+
+| Argument | Description | Example |
+| :--- | :--- | :--- |
+| `--lemma-override-file` | Path to a TSV file for context-aware lemma overrides (format: `original\tlemma`). | `--lemma-override-file "config/overrides.tsv"` |
+| `--lemma-index-file` | Path to a lemma index file (legacy functionality). | `--lemma-index-file "index.json"` |
+
 ### Card Content & Formatting
 
 | Argument | Description | Example |
 | :--- | :--- | :--- |
 | `--sentence-context-size N` | Number of preceding and succeeding sentences to include as context. | `--sentence-context-size 2` |
 | `--include-simple-list` | Include a simple list of all unique words from the source sentence in the `SentenceSourceWordlist` field. | `--include-simple-list` |
+| `--original-form-in-simple-list` | When used with `--include-simple-list`, populates the `SentenceSourceWordlist` with original (inflected) word forms instead of their base lemmas. **(Status: Declared, but not yet implemented)** | `--original-form-in-simple-list` |
 | `--with-fields` | Include the header row with all field names in the output TSV file. | `--with-fields` |
 | `--with-br` | Use `<br>` tags instead of newlines for the `SentenceSourceWordlist`. | `--with-br` |
 | `--two-column-output-to-file` | Add the inflected (original) form of a word to the `WordSourceInflectedForm` field. | `--two-column-output-to-file` |
@@ -157,9 +165,22 @@ These options are only for `--language de`.
 | `--gcs` | **Enable** German Compound Splitting. | `--gcs` |
 | `--gcs-dictionary` | Path to the dictionary file used by GCS for validation. | `--gcs-dictionary "dicts/german.dic"` |
 | `--gcs-include-compound` | Include the original compound word in the card list along with its split parts. | `--gcs-include-compound` |
-| `--gcs-combine-noun-modes` | Runs GCS in two modes (splitting on nouns-only and any word type) and merges the results for more comprehensive splitting. | `--gcs-combine-noun-modes` |
-| `--gcs-fix-genitive` | Attempts to correct German genitive noun lemmas (e.g., 'Hauses' -> 'Haus'). | `--gcs-fix-genitive` |
 | `--gcs-in-wordlist` | Also add the split components to the `SentenceSourceWordlist` field. | `--gcs-in-wordlist` |
+| `--gcs-combine-noun-modes` | Runs GCS in two modes (splitting on nouns-only and any word type) and merges the results for more comprehensive splitting. | `--gcs-combine-noun-modes` |
+| `--gcs-only-nouns-false` | Allows any word type (verb, adjective, etc.) to be used for GCS splitting. Ignored if `--gcs-combine-noun-modes` is used. | `--gcs-only-nouns-false` |
+| `--gcs-fix-genitive` | Attempts to correct German genitive noun lemmas (e.g., 'Hauses' -> 'Haus'). | `--gcs-fix-genitive` |
+| `--gcs-mask-unknown` | During GCS splitting, mask word parts not found in the dictionary as 'unknown'. | `--gcs-mask-unknown` |
+| `--make-singular` | Force making compound parts singular during GCS splitting, regardless of the word's part of speech. | `--make-singular` |
+| `--no-make-singular` | Prevent making compound parts singular, keeping their original form. Overrides `--make-singular`. | `--no-make-singular` |
+
+### Debugging & Console Output
+These flags are primarily for debugging and direct console output, not for generating the final Anki `.tsv` file.
+
+| Argument | Description | Example |
+| :--- | :--- | :--- |
+| `--detailed` | Print detailed token information (text, lemma, POS tag) to the console. | `--detailed` |
+| `--two-column-output` | Print a simple two-column output (original and lemma) to the console. | `--two-column-output` |
+| `--html` | Generate and print an HTML table with processing results to the console. | `--html` |
 
 ---
 

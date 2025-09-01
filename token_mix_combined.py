@@ -92,20 +92,20 @@ def _find_matching_rule(rules, context_sentence):
     return None
 
 def apply_word_override(default_lemma, source_word, overrides, context_sentence):
-    key1 = (default_lemma, source_word)
-    rules1 = overrides['priority1'].get(key1)
+    # Безопасно получаем словарь правил для priority1, по умолчанию — пустой словарь
+    rules1 = overrides.get('priority1', {}).get((default_lemma, source_word))
     match1 = _find_matching_rule(rules1, context_sentence)
     if match1 is not None:
         return match1
 
-    key2 = source_word
-    rules2 = overrides['priority2'].get(key2)
+    # Безопасно получаем словарь правил для priority2
+    rules2 = overrides.get('priority2', {}).get(source_word)
     match2 = _find_matching_rule(rules2, context_sentence)
     if match2 is not None:
         return match2
 
-    key3 = default_lemma
-    rules3 = overrides['priority3'].get(key3)
+    # Безопасно получаем словарь правил для priority3
+    rules3 = overrides.get('priority3', {}).get(default_lemma)
     match3 = _find_matching_rule(rules3, context_sentence)
     if match3 is not None:
         return match3

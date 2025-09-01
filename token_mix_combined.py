@@ -113,14 +113,14 @@ def apply_word_override(default_lemma, source_word, overrides, context_sentence)
     return default_lemma
 
 def apply_part_override(default_lemma, part, source_word, overrides, context_sentence):
-    key1 = (part, source_word)
-    rules1 = overrides['priority1'].get(key1)
+    # Безопасно получаем словарь правил для priority1
+    rules1 = overrides.get('priority1', {}).get((part, source_word))
     match1 = _find_matching_rule(rules1, context_sentence)
     if match1 is not None:
         return match1
 
-    key3 = part
-    rules3 = overrides['priority3'].get(key3)
+    # Безопасно получаем словарь правил для priority3
+    rules3 = overrides.get('priority3', {}).get(part)
     match3 = _find_matching_rule(rules3, context_sentence)
     if match3 is not None:
         return match3

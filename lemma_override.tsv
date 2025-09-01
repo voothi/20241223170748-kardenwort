@@ -1,132 +1,26 @@
+# Result_Lemma	Source_Word	Target_Lemma	Context
 # ==============================================================================
-#  Lemma Override Rules
-# ==============================================================================
-#
-# This file allows for precise control over the lemmatization process.
-#
-# There are two formats for rules, depending on what you want to target.
-#
-# Format (for a simple word):
-# Word <TAB> Desired_Lemma <TAB> [Optional_Context_Substring]
-#
-# Format (for a compound word part):
-# CompoundWord:Part <TAB> Desired_Lemma <TAB> [Optional_Context_Substring]
-#
-# See the 'Mechanics & Best Practices' section for detailed examples.
+# Правила для целых слов (безусловные)
+# Логика: "Для этого Source_Word всегда использовать Target_Lemma"
+#-------------------------------------------------------------------------------
+	Dritte	Dritte	
+	Übungsaufgaben	Übungsaufgabe	
+	Bilddaten	Bilddaten	
+	Audiodaten	Audiodaten	
+	Ihrer	Ihr	
+	Substantiven	Substantiv	
+	Substantive	Substantiv	
+	Englischen	Englisch	
 
 # ==============================================================================
-#  How it works & Rule Precedence
-# ==============================================================================
-#
-# The system applies rules with the following priority:
-#
-# 1. Contextual Match (Highest Priority):
-#    The system first checks for rules where the 3rd column (context) is not
-#    empty. If a rule's conditions match, it is applied, and the search
-#    for the current word or part stops.
-#
-# 2. Global Match (Fallback):
-#    If no contextual rule matches, the system looks for a global rule for
-#    the same word or part (where the 3rd column is empty).
-#
-# 3. Default Lemmatizer:
-#    If no override rules match, the default lemmatizer is used.
+# Правила для целых слов (условные, с контекстом)
+# Логика: "Для Source_Word использовать Target_Lemma, только если в предложении есть Context"
+#-------------------------------------------------------------------------------
+	Austernbanken	Austernbanke	Küste
 
 # ==============================================================================
-#  Mechanics & Best Practices
-# ==============================================================================
-#
-# 1. Understanding Context: The Key to Powerful Rules
-#
-# The most important concept to understand is how the optional third column
-# (the context) is applied. Its behavior depends on the format of the key
-# in the first column.
-#
-# A) The Consistent Method: Context from the Entire Sentence (Recommended)
-#
-# This applies to rules for simple words and the recommended 'CompoundWord:Part' format.
-# For these rule types, the context is always searched for within the entire sentence.
-# This provides a predictable and powerful way to define conditions.
-#
-#    - Example for a simple word:
-#      Rule:     Austernbanken	Austernbanke	Küste
-#      Sentence: "Die ertragreichen Austernbanken vor der Küste sind berühmt."
-#      Result:   Match. The context 'Küste' is found in the sentence.
-#
-#    - Example for a compound part:
-#      Rule:     Bilddaten:Date	Daten	Analyse
-#      Sentence: "Die Analyse der Bilddaten hat begonnen."
-#      Result:   Match. The key 'Bilddaten:Date' matches the word, and the
-#                context 'Analyse' is found in the sentence.
-#
-# B) The Special Case: Context from the Compound Word Itself
-#
-# This applies only to the alternative format where a rule targets just a component 'Part'.
-#
-# When a rule targets only a component part (e.g., 'Date'), the context in the
-# third column is searched for only within the original compound word itself,
-# not the full sentence. This makes it a filter for the parent word.
-#
-#    - Example 1 (This works):
-#      Rule:     Date	Daten	Bild
-#      Word:     'Bilddaten'
-#      Result:   Match. The key 'Date' matches the part, and the context 'Bild'
-#                is a substring of the original word 'Bilddaten'.
-#
-#    - Example 2 (This will not work):
-#      Rule:     Date	Daten	Analyse der Bilddaten
-#      Word:     'Bilddaten'
-#      Result:   No Match. The key 'Date' matches the part, but the context
-#                'Analyse der Bilddaten' is not a substring of the original
-#                word 'Bilddaten'.
-#
-# Recommendation:
-# For clarity and consistent behavior, the 'CompoundWord:Part' format is
-# strongly recommended. It ensures the context always refers to the full sentence,
-# making your rules easier to write, read, and maintain.
-#
-# 2. Matching is Case-Sensitive
-
-#    All matching for words, parts, and contexts is strictly case-sensitive. This
-#    is critical for languages like German where nouns are capitalized.
-#
-#    - Example: For the text "...vor der Küste..."
-#    - Context 'vor der Küste' will match.
-#    - Context 'vor der küste' (with lowercase 'k') will not match.
-#
-# 3. Rule Order Can Matter
-#
-# The file is processed top-to-bottom. The first matching rule for a word
-# is applied. Place more specific rules before more general ones.
-#
-#    - Example:
-#      # Specific rule (should be placed first to be effective)
-#      Austernbanken	LemmaA	schönen Austernbanken
-#      # General rule (will be ignored if the one above has already matched)
-#      Austernbanken	LemmaB	
-#
-# ==============================================================================
-#  User-Defined Override Rules
-# ==============================================================================
-#
-# Add your global and contextual override rules below.
-# To activate a rule, remove the '#' at the beginning of the line.
-
-# --- Global Rules for simple words ---
-Dritte	Dritte	
-Übungsaufgaben	Übungsaufgabe	
-Bilddaten	Bilddaten	
-Audiodaten	Audiodaten	
-Ihrer	Ihr
-Substantiven	Substantiv
-Substantive	Substantiv
-Englischen	Englisch
-
-# --- Contextual Rules ---
-# Example: Lemmatize 'Austernbanken' differently only if 'Küste' is in the sentence.
-Austernbanken	Austernbanke	Küste
-
-# --- Rules for Compound Word Parts (Recommended Format) ---
-# Example: Change the lemma for the 'Date' part of 'Bilddaten' and 'Audiodaten'.
-Bilddaten:Date	Daten
-Audiodaten:Date	Daten
+# Правила для частей составных слов (условные)
+# Логика: "Если для Source_Word был получен Result_Lemma, заменить его на Target_Lemma"
+#-------------------------------------------------------------------------------
+Date	Bilddaten	Daten	
+Date	Audiodaten	Daten	

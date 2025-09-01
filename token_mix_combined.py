@@ -218,7 +218,10 @@ def get_capitalized_lemma(token, spacy_lemma):
     if is_all_caps or has_internal_caps:
         return original_text
 
-    if token.pos_ in ["NOUN", "PROPN"]:
+    # In German, all nouns are capitalized.
+    # For other languages (like English), only proper nouns should be capitalized.
+    if (nlp.lang == 'de' and token.pos_ in ["NOUN", "PROPN"]) or \
+       (nlp.lang != 'de' and token.pos_ == "PROPN"):
         return spacy_lemma.capitalize()
 
     if token.is_sent_start and token.pos_ not in ["NOUN", "PROPN"]:

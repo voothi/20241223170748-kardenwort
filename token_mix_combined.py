@@ -27,7 +27,11 @@ def load_dictionary_to_set(file_path):
     return dictionary
 
 def load_lemma_overrides(file_path):
-    overrides = {}
+    overrides = {
+        'priority1': {},  # Key: (Result_Lemma, Source_Word)
+        'priority2': {},  # Key: Source_Word
+        'priority3': {}   # Key: Result_Lemma
+    }
     try:
         with open(file_path, "r", encoding="utf-8") as f:
             reader = csv.reader(f, delimiter="\t")
@@ -35,28 +39,79 @@ def load_lemma_overrides(file_path):
                 if not row or row[0].startswith('#'):
                     continue
 
-                if len(row) < 2:
-                    print(f"Warning: Skipping malformed line {i+1} in {file_path}: expected at least 2 columns.", file=sys.stderr)
+                if len(row) < 3:
+                    print(f"Warning: Skipping malformed line {i+1} in {file_path}: expected at least 3 columns.", file=sys.stderr)
                     continue
                 
-                original_word = row[0].strip()
-                desired_lemma = row[1].strip()
-                context = row[2].strip() if len(row) > 2 and row[2].strip() else None
+                result_lemma = row[0].strip()
+                source_word = row[1].strip()
+                target_lemma = row[2].strip()
+                context = row[3].strip() if len(row) > 3 and row[3].strip() else None
 
-                if not original_word or not desired_lemma:
-                    print(f"Warning: Skipping rule on line {i+1} in {file_path} due to empty original word or desired lemma.", file=sys.stderr)
+                if not target_lemma or (not result_lemma and not source_word):
+                    print(f"Warning: Skipping invalid rule on line {i+1} in {file_path}: Target_Lemma and at least one of Result_Lemma or Source_Word must be set.", file=sys.stderr)
                     continue
-                
-                if original_word not in overrides:
-                    overrides[original_word] = []
-                
-                overrides[original_word].append((desired_lemma, context))
+
+                rule = (target_lemma, context)
+
+                if result_lemma and source_word: # Priority 1
+                    key = (result_lemma, source_word)
+                    if key not in overrides['priority1']:
+                        overrides['priority1'][key] = []
+                    overrides['priority1'][key].append(rule)
+                elif source_word: # Priority 2
+                    key = source_word
+                    if key not in overrides['priority2']:
+                        overrides['priority2'][key] = []
+                    overrides['priority2'][key].append(rule)
+                elif result_lemma: # Priority 3
+                    key = result_lemma
+                    if key not in overrides['priority3']:
+                        overrides['priority3'][key] = []
+                    overrides['priority3'][key].append(rule)
 
     except FileNotFoundError:
         print(f"Lemma override file not found: {file_path}", file=sys.stderr)
     except Exception as e:
         print(f"Error reading lemma override file {file_path}: {e}", file=sys.stderr)
     return overrides
+
+def _find_matching_rule(rules, context_sentence):
+    context_rules = [r for r in rules if r[1]]
+    global_rule = next((r for r in rules if not r[1]), None)
+    
+    for target_lemma, context in context_rules:
+        if context in context_sentence:
+            return target_lemma
+            
+    if global_rule:
+        return global_rule[0]
+        
+    return None
+
+def apply_lemma_override(default_lemma, result_lemma, source_word, overrides, context_sentence):
+    # Priority 1: (Result_Lemma, Source_Word) specified
+    key1 = (result_lemma, source_word)
+    if key1 in overrides['priority1']:
+        match = _find_matching_rule(overrides['priority1'][key1], context_sentence)
+        if match is not None:
+            return match
+
+    # Priority 2: Only Source_Word specified
+    key2 = source_word
+    if key2 in overrides['priority2']:
+        match = _find_matching_rule(overrides['priority2'][key2], context_sentence)
+        if match is not None:
+            return match
+
+    # Priority 3: Only Result_Lemma specified
+    key3 = result_lemma
+    if key3 in overrides['priority3']:
+        match = _find_matching_rule(overrides['priority3'][key3], context_sentence)
+        if match is not None:
+            return match
+            
+    return default_lemma
 
 def get_corrected_lemma(token, german_dict, fix_genitive_flag=False):
     spacy_lemma = token.lemma_
@@ -149,8 +204,7 @@ def get_capitalized_lemma(token, spacy_lemma):
     if is_all_caps or has_internal_caps:
         return original_text
 
-    if (nlp.lang == 'de' and token.pos_ in ["NOUN", "PROPN"]) or \
-       (nlp.lang != 'de' and token.pos_ == "PROPN"):
+    if token.pos_ in ["NOUN", "PROPN"]:
         return spacy_lemma.capitalize()
 
     if token.is_sent_start and token.pos_ not in ["NOUN", "PROPN"]:
@@ -223,32 +277,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
                                 if lemma_part_to_check in german_dict:
                                     default_part_lemma = lemma_part_to_check
                         
-                        final_part_lemma = default_part_lemma
-
-                        specific_key = f"{token.text}:{part}"
-                        rule_key_to_use = None
-                        context_scope = sentence
-
-                        if specific_key in lemma_overrides:
-                            rule_key_to_use = specific_key
-                        elif part in lemma_overrides:
-                            rule_key_to_use = part
-                            context_scope = token.text
-
-                        if rule_key_to_use:
-                            rules = lemma_overrides[rule_key_to_use]
-                            context_rules = [r for r in rules if r[1]]
-                            global_rule = next((r for r in rules if not r[1]), None)
-                            
-                            found_context_match = False
-                            for desired_lemma, context in context_rules:
-                                if context in context_scope:
-                                    final_part_lemma = desired_lemma
-                                    found_context_match = True
-                                    break
-                            
-                            if not found_context_match and global_rule:
-                                final_part_lemma = global_rule[0]
+                        final_part_lemma = apply_lemma_override(default_part_lemma, part, token.text, lemma_overrides, sentence)
 
                         if final_part_lemma:
                             final_tokens.add(final_part_lemma)
@@ -267,23 +296,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
                 spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                 default_lemma = get_capitalized_lemma(token, spacy_lemma)
             
-            final_lemma_to_add = default_lemma
-
-            if original_inflected_form in lemma_overrides:
-                rules = lemma_overrides[original_inflected_form]
-                context_rules = [r for r in rules if r[1]]
-                global_rule = next((r for r in rules if not r[1]), None)
-                
-                found_context_match = False
-                for desired_lemma, context in context_rules:
-                    if context in sentence:
-                        final_lemma_to_add = desired_lemma
-                        found_context_match = True
-                        break
-                
-                if not found_context_match and global_rule:
-                    final_lemma_to_add = global_rule[0]
-
+            final_lemma_to_add = apply_lemma_override(default_lemma, default_lemma, original_inflected_form, lemma_overrides, sentence)
             final_tokens.add(final_lemma_to_add)
 
     return sorted(list(final_tokens), key=lambda x: (x not in lemma_index, lemma_index.get(x, 0), x.lower()))
@@ -353,19 +366,7 @@ def process_text_v1(
                             if gcs_include_compound:
                                 spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                                 default_lemma = get_capitalized_lemma(token, spacy_lemma)
-                                final_lemma = default_lemma
-                                if token.text in lemma_overrides:
-                                    rules = lemma_overrides[token.text]
-                                    context_rules = [r for r in rules if r[1]]
-                                    global_rule = next((r for r in rules if not r[1]), None)
-                                    found_match = False
-                                    for desired, context in context_rules:
-                                        if context in line1:
-                                            final_lemma = desired
-                                            found_match = True
-                                            break
-                                    if not found_match and global_rule:
-                                        final_lemma = global_rule[0]
+                                final_lemma = apply_lemma_override(default_lemma, default_lemma, token.text, lemma_overrides, line1)
                                 lemmas_to_process.append((final_lemma, token.text))
 
                             for part in set(final_components):
@@ -384,33 +385,7 @@ def process_text_v1(
                                         if lemma_part_to_check in german_dict:
                                             default_part_lemma = lemma_part_to_check
                                 
-                                final_part_lemma = default_part_lemma
-
-                                specific_key = f"{token.text}:{part}"
-                                rule_key_to_use = None
-                                context_scope = line1
-
-                                if specific_key in lemma_overrides:
-                                    rule_key_to_use = specific_key
-                                elif part in lemma_overrides:
-                                    rule_key_to_use = part
-                                    context_scope = token.text
-
-                                if rule_key_to_use:
-                                    rules = lemma_overrides[rule_key_to_use]
-                                    context_rules = [r for r in rules if r[1]]
-                                    global_rule = next((r for r in rules if not r[1]), None)
-                                    
-                                    found_context_match = False
-                                    for desired_lemma, context in context_rules:
-                                        if context in context_scope:
-                                            final_part_lemma = desired_lemma
-                                            found_context_match = True
-                                            break
-                                    
-                                    if not found_context_match and global_rule:
-                                        final_part_lemma = global_rule[0]
-
+                                final_part_lemma = apply_lemma_override(default_part_lemma, part, token.text, lemma_overrides, line1)
                                 if final_part_lemma:
                                     lemmas_to_process.append((final_part_lemma, token.text))
                     except Exception:
@@ -427,20 +402,7 @@ def process_text_v1(
                         spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                         default_lemma = get_capitalized_lemma(token, spacy_lemma)
                     
-                    final_lemma_to_add = default_lemma
-                    if original_inflected_form in lemma_overrides:
-                        rules = lemma_overrides[original_inflected_form]
-                        context_rules = [r for r in rules if r[1]]
-                        global_rule = next((r for r in rules if not r[1]), None)
-                        found_context_match = False
-                        for desired_lemma, context in context_rules:
-                            if context in line1:
-                                final_lemma_to_add = desired_lemma
-                                found_context_match = True
-                                break
-                        if not found_context_match and global_rule:
-                            final_lemma_to_add = global_rule[0]
-                    
+                    final_lemma_to_add = apply_lemma_override(default_lemma, default_lemma, original_inflected_form, lemma_overrides, line1)
                     lemmas_to_process.append((final_lemma_to_add, original_inflected_form))
 
                 for lemma, original_form in lemmas_to_process:
@@ -555,19 +517,7 @@ def process_text_v2(
                             if gcs_include_compound:
                                 spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                                 default_lemma = get_capitalized_lemma(token, spacy_lemma)
-                                final_lemma = default_lemma
-                                if token.text in lemma_overrides:
-                                    rules = lemma_overrides[token.text]
-                                    context_rules = [r for r in rules if r[1]]
-                                    global_rule = next((r for r in rules if not r[1]), None)
-                                    found_match = False
-                                    for desired, context in context_rules:
-                                        if context in unit_text:
-                                            final_lemma = desired
-                                            found_match = True
-                                            break
-                                    if not found_match and global_rule:
-                                        final_lemma = global_rule[0]
+                                final_lemma = apply_lemma_override(default_lemma, default_lemma, token.text, lemma_overrides, unit_text)
                                 lemmas_to_process.append((final_lemma, token.text))
                             
                             for part in set(final_components):
@@ -586,33 +536,7 @@ def process_text_v2(
                                         if lemma_part_to_check in german_dict:
                                             default_part_lemma = lemma_part_to_check
                                 
-                                final_part_lemma = default_part_lemma
-
-                                specific_key = f"{token.text}:{part}"
-                                rule_key_to_use = None
-                                context_scope = unit_text
-
-                                if specific_key in lemma_overrides:
-                                    rule_key_to_use = specific_key
-                                elif part in lemma_overrides:
-                                    rule_key_to_use = part
-                                    context_scope = token.text
-                                
-                                if rule_key_to_use:
-                                    rules = lemma_overrides[rule_key_to_use]
-                                    context_rules = [r for r in rules if r[1]]
-                                    global_rule = next((r for r in rules if not r[1]), None)
-                                    
-                                    found_context_match = False
-                                    for desired_lemma, context in context_rules:
-                                        if context in context_scope:
-                                            final_part_lemma = desired_lemma
-                                            found_context_match = True
-                                            break
-                                    
-                                    if not found_context_match and global_rule:
-                                        final_part_lemma = global_rule[0]
-
+                                final_part_lemma = apply_lemma_override(default_part_lemma, part, token.text, lemma_overrides, unit_text)
                                 if final_part_lemma:
                                     lemmas_to_process.append((final_part_lemma, token.text))
                     except Exception:
@@ -629,22 +553,7 @@ def process_text_v2(
                         spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                         default_lemma = get_capitalized_lemma(token, spacy_lemma)
                     
-                    final_lemma_to_add = default_lemma
-                    if original_inflected_form in lemma_overrides:
-                        rules = lemma_overrides[original_inflected_form]
-                        context_rules = [r for r in rules if r[1]]
-                        global_rule = next((r for r in rules if not r[1]), None)
-                        
-                        found_context_match = False
-                        for desired_lemma, context in context_rules:
-                            if context in unit_text:
-                                final_lemma_to_add = desired_lemma
-                                found_context_match = True
-                                break
-                        
-                        if not found_context_match and global_rule:
-                            final_lemma_to_add = global_rule[0]
-
+                    final_lemma_to_add = apply_lemma_override(default_lemma, default_lemma, original_inflected_form, lemma_overrides, unit_text)
                     lemmas_to_process.append((final_lemma_to_add, original_inflected_form))
 
                 for lemma, original_form in lemmas_to_process:

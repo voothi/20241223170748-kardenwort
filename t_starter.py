@@ -5,11 +5,12 @@ import argparse
 
 def get_token_args(args, python_path, token_workspace):
     """Configure token extraction arguments based on input parameters"""
-    # Select lemma index file based on language
     if args.language == "en":
         lemma_file = "en-news-2023-1m-words.csv"
+        override_file = "U:\\voothi\\20241223170748-token-extraction\\lemma_override_en.tsv"
     elif args.language == "de":
         lemma_file = "deu-mixed-typical-2011-1m-words.csv"
+        override_file = "U:\\voothi\\20241223170748-token-extraction\\lemma_override_de.tsv"
     else:
         raise ValueError(f"Unsupported language: {args.language}")
 
@@ -42,32 +43,26 @@ def get_token_args(args, python_path, token_workspace):
         "U:\\voothi\\20241223170748-token-extraction\\20250826000433-test\\german.dic",
         "--gcs-in-wordlist",
         "--lemma-override-file",
-        "U:\\voothi\\20241223170748-token-extraction\\lemma_override.tsv",
+        override_file,
         "--pipe"
     ]
 
     output_suffix = "sentence" if args.type == "sentence" else "token"
 
-    # --- ИЗМЕНЕННЫЙ БЛОК ДЛЯ РЕЖИМА 'single' ---
     if args.mode == "single":
-        # Создаем изменяемый список аргументов для этого режима
         single_mode_args = []
         
-        # Если передан текст напрямую через --text, используем его
         if args.text:
             single_mode_args.extend(["--text", args.text])
-        # В противном случае, используем файл text1.txt (старое поведение)
         else:
             single_mode_args.extend(["--text1", str(token_workspace / "in/text1.txt")])
             
-        # Добавляем общие для режима 'single' аргументы
         single_mode_args.extend([
             "--output",
             str(token_workspace / f"out/result.single.{output_suffix}.{args.language}.tsv"),
         ])
         
         return base_args + single_mode_args
-    # --- КОНЕЦ ИЗМЕНЕННОГО БЛОКА ---
         
     elif args.mode == "dual":
         return base_args + [

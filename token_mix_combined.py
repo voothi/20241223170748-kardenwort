@@ -28,9 +28,9 @@ def load_dictionary_to_set(file_path):
 
 def load_lemma_overrides(file_path):
     overrides = {
-        'priority1': {},  # Key: (Result_Lemma, Source_Word)
-        'priority2': {},  # Key: Source_Word
-        'priority3': {}   # Key: Result_Lemma
+        'priority1': {},
+        'priority2': {},
+        'priority3': {}
     }
     try:
         with open(file_path, "r", encoding="utf-8") as f:
@@ -54,17 +54,17 @@ def load_lemma_overrides(file_path):
 
                 rule = (target_lemma, context)
 
-                if result_lemma and source_word: # Priority 1
+                if result_lemma and source_word:
                     key = (result_lemma, source_word)
                     if key not in overrides['priority1']:
                         overrides['priority1'][key] = []
                     overrides['priority1'][key].append(rule)
-                elif source_word: # Priority 2
+                elif source_word:
                     key = source_word
                     if key not in overrides['priority2']:
                         overrides['priority2'][key] = []
                     overrides['priority2'][key].append(rule)
-                elif result_lemma: # Priority 3
+                elif result_lemma:
                     key = result_lemma
                     if key not in overrides['priority3']:
                         overrides['priority3'][key] = []
@@ -77,6 +77,8 @@ def load_lemma_overrides(file_path):
     return overrides
 
 def _find_matching_rule(rules, context_sentence):
+    if not rules:
+        return None
     context_rules = [r for r in rules if r[1]]
     global_rule = next((r for r in rules if not r[1]), None)
     
@@ -89,27 +91,39 @@ def _find_matching_rule(rules, context_sentence):
         
     return None
 
-def apply_lemma_override(default_lemma, result_lemma, source_word, overrides, context_sentence):
-    # Priority 1: (Result_Lemma, Source_Word) specified
-    key1 = (result_lemma, source_word)
-    if key1 in overrides['priority1']:
-        match = _find_matching_rule(overrides['priority1'][key1], context_sentence)
-        if match is not None:
-            return match
+def apply_word_override(default_lemma, source_word, overrides, context_sentence):
+    key1 = (default_lemma, source_word)
+    rules1 = overrides['priority1'].get(key1)
+    match1 = _find_matching_rule(rules1, context_sentence)
+    if match1 is not None:
+        return match1
 
-    # Priority 2: Only Source_Word specified
     key2 = source_word
-    if key2 in overrides['priority2']:
-        match = _find_matching_rule(overrides['priority2'][key2], context_sentence)
-        if match is not None:
-            return match
+    rules2 = overrides['priority2'].get(key2)
+    match2 = _find_matching_rule(rules2, context_sentence)
+    if match2 is not None:
+        return match2
 
-    # Priority 3: Only Result_Lemma specified
-    key3 = result_lemma
-    if key3 in overrides['priority3']:
-        match = _find_matching_rule(overrides['priority3'][key3], context_sentence)
-        if match is not None:
-            return match
+    key3 = default_lemma
+    rules3 = overrides['priority3'].get(key3)
+    match3 = _find_matching_rule(rules3, context_sentence)
+    if match3 is not None:
+        return match3
+            
+    return default_lemma
+
+def apply_part_override(default_lemma, part, source_word, overrides, context_sentence):
+    key1 = (part, source_word)
+    rules1 = overrides['priority1'].get(key1)
+    match1 = _find_matching_rule(rules1, context_sentence)
+    if match1 is not None:
+        return match1
+
+    key3 = part
+    rules3 = overrides['priority3'].get(key3)
+    match3 = _find_matching_rule(rules3, context_sentence)
+    if match3 is not None:
+        return match3
             
     return default_lemma
 
@@ -277,7 +291,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
                                 if lemma_part_to_check in german_dict:
                                     default_part_lemma = lemma_part_to_check
                         
-                        final_part_lemma = apply_lemma_override(default_part_lemma, part, token.text, lemma_overrides, sentence)
+                        final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, sentence)
 
                         if final_part_lemma:
                             final_tokens.add(final_part_lemma)
@@ -296,7 +310,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
                 spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                 default_lemma = get_capitalized_lemma(token, spacy_lemma)
             
-            final_lemma_to_add = apply_lemma_override(default_lemma, default_lemma, original_inflected_form, lemma_overrides, sentence)
+            final_lemma_to_add = apply_word_override(default_lemma, original_inflected_form, lemma_overrides, sentence)
             final_tokens.add(final_lemma_to_add)
 
     return sorted(list(final_tokens), key=lambda x: (x not in lemma_index, lemma_index.get(x, 0), x.lower()))
@@ -366,7 +380,7 @@ def process_text_v1(
                             if gcs_include_compound:
                                 spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                                 default_lemma = get_capitalized_lemma(token, spacy_lemma)
-                                final_lemma = apply_lemma_override(default_lemma, default_lemma, token.text, lemma_overrides, line1)
+                                final_lemma = apply_word_override(default_lemma, token.text, lemma_overrides, line1)
                                 lemmas_to_process.append((final_lemma, token.text))
 
                             for part in set(final_components):
@@ -385,7 +399,7 @@ def process_text_v1(
                                         if lemma_part_to_check in german_dict:
                                             default_part_lemma = lemma_part_to_check
                                 
-                                final_part_lemma = apply_lemma_override(default_part_lemma, part, token.text, lemma_overrides, line1)
+                                final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, line1)
                                 if final_part_lemma:
                                     lemmas_to_process.append((final_part_lemma, token.text))
                     except Exception:
@@ -402,7 +416,7 @@ def process_text_v1(
                         spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                         default_lemma = get_capitalized_lemma(token, spacy_lemma)
                     
-                    final_lemma_to_add = apply_lemma_override(default_lemma, default_lemma, original_inflected_form, lemma_overrides, line1)
+                    final_lemma_to_add = apply_word_override(default_lemma, original_inflected_form, lemma_overrides, line1)
                     lemmas_to_process.append((final_lemma_to_add, original_inflected_form))
 
                 for lemma, original_form in lemmas_to_process:
@@ -517,7 +531,7 @@ def process_text_v2(
                             if gcs_include_compound:
                                 spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                                 default_lemma = get_capitalized_lemma(token, spacy_lemma)
-                                final_lemma = apply_lemma_override(default_lemma, default_lemma, token.text, lemma_overrides, unit_text)
+                                final_lemma = apply_word_override(default_lemma, token.text, lemma_overrides, unit_text)
                                 lemmas_to_process.append((final_lemma, token.text))
                             
                             for part in set(final_components):
@@ -536,7 +550,7 @@ def process_text_v2(
                                         if lemma_part_to_check in german_dict:
                                             default_part_lemma = lemma_part_to_check
                                 
-                                final_part_lemma = apply_lemma_override(default_part_lemma, part, token.text, lemma_overrides, unit_text)
+                                final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, unit_text)
                                 if final_part_lemma:
                                     lemmas_to_process.append((final_part_lemma, token.text))
                     except Exception:
@@ -553,7 +567,7 @@ def process_text_v2(
                         spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                         default_lemma = get_capitalized_lemma(token, spacy_lemma)
                     
-                    final_lemma_to_add = apply_lemma_override(default_lemma, default_lemma, original_inflected_form, lemma_overrides, unit_text)
+                    final_lemma_to_add = apply_word_override(default_lemma, original_inflected_form, lemma_overrides, unit_text)
                     lemmas_to_process.append((final_lemma_to_add, original_inflected_form))
 
                 for lemma, original_form in lemmas_to_process:

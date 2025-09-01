@@ -127,7 +127,9 @@
 # ==============================================================================
 #  User-Defined Override Rules
 # ==============================================================================
-#
+# 
+# Sentence for tests on `en`: `To start working with the program, first visit Edit | Dictionaries to add some directory paths where to search for the dictionary files, set up various Wikipedia sites or other sources, adjust dictionary order or create dictionary groups.`
+# 
 # Add your override rules below.
 # To activate a rule, remove the '#' at the beginning of the line.
 #
@@ -139,19 +141,19 @@
 #-------------------------------------------------------------------------------
 #	Dritte	Dritte	
 #	Übungsaufgaben	Übungsaufgabe	
-
+#	program	Programm	
+#	groups	Groupe1	
 
 # --- Rules for whole words (conditional, with context) ---
 # Logic: "For this Original_Word, use Target_Lemma, but only if Context is in the sentence"
 # Format: <empty> <TAB> Original_Word <TAB> Target_Lemma <TAB> Context
 #-------------------------------------------------------------------------------
 #	Austernbanken	Austernbanke	Küste
+#	start	Starten	working with 
+#	groups	Groupe1	Create dictionary
 
-# --- Very specific rule (Highest Priority), also contextual ---
-# Logic: "If Original_Word was processed as Result_Lemma, replace it, but only with context"
-# Format: Result_Lemma <TAB> Original_Word <TAB> Target_Lemma <TAB> Context
-#-------------------------------------------------------------------------------
-Donaudampfschifffahrtsgesellschaftskapitan	Donaudampfschifffahrtsgesellschaftskapitäne	Donaudampfschifffahrtsgesellschaftskapitän	präzise Navigation
+# --- Rules for parts of lemmas words ---
+#group	groups	Groupe2	
 
 # --- Rules for parts of compound words ---
 # Logic: "If for an Original_Word, a part was identified as Result_Lemma,
@@ -160,3 +162,12 @@ Donaudampfschifffahrtsgesellschaftskapitan	Donaudampfschifffahrtsgesellschaftska
 #-------------------------------------------------------------------------------
 #Date	Bilddaten	Daten	
 #Date	Audiodaten	Daten
+
+# --- Very specific rule (Highest Priority), also contextual ---
+# Logic: "If Original_Word was processed as Result_Lemma, replace it, but only with context"
+# Format: Result_Lemma <TAB> Original_Word <TAB> Target_Lemma <TAB> Context
+#-------------------------------------------------------------------------------
+#Donaudampfschifffahrtsgesellschaftskapitan	Donaudampfschifffahrtsgesellschaftskapitäne	Donaudampfschifffahrtsgesellschaftskapitän	präzise Navigation
+#group	groups	Groupe3	create dictionary
+#group	groups	Groupe4	Create dictionary
+

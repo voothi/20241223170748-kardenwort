@@ -390,8 +390,36 @@ def process_text_v1(
                         if len(final_components) > 1:
                             was_split = True
                             if gcs_include_compound:
-                                spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
-                                default_lemma = get_capitalized_lemma(token, spacy_lemma)
+                                gcs_reconstruct_lemma = kwargs.get('gcs_reconstruct_lemma', False)
+                                default_lemma = ""
+
+                                if gcs_reconstruct_lemma:
+                                    try:
+                                        raw_split_parts = list(dissection)
+                                        if raw_split_parts:
+                                            last_part_inflected = raw_split_parts[-1].word
+
+                                            last_part_doc = nlp(last_part_inflected)
+                                            if last_part_doc:
+                                                last_part_lemma = last_part_doc[0].lemma_
+                                                
+                                                prefix_end_index = token.text.rfind(last_part_inflected)
+                                                if prefix_end_index != -1:
+                                                    prefix = token.text[:prefix_end_index]
+                                                    reconstructed_lemma = prefix + last_part_lemma
+                                                    default_lemma = get_capitalized_lemma(token, reconstructed_lemma)
+                                        
+                                        if not default_lemma:
+                                            raise ValueError("Reconstruction failed, using fallback.")
+
+                                    except Exception:
+                                        spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
+                                        default_lemma = get_capitalized_lemma(token, spacy_lemma)
+                                
+                                else:
+                                    spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
+                                    default_lemma = get_capitalized_lemma(token, spacy_lemma)
+
                                 final_lemma = apply_word_override(default_lemma, token.text, lemma_overrides, line1)
                                 lemmas_to_process.append((final_lemma, token.text))
 
@@ -541,9 +569,37 @@ def process_text_v2(
                         if len(final_components) > 1:
                             was_split = True
                             if gcs_include_compound:
-                                spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
-                                default_lemma = get_capitalized_lemma(token, spacy_lemma)
-                                final_lemma = apply_word_override(default_lemma, token.text, lemma_overrides, unit_text)
+                                gcs_reconstruct_lemma = kwargs.get('gcs_reconstruct_lemma', False)
+                                default_lemma = ""
+
+                                if gcs_reconstruct_lemma:
+                                    try:
+                                        raw_split_parts = list(dissection)
+                                        if raw_split_parts:
+                                            last_part_inflected = raw_split_parts[-1].word
+
+                                            last_part_doc = nlp(last_part_inflected)
+                                            if last_part_doc:
+                                                last_part_lemma = last_part_doc[0].lemma_
+                                                
+                                                prefix_end_index = token.text.rfind(last_part_inflected)
+                                                if prefix_end_index != -1:
+                                                    prefix = token.text[:prefix_end_index]
+                                                    reconstructed_lemma = prefix + last_part_lemma
+                                                    default_lemma = get_capitalized_lemma(token, reconstructed_lemma)
+                                        
+                                        if not default_lemma:
+                                            raise ValueError("Reconstruction failed, using fallback.")
+
+                                    except Exception:
+                                        spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
+                                        default_lemma = get_capitalized_lemma(token, spacy_lemma)
+                                
+                                else:
+                                    spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
+                                    default_lemma = get_capitalized_lemma(token, spacy_lemma)
+
+                                final_lemma = apply_word_override(default_lemma, token.text, lemma_overrides, line1)
                                 lemmas_to_process.append((final_lemma, token.text))
                             
                             for part in set(final_components):
@@ -735,6 +791,7 @@ def main():
     gcs_group.add_argument("--gcs-dictionary", default="german.dic", help="Path to the dictionary file for GCS.")
     gcs_group.add_argument("--gcs-in-wordlist", action="store_true", help="Also add German compound components to the SentenceSourceWordlist field. Requires --gcs.")
     gcs_group.add_argument("--gcs-include-compound", action="store_true", help="Include the original compound word in the lemma list along with its split components. Requires --gcs.")
+    gcs_group.add_argument("--gcs-reconstruct-lemma", action="store_true", help="Reconstructs the lemma of a compound word by lemmatizing only its last component. More accurate than SpaCy's default for unknown compounds. Requires --gcs-include-compound.")
     gcs_group.add_argument("--gcs-only-nouns-false", action="store_true", help="Allows any type of word (verb, adjective, etc.) to be used for GCS splitting. Ignored if --gcs-combine-noun-modes is used.")
     gcs_group.add_argument("--gcs-combine-noun-modes", action="store_true", help="Run GCS in both modes (only_nouns=True and False) and combine the unique resulting components.")
     gcs_group.add_argument("--gcs-fix-genitive", action="store_true", help="Corrects German genitive noun lemmas (e.g., 'Hauses' -> 'Haus') by checking against the dictionary.")
@@ -752,6 +809,8 @@ def main():
         print("Error: --gcs-in-wordlist requires --gcs to be enabled.", file=sys.stderr); exit(1)
     if args.gcs_include_compound and not args.gcs:
         print("Error: --gcs-include-compound requires --gcs to be enabled.", file=sys.stderr); exit(1)
+    if args.gcs_reconstruct_lemma and not args.gcs_include_compound:
+        print("Warning: --gcs-reconstruct-lemma is only effective when --gcs-include-compound is also used.", file=sys.stderr)
 
     global nlp
     nlp = spacy.load("de_core_news_lg" if args.language == "de" else "en_core_web_lg")
@@ -824,6 +883,7 @@ def main():
             'gcs_fix_genitive': args.gcs_fix_genitive,
             'gcs_mask_unknown': args.gcs_mask_unknown,
             'gcs_include_compound': args.gcs_include_compound,
+            'gcs_reconstruct_lemma': args.gcs_reconstruct_lemma,
             'detailed': args.detailed,
             'two_column_output': args.two_column_output,
             'html': args.html

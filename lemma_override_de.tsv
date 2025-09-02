@@ -156,6 +156,7 @@
 
 # --- Rules for parts of lemmas words ---
 #Austernbanko	Austernbanken	Austernbanke	
+ihr	Ihre	Ihr	
 
 # --- Very specific rule (Highest Priority), also contextual ---
 # Logic: "If Original_Word was processed as Result_Lemma, replace it, but only with context"

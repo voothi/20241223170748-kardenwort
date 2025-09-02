@@ -249,6 +249,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
     gcs_fix_genitive = kwargs.get('gcs_fix_genitive', False)
     gcs_mask_unknown = kwargs.get('gcs_mask_unknown', False)
     gcs_include_compound = kwargs.get('gcs_include_compound', False)
+    gcs_reconstruct_lemma = kwargs.get('gcs_reconstruct_lemma', False)
 
     doc = nlp(sentence)
     final_tokens = set()
@@ -265,28 +266,61 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
 
         was_split = False
         
-        if gcs and ahocs and gcs_in_wordlist and nlp.lang == 'de' and len(token.text) > 3 and (token.pos_ in ["NOUN", "PROPN"] or '-' in token.text):
+        if gcs and ahocs and nlp.lang == 'de' and len(token.text) > 3 and (token.pos_ in ["NOUN", "PROPN"] or '-' in token.text):
             try:
                 word_to_split = token.text
                 if no_make_singular: should_make_singular = False
                 elif make_singular: should_make_singular = True
                 else: should_make_singular = (token.pos_ in ['NOUN', 'PROPN'])
-
+                
+                best_dissection_for_reconstruction = None
+                
                 final_components = []
                 if gcs_combine_noun_modes:
                     with redirect_stdout(io.StringIO()):
                         dissection1 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=True, mask_unknown=gcs_mask_unknown)
                     final_components.extend(comp_split.merge_fractions(dissection1))
+                    
                     with redirect_stdout(io.StringIO()):
                         dissection2 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=False, mask_unknown=gcs_mask_unknown)
                     final_components.extend(comp_split.merge_fractions(dissection2))
+                    best_dissection_for_reconstruction = dissection2
                 else:
                     with redirect_stdout(io.StringIO()):
                         dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=gcs_only_nouns, mask_unknown=gcs_mask_unknown)
                     final_components = comp_split.merge_fractions(dissection)
+                    best_dissection_for_reconstruction = dissection
 
                 if len(final_components) > 1:
                     was_split = True
+
+                    if gcs_include_compound:
+                        default_lemma = ""
+                        if gcs_reconstruct_lemma and best_dissection_for_reconstruction:
+                            try:
+                                raw_split_parts = list(best_dissection_for_reconstruction)
+                                if raw_split_parts:
+                                    last_part_inflected = raw_split_parts[-1].word
+                                    last_part_doc = nlp(last_part_inflected)
+                                    if last_part_doc and len(last_part_doc) > 0:
+                                        last_part_lemma = last_part_doc[0].lemma_
+                                        prefix_end_index = token.text.rfind(last_part_inflected)
+                                        if prefix_end_index != -1:
+                                            prefix = token.text[:prefix_end_index]
+                                            reconstructed_lemma = prefix + last_part_lemma
+                                            default_lemma = get_capitalized_lemma(token, reconstructed_lemma)
+                                if not default_lemma:
+                                    raise ValueError("Reconstruction failed, using fallback.")
+                            except Exception:
+                                spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
+                                default_lemma = get_capitalized_lemma(token, spacy_lemma)
+                        else:
+                            spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
+                            default_lemma = get_capitalized_lemma(token, spacy_lemma)
+                        
+                        final_lemma = apply_word_override(default_lemma, token.text, lemma_overrides, sentence)
+                        final_tokens.add(final_lemma)
+
                     for part in set(final_components):
                         part = part.strip('-')
                         if not part: continue
@@ -304,16 +338,14 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
                                     default_part_lemma = lemma_part_to_check
                         
                         final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, sentence)
-
                         if final_part_lemma:
                             final_tokens.add(final_part_lemma)
             except Exception:
-                pass
-
-        if not (was_split and not gcs_include_compound):
+                was_split = False
+        
+        if not was_split:
             original_inflected_form = token.text
             default_lemma = ""
-
             if token.i in verb_particle_map:
                 particle = verb_particle_map[token.i]
                 default_lemma = f"{particle.text.lower()}{token.lemma_}".lower()
@@ -374,33 +406,39 @@ def process_text_v1(
                         elif make_singular: should_make_singular = True
                         else: should_make_singular = (token.pos_ in ['NOUN', 'PROPN'])
 
+                        best_dissection_for_reconstruction = None
+                        
                         final_components = []
                         if gcs_combine_noun_modes:
                             with redirect_stdout(io.StringIO()):
                                 dissection1 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=True, mask_unknown=gcs_mask_unknown)
                             final_components.extend(comp_split.merge_fractions(dissection1))
+                            
                             with redirect_stdout(io.StringIO()):
                                 dissection2 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=False, mask_unknown=gcs_mask_unknown)
                             final_components.extend(comp_split.merge_fractions(dissection2))
+                            best_dissection_for_reconstruction = dissection2
                         else:
                             with redirect_stdout(io.StringIO()):
                                 dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=gcs_only_nouns, mask_unknown=gcs_mask_unknown)
                             final_components = comp_split.merge_fractions(dissection)
+                            best_dissection_for_reconstruction = dissection
 
                         if len(final_components) > 1:
                             was_split = True
+
                             if gcs_include_compound:
                                 gcs_reconstruct_lemma = kwargs.get('gcs_reconstruct_lemma', False)
                                 default_lemma = ""
 
-                                if gcs_reconstruct_lemma:
+                                if gcs_reconstruct_lemma and best_dissection_for_reconstruction:
                                     try:
-                                        raw_split_parts = list(dissection)
+                                        raw_split_parts = list(best_dissection_for_reconstruction)
                                         if raw_split_parts:
                                             last_part_inflected = raw_split_parts[-1].word
 
                                             last_part_doc = nlp(last_part_inflected)
-                                            if last_part_doc:
+                                            if last_part_doc and len(last_part_doc) > 0:
                                                 last_part_lemma = last_part_doc[0].lemma_
                                                 
                                                 prefix_end_index = token.text.rfind(last_part_inflected)
@@ -415,11 +453,10 @@ def process_text_v1(
                                     except Exception:
                                         spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                                         default_lemma = get_capitalized_lemma(token, spacy_lemma)
-                                
                                 else:
                                     spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                                     default_lemma = get_capitalized_lemma(token, spacy_lemma)
-
+                                
                                 final_lemma = apply_word_override(default_lemma, token.text, lemma_overrides, line1)
                                 lemmas_to_process.append((final_lemma, token.text))
 
@@ -553,33 +590,39 @@ def process_text_v2(
                         elif make_singular: should_make_singular = True
                         else: should_make_singular = (token.pos_ in ['NOUN', 'PROPN'])
                             
+                        best_dissection_for_reconstruction = None
+                        
                         final_components = []
                         if gcs_combine_noun_modes:
                             with redirect_stdout(io.StringIO()):
                                 dissection1 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=True, mask_unknown=gcs_mask_unknown)
                             final_components.extend(comp_split.merge_fractions(dissection1))
+                            
                             with redirect_stdout(io.StringIO()):
                                 dissection2 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=False, mask_unknown=gcs_mask_unknown)
                             final_components.extend(comp_split.merge_fractions(dissection2))
+                            best_dissection_for_reconstruction = dissection2
                         else:
                             with redirect_stdout(io.StringIO()):
                                 dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=gcs_only_nouns, mask_unknown=gcs_mask_unknown)
                             final_components = comp_split.merge_fractions(dissection)
+                            best_dissection_for_reconstruction = dissection
 
                         if len(final_components) > 1:
                             was_split = True
+
                             if gcs_include_compound:
                                 gcs_reconstruct_lemma = kwargs.get('gcs_reconstruct_lemma', False)
                                 default_lemma = ""
 
-                                if gcs_reconstruct_lemma:
+                                if gcs_reconstruct_lemma and best_dissection_for_reconstruction:
                                     try:
-                                        raw_split_parts = list(dissection)
+                                        raw_split_parts = list(best_dissection_for_reconstruction)
                                         if raw_split_parts:
                                             last_part_inflected = raw_split_parts[-1].word
 
                                             last_part_doc = nlp(last_part_inflected)
-                                            if last_part_doc:
+                                            if last_part_doc and len(last_part_doc) > 0:
                                                 last_part_lemma = last_part_doc[0].lemma_
                                                 
                                                 prefix_end_index = token.text.rfind(last_part_inflected)
@@ -594,12 +637,11 @@ def process_text_v2(
                                     except Exception:
                                         spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                                         default_lemma = get_capitalized_lemma(token, spacy_lemma)
-                                
                                 else:
                                     spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                                     default_lemma = get_capitalized_lemma(token, spacy_lemma)
-
-                                final_lemma = apply_word_override(default_lemma, token.text, lemma_overrides, line1)
+                                
+                                final_lemma = apply_word_override(default_lemma, token.text, lemma_overrides, unit_text)
                                 lemmas_to_process.append((final_lemma, token.text))
                             
                             for part in set(final_components):

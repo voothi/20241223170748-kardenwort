@@ -46,7 +46,7 @@ def load_lemma_overrides(file_path):
                 result_lemma = row[0].strip()
                 source_word = row[1].strip()
                 target_lemma = row[2].strip()
-                context = row[3].strip() if len(row) > 3 and row[3].strip() else None
+                context = row[3] if len(row) > 3 and row[3] else None
 
                 if not target_lemma or (not result_lemma and not source_word):
                     print(f"Warning: Skipping invalid rule on line {i+1} in {file_path}: Target_Lemma and at least one of Result_Lemma or Source_Word must be set.", file=sys.stderr)
@@ -83,8 +83,17 @@ def _find_matching_rule(rules, context_sentence):
     global_rule = next((r for r in rules if not r[1]), None)
     
     for target_lemma, context in context_rules:
-        if context in context_sentence:
-            return target_lemma
+        if context:
+            if context.startswith('regex:'):
+                pattern = context[6:]
+                try:
+                    if re.search(pattern, context_sentence):
+                        return target_lemma
+                except re.error as e:
+                    print(f"Warning: Invalid regex in override rule: '{pattern}'. Error: {e}", file=sys.stderr)
+            else:
+                if context in context_sentence:
+                    return target_lemma
             
     if global_rule:
         return global_rule[0]
@@ -92,19 +101,16 @@ def _find_matching_rule(rules, context_sentence):
     return None
 
 def apply_word_override(default_lemma, source_word, overrides, context_sentence):
-    # Безопасно получаем словарь правил для priority1, по умолчанию — пустой словарь
     rules1 = overrides.get('priority1', {}).get((default_lemma, source_word))
     match1 = _find_matching_rule(rules1, context_sentence)
     if match1 is not None:
         return match1
 
-    # Безопасно получаем словарь правил для priority2
     rules2 = overrides.get('priority2', {}).get(source_word)
     match2 = _find_matching_rule(rules2, context_sentence)
     if match2 is not None:
         return match2
 
-    # Безопасно получаем словарь правил для priority3
     rules3 = overrides.get('priority3', {}).get(default_lemma)
     match3 = _find_matching_rule(rules3, context_sentence)
     if match3 is not None:
@@ -113,13 +119,11 @@ def apply_word_override(default_lemma, source_word, overrides, context_sentence)
     return default_lemma
 
 def apply_part_override(default_lemma, part, source_word, overrides, context_sentence):
-    # Безопасно получаем словарь правил для priority1
     rules1 = overrides.get('priority1', {}).get((part, source_word))
     match1 = _find_matching_rule(rules1, context_sentence)
     if match1 is not None:
         return match1
 
-    # Безопасно получаем словарь правил для priority3
     rules3 = overrides.get('priority3', {}).get(part)
     match3 = _find_matching_rule(rules3, context_sentence)
     if match3 is not None:
@@ -217,9 +221,7 @@ def get_capitalized_lemma(token, spacy_lemma):
 
     if is_all_caps or has_internal_caps:
         return original_text
-
-    # In German, all nouns are capitalized.
-    # For other languages (like English), only proper nouns should be capitalized.
+    
     if (nlp.lang == 'de' and token.pos_ in ["NOUN", "PROPN"]) or \
        (nlp.lang != 'de' and token.pos_ == "PROPN"):
         return spacy_lemma.capitalize()

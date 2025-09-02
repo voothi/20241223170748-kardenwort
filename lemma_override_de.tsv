@@ -194,8 +194,8 @@
 	Substantiven	Substantiv	
 	Substantive	Substantiv	
 	Englischen	Englisch	
-	aller	all	
-	Sie	Sie	
+	alle	all	
+	Alle	all	
 	Ihre	Ihr	
 
 # --- Rules for whole words (conditional, with context) ---
@@ -208,9 +208,10 @@
 # Die Fischer kennen die Austernbanken vor der Küste sehr gut und fahren sie gezielt an.
 	Austernbanken	Austernbanke	Küste
 
-# Enforce lemma 'Ihr' for the word 'Ihr' ONLY when it is NOT at the start of a sentence
+# Enforce lemma 'Ihr' for the word 'Ihr' only when it is not at the start of a sentence
 # This preserves correct lemmatization for cases like "Ihr seid..."
 	Ihr	Ihr	regex:(?<!^)Ihr
+	Sie	Sie	regex:(?<!^)Sie
 
 # --- Rules for parts of lemmas words ---
 #Austernbanko	Austernbanken	Austernbanke	

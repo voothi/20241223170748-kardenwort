@@ -196,14 +196,21 @@
 	Englischen	Englisch	
 	aller	all	
 	Sie	Sie	
+	Ihre	Ihr	
 
 # --- Rules for whole words (conditional, with context) ---
 # Logic: "For this Original_Word, use Target_Lemma, but only if Context is in the sentence"
 # Format: <empty> <TAB> Original_Word <TAB> Target_Lemma <TAB> Context
 #-------------------------------------------------------------------------------
-# Digitale Bilddaten und Audiodaten.
-#	Digitale	diGital	regex:(?<!^)Digitale
+# Verschiedene digitale Bilddaten und Audiodaten. / Digitale Bilddaten und Audiodaten.
+	digitale	diGital	regex:(?<!^)digitale
+
+# Die Fischer kennen die Austernbanken vor der Küste sehr gut und fahren sie gezielt an.
 	Austernbanken	Austernbanke	Küste
+
+# Enforce lemma 'Ihr' for the word 'Ihr' ONLY when it is NOT at the start of a sentence
+# This preserves correct lemmatization for cases like "Ihr seid..."
+	Ihr	Ihr	regex:(?<!^)Ihr
 
 # --- Rules for parts of lemmas words ---
 #Austernbanko	Austernbanken	Austernbanke	

@@ -152,6 +152,8 @@
 # Logic: "For this Original_Word, use Target_Lemma, but only if Context is in the sentence"
 # Format: <empty> <TAB> Original_Word <TAB> Target_Lemma <TAB> Context
 #-------------------------------------------------------------------------------
+# Digitale Bilddaten und Audiodaten.
+#	Digitale	diGital	 Digitale
 	Austernbanken	Austernbanke	Küste
 
 # --- Rules for parts of lemmas words ---

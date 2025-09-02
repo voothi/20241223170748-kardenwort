@@ -1,0 +1,173 @@
+# ==============================================================================
+#  Lemma Override Rules
+# ==============================================================================
+#
+# This file allows for precise control over the lemmatization process.
+# It uses a powerful 4-column, tab-separated format to define rules.
+#
+# ==============================================================================
+#  Rule Format
+# ==============================================================================
+#
+# Each rule is defined on a single line with four columns separated by TABs.
+#
+# Format:
+# Result_Lemma <TAB> Original_Word <TAB> Target_Lemma <TAB> [Optional_Context]
+#
+# --- Column Definitions ---
+#
+# 1. Result_Lemma:
+#    The initial lemma or component part identified by the system. This can be
+#    the output of the standard lemmatizer or a component from the compound splitter.
+#
+# 2. Original_Word:
+#    The original, inflected word as it appeared in the source text.
+#
+# 3. Target_Lemma:
+#    The new, desired lemma that should be used instead. This column is mandatory.
+#
+# 4. Context:
+#    An optional substring. If provided, the rule will only apply if this
+#    substring is present anywhere in the sentence.
+#
+# By filling in different combinations of the first two columns, you can create
+# rules with varying levels of specificity.
+#
+# ==============================================================================
+#  How it works & Rule Precedence
+# ==============================================================================
+#
+# Before detailing the priority, it's important to understand two types of rules:
+#
+# - A "Global Rule" is a rule where the 4th column (Context) is empty.
+#   It applies every time its conditions are met.
+# - A "Contextual Rule" is a rule where the 4th column is filled.
+#   It applies only if its conditions are met AND the context string is
+#   found in the sentence.
+#
+# The system evaluates rules in a strict order of priority. The first rule
+# that matches a word will be applied, and no further rules will be checked.
+#
+# --- Priority Levels ---
+#
+# 1. Highest Priority: Specific Match (Result_Lemma + Original_Word)
+#    - A rule where both `Result_Lemma` and `Original_Word` are specified.
+#    - This is the most precise rule type. It targets a specific source word
+#      that was lemmatized to a specific (potentially incorrect) result.
+#    - Example: `Donaudampfschifffahrtsgesellschaftskapitan	Donaudampfschifffahrtsgesellschaftskapitäne	Donaudampfschifffahrtsgesellschaftskapitän	präzise Navigation`
+#      "When the word 'Donaudampfschifffahrtsgesellschaftskapitäne' is lemmatized to 'Donaudampfschifffahrtsgesellschaftskapitan', override it with 'Donaudampfschifffahrtsgesellschaftskapitän', but only if the sentence contains 'präzise Navigation'."
+#
+# 2. Medium Priority: Source Word Match (Original_Word only)
+#    - A rule where `Original_Word` is specified, but `Result_Lemma` is empty.
+#    - This targets a specific word, regardless of what the default lemmatizer produces.
+#    - Example: `	Übungsaufgaben	Übungsaufgabe	`
+#      "Whenever the word 'Übungsaufgaben' appears, its lemma must be 'Übungsaufgabe'."
+#
+# 3. Low Priority: Result Lemma Match (Result_Lemma only)
+#    - A rule where `Result_Lemma` is specified, but `Original_Word` is empty.
+#    - This acts as a broad "find and replace" for any lemma produced by the system.
+#    - Example: `Date		Daten	`
+#      "If the system ever produces 'Date' as a lemma or component part for any word,
+#       always replace it with 'Daten'." This single rule would fix the component in both
+#       'Bilddaten' and 'Audiodaten', but it would also apply to any other word that
+#       might produce the lemma 'Date', which could be undesirable in some contexts.
+#
+# --- Context vs. Global Rules within each Priority ---
+#
+# For any of the priority levels above, the system first looks for a contextual
+# rule before a global one.
+#
+# 1. Contextual Match (Checked First):
+#    The system checks for rules where the 4th column (Context) is filled. The
+#    context is treated as a flexible substring, which can be a single word,
+#    multiple words, or a phrase with punctuation. The rule applies if this exact
+#    substring is found anywhere in the sentence—its position relative to the
+#    original word (before, after, or including it) does not matter.
+#
+#    - Example: `	Austernbanken	Austernbanke	Küste`
+#    - Sentence: "Die Fischer kennen die Austernbanken vor der Küste sehr gut und fahren sie gezielt an."
+#    - Result: Match. The word 'Austernbanken' is found, and the context 'Küste'
+#      is present in the sentence, so the lemma becomes 'Austernbanke'.
+#
+# 2. Global Match (Fallback):
+#    If no contextual rule matches, the system looks for a global rule
+#    (where the 4th column is empty).
+#
+# --- Final Fallback ---
+#
+# 4. Default System Processing:
+#    If no override rules match at all, the original output from the lemmatizer
+#    or splitter is used.
+#
+# ==============================================================================
+#  Mechanics & Best Practices
+# ==============================================================================
+#
+# 1. Context is Always Matched Against the Full Sentence
+#    The context string is always searched for within the entire sentence.
+#
+# 2. The Context Check is a Simple Substring Search
+#    The system literally checks "is the context string present in the sentence string?".
+#    There is no special logic if the context string is the same as the `Original_Word`
+#    or any other column.
+#
+# 3. Matching is Case-Sensitive
+#    All matching for words, lemmas, and contexts is strictly case-sensitive.
+#    This is critical for languages like German.
+#    - Example: For the text "...vor der Küste..."
+#    - Context 'Küste' will match.
+#    - Context 'küste' will not match.
+#
+# 4. Rule Order Can Matter
+#    The file is processed top-to-bottom. While the priority system handles most
+#    cases, if you have two rules with the exact same priority (e.g., two
+#    contextual rules for the same `Original_Word`), the one that appears
+#    first in the file will be applied.
+#
+# ==============================================================================
+#  User-Defined Override Rules
+# ==============================================================================
+# 
+# Sentence for tests on `en`: `To start working with the program, first visit Edit | Dictionaries to add some directory paths where to search for the dictionary files, set up various Wikipedia sites or other sources, adjust dictionary order or create dictionary groups.`
+# 
+# Add your override rules below.
+# To activate a rule, remove the '#' at the beginning of the line.
+#
+# Format: Result_Lemma <TAB> Original_Word <TAB> Target_Lemma <TAB> [Context]
+
+# --- Rules for whole words (unconditional) ---
+# Logic: "For this Original_Word, always use this Target_Lemma"
+# Format: <empty> <TAB> Original_Word <TAB> Target_Lemma <TAB> <empty>
+#-------------------------------------------------------------------------------
+#	Dritte	Dritte	
+#	Übungsaufgaben	Übungsaufgabe	
+#	program	Programm	
+#	groups	Groupe1	
+
+# --- Rules for whole words (conditional, with context) ---
+# Logic: "For this Original_Word, use Target_Lemma, but only if Context is in the sentence"
+# Format: <empty> <TAB> Original_Word <TAB> Target_Lemma <TAB> Context
+#-------------------------------------------------------------------------------
+#	Austernbanken	Austernbanke	Küste
+#	start	Starten	working with 
+#	groups	Groupe1	Create dictionary
+
+# --- Rules for parts of lemmas words ---
+#group	groups	Groupe2	
+
+# --- Rules for parts of compound words ---
+# Logic: "If for an Original_Word, a part was identified as Result_Lemma,
+#         replace that part's lemma with Target_Lemma"
+# Format: Result_Lemma <TAB> Original_Word <TAB> Target_Lemma <TAB> <empty>
+#-------------------------------------------------------------------------------
+#Date	Bilddaten	Daten	
+#Date	Audiodaten	Daten
+
+# --- Very specific rule (Highest Priority), also contextual ---
+# Logic: "If Original_Word was processed as Result_Lemma, replace it, but only with context"
+# Format: Result_Lemma <TAB> Original_Word <TAB> Target_Lemma <TAB> Context
+#-------------------------------------------------------------------------------
+#Donaudampfschifffahrtsgesellschaftskapitan	Donaudampfschifffahrtsgesellschaftskapitäne	Donaudampfschifffahrtsgesellschaftskapitän	präzise Navigation
+#group	groups	Groupe3	create dictionary
+#group	groups	Groupe4	Create dictionary
+

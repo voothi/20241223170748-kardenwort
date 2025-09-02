@@ -145,12 +145,17 @@
 	Substantiven	Substantiv	
 	Substantive	Substantiv	
 	Englischen	Englisch	
+	aller	all	
+	Sie	Sie	
 
 # --- Rules for whole words (conditional, with context) ---
 # Logic: "For this Original_Word, use Target_Lemma, but only if Context is in the sentence"
 # Format: <empty> <TAB> Original_Word <TAB> Target_Lemma <TAB> Context
 #-------------------------------------------------------------------------------
 	Austernbanken	Austernbanke	Küste
+
+# --- Rules for parts of lemmas words ---
+#Austernbanko	Austernbanken	Austernbanke	
 
 # --- Very specific rule (Highest Priority), also contextual ---
 # Logic: "If Original_Word was processed as Result_Lemma, replace it, but only with context"

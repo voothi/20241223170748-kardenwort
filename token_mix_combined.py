@@ -46,7 +46,14 @@ def load_lemma_overrides(file_path):
                 result_lemma = row[0].strip()
                 source_word = row[1].strip()
                 target_lemma = row[2].strip()
-                context = row[3] if len(row) > 3 and row[3] else None
+
+                context = None
+                if len(row) > 3 and row[3]:
+                    raw_context = row[3]
+                    if raw_context.startswith('regex:'):
+                        context = raw_context
+                    else:
+                        context = raw_context.strip()
 
                 if not target_lemma or (not result_lemma and not source_word):
                     print(f"Warning: Skipping invalid rule on line {i+1} in {file_path}: Target_Lemma and at least one of Result_Lemma or Source_Word must be set.", file=sys.stderr)

@@ -241,7 +241,6 @@ def get_capitalized_lemma(token, spacy_lemma):
 def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overrides, **kwargs):
     gcs = kwargs.get('gcs', False)
     ahocs = kwargs.get('ahocs', None)
-    gcs_in_wordlist = kwargs.get('gcs_in_wordlist', False)
     gcs_only_nouns = kwargs.get('gcs_only_nouns', True)
     make_singular = kwargs.get('make_singular', False)
     no_make_singular = kwargs.get('no_make_singular', False)
@@ -264,8 +263,8 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
         if not (token.is_alpha or '-' in token.text):
             continue
 
-        was_split = False
-        
+        was_processed_as_compound = False
+
         if gcs and ahocs and nlp.lang == 'de' and len(token.text) > 3 and (token.pos_ in ["NOUN", "PROPN"] or '-' in token.text):
             try:
                 word_to_split = token.text
@@ -274,8 +273,8 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
                 else: should_make_singular = (token.pos_ in ['NOUN', 'PROPN'])
                 
                 best_dissection_for_reconstruction = None
-                
                 final_components = []
+
                 if gcs_combine_noun_modes:
                     with redirect_stdout(io.StringIO()):
                         dissection1 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=True, mask_unknown=gcs_mask_unknown)
@@ -291,8 +290,9 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
                     final_components = comp_split.merge_fractions(dissection)
                     best_dissection_for_reconstruction = dissection
 
-                if len(final_components) > 1:
-                    was_split = True
+                unique_components = set(final_components)
+                if len(unique_components) > 1:
+                    was_processed_as_compound = True
 
                     if gcs_include_compound:
                         default_lemma = ""
@@ -319,9 +319,10 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
                             default_lemma = get_capitalized_lemma(token, spacy_lemma)
                         
                         final_lemma = apply_word_override(default_lemma, token.text, lemma_overrides, sentence)
-                        final_tokens.add(final_lemma)
+                        if final_lemma:
+                            final_tokens.add(final_lemma)
 
-                    for part in set(final_components):
+                    for part in unique_components:
                         part = part.strip('-')
                         if not part: continue
                         
@@ -341,9 +342,9 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
                         if final_part_lemma:
                             final_tokens.add(final_part_lemma)
             except Exception:
-                was_split = False
-        
-        if not was_split:
+                was_processed_as_compound = False
+
+        if not was_processed_as_compound:
             original_inflected_form = token.text
             default_lemma = ""
             if token.i in verb_particle_map:
@@ -355,7 +356,8 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
                 default_lemma = get_capitalized_lemma(token, spacy_lemma)
             
             final_lemma_to_add = apply_word_override(default_lemma, original_inflected_form, lemma_overrides, sentence)
-            final_tokens.add(final_lemma_to_add)
+            if final_lemma_to_add:
+                final_tokens.add(final_lemma_to_add)
 
     return sorted(list(final_tokens), key=lambda x: (x not in lemma_index, lemma_index.get(x, 0), x.lower()))
 

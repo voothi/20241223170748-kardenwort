@@ -203,7 +203,7 @@
 # Format: <empty> <TAB> Original_Word <TAB> Target_Lemma <TAB> Context
 #-------------------------------------------------------------------------------
 # Verschiedene digitale Bilddaten und Audiodaten. / Digitale Bilddaten und Audiodaten.
-	digitale	diGital	regex:(?<!^)digitale
+#	digitale	diGital	regex:(?<!^)digitale
 
 # Die Fischer kennen die Austernbanken vor der Küste sehr gut und fahren sie gezielt an.
 	Austernbanken	Austernbanke	Küste
@@ -220,7 +220,7 @@
 # Format: Result_Lemma <TAB> Original_Word <TAB> Target_Lemma <TAB> Context
 #-------------------------------------------------------------------------------
 Donaudampfschifffahrtsgesellschaftskapitan	Donaudampfschifffahrtsgesellschaftskapitäne	Donaudampfschifffahrtsgesellschaftskapitän	präzise Navigation
-ihr	Ihre	Ihr	Ihr
+#ihr	Ihre	Ihr	Ihr
 
 # --- Rules for parts of compound words ---
 # Logic: "If for an Original_Word, a part was identified as Result_Lemma,

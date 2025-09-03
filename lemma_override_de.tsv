@@ -12,6 +12,7 @@
 	Bilder	Bild	
 	BPMN-Diagramme	BPMN-Diagramm	
 	Bytes	Byte	
+	Daten	Daten	bibliografische Daten
 	Datenbanken	Datenbank	
 	Datenbanktype	Datenbanktyp	
 	Dienste	Dienst	
@@ -29,22 +30,26 @@
 	Funktionsebenen	Funktionseben	
 	gefallen	gefallen	Ihnen
 	Geschäftsprozesse	Geschäftsprozess	
+	Gleichungssystemen	Gleichungssystem	
 	HTML-Dokumenten	HTML-Dokument	
 	HTTP-Statuscodes	HTTP-Statuscode	
 	Ihnen	Ihnen	
 	Ihr	Ihr	regex:(?<!^)Ihr
 	Ihre	Ihr	
 	Ihrer	Ihr	
+	Ihrer	Ihr	
 	Internet-Serverdienste	Internet-Serverdienst	
 	Klassen	Klasse	
 	Materialien	Material	
 	Mathematische	mathematisch		
+	Matrizen	Matrize	
 	Module	Modul	
 	Multimedia-Dateiformate	Multimedia-Dateiformat	
 	Netzwerken	Netzwerk	
 	NoSQL-Datenbanken	NoSQL-Datenbank	
 	Objektorientierte	objektorientiert	
 	Pipes	Pipe	
+	Rechenmaschinen	Rechenmaschine	
 	Schädlinge	Schädling	
 	Serviceseiten	Serviceseite	
 	Sie	Sie	regex:(?<!^)Sie
@@ -71,6 +76,7 @@ Date	Audiodaten	Daten
 Date	Bilddaten	Daten	
 Date	Datenbanken	Daten	
 Date	Datenbankschnittstelle	Daten	
+Date	Datenverarbeitung	Daten	
 Date	Textdaten	Daten	
 digitale		digital	
 Eingabegerat		Eingabegeräte	

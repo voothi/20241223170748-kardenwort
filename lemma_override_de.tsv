@@ -6,6 +6,8 @@
 	Austernbanken	Austernbanke	
 	Auswahlabfragen	Auswahlabfrage	
 	Bilddaten	Bilddaten	
+	HTTP-Statuscodes	HTTP-Statuscode	
+	Apache-Module	Apache-Modul	
 	BPMN-Diagramme	BPMN-Diagramm	
 	Bytes	Byte	
 	Datenbanken	Datenbank	
@@ -16,6 +18,9 @@
 	Donaudampfschifffahrtsgesellschaftskapitäns	Donaudampfschifffahrtsgesellschaftskapitän	
 	Dritte	Dritte	
 	DSL-Dienste	DSL-Dienst	
+	Internet-Serverdienste	Internet-Serverdienst	
+	Dienste	Dienst	
+	Verzeichnisdienste	Verzeichnisdienst	
 	effizienter	effizient	
 	Englischen	Englisch	
 	erster	erste	
@@ -35,13 +40,17 @@
 	Pipes	Pipe	
 	Serviceseiten	Serviceseite	
 	Sie	Sie	regex:(?<!^)Sie
+	Textbasierte	textbasiert	
 	SQL-Abfragen	SQL-Abfrage	
 	Substantive	Substantiv	
 	Substantiven	Substantiv	
+	Zeichensätze	Zeichensatz	
 	Textdaten	Textdaten	
 	Threads	Thread	
 	Übungsaufgaben	Übungsaufgabe	
 	Windows	Windows	
+	Archivdateien	Archivdatei	
+	Multimedia-Dateiformate	Multimedia-Dateiformat	
 aller		all	
 Betriebs		Betrieb	
 Date	Audiodaten	Daten

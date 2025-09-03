@@ -6,6 +6,7 @@
 	Bilddaten	Bilddaten	
 	BPMN-Diagramme	BPMN-Diagramm	
 	Bytes	Byte	
+	Dolibarr	Dolibarr	
 	Donaudampfschifffahrtsgesellschaftskapitäne	Donaudampfschifffahrtsgesellschaftskapitän	
 	Donaudampfschifffahrtsgesellschaftskapitänes	Donaudampfschifffahrtsgesellschaftskapitän	
 	Donaudampfschifffahrtsgesellschaftskapitäns	Donaudampfschifffahrtsgesellschaftskapitän	
@@ -16,6 +17,7 @@
 	erster	erste	
 	Funktionsebenen	Funktionseben	
 	gefallen	gefallen	Ihnen
+	Geschäftsprozesse	Geschäftsprozess	
 	Ihnen	Ihnen	regex:(?<!^)Sie
 	Ihr	Ihr	regex:(?<!^)Ihr
 	Ihre	Ihr	
@@ -37,6 +39,7 @@ aller		all
 Betriebs		Betrieb	
 Date	Audiodaten	Daten
 Date	Bilddaten	Daten	
+Date	Datenbanken	Daten	
 Date	Textdaten	Daten	
 digitale		digital	
 Eingabegerat		Eingabegeräte	

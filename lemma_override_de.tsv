@@ -3,6 +3,7 @@
 	Aussageformen	Aussageform	
 	Austernbanken	Austernbanke	
 	Bilddaten	Bilddaten	
+	Bytes	Byte	
 	Donaudampfschifffahrtsgesellschaftskapitäne	Donaudampfschifffahrtsgesellschaftskapitän	
 	Donaudampfschifffahrtsgesellschaftskapitänes	Donaudampfschifffahrtsgesellschaftskapitän	
 	Donaudampfschifffahrtsgesellschaftskapitäns	Donaudampfschifffahrtsgesellschaftskapitän	
@@ -13,6 +14,7 @@
 	Ihre	Ihr	
 	Ihrer	Ihr	
 	Materialien	Material	
+	Mathematische	mathematisch		
 	Serviceseiten	Serviceseite	
 	Sie	Sie	regex:(?<!^)Sie
 	Substantive	Substantiv	
@@ -28,7 +30,6 @@ Eingabegerat		Eingabegeräte
 Geräte		Gerät	
 IP-Adressen		IP-Adresse	
 IP-Netzwerken		IP-Netzwerk	
-Mathematische		mathematisch	
 Netzwerke		Netzwerk	
 Netzwerkkarten		Netzwerkkarte	
 Netzzugangsverfahr		Netzzugangsverfahren	

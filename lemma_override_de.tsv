@@ -1,11 +1,15 @@
 	Algorithmen	Algorithmus	
+	Änderungsabfragen	Änderungsabfrage	
 	Audiodaten	Audiodaten	
 	Ausdrücke	Ausdruck	
 	Aussageformen	Aussageform	
 	Austernbanken	Austernbanke	
+	Auswahlabfragen	Auswahlabfrage	
 	Bilddaten	Bilddaten	
 	BPMN-Diagramme	BPMN-Diagramm	
 	Bytes	Byte	
+	Datenbanken	Datenbank	
+	Datenbanktype	Datenbanktyp	
 	Dolibarr	Dolibarr	
 	Donaudampfschifffahrtsgesellschaftskapitäne	Donaudampfschifffahrtsgesellschaftskapitän	
 	Donaudampfschifffahrtsgesellschaftskapitänes	Donaudampfschifffahrtsgesellschaftskapitän	
@@ -26,9 +30,12 @@
 	Mathematische	mathematisch		
 	Module	Modul	
 	Netzwerken	Netzwerk	
+	NoSQL-Datenbanken	NoSQL-Datenbank	
+	Objektorientierte	objektorientiert	
 	Pipes	Pipe	
 	Serviceseiten	Serviceseite	
 	Sie	Sie	regex:(?<!^)Sie
+	SQL-Abfragen	SQL-Abfrage	
 	Substantive	Substantiv	
 	Substantiven	Substantiv	
 	Textdaten	Textdaten	
@@ -40,6 +47,7 @@ Betriebs		Betrieb
 Date	Audiodaten	Daten
 Date	Bilddaten	Daten	
 Date	Datenbanken	Daten	
+Date	Datenbankschnittstelle	Daten	
 Date	Textdaten	Daten	
 digitale		digital	
 Eingabegerat		Eingabegeräte	

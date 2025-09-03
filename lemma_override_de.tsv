@@ -4,6 +4,7 @@
 	Aussageformen	Aussageform	
 	Austernbanken	Austernbanke	
 	Bilddaten	Bilddaten	
+	BPMN-Diagramme	BPMN-Diagramm	
 	Bytes	Byte	
 	Donaudampfschifffahrtsgesellschaftskapitäne	Donaudampfschifffahrtsgesellschaftskapitän	
 	Donaudampfschifffahrtsgesellschaftskapitänes	Donaudampfschifffahrtsgesellschaftskapitän	
@@ -28,6 +29,7 @@
 	Sie	Sie	regex:(?<!^)Sie
 	Substantive	Substantiv	
 	Substantiven	Substantiv	
+	Textdaten	Textdaten	
 	Threads	Thread	
 	Übungsaufgaben	Übungsaufgabe	
 	Windows	Windows	
@@ -35,6 +37,7 @@ aller		all
 Betriebs		Betrieb	
 Date	Audiodaten	Daten
 Date	Bilddaten	Daten	
+Date	Textdaten	Daten	
 digitale		digital	
 Eingabegerat		Eingabegeräte	
 Geräte		Gerät	

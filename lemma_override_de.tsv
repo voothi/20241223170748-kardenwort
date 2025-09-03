@@ -1,56 +1,67 @@
 	Algorithmen	Algorithmus	
 	Änderungsabfragen	Änderungsabfrage	
+	Apache-Module	Apache-Modul	
+	Archivdateien	Archivdatei	
 	Audiodaten	Audiodaten	
 	Ausdrücke	Ausdruck	
 	Aussageformen	Aussageform	
 	Austernbanken	Austernbanke	
 	Auswahlabfragen	Auswahlabfrage	
 	Bilddaten	Bilddaten	
-	HTTP-Statuscodes	HTTP-Statuscode	
-	Apache-Module	Apache-Modul	
+	Bilder	Bild	
 	BPMN-Diagramme	BPMN-Diagramm	
 	Bytes	Byte	
 	Datenbanken	Datenbank	
 	Datenbanktype	Datenbanktyp	
+	Dienste	Dienst	
 	Dolibarr	Dolibarr	
 	Donaudampfschifffahrtsgesellschaftskapitäne	Donaudampfschifffahrtsgesellschaftskapitän	
 	Donaudampfschifffahrtsgesellschaftskapitänes	Donaudampfschifffahrtsgesellschaftskapitän	
 	Donaudampfschifffahrtsgesellschaftskapitäns	Donaudampfschifffahrtsgesellschaftskapitän	
 	Dritte	Dritte	
 	DSL-Dienste	DSL-Dienst	
-	Internet-Serverdienste	Internet-Serverdienst	
-	Dienste	Dienst	
-	Verzeichnisdienste	Verzeichnisdienst	
 	effizienter	effizient	
+	Einbetten	Einbetten	
 	Englischen	Englisch	
 	erster	erste	
 	Funktionsebenen	Funktionseben	
 	gefallen	gefallen	Ihnen
 	Geschäftsprozesse	Geschäftsprozess	
+	HTML-Dokumenten	HTML-Dokument	
+	HTTP-Statuscodes	HTTP-Statuscode	
 	Ihnen	Ihnen	regex:(?<!^)Sie
 	Ihr	Ihr	regex:(?<!^)Ihr
 	Ihre	Ihr	
 	Ihrer	Ihr	
+	Internet-Serverdienste	Internet-Serverdienst	
+	Klassen	Klasse	
 	Materialien	Material	
 	Mathematische	mathematisch		
 	Module	Modul	
+	Multimedia-Dateiformate	Multimedia-Dateiformat	
 	Netzwerken	Netzwerk	
 	NoSQL-Datenbanken	NoSQL-Datenbank	
 	Objektorientierte	objektorientiert	
 	Pipes	Pipe	
+	Schädlinge	Schädling	
 	Serviceseiten	Serviceseite	
 	Sie	Sie	regex:(?<!^)Sie
-	Textbasierte	textbasiert	
+	Sprachgrundlagen	Sprachgrundlage	
 	SQL-Abfragen	SQL-Abfrage	
+	Stylesheet-Wertangaben	Stylesheet-Wertangabe	
 	Substantive	Substantiv	
 	Substantiven	Substantiv	
-	Zeichensätze	Zeichensatz	
+	Textbasierte	textbasiert	
 	Textdaten	Textdaten	
 	Threads	Thread	
 	Übungsaufgaben	Übungsaufgabe	
+	Verzeichnisdienste	Verzeichnisdienst	
+	Webseiten	Webseite	
+	Webspezifische	webspezifisch	
 	Windows	Windows	
-	Archivdateien	Archivdatei	
-	Multimedia-Dateiformate	Multimedia-Dateiformat	
+	Würm	Wurm	
+	Würmer	Wurm	
+	Zeichensätze	Zeichensatz	
 aller		all	
 Betriebs		Betrieb	
 Date	Audiodaten	Daten

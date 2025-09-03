@@ -1,5 +1,6 @@
 	Algorithmen	Algorithmus	
 	Audiodaten	Audiodaten	
+	Ausdrücke	Ausdruck	
 	Aussageformen	Aussageform	
 	Austernbanken	Austernbanke	
 	Bilddaten	Bilddaten	
@@ -8,17 +9,26 @@
 	Donaudampfschifffahrtsgesellschaftskapitänes	Donaudampfschifffahrtsgesellschaftskapitän	
 	Donaudampfschifffahrtsgesellschaftskapitäns	Donaudampfschifffahrtsgesellschaftskapitän	
 	Dritte	Dritte	
+	DSL-Dienste	DSL-Dienst	
+	effizienter	effizient	
 	Englischen	Englisch	
+	erster	erste	
+	Funktionsebenen	Funktionseben	
 	gefallen	gefallen	Ihnen
+	Ihnen	Ihnen	regex:(?<!^)Sie
 	Ihr	Ihr	regex:(?<!^)Ihr
 	Ihre	Ihr	
 	Ihrer	Ihr	
 	Materialien	Material	
 	Mathematische	mathematisch		
+	Module	Modul	
+	Netzwerken	Netzwerk	
+	Pipes	Pipe	
 	Serviceseiten	Serviceseite	
 	Sie	Sie	regex:(?<!^)Sie
 	Substantive	Substantiv	
 	Substantiven	Substantiv	
+	Threads	Thread	
 	Übungsaufgaben	Übungsaufgabe	
 	Windows	Windows	
 aller		all	
@@ -30,6 +40,9 @@ Eingabegerat		Eingabegeräte
 Geräte		Gerät	
 IP-Adressen		IP-Adresse	
 IP-Netzwerken		IP-Netzwerk	
+Künstliche		künstlich	
+Lineare		linear	
+Logistische		logistisch	
 Netzwerke		Netzwerk	
 Netzwerkkarten		Netzwerkkarte	
 Netzzugangsverfahr		Netzzugangsverfahren	

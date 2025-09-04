@@ -160,7 +160,8 @@ def apply_word_override(default_lemma, source_word, overrides, context_sentence)
     return default_lemma
 
 def apply_part_override(default_lemma, part, source_word, overrides, context_sentence):
-    rules1 = overrides.get('priority1', {}).get((default_lemma, source_word))
+    # CORRECTED: Теперь ищет правило для (лемма_части, сама_часть)
+    rules1 = overrides.get('priority1', {}).get((default_lemma, part))
     match1 = _find_matching_rule(rules1, context_sentence)
     if match1 is not None:
         return match1
@@ -168,7 +169,8 @@ def apply_part_override(default_lemma, part, source_word, overrides, context_sen
     for res_lemma_rule, pattern, rule in overrides.get('priority1_regex', []):
         if res_lemma_rule == default_lemma:
             try:
-                if re.fullmatch(pattern, source_word):
+                # CORRECTED: Теперь применяет regex к части (part)
+                if re.fullmatch(pattern, part):
                     match_regex1 = _find_matching_rule([rule], context_sentence)
                     if match_regex1 is not None:
                         return match_regex1

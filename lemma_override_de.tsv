@@ -8,10 +8,8 @@
 	Austernbanken	Austernbanke	
 	Auswahlabfragen	Auswahlabfrage	
 	Bedürfnisse	Bedürfnis	
-	Empfangen	Empfang	
-	Bilddaten	Bilddaten	
-	Zugangs	Zugang	
 	besonderer	besondere	
+	Bilddaten	Bilddaten	
 	Bilder	Bild	
 	BPMN-Diagramme	BPMN-Diagramm	
 	Bytes	Byte	
@@ -27,6 +25,7 @@
 	DSL-Dienste	DSL-Dienst	
 	effizienter	effizient	
 	Einbetten	Einbetten	
+	Empfangen	Empfang	
 	Englischen	Englisch	
 	erster	erste	
 	festlesen	festlesen	
@@ -72,16 +71,17 @@
 	Würm	Wurm	
 	Würmer	Wurm	
 	Zeichensätze	Zeichensatz	
-aller		all	
-Beispiele		Beispiel	
-Betriebs		Betrieb	
+	Zugangs	Zugang	
 #Date	Audiodaten	Daten
 #Date	Bilddaten	Daten	
 #Date	Datenbanken	Daten	
 #Date	Datenbankschnittstelle	Daten	
-#Date	Datenverarbeitung	Daten	
 #Date	Datenfernübertragung	Daten	
+#Date	Datenverarbeitung	Daten	
 #Date	Textdaten	Daten	
+aller		all	
+Beispiele		Beispiel	
+Betriebs		Betrieb	
 Date	regex:(?i)\w*daten\w*	Daten	
 digitale		digital	
 Eingabegerat		Eingabegeräte	

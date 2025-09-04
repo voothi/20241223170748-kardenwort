@@ -376,7 +376,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
                     for part_raw in set(final_components):
                         part = part_raw.strip('-')
                         if not part: continue
-                        if len(part) <= 3: continue
+                        if len(part) <= 1: continue
                         
                         default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
                         final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, sentence)
@@ -474,7 +474,7 @@ def process_text_v1(
                             for part_raw in set(final_components):
                                 part = part_raw.strip('-')
                                 if not part: continue
-                                if len(part) <= 3: continue
+                                if len(part) <= 1: continue
 
                                 default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
                                 final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, line1)
@@ -615,7 +615,7 @@ def process_text_v2(
                             for part_raw in set(final_components):
                                 part = part_raw.strip('-')
                                 if not part: continue
-                                if len(part) <= 3: continue
+                                if len(part) <= 1: continue
 
                                 default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
                                 final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, unit_text)

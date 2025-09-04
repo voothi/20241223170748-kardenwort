@@ -82,7 +82,7 @@
 aller		all	
 Beispiele		Beispiel	
 Betriebs		Betrieb	
-Date	regex:(?i)\w*daten\w*	Daten	
+date	regex:(?i)\w*daten\w*	Daten	
 digitale		digital	
 Eingabegerat		Eingabegeräte	
 Geräte		Gerät	

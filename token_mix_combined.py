@@ -213,16 +213,15 @@ def get_lemma_for_compound_part(part, nlp, german_dict):
     if token.pos_ not in ["NOUN", "PROPN"]:
         return token.lemma_.lower()
     
-    spacy_lemma = token.lemma_.capitalize()
-    original_part_capitalized = part.capitalize()
+    spacy_lemma_cap = token.lemma_.capitalize()
+    if spacy_lemma_cap in german_dict:
+        return spacy_lemma_cap
 
-    if spacy_lemma in german_dict:
-        return spacy_lemma
+    original_part_cap = part.capitalize()
+    if original_part_cap in german_dict:
+        return original_part_cap
 
-    if original_part_capitalized in german_dict:
-        return original_part_capitalized
-
-    return spacy_lemma
+    return part
 
 def get_corrected_lemma(token, german_dict, fix_genitive_flag=False):
     spacy_lemma = token.lemma_

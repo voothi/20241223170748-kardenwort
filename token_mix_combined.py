@@ -45,9 +45,11 @@ def load_lemma_overrides(file_path):
                     print(f"Warning: Skipping malformed line {i+1} in {file_path}: expected at least 3 columns.", file=sys.stderr)
                     continue
                 
-                result_lemma = row[0].strip()
-                raw_source_word = row[1]
-                target_lemma = row[2].strip()
+                # --- НАЧАЛО ИЗМЕНЕНИЙ: Переименование переменных ---
+                match_spacy_lemma = row[0].strip()        # Было: result_lemma
+                raw_match_source_word = row[1]            # Было: raw_source_word
+                result_override_lemma = row[2].strip()    # Было: target_lemma
+                # --- КОНЕЦ ИЗМЕНЕНИЙ ---
 
                 context = None
                 if len(row) > 3 and row[3]:
@@ -57,38 +59,45 @@ def load_lemma_overrides(file_path):
                     else:
                         context = raw_context.strip()
 
-                if not target_lemma or (not result_lemma and not raw_source_word.strip()):
-                    print(f"Warning: Skipping invalid rule on line {i+1} in {file_path}: Target_Lemma and at least one of Result_Lemma or Source_Word must be set.", file=sys.stderr)
+                # --- ИЗМЕНЕНИЕ: Использование новых имен и улучшение сообщения об ошибке ---
+                if not result_override_lemma or (not match_spacy_lemma and not raw_match_source_word.strip()):
+                    print(f"Warning: Skipping invalid rule on line {i+1} in {file_path}: Override_Lemma (col 3) and at least one of Match_Spacy_Lemma (col 1) or Match_Source_Word (col 2) must be set.", file=sys.stderr)
                     continue
 
-                rule = (target_lemma, context)
+                rule = (result_override_lemma, context) # Было: target_lemma
 
-                is_regex_word = raw_source_word.startswith('regex:')
-                source_word = raw_source_word.strip()
+                is_regex_word = raw_match_source_word.startswith('regex:') # Было: raw_source_word
+                match_source_word = raw_match_source_word.strip()          # Было: source_word, raw_source_word
 
-                if result_lemma and source_word:
+                # Priority 1: (Лемма от spaCy + Исходное слово) -> Новая лемма
+                if match_spacy_lemma and match_source_word: # Было: result_lemma, source_word
                     if is_regex_word:
-                        pattern = raw_source_word[6:]
-                        overrides['priority1_regex'].append((result_lemma, pattern, rule))
+                        pattern = raw_match_source_word[6:] # Было: raw_source_word
+                        overrides['priority1_regex'].append((match_spacy_lemma, pattern, rule)) # Было: result_lemma
                     else:
-                        key = (result_lemma, source_word)
+                        key = (match_spacy_lemma, match_source_word) # Было: result_lemma, source_word
                         if key not in overrides['priority1']:
                             overrides['priority1'][key] = []
                         overrides['priority1'][key].append(rule)
-                elif source_word:
+                
+                # Priority 2: (Только исходное слово) -> Новая лемма
+                elif match_source_word: # Было: source_word
                     if is_regex_word:
-                        pattern = raw_source_word[6:]
+                        pattern = raw_match_source_word[6:] # Было: raw_source_word
                         overrides['priority2_regex'].append((pattern, rule))
                     else:
-                        key = source_word
+                        key = match_source_word # Было: source_word
                         if key not in overrides['priority2']:
                             overrides['priority2'][key] = []
                         overrides['priority2'][key].append(rule)
-                elif result_lemma:
-                    key = result_lemma
+                
+                # Priority 3: (Только лемма от spaCy) -> Новая лемма
+                elif match_spacy_lemma: # Было: result_lemma
+                    key = match_spacy_lemma # Было: result_lemma
                     if key not in overrides['priority3']:
                         overrides['priority3'][key] = []
                     overrides['priority3'][key].append(rule)
+                # --- КОНЕЦ ИЗМЕНЕНИЙ ---
 
     except FileNotFoundError:
         print(f"Lemma override file not found: {file_path}", file=sys.stderr)

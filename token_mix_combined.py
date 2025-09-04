@@ -196,42 +196,32 @@ def apply_part_override(default_lemma, part, source_word, overrides, context_sen
             
     return default_lemma
 
-def get_lemma_for_compound_part(part, nlp, german_dict, assumed_pos=None):
+def get_lemma_for_compound_part(part, nlp, german_dict):
     """
-    Calculates the base lemma for a part of a German compound word.
-    It can use an 'assumed_pos' to bypass POS detection for performance.
+    Calculates the base lemma for a part of a German compound word, 
+    considering the part of speech and using a dictionary to validate the lemma from spaCy.
     """
     if not part:
         return ""
 
-    part_pos = assumed_pos
-    token = None
+    part_doc = nlp(part)
+    if not part_doc or len(part_doc) == 0:
+        return ""
 
-    if not part_pos:
-        part_doc = nlp(part)
-        if not part_doc or len(part_doc) == 0: return ""
-        token = part_doc[0]
-        part_pos = token.pos_
+    token = part_doc[0]
     
-    if part_pos not in ["NOUN", "PROPN"]:
-        if not token:
-            part_doc = nlp(part)
-            if not part_doc or len(part_doc) == 0: return ""
-            token = part_doc[0]
+    if token.pos_ not in ["NOUN", "PROPN"]:
         return token.lemma_.lower()
-
-    if not token:
-        part_doc = nlp(part)
-        if not part_doc or len(part_doc) == 0: return ""
-        token = part_doc[0]
-        
+    
     spacy_lemma = token.lemma_.capitalize()
     original_part_capitalized = part.capitalize()
 
     if spacy_lemma in german_dict:
         return spacy_lemma
+
     if original_part_capitalized in german_dict:
         return original_part_capitalized
+
     return spacy_lemma
 
 def get_corrected_lemma(token, german_dict, fix_genitive_flag=False):
@@ -383,14 +373,12 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
 
                 if len(final_components) > 1:
                     was_split = True
-                    composite_pos = token.pos_
                     for part_raw in set(final_components):
                         part = part_raw.strip('-')
                         if not part: continue
-                        if len(part) <= 2: continue
+                        if len(part) <= 3: continue
                         
-                        assumed_part_pos = "NOUN" if composite_pos in ["NOUN", "PROPN"] else None
-                        default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict, assumed_pos=assumed_part_pos)
+                        default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
                         final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, sentence)
 
                         if final_part_lemma:
@@ -483,14 +471,12 @@ def process_text_v1(
                                 final_lemma = apply_word_override(default_lemma, token.text, lemma_overrides, line1)
                                 lemmas_to_process.append((final_lemma, token.text))
 
-                            composite_pos = token.pos_
                             for part_raw in set(final_components):
                                 part = part_raw.strip('-')
                                 if not part: continue
-                                if len(part) <= 2: continue
+                                if len(part) <= 3: continue
 
-                                assumed_part_pos = "NOUN" if composite_pos in ["NOUN", "PROPN"] else None
-                                default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict, assumed_pos=assumed_part_pos)
+                                default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
                                 final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, line1)
                                 if final_part_lemma:
                                     lemmas_to_process.append((final_part_lemma, token.text))
@@ -626,14 +612,12 @@ def process_text_v2(
                                 final_lemma = apply_word_override(default_lemma, token.text, lemma_overrides, unit_text)
                                 lemmas_to_process.append((final_lemma, token.text))
                             
-                            composite_pos = token.pos_
                             for part_raw in set(final_components):
                                 part = part_raw.strip('-')
                                 if not part: continue
-                                if len(part) <= 2: continue
+                                if len(part) <= 3: continue
 
-                                assumed_part_pos = "NOUN" if composite_pos in ["NOUN", "PROPN"] else None
-                                default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict, assumed_pos=assumed_part_pos)
+                                default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
                                 final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, unit_text)
                                 if final_part_lemma:
                                     lemmas_to_process.append((final_part_lemma, token.text))

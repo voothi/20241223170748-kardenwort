@@ -45,11 +45,9 @@ def load_lemma_overrides(file_path):
                     print(f"Warning: Skipping malformed line {i+1} in {file_path}: expected at least 3 columns.", file=sys.stderr)
                     continue
                 
-                # --- НАЧАЛО ИЗМЕНЕНИЙ: Переименование переменных ---
-                match_spacy_lemma = row[0].strip()        # Было: result_lemma
-                raw_match_source_word = row[1]            # Было: raw_source_word
-                result_override_lemma = row[2].strip()    # Было: target_lemma
-                # --- КОНЕЦ ИЗМЕНЕНИЙ ---
+                match_spacy_lemma = row[0].strip()
+                raw_match_source_word = row[1]
+                result_override_lemma = row[2].strip()
 
                 context = None
                 if len(row) > 3 and row[3]:
@@ -59,45 +57,40 @@ def load_lemma_overrides(file_path):
                     else:
                         context = raw_context.strip()
 
-                # --- ИЗМЕНЕНИЕ: Использование новых имен и улучшение сообщения об ошибке ---
                 if not result_override_lemma or (not match_spacy_lemma and not raw_match_source_word.strip()):
                     print(f"Warning: Skipping invalid rule on line {i+1} in {file_path}: Override_Lemma (col 3) and at least one of Match_Spacy_Lemma (col 1) or Match_Source_Word (col 2) must be set.", file=sys.stderr)
                     continue
 
-                rule = (result_override_lemma, context) # Было: target_lemma
+                rule = (result_override_lemma, context)
 
-                is_regex_word = raw_match_source_word.startswith('regex:') # Было: raw_source_word
-                match_source_word = raw_match_source_word.strip()          # Было: source_word, raw_source_word
+                is_regex_word = raw_match_source_word.startswith('regex:')
+                match_source_word = raw_match_source_word.strip()
 
-                # Priority 1: (Лемма от spaCy + Исходное слово) -> Новая лемма
-                if match_spacy_lemma and match_source_word: # Было: result_lemma, source_word
+                if match_spacy_lemma and match_source_word:
                     if is_regex_word:
-                        pattern = raw_match_source_word[6:] # Было: raw_source_word
-                        overrides['priority1_regex'].append((match_spacy_lemma, pattern, rule)) # Было: result_lemma
+                        pattern = raw_match_source_word[6:]
+                        overrides['priority1_regex'].append((match_spacy_lemma, pattern, rule))
                     else:
-                        key = (match_spacy_lemma, match_source_word) # Было: result_lemma, source_word
+                        key = (match_spacy_lemma, match_source_word)
                         if key not in overrides['priority1']:
                             overrides['priority1'][key] = []
                         overrides['priority1'][key].append(rule)
                 
-                # Priority 2: (Только исходное слово) -> Новая лемма
-                elif match_source_word: # Было: source_word
+                elif match_source_word:
                     if is_regex_word:
-                        pattern = raw_match_source_word[6:] # Было: raw_source_word
+                        pattern = raw_match_source_word[6:]
                         overrides['priority2_regex'].append((pattern, rule))
                     else:
-                        key = match_source_word # Было: source_word
+                        key = match_source_word
                         if key not in overrides['priority2']:
                             overrides['priority2'][key] = []
                         overrides['priority2'][key].append(rule)
                 
-                # Priority 3: (Только лемма от spaCy) -> Новая лемма
-                elif match_spacy_lemma: # Было: result_lemma
-                    key = match_spacy_lemma # Было: result_lemma
+                elif match_spacy_lemma:
+                    key = match_spacy_lemma
                     if key not in overrides['priority3']:
                         overrides['priority3'][key] = []
                     overrides['priority3'][key].append(rule)
-                # --- КОНЕЦ ИЗМЕНЕНИЙ ---
 
     except FileNotFoundError:
         print(f"Lemma override file not found: {file_path}", file=sys.stderr)
@@ -130,13 +123,11 @@ def _find_matching_rule(rules, context_sentence):
     return None
 
 def apply_word_override(default_lemma, source_word, overrides, context_sentence):
-    # Priority 1: Literal match
     rules1 = overrides.get('priority1', {}).get((default_lemma, source_word))
     match1 = _find_matching_rule(rules1, context_sentence)
     if match1 is not None:
         return match1
 
-    # Priority 1: Regex match
     for res_lemma_rule, pattern, rule in overrides.get('priority1_regex', []):
         if res_lemma_rule == default_lemma:
             try:
@@ -147,13 +138,11 @@ def apply_word_override(default_lemma, source_word, overrides, context_sentence)
             except re.error as e:
                 print(f"Warning: Invalid regex original word pattern: '{pattern}'. Error: {e}", file=sys.stderr)
 
-    # Priority 2: Literal match
     rules2 = overrides.get('priority2', {}).get(source_word)
     match2 = _find_matching_rule(rules2, context_sentence)
     if match2 is not None:
         return match2
 
-    # Priority 2: Regex match
     for pattern, rule in overrides.get('priority2_regex', []):
         try:
             if re.fullmatch(pattern, source_word):
@@ -163,7 +152,6 @@ def apply_word_override(default_lemma, source_word, overrides, context_sentence)
         except re.error as e:
             print(f"Warning: Invalid regex original word pattern: '{pattern}'. Error: {e}", file=sys.stderr)
 
-    # Priority 3: Literal match
     rules3 = overrides.get('priority3', {}).get(default_lemma)
     match3 = _find_matching_rule(rules3, context_sentence)
     if match3 is not None:
@@ -172,17 +160,11 @@ def apply_word_override(default_lemma, source_word, overrides, context_sentence)
     return default_lemma
 
 def apply_part_override(default_lemma, part, source_word, overrides, context_sentence):
-    # В этой функции `default_lemma` - это лемма части, а `part` - сама часть.
-
-    # Priority 1: Literal match
-    # Ключ: (лемма_части, исходное_полное_слово)
     rules1 = overrides.get('priority1', {}).get((default_lemma, source_word))
     match1 = _find_matching_rule(rules1, context_sentence)
     if match1 is not None:
         return match1
 
-    # Priority 1: Regex match
-    # Сравниваем правило с леммой части, а паттерн с исходным полным словом
     for res_lemma_rule, pattern, rule in overrides.get('priority1_regex', []):
         if res_lemma_rule == default_lemma:
             try:
@@ -193,15 +175,11 @@ def apply_part_override(default_lemma, part, source_word, overrides, context_sen
             except re.error as e:
                 print(f"Warning: Invalid regex original word pattern: '{pattern}'. Error: {e}", file=sys.stderr)
 
-    # Priority 2: Literal match
-    # Ключ: сама часть (сырая строка)
     rules2 = overrides.get('priority2', {}).get(part)
     match2 = _find_matching_rule(rules2, context_sentence)
     if match2 is not None:
         return match2
 
-    # Priority 2: Regex match
-    # Паттерн сравниваем с самой частью (сырой строкой)
     for pattern, rule in overrides.get('priority2_regex', []):
         try:
             if re.fullmatch(pattern, part):
@@ -211,8 +189,6 @@ def apply_part_override(default_lemma, part, source_word, overrides, context_sen
         except re.error as e:
             print(f"Warning: Invalid regex original word pattern: '{pattern}'. Error: {e}", file=sys.stderr)
 
-    # Priority 3: Literal match
-    # Ключ: лемма части
     rules3 = overrides.get('priority3', {}).get(default_lemma)
     match3 = _find_matching_rule(rules3, context_sentence)
     if match3 is not None:
@@ -220,42 +196,42 @@ def apply_part_override(default_lemma, part, source_word, overrides, context_sen
             
     return default_lemma
 
-def get_lemma_for_compound_part(part, nlp, german_dict):
+def get_lemma_for_compound_part(part, nlp, german_dict, assumed_pos=None):
     """
-    Вычисляет базовую лемму для части немецкого составного слова,
-    учитывая часть речи и используя словарь для валидации леммы от spaCy.
+    Calculates the base lemma for a part of a German compound word.
+    It can use an 'assumed_pos' to bypass POS detection for performance.
     """
     if not part:
         return ""
 
-    part_doc = nlp(part)
-    if not part_doc or len(part_doc) == 0:
-        return ""
+    part_pos = assumed_pos
+    token = None
 
-    token = part_doc[0]
+    if not part_pos:
+        part_doc = nlp(part)
+        if not part_doc or len(part_doc) == 0: return ""
+        token = part_doc[0]
+        part_pos = token.pos_
     
-    # Для не-существительных логика остается прежней: доверяем spaCy
-    if token.pos_ not in ["NOUN", "PROPN"]:
+    if part_pos not in ["NOUN", "PROPN"]:
+        if not token:
+            part_doc = nlp(part)
+            if not part_doc or len(part_doc) == 0: return ""
+            token = part_doc[0]
         return token.lemma_.lower()
 
-    # --- НОВАЯ ЛОГИКА ДЛЯ СУЩЕСТВИТЕЛЬНЫХ ---
-    
+    if not token:
+        part_doc = nlp(part)
+        if not part_doc or len(part_doc) == 0: return ""
+        token = part_doc[0]
+        
     spacy_lemma = token.lemma_.capitalize()
     original_part_capitalized = part.capitalize()
 
-    # Приоритет №1: Является ли лемма, предложенная spaCy, валидной (есть в словаре)?
-    # Это самый желаемый результат.
     if spacy_lemma in german_dict:
         return spacy_lemma
-
-    # Приоритет №2 (Запасной план А): Если леммы от spaCy нет в словаре,
-    # может быть, сама исходная часть уже является базовой формой? (Случай для "Liste").
-    # Также это спасает от редких ошибок spaCy, если он предложил несуществующую лемму.
     if original_part_capitalized in german_dict:
         return original_part_capitalized
-
-    # Приоритет №3 (Запасной план Б): Если в словаре ничего не найдено,
-    # мы вынуждены довериться spaCy, так как это наш лучший и единственный источник информации.
     return spacy_lemma
 
 def get_corrected_lemma(token, german_dict, fix_genitive_flag=False):
@@ -407,11 +383,14 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
 
                 if len(final_components) > 1:
                     was_split = True
+                    composite_pos = token.pos_
                     for part_raw in set(final_components):
                         part = part_raw.strip('-')
                         if not part: continue
+                        if len(part) <= 3: continue
                         
-                        default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
+                        assumed_part_pos = "NOUN" if composite_pos in ["NOUN", "PROPN"] else None
+                        default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict, assumed_pos=assumed_part_pos)
                         final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, sentence)
 
                         if final_part_lemma:
@@ -504,11 +483,14 @@ def process_text_v1(
                                 final_lemma = apply_word_override(default_lemma, token.text, lemma_overrides, line1)
                                 lemmas_to_process.append((final_lemma, token.text))
 
+                            composite_pos = token.pos_
                             for part_raw in set(final_components):
                                 part = part_raw.strip('-')
                                 if not part: continue
+                                if len(part) <= 3: continue
 
-                                default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
+                                assumed_part_pos = "NOUN" if composite_pos in ["NOUN", "PROPN"] else None
+                                default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict, assumed_pos=assumed_part_pos)
                                 final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, line1)
                                 if final_part_lemma:
                                     lemmas_to_process.append((final_part_lemma, token.text))
@@ -644,11 +626,14 @@ def process_text_v2(
                                 final_lemma = apply_word_override(default_lemma, token.text, lemma_overrides, unit_text)
                                 lemmas_to_process.append((final_lemma, token.text))
                             
+                            composite_pos = token.pos_
                             for part_raw in set(final_components):
                                 part = part_raw.strip('-')
                                 if not part: continue
+                                if len(part) <= 3: continue
 
-                                default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
+                                assumed_part_pos = "NOUN" if composite_pos in ["NOUN", "PROPN"] else None
+                                default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict, assumed_pos=assumed_part_pos)
                                 final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, unit_text)
                                 if final_part_lemma:
                                     lemmas_to_process.append((final_part_lemma, token.text))
@@ -833,7 +818,7 @@ def main():
 
     if args.gcs and args.language != 'de':
         print("Warning: GCS is designed for German language (--language de). The --gcs flag will be ignored.", file=sys.stderr)
-        args.gcs = False # Можно даже принудительно отключить, чтобы избежать путаницы    
+        args.gcs = False
     if args.make_singular and args.no_make_singular:
         print("Error: --make-singular and --no-make-singular cannot be used together.", file=sys.stderr); exit(1)
     if args.gcs_combine_noun_modes and args.gcs_only_nouns_false:

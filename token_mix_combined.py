@@ -168,15 +168,8 @@ def get_lemma_for_compound_part(part, nlp, german_dict):
     if not part_doc or len(part_doc) == 0:
         return ""
 
-    token = part_doc[0]
-    spacy_lemma = token.lemma_
-
-    # Простое правило: если spaCy считает, что это существительное, делаем с большой буквы.
-    # В противном случае - возвращаем как есть.
-    if token.pos_ in ["NOUN", "PROPN"]:
-        return spacy_lemma
-    # else:
-    #     return spacy_lemma
+    # Просто возвращаем "сырую" лемму от spaCy, ничего не меняя.
+    return part_doc[0].lemma_
 
 def get_corrected_lemma(token, german_dict, fix_genitive_flag=False):
     spacy_lemma = token.lemma_

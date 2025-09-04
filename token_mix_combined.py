@@ -122,23 +122,12 @@ def _find_matching_rule(rules, context_sentence):
         
     return None
 
-# ==============================================================================
-# ИЗМЕНЕНИЕ: Одна универсальная функция вместо двух старых
-# ==============================================================================
 def apply_override(default_lemma, current_form, source_word_for_regex, overrides, context_sentence):
-    """
-    Универсальная функция для применения правил.
-    - default_lemma: лемма, которую нужно проверить/заменить.
-    - current_form: текущая форма слова или части (для точных совпадений).
-    - source_word_for_regex: ВСЕГДА целое исходное слово (для совпадений по regex).
-    """
-    # Priority 1: Точное совпадение (лемма + текущая форма)
     rules1 = overrides.get('priority1', {}).get((default_lemma, current_form))
     match1 = _find_matching_rule(rules1, context_sentence)
     if match1 is not None:
         return match1
 
-    # Priority 1 (Regex): Совпадение леммы + Regex по ЦЕЛОМУ исходному слову
     for res_lemma_rule, pattern, rule in overrides.get('priority1_regex', []):
         if res_lemma_rule == default_lemma:
             try:
@@ -149,13 +138,11 @@ def apply_override(default_lemma, current_form, source_word_for_regex, overrides
             except re.error as e:
                 print(f"Warning: Invalid regex original word pattern: '{pattern}'. Error: {e}", file=sys.stderr)
 
-    # Priority 2: Точное совпадение по текущей форме
     rules2 = overrides.get('priority2', {}).get(current_form)
     match2 = _find_matching_rule(rules2, context_sentence)
     if match2 is not None:
         return match2
 
-    # Priority 2 (Regex): Regex по ЦЕЛОМУ исходному слову
     for pattern, rule in overrides.get('priority2_regex', []):
         try:
             if re.fullmatch(pattern, source_word_for_regex):
@@ -165,7 +152,6 @@ def apply_override(default_lemma, current_form, source_word_for_regex, overrides
         except re.error as e:
             print(f"Warning: Invalid regex original word pattern: '{pattern}'. Error: {e}", file=sys.stderr)
 
-    # Priority 3: Совпадение только по лемме
     rules3 = overrides.get('priority3', {}).get(default_lemma)
     match3 = _find_matching_rule(rules3, context_sentence)
     if match3 is not None:
@@ -351,7 +337,6 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
                         if len(part) <= 1: continue
                         
                         default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
-                        # ИЗМЕНЕНИЕ: Вызов новой универсальной функции
                         final_part_lemma = apply_override(default_part_lemma, part, token.text, lemma_overrides, sentence)
 
                         if final_part_lemma:
@@ -371,7 +356,6 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
                 spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                 default_lemma = get_capitalized_lemma(token, spacy_lemma)
             
-            # ИЗМЕНЕНИЕ: Вызов новой универсальной функции
             final_lemma_to_add = apply_override(default_lemma, original_inflected_form, original_inflected_form, lemma_overrides, sentence)
             final_tokens.add(final_lemma_to_add)
 
@@ -442,7 +426,6 @@ def process_text_v1(
                             if gcs_include_compound:
                                 spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                                 default_lemma = get_capitalized_lemma(token, spacy_lemma)
-                                # ИЗМЕНЕНИЕ: Вызов новой универсальной функции
                                 final_lemma = apply_override(default_lemma, token.text, token.text, lemma_overrides, line1)
                                 lemmas_to_process.append((final_lemma, token.text))
 
@@ -452,7 +435,6 @@ def process_text_v1(
                                 if len(part) <= 1: continue
 
                                 default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
-                                # ИЗМЕНЕНИЕ: Вызов новой универсальной функции
                                 final_part_lemma = apply_override(default_part_lemma, part, token.text, lemma_overrides, line1)
                                 if final_part_lemma:
                                     lemmas_to_process.append((final_part_lemma, token.text))
@@ -470,7 +452,6 @@ def process_text_v1(
                         spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                         default_lemma = get_capitalized_lemma(token, spacy_lemma)
                     
-                    # ИЗМЕНЕНИЕ: Вызов новой универсальной функции
                     final_lemma_to_add = apply_override(default_lemma, original_inflected_form, original_inflected_form, lemma_overrides, line1)
                     lemmas_to_process.append((final_lemma_to_add, original_inflected_form))
 
@@ -586,7 +567,6 @@ def process_text_v2(
                             if gcs_include_compound:
                                 spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                                 default_lemma = get_capitalized_lemma(token, spacy_lemma)
-                                # ИЗМЕНЕНИЕ: Вызов новой универсальной функции
                                 final_lemma = apply_override(default_lemma, token.text, token.text, lemma_overrides, unit_text)
                                 lemmas_to_process.append((final_lemma, token.text))
                             
@@ -596,7 +576,6 @@ def process_text_v2(
                                 if len(part) <= 1: continue
 
                                 default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
-                                # ИЗМЕНЕНИЕ: Вызов новой универсальной функции
                                 final_part_lemma = apply_override(default_part_lemma, part, token.text, lemma_overrides, unit_text)
                                 if final_part_lemma:
                                     lemmas_to_process.append((final_part_lemma, token.text))
@@ -614,7 +593,6 @@ def process_text_v2(
                         spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                         default_lemma = get_capitalized_lemma(token, spacy_lemma)
                     
-                    # ИЗМЕНЕНИЕ: Вызов новой универсальной функции
                     final_lemma_to_add = apply_override(default_lemma, original_inflected_form, original_inflected_form, lemma_overrides, unit_text)
                     lemmas_to_process.append((final_lemma_to_add, original_inflected_form))
 

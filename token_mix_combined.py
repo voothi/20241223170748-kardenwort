@@ -180,6 +180,22 @@ def apply_part_override(default_lemma, part, source_word, overrides, context_sen
             except re.error as e:
                 print(f"Warning: Invalid regex original word pattern: '{pattern}'. Error: {e}", file=sys.stderr)
 
+    # Priority 2: Literal match
+    rules2 = overrides.get('priority2', {}).get(part)
+    match2 = _find_matching_rule(rules2, context_sentence)
+    if match2 is not None:
+        return match2
+
+    # Priority 2: Regex match
+    for pattern, rule in overrides.get('priority2_regex', []):
+        try:
+            if re.fullmatch(pattern, part):
+                match_regex2 = _find_matching_rule([rule], context_sentence)
+                if match_regex2 is not None:
+                    return match_regex2
+        except re.error as e:
+            print(f"Warning: Invalid regex original word pattern: '{pattern}'. Error: {e}", file=sys.stderr)
+
     # Priority 3: Literal match
     rules3 = overrides.get('priority3', {}).get(part)
     match3 = _find_matching_rule(rules3, context_sentence)
@@ -187,6 +203,7 @@ def apply_part_override(default_lemma, part, source_word, overrides, context_sen
         return match3
             
     return default_lemma
+
 
 def get_corrected_lemma(token, german_dict, fix_genitive_flag=False):
     spacy_lemma = token.lemma_

@@ -811,7 +811,10 @@ def main():
     gcs_group.add_argument("--no-make-singular", action="store_true", help="Prevent making compound parts singular during GCS splitting, keeping their original form. Overrides default behavior and --make-singular.")
 
     args = parser.parse_args()
-    
+
+    if args.gcs and args.language != 'de':
+        print("Warning: GCS is designed for German language (--language de). The --gcs flag will be ignored.", file=sys.stderr)
+        args.gcs = False # Можно даже принудительно отключить, чтобы избежать путаницы    
     if args.make_singular and args.no_make_singular:
         print("Error: --make-singular and --no-make-singular cannot be used together.", file=sys.stderr); exit(1)
     if args.gcs_combine_noun_modes and args.gcs_only_nouns_false:

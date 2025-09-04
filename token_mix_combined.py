@@ -324,96 +324,18 @@ def get_capitalized_lemma(token, spacy_lemma):
 
     return spacy_lemma
 
-def _recursive_gcs_split(word, ahocs, **gcs_kwargs):
-    """Recursively splits a word until its components cannot be split further."""
-    combine_modes = gcs_kwargs.get('gcs_combine_noun_modes', False)
-    only_nouns = gcs_kwargs.get('gcs_only_nouns', True)
-    should_make_singular = gcs_kwargs.get('should_make_singular', False)
-    mask_unknown = gcs_kwargs.get('gcs_mask_unknown', False)
-    
-    words_to_process = [word]
-    final_components = set()
-    processed = set()
-
-    while words_to_process:
-        current_word = words_to_process.pop(0)
-        if current_word in processed or len(current_word) <= 2:
-            if len(current_word) > 2: final_components.add(current_word)
-            continue
-        processed.add(current_word)
-
-        split_results = set()
-        with redirect_stdout(io.StringIO()):
-            if combine_modes:
-                dissection1 = comp_split.dissect(current_word, ahocs, make_singular=should_make_singular, only_nouns=True, mask_unknown=mask_unknown)
-                split_results.update(comp_split.merge_fractions(dissection1))
-                dissection2 = comp_split.dissect(current_word, ahocs, make_singular=should_make_singular, only_nouns=False, mask_unknown=mask_unknown)
-                split_results.update(comp_split.merge_fractions(dissection2))
-            else:
-                dissection = comp_split.dissect(current_word, ahocs, make_singular=should_make_singular, only_nouns=only_nouns, mask_unknown=mask_unknown)
-                split_results.update(comp_split.merge_fractions(dissection))
-        
-        split_list = [s.strip('-') for s in split_results if s.strip('-')]
-        
-        # Stopping condition: if the split result is just the original word
-        if len(split_list) == 1 and split_list[0].lower() == current_word.lower():
-            final_components.add(current_word)
-        else:
-            # Recursive step: add new parts to the processing queue
-            for part in split_list:
-                words_to_process.append(part)
-    
-    return list(final_components) if final_components else [word]
-
-def _get_gcs_components(token, ahocs, **kwargs):
-    """Centralized function to handle GCS splitting, including recursive mode."""
-    gcs_recursive = kwargs.get('gcs_recursive', False)
-    gcs_combine_noun_modes = kwargs.get('gcs_combine_noun_modes', False)
-    gcs_only_nouns = kwargs.get('gcs_only_nouns', True)
-    gcs_mask_unknown = kwargs.get('gcs_mask_unknown', False)
-    make_singular = kwargs.get('make_singular', False)
-    no_make_singular = kwargs.get('no_make_singular', False)
-
-    word_to_split = token.text
-    if no_make_singular:
-        should_make_singular = False
-    elif make_singular:
-        should_make_singular = True
-    else:
-        should_make_singular = (token.pos_ in ['NOUN', 'PROPN'])
-
-    gcs_params = {
-        'should_make_singular': should_make_singular,
-        'gcs_combine_noun_modes': gcs_combine_noun_modes,
-        'gcs_only_nouns': gcs_only_nouns,
-        'gcs_mask_unknown': gcs_mask_unknown
-    }
-
-    final_components = []
-    if gcs_recursive:
-        final_components = _recursive_gcs_split(word_to_split, ahocs, **gcs_params)
-    else:
-        if gcs_combine_noun_modes:
-            with redirect_stdout(io.StringIO()):
-                dissection1 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=True, mask_unknown=gcs_mask_unknown)
-            final_components.extend(comp_split.merge_fractions(dissection1))
-            with redirect_stdout(io.StringIO()):
-                dissection2 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=False, mask_unknown=gcs_mask_unknown)
-            final_components.extend(comp_split.merge_fractions(dissection2))
-        else:
-            with redirect_stdout(io.StringIO()):
-                dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=gcs_only_nouns, mask_unknown=gcs_mask_unknown)
-            final_components = comp_split.merge_fractions(dissection)
-
-    return final_components
-
 def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overrides, **kwargs):
     gcs = kwargs.get('gcs', False)
     ahocs = kwargs.get('ahocs', None)
     gcs_in_wordlist = kwargs.get('gcs_in_wordlist', False)
-    gcs_include_compound = kwargs.get('gcs_include_compound', False)
+    gcs_only_nouns = kwargs.get('gcs_only_nouns', True)
+    make_singular = kwargs.get('make_singular', False)
+    no_make_singular = kwargs.get('no_make_singular', False)
+    gcs_combine_noun_modes = kwargs.get('gcs_combine_noun_modes', False)
     gcs_fix_genitive = kwargs.get('gcs_fix_genitive', False)
-    
+    gcs_mask_unknown = kwargs.get('gcs_mask_unknown', False)
+    gcs_include_compound = kwargs.get('gcs_include_compound', False)
+
     doc = nlp(sentence)
     final_tokens = set()
 
@@ -431,13 +353,30 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
         
         if gcs and ahocs and gcs_in_wordlist and nlp.lang == 'de' and len(token.text) > 3 and (token.pos_ in ["NOUN", "PROPN"] or '-' in token.text):
             try:
-                final_components = _get_gcs_components(token, ahocs, **kwargs)
-                
+                word_to_split = token.text
+                if no_make_singular: should_make_singular = False
+                elif make_singular: should_make_singular = True
+                else: should_make_singular = (token.pos_ in ['NOUN', 'PROPN'])
+
+                final_components = []
+                if gcs_combine_noun_modes:
+                    with redirect_stdout(io.StringIO()):
+                        dissection1 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=True, mask_unknown=gcs_mask_unknown)
+                    final_components.extend(comp_split.merge_fractions(dissection1))
+                    with redirect_stdout(io.StringIO()):
+                        dissection2 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=False, mask_unknown=gcs_mask_unknown)
+                    final_components.extend(comp_split.merge_fractions(dissection2))
+                else:
+                    with redirect_stdout(io.StringIO()):
+                        dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=gcs_only_nouns, mask_unknown=gcs_mask_unknown)
+                    final_components = comp_split.merge_fractions(dissection)
+
                 if len(final_components) > 1:
                     was_split = True
                     for part_raw in set(final_components):
                         part = part_raw.strip('-')
-                        if not part or len(part) <= 1: continue
+                        if not part: continue
+                        if len(part) <= 1: continue
                         
                         default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
                         final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, sentence)
@@ -470,9 +409,14 @@ def process_text_v1(
     with_fields, with_br, pipe, gcs, ahocs, gcs_in_wordlist, german_dict, lemma_overrides,
     **kwargs
 ):
-    gcs_include_compound = kwargs.get('gcs_include_compound', False)
+    gcs_only_nouns = kwargs.get('gcs_only_nouns', True)
+    make_singular = kwargs.get('make_singular', False)
+    no_make_singular = kwargs.get('no_make_singular', False)
+    gcs_combine_noun_modes = kwargs.get('gcs_combine_noun_modes', False)
     gcs_fix_genitive = kwargs.get('gcs_fix_genitive', False)
-
+    gcs_mask_unknown = kwargs.get('gcs_mask_unknown', False)
+    gcs_include_compound = kwargs.get('gcs_include_compound', False)
+    
     if "\n" in input_text or not os.path.exists(input_text):
         text1_lines = input_text.splitlines()
     else:
@@ -501,7 +445,23 @@ def process_text_v1(
                 
                 if gcs and ahocs and language == 'de' and len(token.text) > 3 and (token.pos_ in ["NOUN", "PROPN"] or '-' in token.text):
                     try:
-                        final_components = _get_gcs_components(token, ahocs, **kwargs)
+                        word_to_split = token.text
+                        if no_make_singular: should_make_singular = False
+                        elif make_singular: should_make_singular = True
+                        else: should_make_singular = (token.pos_ in ['NOUN', 'PROPN'])
+
+                        final_components = []
+                        if gcs_combine_noun_modes:
+                            with redirect_stdout(io.StringIO()):
+                                dissection1 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=True, mask_unknown=gcs_mask_unknown)
+                            final_components.extend(comp_split.merge_fractions(dissection1))
+                            with redirect_stdout(io.StringIO()):
+                                dissection2 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=False, mask_unknown=gcs_mask_unknown)
+                            final_components.extend(comp_split.merge_fractions(dissection2))
+                        else:
+                            with redirect_stdout(io.StringIO()):
+                                dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=gcs_only_nouns, mask_unknown=gcs_mask_unknown)
+                            final_components = comp_split.merge_fractions(dissection)
 
                         if len(final_components) > 1:
                             was_split = True
@@ -513,7 +473,8 @@ def process_text_v1(
 
                             for part_raw in set(final_components):
                                 part = part_raw.strip('-')
-                                if not part or len(part) <= 1: continue
+                                if not part: continue
+                                if len(part) <= 1: continue
 
                                 default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
                                 final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, line1)
@@ -590,9 +551,14 @@ def process_text_v2(
     output_file, two_column_output_to_file, include_simple_list,
     with_fields, with_br, pipe, gcs, ahocs, gcs_in_wordlist, german_dict, lemma_overrides, **kwargs
 ):
-    gcs_include_compound = kwargs.get('gcs_include_compound', False)
+    gcs_only_nouns = kwargs.get('gcs_only_nouns', True)
+    make_singular = kwargs.get('make_singular', False)
+    no_make_singular = kwargs.get('no_make_singular', False)
+    gcs_combine_noun_modes = kwargs.get('gcs_combine_noun_modes', False)
     gcs_fix_genitive = kwargs.get('gcs_fix_genitive', False)
-
+    gcs_mask_unknown = kwargs.get('gcs_mask_unknown', False)
+    gcs_include_compound = kwargs.get('gcs_include_compound', False)
+    
     if '\n' in input_text.strip():
         processing_units = input_text.splitlines()
         is_line_based = True
@@ -620,7 +586,23 @@ def process_text_v2(
 
                 if gcs and ahocs and language == 'de' and len(token.text) > 3 and (token.pos_ in ["NOUN", "PROPN"] or '-' in token.text):
                     try:
-                        final_components = _get_gcs_components(token, ahocs, **kwargs)
+                        word_to_split = token.text
+                        if no_make_singular: should_make_singular = False
+                        elif make_singular: should_make_singular = True
+                        else: should_make_singular = (token.pos_ in ['NOUN', 'PROPN'])
+                            
+                        final_components = []
+                        if gcs_combine_noun_modes:
+                            with redirect_stdout(io.StringIO()):
+                                dissection1 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=True, mask_unknown=gcs_mask_unknown)
+                            final_components.extend(comp_split.merge_fractions(dissection1))
+                            with redirect_stdout(io.StringIO()):
+                                dissection2 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=False, mask_unknown=gcs_mask_unknown)
+                            final_components.extend(comp_split.merge_fractions(dissection2))
+                        else:
+                            with redirect_stdout(io.StringIO()):
+                                dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=gcs_only_nouns, mask_unknown=gcs_mask_unknown)
+                            final_components = comp_split.merge_fractions(dissection)
 
                         if len(final_components) > 1:
                             was_split = True
@@ -632,7 +614,8 @@ def process_text_v2(
                             
                             for part_raw in set(final_components):
                                 part = part_raw.strip('-')
-                                if not part or len(part) <= 1: continue
+                                if not part: continue
+                                if len(part) <= 1: continue
 
                                 default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
                                 final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, unit_text)
@@ -806,7 +789,6 @@ def main():
     gcs_group = parser.add_argument_group('GCS (German Compound Splitting) options')
     gcs_group.add_argument("--gcs", action="store_true", help="Enable German Compound Splitting. Requires --language de.")
     gcs_group.add_argument("--gcs-dictionary", default="german.dic", help="Path to the dictionary file for GCS.")
-    gcs_group.add_argument("--gcs-recursive", action="store_true", help="Recursively split compound word parts until they can no longer be split.")
     gcs_group.add_argument("--gcs-in-wordlist", action="store_true", help="Also add German compound components to the SentenceSourceWordlist field. Requires --gcs.")
     gcs_group.add_argument("--gcs-include-compound", action="store_true", help="Include the original compound word in the lemma list along with its split components. Requires --gcs.")
     gcs_group.add_argument("--gcs-only-nouns-false", action="store_true", help="Allows any type of word (verb, adjective, etc.) to be used for GCS splitting. Ignored if --gcs-combine-noun-modes is used.")
@@ -829,9 +811,6 @@ def main():
         print("Error: --gcs-in-wordlist requires --gcs to be enabled.", file=sys.stderr); exit(1)
     if args.gcs_include_compound and not args.gcs:
         print("Error: --gcs-include-compound requires --gcs to be enabled.", file=sys.stderr); exit(1)
-    if args.gcs_recursive and not args.gcs:
-        print("Error: --gcs-recursive requires --gcs to be enabled.", file=sys.stderr); exit(1)
-
 
     global nlp
     nlp = spacy.load("de_core_news_lg" if args.language == "de" else "en_core_web_lg")
@@ -904,7 +883,6 @@ def main():
             'gcs_fix_genitive': args.gcs_fix_genitive,
             'gcs_mask_unknown': args.gcs_mask_unknown,
             'gcs_include_compound': args.gcs_include_compound,
-            'gcs_recursive': args.gcs_recursive,
             'detailed': args.detailed,
             'two_column_output': args.two_column_output,
             'html': args.html
@@ -929,7 +907,7 @@ def main():
             )
 
     elif args.type == "sentence":
-        if any([args.gcs, args.gcs_combine_noun_modes, args.gcs_only_nouns_false, args.make_singular, args.no_make_singular, args.gcs_fix_genitive, args.gcs_mask_unknown, args.gcs_recursive]):
+        if any([args.gcs, args.gcs_combine_noun_modes, args.gcs_only_nouns_false, args.make_singular, args.no_make_singular, args.gcs_fix_genitive, args.gcs_mask_unknown]):
             print("Warning: GCS-related flags are only applicable for --type token and will be ignored.", file=sys.stderr)
         if not args.text1 or not args.text2:
             print("Error: --text1 and --text2 must be specified for sentence mode.", file=sys.stderr); exit(1)
@@ -946,7 +924,6 @@ def main():
             'gcs_fix_genitive': args.gcs_fix_genitive,
             'gcs_mask_unknown': args.gcs_mask_unknown,
             'gcs_include_compound': args.gcs_include_compound,
-            'gcs_recursive': args.gcs_recursive,
             'german_dict': german_dict
         }
         processed_output_file = process_sentences(

@@ -122,8 +122,8 @@ def _find_matching_rule(rules, context_sentence):
         
     return None
 
-def apply_word_override(default_lemma, source_word, overrides, context_sentence):
-    rules1 = overrides.get('priority1', {}).get((default_lemma, source_word))
+def apply_override(default_lemma, current_form, source_word_for_regex, overrides, context_sentence):
+    rules1 = overrides.get('priority1', {}).get((default_lemma, current_form))
     match1 = _find_matching_rule(rules1, context_sentence)
     if match1 is not None:
         return match1
@@ -131,58 +131,21 @@ def apply_word_override(default_lemma, source_word, overrides, context_sentence)
     for res_lemma_rule, pattern, rule in overrides.get('priority1_regex', []):
         if res_lemma_rule == default_lemma:
             try:
-                if re.fullmatch(pattern, source_word):
+                if re.fullmatch(pattern, source_word_for_regex):
                     match_regex1 = _find_matching_rule([rule], context_sentence)
                     if match_regex1 is not None:
                         return match_regex1
             except re.error as e:
                 print(f"Warning: Invalid regex original word pattern: '{pattern}'. Error: {e}", file=sys.stderr)
 
-    rules2 = overrides.get('priority2', {}).get(source_word)
+    rules2 = overrides.get('priority2', {}).get(current_form)
     match2 = _find_matching_rule(rules2, context_sentence)
     if match2 is not None:
         return match2
 
     for pattern, rule in overrides.get('priority2_regex', []):
         try:
-            if re.fullmatch(pattern, source_word):
-                match_regex2 = _find_matching_rule([rule], context_sentence)
-                if match_regex2 is not None:
-                    return match_regex2
-        except re.error as e:
-            print(f"Warning: Invalid regex original word pattern: '{pattern}'. Error: {e}", file=sys.stderr)
-
-    rules3 = overrides.get('priority3', {}).get(default_lemma)
-    match3 = _find_matching_rule(rules3, context_sentence)
-    if match3 is not None:
-        return match3
-            
-    return default_lemma
-
-def apply_part_override(default_lemma, part, source_word, overrides, context_sentence):
-    rules1 = overrides.get('priority1', {}).get((default_lemma, part))
-    match1 = _find_matching_rule(rules1, context_sentence)
-    if match1 is not None:
-        return match1
-
-    for res_lemma_rule, pattern, rule in overrides.get('priority1_regex', []):
-        if res_lemma_rule == default_lemma:
-            try:
-                if re.fullmatch(pattern, part):
-                    match_regex1 = _find_matching_rule([rule], context_sentence)
-                    if match_regex1 is not None:
-                        return match_regex1
-            except re.error as e:
-                print(f"Warning: Invalid regex original word pattern: '{pattern}'. Error: {e}", file=sys.stderr)
-
-    rules2 = overrides.get('priority2', {}).get(part)
-    match2 = _find_matching_rule(rules2, context_sentence)
-    if match2 is not None:
-        return match2
-
-    for pattern, rule in overrides.get('priority2_regex', []):
-        try:
-            if re.fullmatch(pattern, part):
+            if re.fullmatch(pattern, source_word_for_regex):
                 match_regex2 = _find_matching_rule([rule], context_sentence)
                 if match_regex2 is not None:
                     return match_regex2
@@ -476,7 +439,7 @@ def process_text_v1(
                                 if len(part) <= 1: continue
 
                                 default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
-                                final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, line1)
+                                final_part_lemma = apply_override(default_part_lemma, part, token.text, lemma_overrides, line1)
                                 if final_part_lemma:
                                     lemmas_to_process.append((final_part_lemma, token.text))
                     except Exception:
@@ -493,7 +456,7 @@ def process_text_v1(
                         spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                         default_lemma = get_capitalized_lemma(token, spacy_lemma)
                     
-                    final_lemma_to_add = apply_word_override(default_lemma, original_inflected_form, lemma_overrides, line1)
+                    final_lemma_to_add = apply_override(default_lemma, original_inflected_form, original_inflected_form, lemma_overrides, line1)
                     lemmas_to_process.append((final_lemma_to_add, original_inflected_form))
 
                 for lemma, original_form in lemmas_to_process:

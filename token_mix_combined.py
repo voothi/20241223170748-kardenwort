@@ -159,6 +159,7 @@ def apply_override(default_lemma, current_form, source_word_for_regex, overrides
             
     return default_lemma
 
+# СТАЛО (Версия БЕЗ словаря для теста)
 def get_lemma_for_compound_part(part, nlp, german_dict):
     if not part:
         return ""
@@ -168,19 +169,14 @@ def get_lemma_for_compound_part(part, nlp, german_dict):
         return ""
 
     token = part_doc[0]
-    
-    if token.pos_ not in ["NOUN", "PROPN"]:
-        return token.lemma_
-    
-    spacy_lemma_cap = token.lemma_.capitalize()
-    if spacy_lemma_cap in german_dict:
-        return spacy_lemma_cap
+    spacy_lemma = token.lemma_
 
-    original_part_cap = part.capitalize()
-    if original_part_cap in german_dict:
-        return original_part_cap
-
-    return part
+    # Простое правило: если spaCy считает, что это существительное, делаем с большой буквы.
+    # В противном случае - возвращаем как есть.
+    if token.pos_ in ["NOUN", "PROPN"]:
+        return spacy_lemma
+    # else:
+    #     return spacy_lemma
 
 def get_corrected_lemma(token, german_dict, fix_genitive_flag=False):
     spacy_lemma = token.lemma_

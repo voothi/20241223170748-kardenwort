@@ -163,15 +163,19 @@ def apply_word_override(default_lemma, source_word, overrides, context_sentence)
     return default_lemma
 
 def apply_part_override(default_lemma, part, source_word, overrides, context_sentence):
+    # В этой функции `default_lemma` - это лемма части, а `part` - сама часть.
+
     # Priority 1: Literal match
-    rules1 = overrides.get('priority1', {}).get((part, source_word))
+    # Ключ: (лемма_части, исходное_полное_слово)
+    rules1 = overrides.get('priority1', {}).get((default_lemma, source_word))
     match1 = _find_matching_rule(rules1, context_sentence)
     if match1 is not None:
         return match1
 
     # Priority 1: Regex match
+    # Сравниваем правило с леммой части, а паттерн с исходным полным словом
     for res_lemma_rule, pattern, rule in overrides.get('priority1_regex', []):
-        if res_lemma_rule == part:
+        if res_lemma_rule == default_lemma:
             try:
                 if re.fullmatch(pattern, source_word):
                     match_regex1 = _find_matching_rule([rule], context_sentence)
@@ -181,12 +185,14 @@ def apply_part_override(default_lemma, part, source_word, overrides, context_sen
                 print(f"Warning: Invalid regex original word pattern: '{pattern}'. Error: {e}", file=sys.stderr)
 
     # Priority 2: Literal match
+    # Ключ: сама часть (сырая строка)
     rules2 = overrides.get('priority2', {}).get(part)
     match2 = _find_matching_rule(rules2, context_sentence)
     if match2 is not None:
         return match2
 
     # Priority 2: Regex match
+    # Паттерн сравниваем с самой частью (сырой строкой)
     for pattern, rule in overrides.get('priority2_regex', []):
         try:
             if re.fullmatch(pattern, part):
@@ -197,13 +203,13 @@ def apply_part_override(default_lemma, part, source_word, overrides, context_sen
             print(f"Warning: Invalid regex original word pattern: '{pattern}'. Error: {e}", file=sys.stderr)
 
     # Priority 3: Literal match
-    rules3 = overrides.get('priority3', {}).get(part)
+    # Ключ: лемма части
+    rules3 = overrides.get('priority3', {}).get(default_lemma)
     match3 = _find_matching_rule(rules3, context_sentence)
     if match3 is not None:
         return match3
             
     return default_lemma
-
 
 def get_corrected_lemma(token, german_dict, fix_genitive_flag=False):
     spacy_lemma = token.lemma_

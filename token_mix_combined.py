@@ -63,12 +63,12 @@ def load_lemma_overrides(file_path):
 
                 rule = (target_lemma, context)
 
-                is_regex_word = raw_source_word.startswith('regex_word:')
+                is_regex_word = raw_source_word.startswith('regex:')
                 source_word = raw_source_word.strip()
 
                 if result_lemma and source_word:
                     if is_regex_word:
-                        pattern = raw_source_word[11:]
+                        pattern = raw_source_word[6:]
                         overrides['priority1_regex'].append((result_lemma, pattern, rule))
                     else:
                         key = (result_lemma, source_word)
@@ -77,7 +77,7 @@ def load_lemma_overrides(file_path):
                         overrides['priority1'][key].append(rule)
                 elif source_word:
                     if is_regex_word:
-                        pattern = raw_source_word[11:]
+                        pattern = raw_source_word[6:]
                         overrides['priority2_regex'].append((pattern, rule))
                     else:
                         key = source_word
@@ -136,7 +136,7 @@ def apply_word_override(default_lemma, source_word, overrides, context_sentence)
                     if match_regex1 is not None:
                         return match_regex1
             except re.error as e:
-                print(f"Warning: Invalid regex_word pattern: '{pattern}'. Error: {e}", file=sys.stderr)
+                print(f"Warning: Invalid regex original word pattern: '{pattern}'. Error: {e}", file=sys.stderr)
 
     # Priority 2: Literal match
     rules2 = overrides.get('priority2', {}).get(source_word)
@@ -152,7 +152,7 @@ def apply_word_override(default_lemma, source_word, overrides, context_sentence)
                 if match_regex2 is not None:
                     return match_regex2
         except re.error as e:
-            print(f"Warning: Invalid regex_word pattern: '{pattern}'. Error: {e}", file=sys.stderr)
+            print(f"Warning: Invalid regex original word pattern: '{pattern}'. Error: {e}", file=sys.stderr)
 
     # Priority 3: Literal match
     rules3 = overrides.get('priority3', {}).get(default_lemma)
@@ -178,7 +178,7 @@ def apply_part_override(default_lemma, part, source_word, overrides, context_sen
                     if match_regex1 is not None:
                         return match_regex1
             except re.error as e:
-                print(f"Warning: Invalid regex_word pattern: '{pattern}'. Error: {e}", file=sys.stderr)
+                print(f"Warning: Invalid regex original word pattern: '{pattern}'. Error: {e}", file=sys.stderr)
 
     # Priority 3: Literal match
     rules3 = overrides.get('priority3', {}).get(part)

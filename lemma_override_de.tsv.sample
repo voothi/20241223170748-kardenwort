@@ -84,11 +84,6 @@
 #    substring is found anywhere in the sentence—its position relative to the
 #    original word (before, after, or including it) does not matter.
 #
-#    - Example: `	Austernbanken	Austernbanke	Küste`
-#    - Sentence: "Die Fischer kennen die Austernbanken vor der Küste sehr gut und fahren sie gezielt an."
-#    - Result: Match. The word 'Austernbanken' is found, and the context 'Küste'
-#      is present in the sentence, so the lemma becomes 'Austernbanke'.
-#
 # 2. Global Match (Fallback):
 #    If no contextual rule matches, the system looks for a global rule
 #    (where the 4th column is empty).
@@ -100,78 +95,87 @@
 #    or splitter is used.
 #
 # ==============================================================================
-#  Advanced Context Matching: Regular Expressions
+#  Advanced Matching with Regular Expressions (regex)
 # ==============================================================================
 #
-# For more powerful and precise context matching, the system supports
-# regular expressions (regex) in the 4th column.
+# For ultimate flexibility, the system supports regular expressions in both the
+# `Original_Word` (column 2) and `Context` (column 4) fields.
 #
-# --- Enabling Regex Mode ---
+# To enable regex mode for a field, simply prefix its content with "regex:".
 #
-# To treat a context string as a regular expression, simply prefix it with
-# "regex:". The system will then use pattern matching instead of a simple
-# substring search.
+# The behavior of "regex:" is context-dependent:
+# - In column 2, it matches against the single Original_Word.
+# - In column 4, it matches against the entire sentence.
 #
-# - Example 1: Match if a word is not at the start of a sentence.
-#   You want to change "Digitale" to "diGital" only when it's not the first word.
-#   The regex (?<!^)Digitale uses a negative lookbehind to assert that
-#   "Digitale" is not preceded by the start of the string (^).
+# --- Part 1: Regex on Original_Word (Column 2) ---
+#
+# This is extremely powerful for creating a single rule that applies to many
+# different words, or for correcting components inside compound words safely.
+#
+# - Example: Safely correcting a component in compound words.
+#   Problem: The compound splitter sometimes incorrectly identifies 'Daten' as 'Date'.
+#   However, "Date" is a valid German word (the fruit), so a broad rule like
+#   `Date		Daten` is unsafe.
+#
+#   Old, repetitive solution:
+#   # Date	Audiodaten	Daten
+#   # Date	Bilddaten	Daten
+#   # Date	Datenbanken	Daten
+#   # ... and so on for every new compound word.
+#
+#   New, elegant solution with regex:
+#   Date	regex:(?i)\w*daten\w*	Daten
+#
+#   How it works:
+#   This Priority 1 rule says: "If the system produces a component 'Date' (col 1)
+#   from an `Original_Word` (col 2) that matches the pattern `(?i)\w*daten\w*`,
+#   then replace the component's lemma with 'Daten' (col 3)."
+#   - `(?i)`: case-insensitive match.
+#   - `\w*daten\w*`: matches any word containing "daten".
+#   This single line correctly fixes `Audiodaten`, `Bilddaten`, `Metadaten`, etc.,
+#   without affecting the standalone word "Date".
+#
+# - A Priority 2 regex rule is also possible:
+#   `	regex:(?i)\w*daten\w*	Daten`
+#   This is a broader, more aggressive rule: "For any `Original_Word` containing
+#   'daten', force its lemma to be 'Daten'." This would incorrectly change
+#   "Soldaten" to "Daten", so use with caution.
+#
+# --- Part 2: Regex on Context (Column 4) ---
+#
+# This allows creating rules that depend on the structure of the sentence.
+#
+# - Example: Match if a word is not at the start of a sentence.
+#   Problem: You want to ensure `Ihr` (formal "your") keeps its capitalization
+#   when it's in the middle of a sentence, but not interfere when it's at the
+#   start (where it could be `ihr` - "you all").
 #
 #   Rule:
-#   	Digitale	diGital	regex:(?<!^)Digitale
+#   	Ihr	Ihr	regex:(?<!^)Ihr
 #
-#   Sentence 1: "Digitale Bilddaten und Audiodaten." -> NO MATCH.
-#   Sentence 2: "und die Digitale Transformation." -> MATCH.
+#   How it works:
+#   The regex `(?<!^)Ihr` uses a negative lookbehind `(?<!^)` to assert that
+#   the string "Ihr" is not preceded by the start of the line `^`.
+#   - Sentence "Wir brauchen Ihr Feedback." -> MATCH.
+#   - Sentence "Ihr seid willkommen." -> NO MATCH.
 #
-# - Example 2: Match a word only if it's a whole word.
-#   You want to override the lemma for "bad", but not for "baden".
-#   The regex \bbad\b uses word boundaries (\b) to ensure a match only on
-#   the whole word "bad".
+# --- Whitespace Handling with Regex ---
 #
-#   Rule:
-#   	bad	schlecht	regex:\bbad\b
-#
-#   Sentence 1: "Das ist bad." -> MATCH.
-#   Sentence 2: "Wir gehen baden." -> NO MATCH.
-#
-# --- Hybrid Whitespace Handling ---
-#
-# The system handles leading/trailing whitespace differently depending on the mode:
-#
-# 1. Standard Context (No "regex:" prefix):
-#    - Whitespace at the beginning and end of the context string is automatically
-#      removed. This is for convenience and prevents errors from accidental spaces.
-#    - `Küste ` is treated exactly the same as `Küste`.
-#
-# 2. Regex Context ("regex:" prefix):
-#    - The context string is used EXACTLY as written. No whitespace is removed.
-#    - This gives you full control to include whitespace characters like `\s` or
-#      literal spaces in your patterns when needed.
+# - Standard fields (no "regex:" prefix): Leading/trailing whitespace is removed.
+# - Regex fields ("regex:" prefix): The pattern is used exactly as written.
+#   This gives you full control.
 #
 # ==============================================================================
 #  Mechanics & Best Practices
 # ==============================================================================
 #
-# 1. Context is Always Matched Against the Full Sentence
-#    The context string is always searched for within the entire sentence.
-#
-# 2. The Context Check is a Simple Substring Search
-#    The system literally checks "is the context string present in the sentence string?".
-#    There is no special logic if the context string is the same as the `Original_Word`
-#    or any other column.
-#
-# 3. Matching is Case-Sensitive
+# 1. Matching is Case-Sensitive (unless using regex flags like `(?i)`)
 #    All matching for words, lemmas, and contexts is strictly case-sensitive.
-#    This is critical for languages like German.
-#    - Example: For the text "...vor der Küste..."
-#    - Context 'Küste' will match.
-#    - Context 'küste' will not match.
 #
-# 4. Rule Order Can Matter
+# 2. Rule Order Can Matter
 #    The file is processed top-to-bottom. While the priority system handles most
-#    cases, if you have two rules with the exact same priority (e.g., two
-#    contextual rules for the same `Original_Word`), the one that appears
-#    first in the file will be applied.
+#    cases, if you have two rules with the exact same priority, the one that
+#    appears first in the file will be applied.
 #
 # ==============================================================================
 #  User-Defined Override Rules
@@ -200,33 +204,24 @@
 # Logic: "For this Original_Word, use Target_Lemma, but only if Context is in the sentence"
 # Format: <empty> <TAB> Original_Word <TAB> Target_Lemma <TAB> Context
 #-------------------------------------------------------------------------------
-# Verschiedene digitale Bilddaten und Audiodaten. / Digitale Bilddaten und Audiodaten.
-#	digitale	diGital	regex:(?<!^)digitale
-
 # Die Fischer kennen die Austernbanken vor der Küste sehr gut und fahren sie gezielt an.
 	Austernbanken	Austernbanke	Küste
 
-# Enforce lemma 'Ihr' for the word 'Ihr' only when it is not at the start of a sentence
-# This preserves correct lemmatization for cases like "Ihr seid..."
+# Enforce lemma 'Ihr'/'Sie' only when it is not at the start of a sentence
 	Ihr	Ihr	regex:(?<!^)Ihr
 	Sie	Sie	regex:(?<!^)Sie
 
-# --- Rules for parts of lemmas words ---
-#Austernbanko	Austernbanken	Austernbanke	
-
+# --- Rules for lemma parts (unconditional) ---
 aller		all	
 
 # --- Very specific rule (Highest Priority), also contextual ---
-# Logic: "If Original_Word was processed as Result_Lemma, replace it, but only with context"
 # Format: Result_Lemma <TAB> Original_Word <TAB> Target_Lemma <TAB> Context
 #-------------------------------------------------------------------------------
 Donaudampfschifffahrtsgesellschaftskapitan	Donaudampfschifffahrtsgesellschaftskapitäne	Donaudampfschifffahrtsgesellschaftskapitän	präzise Navigation
-#ihr	Ihre	Ihr	Ihr
 
 # --- Rules for parts of compound words ---
-# Logic: "If for an Original_Word, a part was identified as Result_Lemma,
-#         replace that part's lemma with Target_Lemma"
+# Logic: Correct a component 'Result_Lemma' from a specific 'Original_Word'
 # Format: Result_Lemma <TAB> Original_Word <TAB> Target_Lemma <TAB> <empty>
 #-------------------------------------------------------------------------------
-Date	Bilddaten	Daten	
-Date	Audiodaten	Daten
+# Safely correct 'Date' -> 'Daten' in all compound words containing 'daten'
+Date	regex:(?i)\w*daten\w*	Daten

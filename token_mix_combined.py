@@ -211,6 +211,34 @@ def apply_part_override(default_lemma, part, source_word, overrides, context_sen
             
     return default_lemma
 
+def get_lemma_for_compound_part(part, nlp, german_dict):
+    """
+    Вычисляет базовую лемму для части немецкого составного слова.
+    Приоритет отдается проверке по словарю.
+    1. Капитализирует часть и проверяет ее наличие в словаре.
+    2. Если не найдено, использует spaCy для поиска леммы.
+    3. Затем капитализирует лемму от spaCy и снова проверяет по словарю.
+    Возвращает найденную лемму или пустую строку, если валидная лемма не найдена.
+    """
+    default_part_lemma = ""
+    
+    # 1. Проверяем капитализированную "сырую" часть по словарю
+    part_to_check = part.capitalize()
+    if part_to_check in german_dict:
+        default_part_lemma = part_to_check
+    else:
+        # 2. Если не нашли, используем spaCy для лемматизации
+        part_doc = nlp(part)
+        if part_doc and len(part_doc) > 0:
+            lemmatized_part_str = part_doc[0].lemma_
+            
+            # 3. Проверяем капитализированную лемму по словарю
+            lemma_part_to_check = lemmatized_part_str.capitalize()
+            if lemma_part_to_check in german_dict:
+                default_part_lemma = lemma_part_to_check
+                
+    return default_part_lemma
+
 def get_corrected_lemma(token, german_dict, fix_genitive_flag=False):
     spacy_lemma = token.lemma_
     if (fix_genitive_flag and
@@ -360,22 +388,11 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
 
                 if len(final_components) > 1:
                     was_split = True
-                    for part in set(final_components):
-                        part = part.strip('-')
+                    for part_raw in set(final_components):
+                        part = part_raw.strip('-')
                         if not part: continue
                         
-                        part_to_check = part.capitalize()
-                        default_part_lemma = ""
-                        if part_to_check in german_dict:
-                            default_part_lemma = part_to_check
-                        else:
-                            part_doc = nlp(part)
-                            if len(part_doc) > 0:
-                                lemmatized_part_str = part_doc[0].lemma_
-                                lemma_part_to_check = lemmatized_part_str.capitalize()
-                                if lemma_part_to_check in german_dict:
-                                    default_part_lemma = lemma_part_to_check
-                        
+                        default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
                         final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, sentence)
 
                         if final_part_lemma:
@@ -468,22 +485,11 @@ def process_text_v1(
                                 final_lemma = apply_word_override(default_lemma, token.text, lemma_overrides, line1)
                                 lemmas_to_process.append((final_lemma, token.text))
 
-                            for part in set(final_components):
-                                part = part.strip('-')
+                            for part_raw in set(final_components):
+                                part = part_raw.strip('-')
                                 if not part: continue
 
-                                part_to_check = part.capitalize()
-                                default_part_lemma = ""
-                                if part_to_check in german_dict:
-                                    default_part_lemma = part_to_check
-                                else:
-                                    part_doc = nlp(part)
-                                    if len(part_doc) > 0:
-                                        lemmatized_part_str = part_doc[0].lemma_
-                                        lemma_part_to_check = lemmatized_part_str.capitalize()
-                                        if lemma_part_to_check in german_dict:
-                                            default_part_lemma = lemma_part_to_check
-                                
+                                default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
                                 final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, line1)
                                 if final_part_lemma:
                                     lemmas_to_process.append((final_part_lemma, token.text))
@@ -619,22 +625,11 @@ def process_text_v2(
                                 final_lemma = apply_word_override(default_lemma, token.text, lemma_overrides, unit_text)
                                 lemmas_to_process.append((final_lemma, token.text))
                             
-                            for part in set(final_components):
-                                part = part.strip('-')
+                            for part_raw in set(final_components):
+                                part = part_raw.strip('-')
                                 if not part: continue
 
-                                part_to_check = part.capitalize()
-                                default_part_lemma = ""
-                                if part_to_check in german_dict:
-                                    default_part_lemma = part_to_check
-                                else:
-                                    part_doc = nlp(part)
-                                    if len(part_doc) > 0:
-                                        lemmatized_part_str = part_doc[0].lemma_
-                                        lemma_part_to_check = lemmatized_part_str.capitalize()
-                                        if lemma_part_to_check in german_dict:
-                                            default_part_lemma = lemma_part_to_check
-                                
+                                default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
                                 final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, unit_text)
                                 if final_part_lemma:
                                     lemmas_to_process.append((final_part_lemma, token.text))

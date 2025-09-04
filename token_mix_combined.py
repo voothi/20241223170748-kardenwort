@@ -159,7 +159,6 @@ def apply_override(default_lemma, current_form, source_word_for_regex, overrides
             
     return default_lemma
 
-# СТАЛО (Версия БЕЗ словаря для теста)
 def get_lemma_for_compound_part(part, nlp, german_dict):
     if not part:
         return ""
@@ -168,7 +167,6 @@ def get_lemma_for_compound_part(part, nlp, german_dict):
     if not part_doc or len(part_doc) == 0:
         return ""
 
-    # Просто возвращаем "сырую" лемму от spaCy, ничего не меняя.
     return part_doc[0].lemma_
 
 def get_corrected_lemma(token, german_dict, fix_genitive_flag=False):
@@ -318,6 +316,10 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
                         dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=gcs_only_nouns, mask_unknown=gcs_mask_unknown)
                     final_components = comp_split.merge_fractions(dissection)
 
+                reconstructed_word = "".join(part.strip('-') for part in final_components)
+                if reconstructed_word.lower() != word_to_split.lower():
+                    final_components = []
+
                 if len(final_components) > 1:
                     was_split = True
                     for part_raw in set(final_components):
@@ -389,8 +391,24 @@ def process_text_v1(
             if (token.is_alpha or '-' in token.text):
                 lemmas_to_process = []
                 was_split = False
-                
-                if gcs and ahocs and language == 'de' and len(token.text) > 3 and (token.pos_ in ["NOUN", "PROPN"] or '-' in token.text):
+                was_hyphen_split = False
+
+                if '-' in token.text and len(token.text) > 1:
+                    parts = token.text.split('-')
+                    if len(parts) > 1:
+                        was_hyphen_split = True
+                        for part in parts:
+                            if not part: continue
+                            default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
+                            final_part_lemma = apply_override(default_part_lemma, part, token.text, lemma_overrides, line1)
+                            if final_part_lemma:
+                                lemmas_to_process.append((final_part_lemma, token.text))
+                        
+                        default_lemma = get_capitalized_lemma(token, get_corrected_lemma(token, german_dict))
+                        final_lemma_to_add = apply_override(default_lemma, token.text, token.text, lemma_overrides, line1)
+                        lemmas_to_process.append((final_lemma_to_add, token.text))
+
+                if not was_hyphen_split and gcs and ahocs and language == 'de' and len(token.text) > 3 and token.pos_ in ["NOUN", "PROPN"]:
                     try:
                         word_to_split = token.text
                         if no_make_singular: should_make_singular = False
@@ -409,6 +427,10 @@ def process_text_v1(
                             with redirect_stdout(io.StringIO()):
                                 dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=gcs_only_nouns, mask_unknown=gcs_mask_unknown)
                             final_components = comp_split.merge_fractions(dissection)
+
+                        reconstructed_word = "".join(part.strip('-') for part in final_components)
+                        if reconstructed_word.lower() != word_to_split.lower():
+                            final_components = []
 
                         if len(final_components) > 1:
                             was_split = True
@@ -430,7 +452,7 @@ def process_text_v1(
                     except Exception:
                         was_split = False
                 
-                if not was_split:
+                if not was_split and not was_hyphen_split:
                     original_inflected_form = token.text
                     default_lemma = ""
                     if token.i in verb_particle_map:
@@ -530,8 +552,24 @@ def process_text_v2(
             if (token.is_alpha or '-' in token.text):
                 lemmas_to_process = []
                 was_split = False
+                was_hyphen_split = False
 
-                if gcs and ahocs and language == 'de' and len(token.text) > 3 and (token.pos_ in ["NOUN", "PROPN"] or '-' in token.text):
+                if '-' in token.text and len(token.text) > 1:
+                    parts = token.text.split('-')
+                    if len(parts) > 1:
+                        was_hyphen_split = True
+                        for part in parts:
+                            if not part: continue
+                            default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
+                            final_part_lemma = apply_override(default_part_lemma, part, token.text, lemma_overrides, unit_text)
+                            if final_part_lemma:
+                                lemmas_to_process.append((final_part_lemma, token.text))
+
+                        default_lemma = get_capitalized_lemma(token, get_corrected_lemma(token, german_dict))
+                        final_lemma_to_add = apply_override(default_lemma, token.text, token.text, lemma_overrides, unit_text)
+                        lemmas_to_process.append((final_lemma_to_add, token.text))
+
+                if not was_hyphen_split and gcs and ahocs and language == 'de' and len(token.text) > 3 and token.pos_ in ["NOUN", "PROPN"]:
                     try:
                         word_to_split = token.text
                         if no_make_singular: should_make_singular = False
@@ -550,6 +588,10 @@ def process_text_v2(
                             with redirect_stdout(io.StringIO()):
                                 dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=gcs_only_nouns, mask_unknown=gcs_mask_unknown)
                             final_components = comp_split.merge_fractions(dissection)
+
+                        reconstructed_word = "".join(part.strip('-') for part in final_components)
+                        if reconstructed_word.lower() != word_to_split.lower():
+                            final_components = []
 
                         if len(final_components) > 1:
                             was_split = True
@@ -571,7 +613,7 @@ def process_text_v2(
                     except Exception:
                         was_split = False
 
-                if not was_split:
+                if not was_split and not was_hyphen_split:
                     original_inflected_form = token.text
                     default_lemma = ""
                     if token.i in verb_particle_map:

@@ -160,8 +160,7 @@ def apply_word_override(default_lemma, source_word, overrides, context_sentence)
     return default_lemma
 
 def apply_part_override(default_lemma, part, source_word, overrides, context_sentence):
-    # CORRECTED: Priority 1 now correctly uses `part` instead of `source_word`
-    rules1 = overrides.get('priority1', {}).get((default_lemma, part))
+    rules1 = overrides.get('priority1', {}).get((default_lemma, source_word))
     match1 = _find_matching_rule(rules1, context_sentence)
     if match1 is not None:
         return match1
@@ -169,15 +168,13 @@ def apply_part_override(default_lemma, part, source_word, overrides, context_sen
     for res_lemma_rule, pattern, rule in overrides.get('priority1_regex', []):
         if res_lemma_rule == default_lemma:
             try:
-                # CORRECTED: Regex now matches against `part` instead of `source_word`
-                if re.fullmatch(pattern, part):
+                if re.fullmatch(pattern, source_word):
                     match_regex1 = _find_matching_rule([rule], context_sentence)
                     if match_regex1 is not None:
                         return match_regex1
             except re.error as e:
                 print(f"Warning: Invalid regex original word pattern: '{pattern}'. Error: {e}", file=sys.stderr)
 
-    # Priority 2 already correctly uses `part`
     rules2 = overrides.get('priority2', {}).get(part)
     match2 = _find_matching_rule(rules2, context_sentence)
     if match2 is not None:
@@ -192,7 +189,6 @@ def apply_part_override(default_lemma, part, source_word, overrides, context_sen
         except re.error as e:
             print(f"Warning: Invalid regex original word pattern: '{pattern}'. Error: {e}", file=sys.stderr)
 
-    # Priority 3 correctly uses `default_lemma` (lemma of the part)
     rules3 = overrides.get('priority3', {}).get(default_lemma)
     match3 = _find_matching_rule(rules3, context_sentence)
     if match3 is not None:

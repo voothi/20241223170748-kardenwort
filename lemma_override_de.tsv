@@ -75,13 +75,14 @@
 aller		all	
 Beispiele		Beispiel	
 Betriebs		Betrieb	
-Date	Audiodaten	Daten
-Date	Bilddaten	Daten	
-Date	Datenbanken	Daten	
-Date	Datenbankschnittstelle	Daten	
-Date	Datenverarbeitung	Daten	
-Date	Datenfernübertragung	Daten	
-Date	Textdaten	Daten	
+#Date	Audiodaten	Daten
+#Date	Bilddaten	Daten	
+#Date	Datenbanken	Daten	
+#Date	Datenbankschnittstelle	Daten	
+#Date	Datenverarbeitung	Daten	
+#Date	Datenfernübertragung	Daten	
+#Date	Textdaten	Daten	
+Date	regex:(?i)\w*daten\w*	Daten	
 digitale		digital	
 Eingabegerat		Eingabegeräte	
 Geräte		Gerät	

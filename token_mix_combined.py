@@ -29,7 +29,9 @@ def load_dictionary_to_set(file_path):
 def load_lemma_overrides(file_path):
     overrides = {
         'priority1': {},
+        'priority1_regex': [],
         'priority2': {},
+        'priority2_regex': [],
         'priority3': {}
     }
     try:
@@ -44,7 +46,7 @@ def load_lemma_overrides(file_path):
                     continue
                 
                 result_lemma = row[0].strip()
-                source_word = row[1].strip()
+                raw_source_word = row[1]
                 target_lemma = row[2].strip()
 
                 context = None
@@ -55,22 +57,33 @@ def load_lemma_overrides(file_path):
                     else:
                         context = raw_context.strip()
 
-                if not target_lemma or (not result_lemma and not source_word):
+                if not target_lemma or (not result_lemma and not raw_source_word.strip()):
                     print(f"Warning: Skipping invalid rule on line {i+1} in {file_path}: Target_Lemma and at least one of Result_Lemma or Source_Word must be set.", file=sys.stderr)
                     continue
 
                 rule = (target_lemma, context)
 
+                is_regex_word = raw_source_word.startswith('regex_word:')
+                source_word = raw_source_word.strip()
+
                 if result_lemma and source_word:
-                    key = (result_lemma, source_word)
-                    if key not in overrides['priority1']:
-                        overrides['priority1'][key] = []
-                    overrides['priority1'][key].append(rule)
+                    if is_regex_word:
+                        pattern = raw_source_word[11:]
+                        overrides['priority1_regex'].append((result_lemma, pattern, rule))
+                    else:
+                        key = (result_lemma, source_word)
+                        if key not in overrides['priority1']:
+                            overrides['priority1'][key] = []
+                        overrides['priority1'][key].append(rule)
                 elif source_word:
-                    key = source_word
-                    if key not in overrides['priority2']:
-                        overrides['priority2'][key] = []
-                    overrides['priority2'][key].append(rule)
+                    if is_regex_word:
+                        pattern = raw_source_word[11:]
+                        overrides['priority2_regex'].append((pattern, rule))
+                    else:
+                        key = source_word
+                        if key not in overrides['priority2']:
+                            overrides['priority2'][key] = []
+                        overrides['priority2'][key].append(rule)
                 elif result_lemma:
                     key = result_lemma
                     if key not in overrides['priority3']:
@@ -108,16 +121,40 @@ def _find_matching_rule(rules, context_sentence):
     return None
 
 def apply_word_override(default_lemma, source_word, overrides, context_sentence):
+    # Priority 1: Literal match
     rules1 = overrides.get('priority1', {}).get((default_lemma, source_word))
     match1 = _find_matching_rule(rules1, context_sentence)
     if match1 is not None:
         return match1
 
+    # Priority 1: Regex match
+    for res_lemma_rule, pattern, rule in overrides.get('priority1_regex', []):
+        if res_lemma_rule == default_lemma:
+            try:
+                if re.fullmatch(pattern, source_word):
+                    match_regex1 = _find_matching_rule([rule], context_sentence)
+                    if match_regex1 is not None:
+                        return match_regex1
+            except re.error as e:
+                print(f"Warning: Invalid regex_word pattern: '{pattern}'. Error: {e}", file=sys.stderr)
+
+    # Priority 2: Literal match
     rules2 = overrides.get('priority2', {}).get(source_word)
     match2 = _find_matching_rule(rules2, context_sentence)
     if match2 is not None:
         return match2
 
+    # Priority 2: Regex match
+    for pattern, rule in overrides.get('priority2_regex', []):
+        try:
+            if re.fullmatch(pattern, source_word):
+                match_regex2 = _find_matching_rule([rule], context_sentence)
+                if match_regex2 is not None:
+                    return match_regex2
+        except re.error as e:
+            print(f"Warning: Invalid regex_word pattern: '{pattern}'. Error: {e}", file=sys.stderr)
+
+    # Priority 3: Literal match
     rules3 = overrides.get('priority3', {}).get(default_lemma)
     match3 = _find_matching_rule(rules3, context_sentence)
     if match3 is not None:
@@ -126,11 +163,24 @@ def apply_word_override(default_lemma, source_word, overrides, context_sentence)
     return default_lemma
 
 def apply_part_override(default_lemma, part, source_word, overrides, context_sentence):
+    # Priority 1: Literal match
     rules1 = overrides.get('priority1', {}).get((part, source_word))
     match1 = _find_matching_rule(rules1, context_sentence)
     if match1 is not None:
         return match1
 
+    # Priority 1: Regex match
+    for res_lemma_rule, pattern, rule in overrides.get('priority1_regex', []):
+        if res_lemma_rule == part:
+            try:
+                if re.fullmatch(pattern, source_word):
+                    match_regex1 = _find_matching_rule([rule], context_sentence)
+                    if match_regex1 is not None:
+                        return match_regex1
+            except re.error as e:
+                print(f"Warning: Invalid regex_word pattern: '{pattern}'. Error: {e}", file=sys.stderr)
+
+    # Priority 3: Literal match
     rules3 = overrides.get('priority3', {}).get(part)
     match3 = _find_matching_rule(rules3, context_sentence)
     if match3 is not None:

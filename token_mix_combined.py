@@ -387,7 +387,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
                     for part_raw in set(final_components):
                         part = part_raw.strip('-')
                         if not part: continue
-                        if len(part) <= 3: continue
+                        if len(part) <= 2: continue
                         
                         assumed_part_pos = "NOUN" if composite_pos in ["NOUN", "PROPN"] else None
                         default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict, assumed_pos=assumed_part_pos)
@@ -487,7 +487,7 @@ def process_text_v1(
                             for part_raw in set(final_components):
                                 part = part_raw.strip('-')
                                 if not part: continue
-                                if len(part) <= 3: continue
+                                if len(part) <= 2: continue
 
                                 assumed_part_pos = "NOUN" if composite_pos in ["NOUN", "PROPN"] else None
                                 default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict, assumed_pos=assumed_part_pos)
@@ -630,7 +630,7 @@ def process_text_v2(
                             for part_raw in set(final_components):
                                 part = part_raw.strip('-')
                                 if not part: continue
-                                if len(part) <= 3: continue
+                                if len(part) <= 2: continue
 
                                 assumed_part_pos = "NOUN" if composite_pos in ["NOUN", "PROPN"] else None
                                 default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict, assumed_pos=assumed_part_pos)

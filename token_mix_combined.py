@@ -170,7 +170,7 @@ def get_lemma_for_compound_part(part, nlp, german_dict):
     token = part_doc[0]
     
     if token.pos_ not in ["NOUN", "PROPN"]:
-        return token.lemma_.lower()
+        return token.lemma_
     
     spacy_lemma_cap = token.lemma_.capitalize()
     if spacy_lemma_cap in german_dict:

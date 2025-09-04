@@ -8,7 +8,10 @@
 	Austernbanken	Austernbanke	
 	Auswahlabfragen	Auswahlabfrage	
 	Bedürfnisse	Bedürfnis	
+	Empfangen	Empfang	
 	Bilddaten	Bilddaten	
+	Zugangs	Zugang	
+	besonderer	besondere	
 	Bilder	Bild	
 	BPMN-Diagramme	BPMN-Diagramm	
 	Bytes	Byte	
@@ -77,6 +80,7 @@ Date	Bilddaten	Daten
 Date	Datenbanken	Daten	
 Date	Datenbankschnittstelle	Daten	
 Date	Datenverarbeitung	Daten	
+Date	Datenfernübertragung	Daten	
 Date	Textdaten	Daten	
 digitale		digital	
 Eingabegerat		Eingabegeräte	

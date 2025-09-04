@@ -222,31 +222,41 @@ def apply_part_override(default_lemma, part, source_word, overrides, context_sen
 
 def get_lemma_for_compound_part(part, nlp, german_dict):
     """
-    Вычисляет базовую лемму для части немецкого составного слова.
-    Приоритет отдается проверке по словарю.
-    1. Капитализирует часть и проверяет ее наличие в словаре.
-    2. Если не найдено, использует spaCy для поиска леммы.
-    3. Затем капитализирует лемму от spaCy и снова проверяет по словарю.
-    Возвращает найденную лемму или пустую строку, если валидная лемма не найдена.
+    Вычисляет базовую лемму для части немецкого составного слова,
+    учитывая часть речи и используя словарь для валидации леммы от spaCy.
     """
-    default_part_lemma = ""
+    if not part:
+        return ""
+
+    part_doc = nlp(part)
+    if not part_doc or len(part_doc) == 0:
+        return ""
+
+    token = part_doc[0]
     
-    # 1. Проверяем капитализированную "сырую" часть по словарю
-    part_to_check = part.capitalize()
-    if part_to_check in german_dict:
-        default_part_lemma = part_to_check
-    else:
-        # 2. Если не нашли, используем spaCy для лемматизации
-        part_doc = nlp(part)
-        if part_doc and len(part_doc) > 0:
-            lemmatized_part_str = part_doc[0].lemma_
-            
-            # 3. Проверяем капитализированную лемму по словарю
-            lemma_part_to_check = lemmatized_part_str.capitalize()
-            if lemma_part_to_check in german_dict:
-                default_part_lemma = lemma_part_to_check
-                
-    return default_part_lemma
+    # Для не-существительных логика остается прежней: доверяем spaCy
+    if token.pos_ not in ["NOUN", "PROPN"]:
+        return token.lemma_.lower()
+
+    # --- НОВАЯ ЛОГИКА ДЛЯ СУЩЕСТВИТЕЛЬНЫХ ---
+    
+    spacy_lemma = token.lemma_.capitalize()
+    original_part_capitalized = part.capitalize()
+
+    # Приоритет №1: Является ли лемма, предложенная spaCy, валидной (есть в словаре)?
+    # Это самый желаемый результат.
+    if spacy_lemma in german_dict:
+        return spacy_lemma
+
+    # Приоритет №2 (Запасной план А): Если леммы от spaCy нет в словаре,
+    # может быть, сама исходная часть уже является базовой формой? (Случай для "Liste").
+    # Также это спасает от редких ошибок spaCy, если он предложил несуществующую лемму.
+    if original_part_capitalized in german_dict:
+        return original_part_capitalized
+
+    # Приоритет №3 (Запасной план Б): Если в словаре ничего не найдено,
+    # мы вынуждены довериться spaCy, так как это наш лучший и единственный источник информации.
+    return spacy_lemma
 
 def get_corrected_lemma(token, german_dict, fix_genitive_flag=False):
     spacy_lemma = token.lemma_

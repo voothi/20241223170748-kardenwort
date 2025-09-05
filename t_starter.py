@@ -2,9 +2,8 @@ import subprocess
 from pathlib import Path
 import argparse
 
-
 def get_token_args(args, python_path, token_workspace):
-    """Настраивает аргументы для извлечения токенов на основе входных параметров"""
+    """Configures arguments for token extraction based on input parameters."""
     if args.language == "en":
         lemma_file = "en-news-2023-1m-words.csv"
         override_file = "U:\\voothi\\20241223170748-token-extraction\\lemma_override_en.tsv"
@@ -12,7 +11,7 @@ def get_token_args(args, python_path, token_workspace):
         lemma_file = "deu-mixed-typical-2011-1m-words.csv"
         override_file = "U:\\voothi\\20241223170748-token-extraction\\lemma_override_de.tsv"
     else:
-        raise ValueError(f"Неподдерживаемый язык: {args.language}")
+        raise ValueError(f"Unsupported language: {args.language}")
 
     base_args = [
         str(python_path),
@@ -37,9 +36,6 @@ def get_token_args(args, python_path, token_workspace):
     ]
 
     if args.language == "de":
-        # --- ИЗМЕНЕНИЕ НАЧАЛО ---
-        # Аргументы для общих улучшений немецкой лемматизации.
-        # Они не зависят от GCS и должны применяться всегда.
         german_enhancement_args = [
             "--gcs-fix-genitive",
             "--gcs-dictionary",
@@ -47,7 +43,6 @@ def get_token_args(args, python_path, token_workspace):
         ]
         base_args.extend(german_enhancement_args)
 
-        # GCS-специфичные аргументы добавляются только если передан флаг --gcs
         if args.gcs:
             gcs_args = [
                 "--gcs",
@@ -61,7 +56,6 @@ def get_token_args(args, python_path, token_workspace):
                 gcs_args.extend(args.gcs_pos_tags)
             
             base_args.extend(gcs_args)
-        # --- ИЗМЕНЕНИЕ КОНЕЦ ---
 
     output_suffix = "sentence" if args.type == "sentence" else "token"
 
@@ -101,7 +95,7 @@ def get_token_args(args, python_path, token_workspace):
             str(token_workspace / f"out/result.triple.{output_suffix}.{args.language}.tsv"),
         ]
 
-    raise ValueError(f"Неизвестный режим: {args.mode}")
+    raise ValueError(f"Unknown mode: {args.mode}")
 
 
 def main():
@@ -134,7 +128,6 @@ def main():
         type=str,
         help="Directly pass a text string for 'single' mode processing, bypassing the text1.txt file."
     )
-    # --- ИЗМЕНЕНИЕ: Добавлен флаг для управления GCS ---
     parser.add_argument(
         "--gcs",
         action='store_true',
@@ -143,7 +136,7 @@ def main():
     parser.add_argument(
         "--gcs-pos-tags",
         nargs='+',
-        default=['NOUN PROPN ADV ADJ'],
+        default=['NOUN', 'PROPN', 'ADV', 'ADJ'],
         help="Specify which Part-of-Speech tags to apply GCS splitting to (e.g., NOUN PROPN or !VERB)."
     )
     args = parser.parse_args()
@@ -168,7 +161,7 @@ def main():
     output_file = token_process.stdout.readline().strip()
     if not output_file:
         print("ERROR: No output file was captured from token_mix_combined.py")
-        stderr_output = token_process.communicate()[1]
+        stderr_output, _ = token_process.communicate()
         if stderr_output:
             print("--- Stderr from token_mix_combined.py ---")
             print(stderr_output)

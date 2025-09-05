@@ -887,10 +887,24 @@ def main():
 
     args = parser.parse_args()
 
-    if 'ALL' in args.gcs_pos_tags:
-        args.gcs_pos_tags = ['ADJ', 'ADP', 'ADV', 'AUX', 'CCONJ', 'DET', 'INTJ', 'NOUN', 'NUM', 'PART', 'PRON', 'PROPN', 'PUNCT', 'SCONJ', 'SYM', 'VERB', 'X']
-    elif 'NO_VERBS' in args.gcs_pos_tags:
-        args.gcs_pos_tags = ['ADJ', 'ADP', 'ADV', 'AUX', 'CCONJ', 'DET', 'INTJ', 'NOUN', 'NUM', 'PART', 'PRON', 'PROPN', 'PUNCT', 'SCONJ', 'SYM', 'X']
+    ALL_POS_TAGS = {'ADJ', 'ADP', 'ADV', 'AUX', 'CCONJ', 'DET', 'INTJ', 'NOUN', 
+                    'NUM', 'PART', 'PRON', 'PROPN', 'PUNCT', 'SCONJ', 'SYM', 'VERB', 'X'}
+
+    user_tags = args.gcs_pos_tags
+
+    has_negation = any(tag.startswith('!') for tag in user_tags)
+
+    final_pos_tags = set()
+
+    if has_negation:
+        excluded_tags = {tag[1:] for tag in user_tags if tag.startswith('!')}
+        final_pos_tags = ALL_POS_TAGS - excluded_tags
+    elif 'ALL' in user_tags:
+        final_pos_tags = ALL_POS_TAGS
+    else:
+        final_pos_tags = set(user_tags)
+
+    args.gcs_pos_tags = list(final_pos_tags)
 
     if args.gcs and args.language != 'de':
         print("Warning: GCS is designed for German language (--language de). The --gcs flag will be ignored.", file=sys.stderr)

@@ -847,7 +847,7 @@ def main():
         nargs='+', 
         default=['NOUN', 'PROPN'],
         help="Specify which Part-of-Speech tags to apply splitting to. "
-             "Default: NOUN PROPN. Use 'ALL' to apply to all tags."
+             "Default: NOUN PROPN. Use 'ALL' to apply to all tags, or 'NO_VERBS' for all except verbs."
     )
     gcs_group.add_argument("--gcs-dictionary", default="german.dic", help="Path to the dictionary file for GCS.")
     gcs_group.add_argument("--gcs-in-wordlist", action="store_true", help="Also add German compound components to the SentenceSourceWordlist field. Requires --gcs.")
@@ -863,6 +863,8 @@ def main():
 
     if 'ALL' in args.gcs_pos_tags:
         args.gcs_pos_tags = ['ADJ', 'ADP', 'ADV', 'AUX', 'CCONJ', 'DET', 'INTJ', 'NOUN', 'NUM', 'PART', 'PRON', 'PROPN', 'PUNCT', 'SCONJ', 'SYM', 'VERB', 'X']
+    elif 'NO_VERBS' in args.gcs_pos_tags:
+        args.gcs_pos_tags = ['ADJ', 'ADP', 'ADV', 'AUX', 'CCONJ', 'DET', 'INTJ', 'NOUN', 'NUM', 'PART', 'PRON', 'PROPN', 'PUNCT', 'SCONJ', 'SYM', 'X']
 
     if args.gcs and args.language != 'de':
         print("Warning: GCS is designed for German language (--language de). The --gcs flag will be ignored.", file=sys.stderr)
@@ -871,7 +873,7 @@ def main():
         print("Error: --make-singular and --no-make-singular cannot be used together.", file=sys.stderr); exit(1)
     if args.gcs_combine_noun_modes and args.gcs_only_nouns_false:
         print("Error: --gcs-combine-noun-modes and --gcs-only-nouns-false cannot be used together.", file=sys.stderr); exit(1)
-    if args.gcs_in_wordlist and not args.gcs:
+    if args.gcs_in-wordlist and not args.gcs:
         print("Error: --gcs-in-wordlist requires --gcs to be enabled.", file=sys.stderr); exit(1)
     if args.gcs_include_compound and not args.gcs:
         print("Error: --gcs-include-compound requires --gcs to be enabled.", file=sys.stderr); exit(1)

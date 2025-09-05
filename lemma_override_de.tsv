@@ -79,11 +79,13 @@
 #Date	Datenverarbeitung	Daten	
 #Date	Textdaten	Daten	
 aller		all	
+atIon		ation	
 Beispiele		Beispiel	
 Betriebs		Betrieb	
 date	regex:(?i)\w*daten\w*	Daten	
 digitale		digital	
 Eingabegerat		Eingabegeräte	
+ethernet		Ethernet	
 Geräte		Gerät	
 IP-Adressen		IP-Adresse	
 IP-Netzwerken		IP-Netzwerk	
@@ -97,7 +99,6 @@ PC-Betriebssysteme		PC-Betriebssystem
 Simulationen		Simulation	
 Soundhardwar		Soundhardware	
 Stan		Standard	
-ethernet		Ethernet	
 Systembefehle		Systembefehl	
 Systeme		System	
 Transportprotokolle		Transportprotokoll	

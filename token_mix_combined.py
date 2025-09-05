@@ -849,31 +849,48 @@ def main():
         "--gcs-pos-tags", 
         nargs='+', 
         default=['NOUN', 'PROPN'],
+        formatter_class=argparse.RawTextHelpFormatter, # <-- ВАЖНО: Добавьте это, чтобы сохранить форматирование
         help='''Specify which Part-of-Speech tags to apply splitting to.
-  Default: NOUN PROPN.
-  
-  Special keywords can be used instead of a list:
-    ALL       - Apply to all tags.
-    NO_VERBS  - Apply to all tags except VERB.
 
-  The full list of available Universal Dependencies tags with German examples:
-    ADJ   - Adjective (Adjektiv; z.B., groß, alt, schön)
-    ADP   - Adposition (Präposition; z.B., in, zu, auf, mit)
-    ADV   - Adverb (Adverb; z.B., schnell, sehr, hier)
-    AUX   - Auxiliary verb (Hilfsverb; z.B., sein, haben, werden, können)
-    CCONJ - Coordinating Conjunction (Konjunktion; z.B., und, aber, oder)
-    DET   - Determiner (Artikel/Demonstrativpronomen; z.B., der, eine, dieser)
-    INTJ  - Interjection (Interjektion; z.B., ach, hallo, oje)
-    NOUN  - Noun (Nomen/Substantiv; z.B., Haus, Tisch, Buch)
-    NUM   - Numeral (Numerale; z.B., eins, zwei, 100)
-    PART  - Particle (Partikel; z.B., nicht, zu bei Infinitiv, ja)
-    PRON  - Pronoun (Pronomen; z.B., ich, du, er, sie)
-    PROPN - Proper Noun (Eigenname; z.B., Peter, Berlin, Google)
-    PUNCT - Punctuation (Interpunktion; z.B., ., ,, ?, !)
-    SCONJ - Subordinating Conjunction (Subjunktion; z.B., dass, weil, wenn)
-    SYM   - Symbol (Symbol; z.B., €, %%, §)
-    VERB  - Verb (Verb; z.B., gehen, sagen, machen)
-    X     - Other (Sonstiges; z.B., Fremdwörter, Tippfehler)'''
+  Default: NOUN PROPN
+
+  This argument operates in two main modes:
+
+  1. INCLUSION MODE (default behavior):
+     List the specific tags you want to process.
+     Example: --gcs-pos-tags NOUN PROPN ADJ
+
+  2. EXCLUSION MODE:
+     Prefix tags with '!' to process all tags except the ones specified.
+     Example: --gcs-pos-tags !VERB !AUX
+     (This splits everything except verbs and auxiliary verbs)
+
+  PRECEDENCE RULE:
+     If even one tag is prefixed with '!', the mode switches to exclusion.
+     Any tags listed without '!' in the same command will be ignored.
+     For instance, '--gcs-pos-tags NOUN !VERB' is treated as just '!VERB'.
+
+  SPECIAL KEYWORD:
+     ALL - A shortcut to process all available tags.
+
+  Available Tags (Universal Dependencies):
+    ADJ   - Adjective (Adjektiv; e.g., groß, alt, schön)
+    ADP   - Adposition (Präposition; e.g., in, zu, auf, mit)
+    ADV   - Adverb (Adverb; e.g., schnell, sehr, hier)
+    AUX   - Auxiliary verb (Hilfsverb; e.g., sein, haben, werden, können)
+    CCONJ - Coordinating Conjunction (Konjunktion; e.g., und, aber, oder)
+    DET   - Determiner (Artikel/Demonstrativpronomen; e.g., der, eine, dieser)
+    INTJ  - Interjection (Interjektion; e.g., ach, hallo, oje)
+    NOUN  - Noun (Nomen/Substantiv; e.g., Haus, Tisch, Buch)
+    NUM   - Numeral (Numerale; e.g., eins, zwei, 100)
+    PART  - Particle (Partikel; e.g., nicht, zu bei Infinitiv, ja)
+    PRON  - Pronoun (Pronomen; e.g., ich, du, er, sie)
+    PROPN - Proper Noun (Eigenname; e.g., Peter, Berlin, Google)
+    PUNCT - Punctuation (Interpunktion; e.g., ., ,, ?, !)
+    SCONJ - Subordinating Conjunction (Subjunktion; e.g., dass, weil, wenn)
+    SYM   - Symbol (Symbol; e.g., €, %%, §)
+    VERB  - Verb (Verb; e.g., gehen, sagen, machen)
+    X     - Other (Sonstiges; e.g., Fremdwörter, Tippfehler)'''
     )
     gcs_group.add_argument("--gcs-dictionary", default="german.dic", help="Path to the dictionary file for GCS.")
     gcs_group.add_argument("--gcs-in-wordlist", action="store_true", help="Also add German compound components to the SentenceSourceWordlist field. Requires --gcs.")

@@ -211,7 +211,7 @@ def get_lemma_for_compound_part(part, nlp, german_dict):
     token = part_doc[0]
     
     if token.pos_ not in ["NOUN", "PROPN"]:
-        return token.lemma_.lower()
+        return token.lemma_
     
     spacy_lemma = token.lemma_.capitalize()
     original_part_capitalized = part.capitalize()
@@ -320,7 +320,7 @@ def get_capitalized_lemma(token, spacy_lemma):
         return spacy_lemma.capitalize()
 
     if token.is_sent_start and token.pos_ not in ["NOUN", "PROPN"]:
-        return spacy_lemma.lower()
+        return spacy_lemma
 
     return spacy_lemma
 

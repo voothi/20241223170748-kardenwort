@@ -4,7 +4,7 @@ import argparse
 
 
 def get_token_args(args, python_path, token_workspace):
-    """Configure token extraction arguments based on input parameters"""
+    """Настраивает аргументы для извлечения токенов на основе входных параметров"""
     if args.language == "en":
         lemma_file = "en-news-2023-1m-words.csv"
         override_file = "U:\\voothi\\20241223170748-token-extraction\\lemma_override_en.tsv"
@@ -12,7 +12,7 @@ def get_token_args(args, python_path, token_workspace):
         lemma_file = "deu-mixed-typical-2011-1m-words.csv"
         override_file = "U:\\voothi\\20241223170748-token-extraction\\lemma_override_de.tsv"
     else:
-        raise ValueError(f"Unsupported language: {args.language}")
+        raise ValueError(f"Неподдерживаемый язык: {args.language}")
 
     base_args = [
         str(python_path),
@@ -31,23 +31,31 @@ def get_token_args(args, python_path, token_workspace):
         "--with-fields",
         "--with-br",
         "--autoname",
-        "--gcs",
-        "--gcs-pos-tags",
-        "!VERB",
-        "--gcs-include-compound",
-        # "--gcs-only-nouns-false",
-        "--gcs-combine-noun-modes",
-        # "--make-singular",
-        # "--no-make-singular",
-        # "--gcs-mask-unknown",
-        "--gcs-fix-genitive",
-        "--gcs-dictionary",
-        "U:\\voothi\\20241223170748-token-extraction\\20250826000433-test\\german.dic",
-        "--gcs-in-wordlist",
         "--lemma-override-file",
         override_file,
         "--pipe"
     ]
+
+    if args.language == "de":
+        gcs_args = [
+            "--gcs",
+            "--gcs-include-compound",
+            # "--gcs-only-nouns-false",
+            "--gcs-combine-noun-modes",
+            # "--make-singular",
+            # "--no-make-singular",
+            # "--gcs-mask-unknown",
+            "--gcs-fix-genitive",
+            "--gcs-dictionary",
+            "U:\\voothi\\20241223170748-token-extraction\\20250826000433-test\\german.dic",
+            "--gcs-in-wordlist",
+        ]
+
+        if args.gcs_pos_tags:
+            gcs_args.append("--gcs-pos-tags")
+            gcs_args.extend(args.gcs_pos_tags)
+        
+        base_args.extend(gcs_args)
 
     output_suffix = "sentence" if args.type == "sentence" else "token"
 
@@ -87,7 +95,7 @@ def get_token_args(args, python_path, token_workspace):
             str(token_workspace / f"out/result.triple.{output_suffix}.{args.language}.tsv"),
         ]
 
-    raise ValueError(f"Unknown mode: {args.mode}")
+    raise ValueError(f"Неизвестный режим: {args.mode}")
 
 
 def main():
@@ -116,39 +124,39 @@ def main():
         choices=["de", "en"],
         help="Language for processing: German (de) or English (en)",
     )
-    # --- НОВЫЙ АРГУМЕНТ ---
     parser.add_argument(
         "--text",
         type=str,
         help="Directly pass a text string for 'single' mode processing, bypassing the text1.txt file."
     )
+    parser.add_argument(
+        "--gcs-pos-tags",
+        nargs='+',
+        default=['NOUN PROPN ADV ADJ'],
+        help="Specify which Part-of-Speech tags to apply GCS splitting to (e.g., NOUN PROPN or !VERB)."
+    )
     args = parser.parse_args()
 
-    # Configure paths
     python_path = Path(
         r"U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
     )
     token_workspace = Path(r"U:/voothi/20241223170748-token-extraction")
     importer_workspace = Path(r"U:/voothi/20250401192017-anki-csv-importer")
 
-    # Get command arguments based on type
     token_args = get_token_args(args, python_path, token_workspace)
 
-    # Token extraction process
     print(f"Running token extraction with command:\n{' '.join(token_args)}\n")
     token_process = subprocess.Popen(
         token_args,
         stdout=subprocess.PIPE,
         text=True,
-        encoding='utf-8', # Явно указываем кодировку для надежности
+        encoding='utf-8',
         errors='replace'
     )
 
-    # Get output filename from token extraction
     output_file = token_process.stdout.readline().strip()
     if not output_file:
         print("ERROR: No output file was captured from token_mix_combined.py")
-        # Выводим возможные ошибки из stderr для диагностики
         stderr_output = token_process.communicate()[1]
         if stderr_output:
             print("--- Stderr from token_mix_combined.py ---")
@@ -158,7 +166,6 @@ def main():
 
     print(f"Processing file: {output_file}")
 
-    # Run Anki importer with the captured filename
     importer_command = [
         str(python_path),
         str(importer_workspace / "anki-csv-importer.py"),

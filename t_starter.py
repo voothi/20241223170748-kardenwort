@@ -99,7 +99,6 @@ def get_token_args(args, python_path, token_workspace):
 
 
 def main():
-    # Parse command line arguments
     parser = argparse.ArgumentParser(
         description="Extract and process tokens or sentences from text."
     )

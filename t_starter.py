@@ -37,25 +37,31 @@ def get_token_args(args, python_path, token_workspace):
     ]
 
     if args.language == "de":
-        gcs_args = [
-            "--gcs",
-            "--gcs-include-compound",
-            # "--gcs-only-nouns-false",
-            "--gcs-combine-noun-modes",
-            # "--make-singular",
-            # "--no-make-singular",
-            # "--gcs-mask-unknown",
+        # --- ИЗМЕНЕНИЕ НАЧАЛО ---
+        # Аргументы для общих улучшений немецкой лемматизации.
+        # Они не зависят от GCS и должны применяться всегда.
+        german_enhancement_args = [
             "--gcs-fix-genitive",
             "--gcs-dictionary",
             "U:\\voothi\\20241223170748-token-extraction\\20250826000433-test\\german.dic",
-            "--gcs-in-wordlist",
         ]
+        base_args.extend(german_enhancement_args)
 
-        if args.gcs_pos_tags:
-            gcs_args.append("--gcs-pos-tags")
-            gcs_args.extend(args.gcs_pos_tags)
-        
-        base_args.extend(gcs_args)
+        # GCS-специфичные аргументы добавляются только если передан флаг --gcs
+        if args.gcs:
+            gcs_args = [
+                "--gcs",
+                "--gcs-include-compound",
+                "--gcs-combine-noun-modes",
+                "--gcs-in-wordlist",
+            ]
+
+            if args.gcs_pos_tags:
+                gcs_args.append("--gcs-pos-tags")
+                gcs_args.extend(args.gcs_pos_tags)
+            
+            base_args.extend(gcs_args)
+        # --- ИЗМЕНЕНИЕ КОНЕЦ ---
 
     output_suffix = "sentence" if args.type == "sentence" else "token"
 
@@ -127,6 +133,12 @@ def main():
         "--text",
         type=str,
         help="Directly pass a text string for 'single' mode processing, bypassing the text1.txt file."
+    )
+    # --- ИЗМЕНЕНИЕ: Добавлен флаг для управления GCS ---
+    parser.add_argument(
+        "--gcs",
+        action='store_true',
+        help="Enable German Compound Splitting (only for '--language de')."
     )
     parser.add_argument(
         "--gcs-pos-tags",

@@ -33,7 +33,7 @@ def get_token_args(args, python_path, token_workspace):
         "--autoname",
         "--gcs",
         "--gcs-pos-tags",
-        "NO_VERBS",
+        "!VERB",
         "--gcs-include-compound",
         # "--gcs-only-nouns-false",
         "--gcs-combine-noun-modes",

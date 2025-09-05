@@ -848,10 +848,10 @@ def main():
     gcs_group.add_argument(
         "--gcs-pos-tags", 
         nargs='+', 
-        default=['NOUN', 'PROPN'],
+        default=['NOUN', 'PROPN', 'ADV', 'ADJ'],
         help='''Specify which Part-of-Speech tags to apply splitting to.
 
-  Default: NOUN PROPN
+  Default: NOUN PROPN ADV ADJ
 
   This argument operates in two main modes:
 

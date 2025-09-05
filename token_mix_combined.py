@@ -849,7 +849,6 @@ def main():
         "--gcs-pos-tags", 
         nargs='+', 
         default=['NOUN', 'PROPN'],
-        formatter_class=argparse.RawTextHelpFormatter, # <-- ВАЖНО: Добавьте это, чтобы сохранить форматирование
         help='''Specify which Part-of-Speech tags to apply splitting to.
 
   Default: NOUN PROPN

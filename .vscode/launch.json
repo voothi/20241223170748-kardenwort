@@ -243,7 +243,7 @@
                 "--autoname",
                 "--gcs",
                 "--gcs-pos-tags",
-                "NO_VERBS",
+                "!VERB !PUNCT !SYM !AUX",
                 "--gcs-include-compound",
                 // "--gcs-only-nouns-false",
                 "--gcs-combine-noun-modes",

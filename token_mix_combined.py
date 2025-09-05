@@ -873,7 +873,7 @@ def main():
         print("Error: --make-singular and --no-make-singular cannot be used together.", file=sys.stderr); exit(1)
     if args.gcs_combine_noun_modes and args.gcs_only_nouns_false:
         print("Error: --gcs-combine-noun-modes and --gcs-only-nouns-false cannot be used together.", file=sys.stderr); exit(1)
-    if args.gcs_in-wordlist and not args.gcs:
+    if args.gcs_in_wordlist and not args.gcs:
         print("Error: --gcs-in-wordlist requires --gcs to be enabled.", file=sys.stderr); exit(1)
     if args.gcs_include_compound and not args.gcs:
         print("Error: --gcs-include-compound requires --gcs to be enabled.", file=sys.stderr); exit(1)

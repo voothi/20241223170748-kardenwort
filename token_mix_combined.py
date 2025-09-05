@@ -200,6 +200,12 @@ def get_lemma_for_compound_part(part, nlp, german_dict):
     if not part:
         return ""
 
+    is_all_caps = part.isupper() and len(part) > 1
+    has_internal_caps = any(c.isupper() for c in part[1:])
+
+    if is_all_caps or has_internal_caps:
+        return part
+
     part_doc = nlp(part)
     if not part_doc or len(part_doc) == 0:
         return ""

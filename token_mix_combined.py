@@ -122,8 +122,8 @@ def _find_matching_rule(rules, context_sentence):
         
     return None
 
-def apply_override(default_lemma, current_form, source_word_for_regex, overrides, context_sentence):
-    rules1 = overrides.get('priority1', {}).get((default_lemma, current_form))
+def apply_word_override(default_lemma, source_word, overrides, context_sentence):
+    rules1 = overrides.get('priority1', {}).get((default_lemma, source_word))
     match1 = _find_matching_rule(rules1, context_sentence)
     if match1 is not None:
         return match1
@@ -131,21 +131,21 @@ def apply_override(default_lemma, current_form, source_word_for_regex, overrides
     for res_lemma_rule, pattern, rule in overrides.get('priority1_regex', []):
         if res_lemma_rule == default_lemma:
             try:
-                if re.fullmatch(pattern, source_word_for_regex):
+                if re.fullmatch(pattern, source_word):
                     match_regex1 = _find_matching_rule([rule], context_sentence)
                     if match_regex1 is not None:
                         return match_regex1
             except re.error as e:
                 print(f"Warning: Invalid regex original word pattern: '{pattern}'. Error: {e}", file=sys.stderr)
 
-    rules2 = overrides.get('priority2', {}).get(current_form)
+    rules2 = overrides.get('priority2', {}).get(source_word)
     match2 = _find_matching_rule(rules2, context_sentence)
     if match2 is not None:
         return match2
 
     for pattern, rule in overrides.get('priority2_regex', []):
         try:
-            if re.fullmatch(pattern, source_word_for_regex):
+            if re.fullmatch(pattern, source_word):
                 match_regex2 = _find_matching_rule([rule], context_sentence)
                 if match_regex2 is not None:
                     return match_regex2
@@ -159,8 +159,48 @@ def apply_override(default_lemma, current_form, source_word_for_regex, overrides
             
     return default_lemma
 
-# СТАЛО (Версия БЕЗ словаря для теста)
+def apply_part_override(default_lemma, part, source_word, overrides, context_sentence):
+    rules1 = overrides.get('priority1', {}).get((default_lemma, source_word))
+    match1 = _find_matching_rule(rules1, context_sentence)
+    if match1 is not None:
+        return match1
+
+    for res_lemma_rule, pattern, rule in overrides.get('priority1_regex', []):
+        if res_lemma_rule == default_lemma:
+            try:
+                if re.fullmatch(pattern, source_word):
+                    match_regex1 = _find_matching_rule([rule], context_sentence)
+                    if match_regex1 is not None:
+                        return match_regex1
+            except re.error as e:
+                print(f"Warning: Invalid regex original word pattern: '{pattern}'. Error: {e}", file=sys.stderr)
+
+    rules2 = overrides.get('priority2', {}).get(part)
+    match2 = _find_matching_rule(rules2, context_sentence)
+    if match2 is not None:
+        return match2
+
+    for pattern, rule in overrides.get('priority2_regex', []):
+        try:
+            if re.fullmatch(pattern, part):
+                match_regex2 = _find_matching_rule([rule], context_sentence)
+                if match_regex2 is not None:
+                    return match_regex2
+        except re.error as e:
+            print(f"Warning: Invalid regex original word pattern: '{pattern}'. Error: {e}", file=sys.stderr)
+
+    rules3 = overrides.get('priority3', {}).get(default_lemma)
+    match3 = _find_matching_rule(rules3, context_sentence)
+    if match3 is not None:
+        return match3
+            
+    return default_lemma
+
 def get_lemma_for_compound_part(part, nlp, german_dict):
+    """
+    Calculates the base lemma for a part of a German compound word, 
+    considering the part of speech and using a dictionary to validate the lemma from spaCy.
+    """
     if not part:
         return ""
 
@@ -168,8 +208,21 @@ def get_lemma_for_compound_part(part, nlp, german_dict):
     if not part_doc or len(part_doc) == 0:
         return ""
 
-    # Просто возвращаем "сырую" лемму от spaCy, ничего не меняя.
-    return part_doc[0].lemma_
+    token = part_doc[0]
+    
+    if token.pos_ not in ["NOUN", "PROPN"]:
+        return token.lemma_.lower()
+    
+    spacy_lemma = token.lemma_.capitalize()
+    original_part_capitalized = part.capitalize()
+
+    if spacy_lemma in german_dict:
+        return spacy_lemma
+
+    if original_part_capitalized in german_dict:
+        return original_part_capitalized
+
+    return spacy_lemma
 
 def get_corrected_lemma(token, german_dict, fix_genitive_flag=False):
     spacy_lemma = token.lemma_
@@ -326,7 +379,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
                         if len(part) <= 1: continue
                         
                         default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
-                        final_part_lemma = apply_override(default_part_lemma, part, token.text, lemma_overrides, sentence)
+                        final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, sentence)
 
                         if final_part_lemma:
                             final_tokens.add(final_part_lemma)
@@ -345,7 +398,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
                 spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                 default_lemma = get_capitalized_lemma(token, spacy_lemma)
             
-            final_lemma_to_add = apply_override(default_lemma, original_inflected_form, original_inflected_form, lemma_overrides, sentence)
+            final_lemma_to_add = apply_word_override(default_lemma, original_inflected_form, lemma_overrides, sentence)
             final_tokens.add(final_lemma_to_add)
 
     return sorted(list(final_tokens), key=lambda x: (x not in lemma_index, lemma_index.get(x, 0), x.lower()))
@@ -415,7 +468,7 @@ def process_text_v1(
                             if gcs_include_compound:
                                 spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                                 default_lemma = get_capitalized_lemma(token, spacy_lemma)
-                                final_lemma = apply_override(default_lemma, token.text, token.text, lemma_overrides, line1)
+                                final_lemma = apply_word_override(default_lemma, token.text, lemma_overrides, line1)
                                 lemmas_to_process.append((final_lemma, token.text))
 
                             for part_raw in set(final_components):
@@ -424,7 +477,7 @@ def process_text_v1(
                                 if len(part) <= 1: continue
 
                                 default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
-                                final_part_lemma = apply_override(default_part_lemma, part, token.text, lemma_overrides, line1)
+                                final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, line1)
                                 if final_part_lemma:
                                     lemmas_to_process.append((final_part_lemma, token.text))
                     except Exception:
@@ -441,7 +494,7 @@ def process_text_v1(
                         spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                         default_lemma = get_capitalized_lemma(token, spacy_lemma)
                     
-                    final_lemma_to_add = apply_override(default_lemma, original_inflected_form, original_inflected_form, lemma_overrides, line1)
+                    final_lemma_to_add = apply_word_override(default_lemma, original_inflected_form, lemma_overrides, line1)
                     lemmas_to_process.append((final_lemma_to_add, original_inflected_form))
 
                 for lemma, original_form in lemmas_to_process:
@@ -556,7 +609,7 @@ def process_text_v2(
                             if gcs_include_compound:
                                 spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                                 default_lemma = get_capitalized_lemma(token, spacy_lemma)
-                                final_lemma = apply_override(default_lemma, token.text, token.text, lemma_overrides, unit_text)
+                                final_lemma = apply_word_override(default_lemma, token.text, lemma_overrides, unit_text)
                                 lemmas_to_process.append((final_lemma, token.text))
                             
                             for part_raw in set(final_components):
@@ -565,7 +618,7 @@ def process_text_v2(
                                 if len(part) <= 1: continue
 
                                 default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
-                                final_part_lemma = apply_override(default_part_lemma, part, token.text, lemma_overrides, unit_text)
+                                final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, unit_text)
                                 if final_part_lemma:
                                     lemmas_to_process.append((final_part_lemma, token.text))
                     except Exception:
@@ -582,7 +635,7 @@ def process_text_v2(
                         spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                         default_lemma = get_capitalized_lemma(token, spacy_lemma)
                     
-                    final_lemma_to_add = apply_override(default_lemma, original_inflected_form, original_inflected_form, lemma_overrides, unit_text)
+                    final_lemma_to_add = apply_word_override(default_lemma, original_inflected_form, lemma_overrides, unit_text)
                     lemmas_to_process.append((final_lemma_to_add, original_inflected_form))
 
                 for lemma, original_form in lemmas_to_process:

@@ -159,6 +159,7 @@ def apply_override(default_lemma, current_form, source_word_for_regex, overrides
             
     return default_lemma
 
+# СТАЛО (Версия БЕЗ словаря для теста)
 def get_lemma_for_compound_part(part, nlp, german_dict):
     if not part:
         return ""
@@ -167,6 +168,7 @@ def get_lemma_for_compound_part(part, nlp, german_dict):
     if not part_doc or len(part_doc) == 0:
         return ""
 
+    # Просто возвращаем "сырую" лемму от spaCy, ничего не меняя.
     return part_doc[0].lemma_
 
 def get_corrected_lemma(token, german_dict, fix_genitive_flag=False):

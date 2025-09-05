@@ -197,10 +197,6 @@ def apply_part_override(default_lemma, part, source_word, overrides, context_sen
     return default_lemma
 
 def get_lemma_for_compound_part(part, nlp, german_dict):
-    """
-    Calculates the base lemma for a part of a German compound word, 
-    considering the part of speech and using a dictionary to validate the lemma from spaCy.
-    """
     if not part:
         return ""
 
@@ -324,7 +320,7 @@ def get_capitalized_lemma(token, spacy_lemma):
 
     return spacy_lemma
 
-def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overrides, **kwargs):
+def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overrides, gcs_pos_tags, **kwargs):
     gcs = kwargs.get('gcs', False)
     ahocs = kwargs.get('ahocs', None)
     gcs_in_wordlist = kwargs.get('gcs_in_wordlist', False)
@@ -351,12 +347,10 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
 
         was_split = False
         
-        # New logic for hyphenated words takes priority
         if '-' in token.text:
             was_split = True
             parts = token.text.split('-')
             
-            # Optionally add the full compound word itself
             if gcs_include_compound:
                 spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
                 default_lemma = get_capitalized_lemma(token, spacy_lemma)
@@ -372,8 +366,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
                 if final_part_lemma:
                     final_tokens.add(final_part_lemma)
 
-        # GCS logic for non-hyphenated compounds
-        elif gcs and ahocs and gcs_in_wordlist and nlp.lang == 'de' and len(token.text) > 3:
+        elif gcs and ahocs and gcs_in_wordlist and nlp.lang == 'de' and len(token.text) > 3 and (token.pos_ in gcs_pos_tags):
             try:
                 word_to_split = token.text
                 if no_make_singular: should_make_singular = False
@@ -429,7 +422,7 @@ def process_text_v1(
     input_text, lemma_index, language, text2, text3, sentence_context_size,
     output_file, two_column_output_to_file, include_simple_list,
     with_fields, with_br, pipe, gcs, ahocs, gcs_in_wordlist, german_dict, lemma_overrides,
-    **kwargs
+    gcs_pos_tags, **kwargs
 ):
     gcs_only_nouns = kwargs.get('gcs_only_nouns', True)
     make_singular = kwargs.get('make_singular', False)
@@ -465,7 +458,6 @@ def process_text_v1(
                 lemmas_to_process = []
                 was_split = False
                 
-                # New logic for hyphenated words takes priority
                 if '-' in token.text:
                     was_split = True
                     parts = token.text.split('-')
@@ -485,8 +477,7 @@ def process_text_v1(
                         if final_part_lemma:
                             lemmas_to_process.append((final_part_lemma, token.text))
                 
-                # GCS logic for non-hyphenated compounds
-                elif gcs and ahocs and language == 'de' and len(token.text) > 3:
+                elif gcs and ahocs and language == 'de' and len(token.text) > 3 and (token.pos_ in gcs_pos_tags):
                     try:
                         word_to_split = token.text
                         if no_make_singular: should_make_singular = False
@@ -526,7 +517,6 @@ def process_text_v1(
                     except Exception:
                         was_split = False
                 
-                # Default case for simple words
                 if not was_split:
                     original_inflected_form = token.text
                     default_lemma = ""
@@ -581,7 +571,7 @@ def process_text_v1(
                 row_data[12] = l1_sentence
                 if include_simple_list:
                     all_kwargs = {**kwargs, 'gcs': gcs, 'ahocs': ahocs, 'gcs_in_wordlist': gcs_in_wordlist}
-                    lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, german_dict, lemma_overrides, **all_kwargs)
+                    lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, german_dict, lemma_overrides, gcs_pos_tags, **all_kwargs)
                     row_data[11] = "<br>".join(lemmas) if with_br else "\n".join(lemmas)
                 if language == "de":
                     row_data[58] = "1"; row_data[65] = "1"
@@ -593,7 +583,8 @@ def process_text_v1(
 def process_text_v2(
     input_text, lemma_index, language, sentence_context_size,
     output_file, two_column_output_to_file, include_simple_list,
-    with_fields, with_br, pipe, gcs, ahocs, gcs_in_wordlist, german_dict, lemma_overrides, **kwargs
+    with_fields, with_br, pipe, gcs, ahocs, gcs_in_wordlist, german_dict, lemma_overrides, 
+    gcs_pos_tags, **kwargs
 ):
     gcs_only_nouns = kwargs.get('gcs_only_nouns', True)
     make_singular = kwargs.get('make_singular', False)
@@ -628,7 +619,6 @@ def process_text_v2(
                 lemmas_to_process = []
                 was_split = False
 
-                # New logic for hyphenated words takes priority
                 if '-' in token.text:
                     was_split = True
                     parts = token.text.split('-')
@@ -648,8 +638,7 @@ def process_text_v2(
                         if final_part_lemma:
                             lemmas_to_process.append((final_part_lemma, token.text))
                 
-                # GCS logic for non-hyphenated compounds
-                elif gcs and ahocs and language == 'de' and len(token.text) > 3:
+                elif gcs and ahocs and language == 'de' and len(token.text) > 3 and (token.pos_ in gcs_pos_tags):
                     try:
                         word_to_split = token.text
                         if no_make_singular: should_make_singular = False
@@ -689,7 +678,6 @@ def process_text_v2(
                     except Exception:
                         was_split = False
 
-                # Default case for simple words
                 if not was_split:
                     original_inflected_form = token.text
                     default_lemma = ""
@@ -767,7 +755,7 @@ def process_text_v2(
             row_data[12] = l1_sentence
             if include_simple_list:
                 all_kwargs = {**kwargs, 'gcs': gcs, 'ahocs': ahocs, 'gcs_in_wordlist': gcs_in_wordlist}
-                lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, german_dict, lemma_overrides, **all_kwargs)
+                lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, german_dict, lemma_overrides, gcs_pos_tags, **all_kwargs)
                 row_data[11] = "<br>".join(lemmas) if with_br else "\n".join(lemmas)
             if language == "de":
                 row_data[58] = "1"; row_data[65] = "1"
@@ -779,7 +767,7 @@ def process_text_v2(
 
 def process_sentences(
     language, lemma_index, text1, text2, text3, sentence_context_size,
-    output_file, include_simple_list, with_fields, with_br, pipe, **kwargs
+    output_file, include_simple_list, with_fields, with_br, pipe, gcs_pos_tags, **kwargs
 ):
     lemma_overrides = kwargs.get('lemma_overrides', {})
     
@@ -814,7 +802,7 @@ def process_sentences(
             row_data[9] = l2_sentence
             row_data[10] = " ".join(line.strip() for line in text2_lines[i + 1:end_idx])
             if include_simple_list:
-                lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, german_dict, lemma_overrides, **kwargs)
+                lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, german_dict, lemma_overrides, gcs_pos_tags, **kwargs)
                 row_data[11] = "<br>".join(lemmas) if with_br else "\n".join(lemmas)
             row_data[12] = l1_sentence
             if text3:
@@ -854,6 +842,13 @@ def main():
     
     gcs_group = parser.add_argument_group('GCS (German Compound Splitting) options')
     gcs_group.add_argument("--gcs", action="store_true", help="Enable German Compound Splitting. Requires --language de.")
+    gcs_group.add_argument(
+        "--gcs-pos-tags", 
+        nargs='+', 
+        default=['NOUN', 'PROPN'],
+        help="Specify which Part-of-Speech tags to apply splitting to. "
+             "Default: NOUN PROPN. Use 'ALL' to apply to all tags."
+    )
     gcs_group.add_argument("--gcs-dictionary", default="german.dic", help="Path to the dictionary file for GCS.")
     gcs_group.add_argument("--gcs-in-wordlist", action="store_true", help="Also add German compound components to the SentenceSourceWordlist field. Requires --gcs.")
     gcs_group.add_argument("--gcs-include-compound", action="store_true", help="Include the original compound word in the lemma list along with its split components. Requires --gcs.")
@@ -865,6 +860,9 @@ def main():
     gcs_group.add_argument("--no-make-singular", action="store_true", help="Prevent making compound parts singular during GCS splitting, keeping their original form. Overrides default behavior and --make-singular.")
 
     args = parser.parse_args()
+
+    if 'ALL' in args.gcs_pos_tags:
+        args.gcs_pos_tags = ['ADJ', 'ADP', 'ADV', 'AUX', 'CCONJ', 'DET', 'INTJ', 'NOUN', 'NUM', 'PART', 'PRON', 'PROPN', 'PUNCT', 'SCONJ', 'SYM', 'VERB', 'X']
 
     if args.gcs and args.language != 'de':
         print("Warning: GCS is designed for German language (--language de). The --gcs flag will be ignored.", file=sys.stderr)
@@ -961,7 +959,7 @@ def main():
                 args.two_column_output_to_file, args.include_simple_list,
                 args.with_fields, args.with_br, args.pipe,
                 args.gcs, ahocs, args.gcs_in_wordlist, german_dict, lemma_overrides,
-                **kwargs_for_processing
+                args.gcs_pos_tags, **kwargs_for_processing
             )
         else:
              processed_output_file = process_text_v2(
@@ -969,7 +967,7 @@ def main():
                 final_output_path, args.two_column_output_to_file, args.include_simple_list,
                 args.with_fields, args.with_br, args.pipe,
                 args.gcs, ahocs, args.gcs_in_wordlist, german_dict, lemma_overrides,
-                **kwargs_for_processing
+                args.gcs_pos_tags, **kwargs_for_processing
             )
 
     elif args.type == "sentence":
@@ -996,7 +994,7 @@ def main():
             args.language, lemma_index, args.text1, args.text2, args.text3,
             args.sentence_context_size, final_output_path,
             args.include_simple_list, args.with_fields, args.with_br, args.pipe,
-            **kwargs_for_processing
+            args.gcs_pos_tags, **kwargs_for_processing
         )
 
     if args.pipe and processed_output_file:

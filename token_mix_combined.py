@@ -817,7 +817,10 @@ def process_sentences(
     return output_file
 
 def main():
-    parser = argparse.ArgumentParser(description="Extract and process tokens or sentences from text.")
+    parser = argparse.ArgumentParser(
+        description="Extract and process tokens or sentences from text.",
+        formatter_class=argparse.RawTextHelpFormatter
+    )
     parser.add_argument("--type", required=True, choices=["token", "sentence"])
     parser.add_argument("--language", default="de", choices=["de", "en"])
     parser.add_argument("--lemma-index-file", default="")
@@ -846,8 +849,15 @@ def main():
         "--gcs-pos-tags", 
         nargs='+', 
         default=['NOUN', 'PROPN'],
-        help="Specify which Part-of-Speech tags to apply splitting to. "
-             "Default: NOUN PROPN. Use 'ALL' to apply to all tags, or 'NO_VERBS' for all except verbs."
+        help='''Specify which Part-of-Speech tags to apply splitting to.
+  Default: NOUN PROPN.
+  Special keywords:
+    ALL       - Apply to all tags.
+    NO_VERBS  - Apply to all tags except VERB.
+
+  The full list of available Universal Dependencies tags is:
+  ADJ, ADP, ADV, AUX, CCONJ, DET, INTJ, NOUN, NUM, PART,
+  PRON, PROPN, PUNCT, SCONJ, SYM, VERB, X.'''
     )
     gcs_group.add_argument("--gcs-dictionary", default="german.dic", help="Path to the dictionary file for GCS.")
     gcs_group.add_argument("--gcs-in-wordlist", action="store_true", help="Also add German compound components to the SentenceSourceWordlist field. Requires --gcs.")

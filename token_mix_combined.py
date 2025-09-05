@@ -443,7 +443,26 @@ def process_text_v1(
                 lemmas_to_process = []
                 was_split = False
                 
-                if gcs and ahocs and language == 'de' and len(token.text) > 3 and (token.pos_ in ["NOUN", "PROPN"] or '-' in token.text):
+                if '-' in token.text:
+                    was_split = True
+                    parts = token.text.split('-')
+                    
+                    if gcs_include_compound:
+                        spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
+                        default_lemma = get_capitalized_lemma(token, spacy_lemma)
+                        final_lemma = apply_word_override(default_lemma, token.text, lemma_overrides, line1)
+                        lemmas_to_process.append((final_lemma, token.text))
+
+                    for part in parts:
+                        part = part.strip()
+                        if not part or len(part) <= 1: continue
+
+                        default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
+                        final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, line1)
+                        if final_part_lemma:
+                            lemmas_to_process.append((final_part_lemma, token.text))
+                
+                elif gcs and ahocs and language == 'de' and len(token.text) > 3 and (token.pos_ in ["NOUN", "PROPN"]):
                     try:
                         word_to_split = token.text
                         if no_make_singular: should_make_singular = False
@@ -584,7 +603,26 @@ def process_text_v2(
                 lemmas_to_process = []
                 was_split = False
 
-                if gcs and ahocs and language == 'de' and len(token.text) > 3 and (token.pos_ in ["NOUN", "PROPN"] or '-' in token.text):
+                if '-' in token.text:
+                    was_split = True
+                    parts = token.text.split('-')
+                    
+                    if gcs_include_compound:
+                        spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
+                        default_lemma = get_capitalized_lemma(token, spacy_lemma)
+                        final_lemma = apply_word_override(default_lemma, token.text, lemma_overrides, unit_text)
+                        lemmas_to_process.append((final_lemma, token.text))
+
+                    for part in parts:
+                        part = part.strip()
+                        if not part or len(part) <= 1: continue
+
+                        default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
+                        final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, unit_text)
+                        if final_part_lemma:
+                            lemmas_to_process.append((final_part_lemma, token.text))
+                
+                elif gcs and ahocs and language == 'de' and len(token.text) > 3 and (token.pos_ in ["NOUN", "PROPN"]):
                     try:
                         word_to_split = token.text
                         if no_make_singular: should_make_singular = False

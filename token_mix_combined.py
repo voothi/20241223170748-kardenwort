@@ -373,7 +373,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
                     final_tokens.add(final_part_lemma)
 
         # GCS logic for non-hyphenated compounds
-        elif gcs and ahocs and gcs_in_wordlist and nlp.lang == 'de' and len(token.text) > 3 and (token.pos_ in ["NOUN", "PROPN"]):
+        elif gcs and ahocs and gcs_in_wordlist and nlp.lang == 'de' and len(token.text) > 3 and (token.pos_ in ["NOUN", "PROPN", "ADJ"]):
             try:
                 word_to_split = token.text
                 if no_make_singular: should_make_singular = False
@@ -486,7 +486,7 @@ def process_text_v1(
                             lemmas_to_process.append((final_part_lemma, token.text))
                 
                 # GCS logic for non-hyphenated compounds
-                elif gcs and ahocs and language == 'de' and len(token.text) > 3 and (token.pos_ in ["NOUN", "PROPN"]):
+                elif gcs and ahocs and language == 'de' and len(token.text) > 3 and (token.pos_ in ["NOUN", "PROPN", "ADJ"]):
                     try:
                         word_to_split = token.text
                         if no_make_singular: should_make_singular = False
@@ -649,7 +649,7 @@ def process_text_v2(
                             lemmas_to_process.append((final_part_lemma, token.text))
                 
                 # GCS logic for non-hyphenated compounds
-                elif gcs and ahocs and language == 'de' and len(token.text) > 3 and (token.pos_ in ["NOUN", "PROPN"]):
+                elif gcs and ahocs and language == 'de' and len(token.text) > 3 and (token.pos_ in ["NOUN", "PROPN", "ADJ"]):
                     try:
                         word_to_split = token.text
                         if no_make_singular: should_make_singular = False

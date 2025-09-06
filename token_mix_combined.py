@@ -226,30 +226,6 @@ def get_lemma_for_compound_part(part, nlp, german_dict):
 
     return spacy_lemma
 
-def get_lemma_for_gcs_part(part, nlp, german_dict):
-    if not part:
-        return ""
-
-    part_doc = nlp(part)
-    if not part_doc or len(part_doc) == 0:
-        return ""
-
-    token = part_doc[0]
-    
-    if token.pos_ not in ["NOUN", "PROPN"]:
-        return token.lemma_
-    
-    spacy_lemma = token.lemma_.capitalize()
-    original_part_capitalized = part.capitalize()
-
-    if spacy_lemma in german_dict:
-        return spacy_lemma
-
-    if original_part_capitalized in german_dict:
-        return original_part_capitalized
-
-    return spacy_lemma
-
 def get_corrected_lemma(token, german_dict, fix_genitive_flag=False):
     spacy_lemma = token.lemma_
     if (fix_genitive_flag and
@@ -361,7 +337,6 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
     gcs_fix_genitive = kwargs.get('gcs_fix_genitive', False)
     gcs_mask_unknown = kwargs.get('gcs_mask_unknown', False)
     gcs_include_compound = kwargs.get('gcs_include_compound', False)
-    gcs_no_merge = kwargs.get('gcs_no_merge', False)
 
     doc = nlp(sentence)
     final_tokens = set()
@@ -408,36 +383,23 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
                 if gcs_combine_noun_modes:
                     with redirect_stdout(io.StringIO()):
                         dissection1 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=True, mask_unknown=gcs_mask_unknown)
+                    final_components.extend(comp_split.merge_fractions(dissection1))
                     with redirect_stdout(io.StringIO()):
                         dissection2 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=False, mask_unknown=gcs_mask_unknown)
-                    
-                    if gcs_no_merge:
-                        components1 = [part for part, score in dissection1]
-                        components2 = [part for part, score in dissection2]
-                        final_components.extend(components1)
-                        final_components.extend(components2)
-                    else:
-                        final_components.extend(comp_split.merge_fractions(dissection1))
-                        final_components.extend(comp_split.merge_fractions(dissection2))
+                    final_components.extend(comp_split.merge_fractions(dissection2))
                 else:
                     with redirect_stdout(io.StringIO()):
                         dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=gcs_only_nouns, mask_unknown=gcs_mask_unknown)
-
-                    if gcs_no_merge:
-                        final_components = [part for part, score in dissection]
-                    else:
-                        final_components = comp_split.merge_fractions(dissection)
+                    final_components = comp_split.merge_fractions(dissection)
 
                 if len(final_components) > 1:
                     was_split = True
                     for part_raw in set(final_components):
-                        if part_raw.lower() == token.text.lower():
-                            continue
                         part = part_raw.strip('-')
                         if not part: continue
                         if len(part) < 3: continue
                         
-                        default_part_lemma = get_lemma_for_gcs_part(part, nlp, german_dict)
+                        default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
                         final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, sentence)
 
                         if final_part_lemma:
@@ -475,7 +437,6 @@ def process_text_v1(
     gcs_fix_genitive = kwargs.get('gcs_fix_genitive', False)
     gcs_mask_unknown = kwargs.get('gcs_mask_unknown', False)
     gcs_include_compound = kwargs.get('gcs_include_compound', False)
-    gcs_no_merge = kwargs.get('gcs_no_merge', False)
     
     if "\n" in input_text or not os.path.exists(input_text):
         text1_lines = input_text.splitlines()
@@ -533,25 +494,14 @@ def process_text_v1(
                         if gcs_combine_noun_modes:
                             with redirect_stdout(io.StringIO()):
                                 dissection1 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=True, mask_unknown=gcs_mask_unknown)
+                            final_components.extend(comp_split.merge_fractions(dissection1))
                             with redirect_stdout(io.StringIO()):
                                 dissection2 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=False, mask_unknown=gcs_mask_unknown)
-                            
-                            if gcs_no_merge:
-                                components1 = [part for part, score in dissection1]
-                                components2 = [part for part, score in dissection2]
-                                final_components.extend(components1)
-                                final_components.extend(components2)
-                            else:
-                                final_components.extend(comp_split.merge_fractions(dissection1))
-                                final_components.extend(comp_split.merge_fractions(dissection2))
+                            final_components.extend(comp_split.merge_fractions(dissection2))
                         else:
                             with redirect_stdout(io.StringIO()):
                                 dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=gcs_only_nouns, mask_unknown=gcs_mask_unknown)
-                            
-                            if gcs_no_merge:
-                                final_components = [part for part, score in dissection]
-                            else:
-                                final_components = comp_split.merge_fractions(dissection)
+                            final_components = comp_split.merge_fractions(dissection)
 
                         if len(final_components) > 1:
                             was_split = True
@@ -562,13 +512,11 @@ def process_text_v1(
                                 lemmas_to_process.append((final_lemma, token.text))
 
                             for part_raw in set(final_components):
-                                if part_raw.lower() == token.text.lower():
-                                    continue
                                 part = part_raw.strip('-')
                                 if not part: continue
                                 if len(part) < 3: continue
 
-                                default_part_lemma = get_lemma_for_gcs_part(part, nlp, german_dict)
+                                default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
                                 final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, line1)
                                 if final_part_lemma:
                                     lemmas_to_process.append((final_part_lemma, token.text))
@@ -651,7 +599,6 @@ def process_text_v2(
     gcs_fix_genitive = kwargs.get('gcs_fix_genitive', False)
     gcs_mask_unknown = kwargs.get('gcs_mask_unknown', False)
     gcs_include_compound = kwargs.get('gcs_include_compound', False)
-    gcs_no_merge = kwargs.get('gcs_no_merge', False)
     
     if '\n' in input_text.strip():
         processing_units = input_text.splitlines()
@@ -708,25 +655,14 @@ def process_text_v2(
                         if gcs_combine_noun_modes:
                             with redirect_stdout(io.StringIO()):
                                 dissection1 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=True, mask_unknown=gcs_mask_unknown)
+                            final_components.extend(comp_split.merge_fractions(dissection1))
                             with redirect_stdout(io.StringIO()):
                                 dissection2 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=False, mask_unknown=gcs_mask_unknown)
-                            
-                            if gcs_no_merge:
-                                components1 = [part for part, score in dissection1]
-                                components2 = [part for part, score in dissection2]
-                                final_components.extend(components1)
-                                final_components.extend(components2)
-                            else:
-                                final_components.extend(comp_split.merge_fractions(dissection1))
-                                final_components.extend(comp_split.merge_fractions(dissection2))
+                            final_components.extend(comp_split.merge_fractions(dissection2))
                         else:
                             with redirect_stdout(io.StringIO()):
                                 dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=gcs_only_nouns, mask_unknown=gcs_mask_unknown)
-                            
-                            if gcs_no_merge:
-                                final_components = [part for part, score in dissection]
-                            else:
-                                final_components = comp_split.merge_fractions(dissection)
+                            final_components = comp_split.merge_fractions(dissection)
 
                         if len(final_components) > 1:
                             was_split = True
@@ -737,13 +673,11 @@ def process_text_v2(
                                 lemmas_to_process.append((final_lemma, token.text))
                             
                             for part_raw in set(final_components):
-                                if part_raw.lower() == token.text.lower():
-                                    continue
                                 part = part_raw.strip('-')
                                 if not part: continue
                                 if len(part) < 3: continue
 
-                                default_part_lemma = get_lemma_for_gcs_part(part, nlp, german_dict)
+                                default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
                                 final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, unit_text)
                                 if final_part_lemma:
                                     lemmas_to_process.append((final_part_lemma, token.text))
@@ -970,7 +904,6 @@ def main():
     gcs_group.add_argument("--gcs-combine-noun-modes", action="store_true", help="Run GCS in both modes (only_nouns=True and False) and combine the unique resulting components.")
     gcs_group.add_argument("--gcs-fix-genitive", action="store_true", help="Corrects German genitive noun lemmas (e.g., 'Hauses' -> 'Haus') by checking against the dictionary.")
     gcs_group.add_argument("--gcs-mask-unknown", action="store_true", help="During GCS splitting, mask word parts not found in the dictionary as 'unknown'.")
-    gcs_group.add_argument("--gcs-no-merge", action="store_true", help="Disable the merge_fractions step in GCS. Outputs raw, unmerged components from the 'dissect' function, including linking elements like '-s-'. Useful for custom post-processing.")
     gcs_group.add_argument("--make-singular", action="store_true", help="Force making compound parts singular during GCS splitting, regardless of the word's part of speech. Default is to only do this for nouns.")
     gcs_group.add_argument("--no-make-singular", action="store_true", help="Prevent making compound parts singular during GCS splitting, keeping their original form. Overrides default behavior and --make-singular.")
 
@@ -1078,7 +1011,6 @@ def main():
             'gcs_fix_genitive': args.gcs_fix_genitive,
             'gcs_mask_unknown': args.gcs_mask_unknown,
             'gcs_include_compound': args.gcs_include_compound,
-            'gcs_no_merge': args.gcs_no_merge,
             'detailed': args.detailed,
             'two_column_output': args.two_column_output,
             'html': args.html
@@ -1120,7 +1052,6 @@ def main():
             'gcs_fix_genitive': args.gcs_fix_genitive,
             'gcs_mask_unknown': args.gcs_mask_unknown,
             'gcs_include_compound': args.gcs_include_compound,
-            'gcs_no_merge': args.gcs_no_merge,
             'german_dict': german_dict
         }
         processed_output_file = process_sentences(

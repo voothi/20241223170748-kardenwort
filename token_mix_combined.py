@@ -226,6 +226,30 @@ def get_lemma_for_compound_part(part, nlp, german_dict):
 
     return spacy_lemma
 
+def get_lemma_for_gcs_part(part, nlp, german_dict):
+    if not part:
+        return ""
+
+    part_doc = nlp(part)
+    if not part_doc or len(part_doc) == 0:
+        return ""
+
+    token = part_doc[0]
+    
+    if token.pos_ not in ["NOUN", "PROPN"]:
+        return token.lemma_
+    
+    spacy_lemma = token.lemma_.capitalize()
+    original_part_capitalized = part.capitalize()
+
+    if spacy_lemma in german_dict:
+        return spacy_lemma
+
+    if original_part_capitalized in german_dict:
+        return original_part_capitalized
+
+    return spacy_lemma
+
 def get_corrected_lemma(token, german_dict, fix_genitive_flag=False):
     spacy_lemma = token.lemma_
     if (fix_genitive_flag and
@@ -411,7 +435,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
                         if not part: continue
                         if len(part) < 3: continue
                         
-                        default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
+                        default_part_lemma = get_lemma_for_gcs_part(part, nlp, german_dict)
                         final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, sentence)
 
                         if final_part_lemma:
@@ -540,7 +564,7 @@ def process_text_v1(
                                 if not part: continue
                                 if len(part) < 3: continue
 
-                                default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
+                                default_part_lemma = get_lemma_for_gcs_part(part, nlp, german_dict)
                                 final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, line1)
                                 if final_part_lemma:
                                     lemmas_to_process.append((final_part_lemma, token.text))
@@ -713,7 +737,7 @@ def process_text_v2(
                                 if not part: continue
                                 if len(part) < 3: continue
 
-                                default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
+                                default_part_lemma = get_lemma_for_gcs_part(part, nlp, german_dict)
                                 final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, unit_text)
                                 if final_part_lemma:
                                     lemmas_to_process.append((final_part_lemma, token.text))

@@ -79,7 +79,7 @@
 #Date	Datenverarbeitung	Daten	
 #Date	Textdaten	Daten	
 aller		all	
-atIon		ation	
+#atIon		ation	
 Beispiele		Beispiel	
 Betriebs		Betrieb	
 date	regex:(?i)\w*daten\w*	Daten	

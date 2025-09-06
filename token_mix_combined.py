@@ -14,6 +14,11 @@ try:
 except ImportError:
     GCS_AVAILABLE = False
 
+def _smooth_gcs_case(lemma):
+    if not lemma or len(lemma) < 2:
+        return lemma
+    return lemma[0] + lemma[1:].lower()
+
 def load_dictionary_to_set(file_path):
     dictionary = set()
     try:
@@ -400,7 +405,8 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
                         if len(part) < 3: continue
                         
                         default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
-                        final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, sentence)
+                        overridden_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, sentence)
+                        final_part_lemma = _smooth_gcs_case(overridden_lemma)
 
                         if final_part_lemma:
                             final_tokens.add(final_part_lemma)
@@ -517,7 +523,9 @@ def process_text_v1(
                                 if len(part) < 3: continue
 
                                 default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
-                                final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, line1)
+                                overridden_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, line1)
+                                final_part_lemma = _smooth_gcs_case(overridden_lemma)
+                                
                                 if final_part_lemma:
                                     lemmas_to_process.append((final_part_lemma, token.text))
                     except Exception:
@@ -678,7 +686,9 @@ def process_text_v2(
                                 if len(part) < 3: continue
 
                                 default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
-                                final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, unit_text)
+                                overridden_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, unit_text)
+                                final_part_lemma = _smooth_gcs_case(overridden_lemma)
+
                                 if final_part_lemma:
                                     lemmas_to_process.append((final_part_lemma, token.text))
                     except Exception:

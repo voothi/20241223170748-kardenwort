@@ -32,7 +32,7 @@ def get_token_args(args, python_path, token_workspace):
         "--autoname",
         "--lemma-override-file",
         override_file,
-        "--pipe"
+        "--pipe",
     ]
 
     if args.language == "de":
@@ -49,6 +49,8 @@ def get_token_args(args, python_path, token_workspace):
                 "--gcs-include-compound",
                 "--gcs-combine-noun-modes",
                 "--gcs-in-wordlist",
+                "--no-make-singular",
+                "--gcs-skip-merge-fractions",
             ]
 
             if args.gcs_pos_tags:

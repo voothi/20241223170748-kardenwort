@@ -331,6 +331,36 @@ def get_capitalized_lemma(token, spacy_lemma):
 
     return spacy_lemma
 
+def collapse_lemmas_for_token(candidates):
+    """
+    Collapses a list of lemmas based on capitalization, preferring capitalized forms,
+    but DOES NOT prioritize the compound word over its parts.
+    Example: ['ausbildung', 'Ausbildung', 'Erfahrung', 'Ausbildungserfahrung']
+    -> ['Ausbildung', 'Erfahrung', 'Ausbildungserfahrung']
+    """
+    lemmas_by_lower = {}
+    # Группируем леммы по их версии в нижнем регистре
+    for lemma in candidates:
+        if not lemma: continue
+        lower_lemma = lemma.lower()
+        if lower_lemma not in lemmas_by_lower:
+            lemmas_by_lower[lower_lemma] = set()
+        lemmas_by_lower[lower_lemma].add(lemma)
+    
+    final_lemmas = []
+    # Для каждой группы выбираем предпочтительную (заглавную) форму
+    for _, variants in lemmas_by_lower.items():
+        # Ищем вариант, который начинается с заглавной буквы
+        preferred_variant = next((v for v in variants if v[0].isupper()), None)
+        
+        # Если заглавный вариант найден, используем его. Иначе - используем любой из доступных.
+        if preferred_variant:
+            final_lemmas.append(preferred_variant)
+        elif variants: # Убедимся, что сет не пустой
+            final_lemmas.append(list(variants)[0])
+            
+    return final_lemmas
+
 def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overrides, gcs_pos_tags, **kwargs):
     gcs = kwargs.get('gcs', False)
     ahocs = kwargs.get('ahocs', None)
@@ -356,6 +386,19 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
         if not (token.is_alpha or '-' in token.text):
             continue
 
+        candidate_lemmas = []
+        
+        original_inflected_form = token.text
+        parent_lemma = ""
+        if token.i in verb_particle_map:
+            particle = verb_particle_map[token.i]
+            default_lemma = f"{particle.text.lower()}{token.lemma_}".lower()
+            original_inflected_form = f"{token.text} {particle.text}"
+        else:
+            spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
+            default_lemma = get_capitalized_lemma(token, spacy_lemma)
+        parent_lemma = apply_word_override(default_lemma, original_inflected_form, lemma_overrides, sentence)
+        
         was_split = False
         
         if '-' in token.text:
@@ -363,10 +406,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
             parts = token.text.split('-')
             
             if gcs_include_compound:
-                spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
-                default_lemma = get_capitalized_lemma(token, spacy_lemma)
-                final_lemma = apply_word_override(default_lemma, token.text, lemma_overrides, sentence)
-                final_tokens.add(final_lemma)
+                candidate_lemmas.append(parent_lemma)
 
             for part in parts:
                 part = part.strip()
@@ -375,7 +415,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
                 default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
                 final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, sentence)
                 if final_part_lemma:
-                    final_tokens.add(final_part_lemma)
+                    candidate_lemmas.append(final_part_lemma)
 
         elif gcs and ahocs and gcs_in_wordlist and nlp.lang == 'de' and len(token.text) > 3 and (token.pos_ in gcs_pos_tags):
             try:
@@ -399,34 +439,28 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
 
                 if len(final_components) > 1:
                     was_split = True
+                    if gcs_include_compound:
+                        candidate_lemmas.append(parent_lemma)
+                        
                     for part_raw in set(final_components):
                         part = part_raw.strip('-')
-                        if not part: continue
-                        if len(part) < 3: continue
+                        if not part or len(part) < 3: continue
                         
                         default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
                         overridden_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, sentence)
                         final_part_lemma = _smooth_gcs_case(overridden_lemma)
 
                         if final_part_lemma:
-                            final_tokens.add(final_part_lemma)
+                            candidate_lemmas.append(final_part_lemma)
             except Exception:
-                pass
+                was_split = False
+        
+        if not was_split:
+            candidate_lemmas.append(parent_lemma)
 
-        if not (was_split and not gcs_include_compound):
-            original_inflected_form = token.text
-            default_lemma = ""
-
-            if token.i in verb_particle_map:
-                particle = verb_particle_map[token.i]
-                default_lemma = f"{particle.text.lower()}{token.lemma_}".lower()
-                original_inflected_form = f"{token.text} {particle.text}"
-            else:
-                spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
-                default_lemma = get_capitalized_lemma(token, spacy_lemma)
-            
-            final_lemma_to_add = apply_word_override(default_lemma, original_inflected_form, lemma_overrides, sentence)
-            final_tokens.add(final_lemma_to_add)
+        finalized_lemmas = collapse_lemmas_for_token(candidate_lemmas)
+        for lemma in finalized_lemmas:
+            final_tokens.add(lemma)
 
     return sorted(list(final_tokens), key=lambda x: (x not in lemma_index, lemma_index.get(x, 0), x.lower()))
 
@@ -467,7 +501,19 @@ def process_text_v1(
                 continue
 
             if (token.is_alpha or '-' in token.text):
-                lemmas_to_process = []
+                candidate_lemmas = []
+                
+                original_inflected_form = token.text
+                parent_lemma = ""
+                if token.i in verb_particle_map:
+                    particle = verb_particle_map[token.i]
+                    default_lemma = f"{particle.text.lower()}{token.lemma_}".lower()
+                    original_inflected_form = f"{token.text} {particle.text}"
+                else:
+                    spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
+                    default_lemma = get_capitalized_lemma(token, spacy_lemma)
+                parent_lemma = apply_word_override(default_lemma, original_inflected_form, lemma_overrides, line1)
+
                 was_split = False
                 
                 if '-' in token.text:
@@ -475,10 +521,7 @@ def process_text_v1(
                     parts = token.text.split('-')
                     
                     if gcs_include_compound:
-                        spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
-                        default_lemma = get_capitalized_lemma(token, spacy_lemma)
-                        final_lemma = apply_word_override(default_lemma, token.text, lemma_overrides, line1)
-                        lemmas_to_process.append((final_lemma, token.text))
+                        candidate_lemmas.append(parent_lemma)
 
                     for part in parts:
                         part = part.strip()
@@ -487,7 +530,7 @@ def process_text_v1(
                         default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
                         final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, line1)
                         if final_part_lemma:
-                            lemmas_to_process.append((final_part_lemma, token.text))
+                            candidate_lemmas.append(final_part_lemma)
                 
                 elif gcs and ahocs and language == 'de' and len(token.text) > 3 and (token.pos_ in gcs_pos_tags):
                     try:
@@ -512,10 +555,7 @@ def process_text_v1(
                         if len(final_components) > 1:
                             was_split = True
                             if gcs_include_compound:
-                                spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
-                                default_lemma = get_capitalized_lemma(token, spacy_lemma)
-                                final_lemma = apply_word_override(default_lemma, token.text, lemma_overrides, line1)
-                                lemmas_to_process.append((final_lemma, token.text))
+                                candidate_lemmas.append(parent_lemma)
 
                             for part_raw in set(final_components):
                                 part = part_raw.strip('-')
@@ -527,31 +567,22 @@ def process_text_v1(
                                 final_part_lemma = _smooth_gcs_case(overridden_lemma)
                                 
                                 if final_part_lemma:
-                                    lemmas_to_process.append((final_part_lemma, token.text))
+                                    candidate_lemmas.append(final_part_lemma)
                     except Exception:
                         was_split = False
                 
                 if not was_split:
-                    original_inflected_form = token.text
-                    default_lemma = ""
-                    if token.i in verb_particle_map:
-                        particle = verb_particle_map[token.i]
-                        default_lemma = f"{particle.text.lower()}{token.lemma_}".lower()
-                        original_inflected_form = f"{token.text} {particle.text}"
-                    else:
-                        spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
-                        default_lemma = get_capitalized_lemma(token, spacy_lemma)
-                    
-                    final_lemma_to_add = apply_word_override(default_lemma, original_inflected_form, lemma_overrides, line1)
-                    lemmas_to_process.append((final_lemma_to_add, original_inflected_form))
+                    candidate_lemmas.append(parent_lemma)
 
-                for lemma, original_form in lemmas_to_process:
+                finalized_lemmas = collapse_lemmas_for_token(candidate_lemmas)
+
+                for lemma in finalized_lemmas:
                     if lemma:
                         if lemma not in unique_lemmatized_tokens:
-                            unique_lemmatized_tokens[lemma] = original_form
+                            unique_lemmatized_tokens[lemma] = original_inflected_form
                             token_to_sentence[lemma] = (i, line1)
-                        elif len(original_form) < len(unique_lemmatized_tokens[lemma]):
-                             unique_lemmatized_tokens[lemma] = original_form
+                        elif len(original_inflected_form) < len(unique_lemmatized_tokens[lemma]):
+                             unique_lemmatized_tokens[lemma] = original_inflected_form
 
     sorted_tokens = sorted(list(unique_lemmatized_tokens.keys()), key=lambda token: (token not in lemma_index, lemma_index.get(token, 0), token.lower()))
     if output_file:
@@ -630,7 +661,19 @@ def process_text_v2(
                 continue
 
             if (token.is_alpha or '-' in token.text):
-                lemmas_to_process = []
+                candidate_lemmas = []
+
+                original_inflected_form = token.text
+                parent_lemma = ""
+                if token.i in verb_particle_map:
+                    particle = verb_particle_map[token.i]
+                    default_lemma = f"{particle.text.lower()}{token.lemma_}".lower()
+                    original_inflected_form = f"{token.text} {particle.text}"
+                else:
+                    spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
+                    default_lemma = get_capitalized_lemma(token, spacy_lemma)
+                parent_lemma = apply_word_override(default_lemma, original_inflected_form, lemma_overrides, unit_text)
+                
                 was_split = False
 
                 if '-' in token.text:
@@ -638,10 +681,7 @@ def process_text_v2(
                     parts = token.text.split('-')
                     
                     if gcs_include_compound:
-                        spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
-                        default_lemma = get_capitalized_lemma(token, spacy_lemma)
-                        final_lemma = apply_word_override(default_lemma, token.text, lemma_overrides, unit_text)
-                        lemmas_to_process.append((final_lemma, token.text))
+                        candidate_lemmas.append(parent_lemma)
 
                     for part in parts:
                         part = part.strip()
@@ -650,7 +690,7 @@ def process_text_v2(
                         default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
                         final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, unit_text)
                         if final_part_lemma:
-                            lemmas_to_process.append((final_part_lemma, token.text))
+                            candidate_lemmas.append(final_part_lemma)
                 
                 elif gcs and ahocs and language == 'de' and len(token.text) > 3 and (token.pos_ in gcs_pos_tags):
                     try:
@@ -675,10 +715,7 @@ def process_text_v2(
                         if len(final_components) > 1:
                             was_split = True
                             if gcs_include_compound:
-                                spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
-                                default_lemma = get_capitalized_lemma(token, spacy_lemma)
-                                final_lemma = apply_word_override(default_lemma, token.text, lemma_overrides, unit_text)
-                                lemmas_to_process.append((final_lemma, token.text))
+                                candidate_lemmas.append(parent_lemma)
                             
                             for part_raw in set(final_components):
                                 part = part_raw.strip('-')
@@ -690,31 +727,22 @@ def process_text_v2(
                                 final_part_lemma = _smooth_gcs_case(overridden_lemma)
 
                                 if final_part_lemma:
-                                    lemmas_to_process.append((final_part_lemma, token.text))
+                                    candidate_lemmas.append(final_part_lemma)
                     except Exception:
                         was_split = False
 
                 if not was_split:
-                    original_inflected_form = token.text
-                    default_lemma = ""
-                    if token.i in verb_particle_map:
-                        particle = verb_particle_map[token.i]
-                        default_lemma = f"{particle.text.lower()}{token.lemma_}".lower()
-                        original_inflected_form = f"{token.text} {particle.text}"
-                    else:
-                        spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
-                        default_lemma = get_capitalized_lemma(token, spacy_lemma)
-                    
-                    final_lemma_to_add = apply_word_override(default_lemma, original_inflected_form, lemma_overrides, unit_text)
-                    lemmas_to_process.append((final_lemma_to_add, original_inflected_form))
+                    candidate_lemmas.append(parent_lemma)
 
-                for lemma, original_form in lemmas_to_process:
+                finalized_lemmas = collapse_lemmas_for_token(candidate_lemmas)
+
+                for lemma in finalized_lemmas:
                     if lemma:
                         if lemma not in unique_lemmatized_tokens:
-                            unique_lemmatized_tokens[lemma] = original_form
+                            unique_lemmatized_tokens[lemma] = original_inflected_form
                             token_to_sentence[lemma] = (unit_index, unit_text)
-                        elif len(original_form) < len(unique_lemmatized_tokens[lemma]):
-                             unique_lemmatized_tokens[lemma] = original_form
+                        elif len(original_inflected_form) < len(unique_lemmatized_tokens[lemma]):
+                             unique_lemmatized_tokens[lemma] = original_inflected_form
 
     sorted_tokens = sorted(list(unique_lemmatized_tokens.keys()), key=lambda token: (token not in lemma_index, lemma_index.get(token, 0), token.lower()))
     def get_unit_text(u):

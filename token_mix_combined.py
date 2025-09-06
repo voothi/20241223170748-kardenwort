@@ -431,6 +431,8 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
                 if len(final_components) > 1:
                     was_split = True
                     for part_raw in set(final_components):
+                        if part_raw.lower() == token.text.lower():
+                            continue
                         part = part_raw.strip('-')
                         if not part: continue
                         if len(part) < 3: continue
@@ -560,6 +562,8 @@ def process_text_v1(
                                 lemmas_to_process.append((final_lemma, token.text))
 
                             for part_raw in set(final_components):
+                                if part_raw.lower() == token.text.lower():
+                                    continue
                                 part = part_raw.strip('-')
                                 if not part: continue
                                 if len(part) < 3: continue
@@ -733,6 +737,8 @@ def process_text_v2(
                                 lemmas_to_process.append((final_lemma, token.text))
                             
                             for part_raw in set(final_components):
+                                if part_raw.lower() == token.text.lower():
+                                    continue
                                 part = part_raw.strip('-')
                                 if not part: continue
                                 if len(part) < 3: continue

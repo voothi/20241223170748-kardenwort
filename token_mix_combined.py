@@ -339,7 +339,7 @@ def collapse_lemmas_for_token(candidates):
     -> ['Ausbildung', 'Erfahrung', 'Ausbildungserfahrung']
     """
     lemmas_by_lower = {}
-    # Группируем леммы по их версии в нижнем регистре
+
     for lemma in candidates:
         if not lemma: continue
         lower_lemma = lemma.lower()
@@ -348,15 +348,12 @@ def collapse_lemmas_for_token(candidates):
         lemmas_by_lower[lower_lemma].add(lemma)
     
     final_lemmas = []
-    # Для каждой группы выбираем предпочтительную (заглавную) форму
     for _, variants in lemmas_by_lower.items():
-        # Ищем вариант, который начинается с заглавной буквы
         preferred_variant = next((v for v in variants if v[0].isupper()), None)
         
-        # Если заглавный вариант найден, используем его. Иначе - используем любой из доступных.
         if preferred_variant:
             final_lemmas.append(preferred_variant)
-        elif variants: # Убедимся, что сет не пустой
+        elif variants:
             final_lemmas.append(list(variants)[0])
             
     return final_lemmas
@@ -373,6 +370,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
     gcs_mask_unknown = kwargs.get('gcs_mask_unknown', False)
     gcs_include_compound = kwargs.get('gcs_include_compound', False)
     gcs_skip_merge_fractions = kwargs.get('gcs_skip_merge_fractions', False)
+    gcs_combine_fractions = kwargs.get('gcs_combine_fractions', False)
 
     doc = nlp(sentence)
     final_tokens = set()
@@ -429,27 +427,32 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
                 if gcs_combine_noun_modes:
                     with redirect_stdout(io.StringIO()):
                         dissection1 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=True, mask_unknown=gcs_mask_unknown)
-                    final_components.extend(comp_split.merge_fractions(dissection1))
                     with redirect_stdout(io.StringIO()):
                         dissection2 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=False, mask_unknown=gcs_mask_unknown)
-                    final_components.extend(comp_split.merge_fractions(dissection2))
-
-                    if gcs_skip_merge_fractions:
+                    
+                    if gcs_combine_fractions:
+                        final_components.extend(comp_split.merge_fractions(dissection1))
+                        final_components.extend(dissection1)
+                        final_components.extend(comp_split.merge_fractions(dissection2))
+                        final_components.extend(dissection2)
+                    elif gcs_skip_merge_fractions:
                         final_components.extend(dissection1)
                         final_components.extend(dissection2)
-                    else:
+                    else: # Default
                         final_components.extend(comp_split.merge_fractions(dissection1))
                         final_components.extend(comp_split.merge_fractions(dissection2))
 
-                else:
+                else: # Single GCS mode
                     with redirect_stdout(io.StringIO()):
                         dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=gcs_only_nouns, mask_unknown=gcs_mask_unknown)
-                    final_components = comp_split.merge_fractions(dissection)
 
-                    if gcs_skip_merge_fractions:
-                        final_components = dissection
-                    else:
-                        final_components = comp_split.merge_fractions(dissection)
+                    if gcs_combine_fractions:
+                        final_components.extend(comp_split.merge_fractions(dissection))
+                        final_components.extend(dissection)
+                    elif gcs_skip_merge_fractions:
+                        final_components.extend(dissection)
+                    else: # Default
+                        final_components.extend(comp_split.merge_fractions(dissection))
 
                 if len(final_components) > 1:
                     was_split = True
@@ -492,6 +495,7 @@ def process_text_v1(
     gcs_mask_unknown = kwargs.get('gcs_mask_unknown', False)
     gcs_include_compound = kwargs.get('gcs_include_compound', False)
     gcs_skip_merge_fractions = kwargs.get('gcs_skip_merge_fractions', False)
+    gcs_combine_fractions = kwargs.get('gcs_combine_fractions', False)
 
     if "\n" in input_text or not os.path.exists(input_text):
         text1_lines = input_text.splitlines()
@@ -558,27 +562,32 @@ def process_text_v1(
                         if gcs_combine_noun_modes:
                             with redirect_stdout(io.StringIO()):
                                 dissection1 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=True, mask_unknown=gcs_mask_unknown)
-                            final_components.extend(comp_split.merge_fractions(dissection1))
                             with redirect_stdout(io.StringIO()):
                                 dissection2 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=False, mask_unknown=gcs_mask_unknown)
-                            final_components.extend(comp_split.merge_fractions(dissection2))
-
-                            if gcs_skip_merge_fractions:
+                            
+                            if gcs_combine_fractions:
+                                final_components.extend(comp_split.merge_fractions(dissection1))
+                                final_components.extend(dissection1)
+                                final_components.extend(comp_split.merge_fractions(dissection2))
+                                final_components.extend(dissection2)
+                            elif gcs_skip_merge_fractions:
                                 final_components.extend(dissection1)
                                 final_components.extend(dissection2)
-                            else:
+                            else: # Default
                                 final_components.extend(comp_split.merge_fractions(dissection1))
                                 final_components.extend(comp_split.merge_fractions(dissection2))
 
-                        else:
+                        else: # Single GCS mode
                             with redirect_stdout(io.StringIO()):
                                 dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=gcs_only_nouns, mask_unknown=gcs_mask_unknown)
-                            final_components = comp_split.merge_fractions(dissection)
 
-                            if gcs_skip_merge_fractions:
-                                final_components = dissection
-                            else:
-                                final_components = comp_split.merge_fractions(dissection)
+                            if gcs_combine_fractions:
+                                final_components.extend(comp_split.merge_fractions(dissection))
+                                final_components.extend(dissection)
+                            elif gcs_skip_merge_fractions:
+                                final_components.extend(dissection)
+                            else: # Default
+                                final_components.extend(comp_split.merge_fractions(dissection))
 
                         if len(final_components) > 1:
                             was_split = True
@@ -667,6 +676,7 @@ def process_text_v2(
     gcs_mask_unknown = kwargs.get('gcs_mask_unknown', False)
     gcs_include_compound = kwargs.get('gcs_include_compound', False)
     gcs_skip_merge_fractions = kwargs.get('gcs_skip_merge_fractions', False)
+    gcs_combine_fractions = kwargs.get('gcs_combine_fractions', False)
 
     if '\n' in input_text.strip():
         processing_units = input_text.splitlines()
@@ -732,27 +742,32 @@ def process_text_v2(
                         if gcs_combine_noun_modes:
                             with redirect_stdout(io.StringIO()):
                                 dissection1 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=True, mask_unknown=gcs_mask_unknown)
-                            final_components.extend(comp_split.merge_fractions(dissection1))
                             with redirect_stdout(io.StringIO()):
                                 dissection2 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=False, mask_unknown=gcs_mask_unknown)
-                            final_components.extend(comp_split.merge_fractions(dissection2))
-
-                            if gcs_skip_merge_fractions:
+                            
+                            if gcs_combine_fractions:
+                                final_components.extend(comp_split.merge_fractions(dissection1))
+                                final_components.extend(dissection1)
+                                final_components.extend(comp_split.merge_fractions(dissection2))
+                                final_components.extend(dissection2)
+                            elif gcs_skip_merge_fractions:
                                 final_components.extend(dissection1)
                                 final_components.extend(dissection2)
-                            else:
+                            else: # Default
                                 final_components.extend(comp_split.merge_fractions(dissection1))
                                 final_components.extend(comp_split.merge_fractions(dissection2))
 
-                        else:
+                        else: # Single GCS mode
                             with redirect_stdout(io.StringIO()):
                                 dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=gcs_only_nouns, mask_unknown=gcs_mask_unknown)
-                            final_components = comp_split.merge_fractions(dissection)
-                            
-                            if gcs_skip_merge_fractions:
-                                final_components = dissection
-                            else:
-                                final_components = comp_split.merge_fractions(dissection)
+
+                            if gcs_combine_fractions:
+                                final_components.extend(comp_split.merge_fractions(dissection))
+                                final_components.extend(dissection)
+                            elif gcs_skip_merge_fractions:
+                                final_components.extend(dissection)
+                            else: # Default
+                                final_components.extend(comp_split.merge_fractions(dissection))
 
                         if len(final_components) > 1:
                             was_split = True
@@ -991,6 +1006,11 @@ def main():
         action="store_true", 
         help="Disable the merging of GCS components, outputting the raw, unmerged parts from the dissection."
     )
+    gcs_group.add_argument(
+        "--gcs-combine-fractions", 
+        action="store_true", 
+        help="Combines results from both merged and unmerged GCS dissections."
+    )
 
     args = parser.parse_args()
 
@@ -1024,7 +1044,9 @@ def main():
         print("Error: --gcs-in-wordlist requires --gcs to be enabled.", file=sys.stderr); exit(1)
     if args.gcs_include_compound and not args.gcs:
         print("Error: --gcs-include-compound requires --gcs to be enabled.", file=sys.stderr); exit(1)
-
+    if args.gcs_combine_fractions and args.gcs_skip_merge_fractions:
+        print("Error: --gcs-combine-fractions and --gcs-skip-merge-fractions cannot be used together.", file=sys.stderr); exit(1)
+        
     global nlp
     nlp = spacy.load("de_core_news_lg" if args.language == "de" else "en_core_web_lg")
 
@@ -1097,6 +1119,7 @@ def main():
             'gcs_mask_unknown': args.gcs_mask_unknown,
             'gcs_include_compound': args.gcs_include_compound,
             'gcs_skip_merge_fractions': args.gcs_skip_merge_fractions,
+            'gcs_combine_fractions': args.gcs_combine_fractions,
             'detailed': args.detailed,
             'two_column_output': args.two_column_output,
             'html': args.html

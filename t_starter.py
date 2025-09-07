@@ -47,8 +47,8 @@ def get_token_args(args, python_path, token_workspace):
             gcs_args = [
                 "--gcs",
                 "--gcs-include-compound",
-                # "--gcs-combine-noun-modes",
-                "--gcs-only-nouns-false",
+                "--gcs-combine-noun-modes",
+                # "--gcs-only-nouns-false",
                 "--gcs-in-wordlist",
                 # "--no-make-singular",
                 # "--make-singular",

@@ -412,7 +412,8 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
                 if final_part_lemma:
                     candidate_lemmas.append(final_part_lemma)
 
-        elif gcs and ahocs and gcs_in_wordlist and nlp.lang == 'de' and len(token.text) > 3 and (token.pos_ in gcs_pos_tags):
+        ### ИСПРАВЛЕНИЕ ЗДЕСЬ ###
+        elif gcs and ahocs and gcs_in_wordlist and nlp.lang == 'de' and not token.like_url and len(token.text) > 3 and (token.pos_ in gcs_pos_tags):
             try:
                 word_to_split = token.text
                 if no_make_singular: should_make_singular = False
@@ -438,8 +439,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
                 else:
                     with redirect_stdout(io.StringIO()):
                         dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=gcs_only_nouns, mask_unknown=gcs_mask_unknown)
-                    final_components = comp_split.merge_fractions(dissection)
-
+                    
                     if gcs_skip_merge_fractions:
                         final_components = dissection
                     else:
@@ -567,8 +567,7 @@ def process_text_v1(
                         else:
                             with redirect_stdout(io.StringIO()):
                                 dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=gcs_only_nouns, mask_unknown=gcs_mask_unknown)
-                            final_components = comp_split.merge_fractions(dissection)
-
+                            
                             if gcs_skip_merge_fractions:
                                 final_components = dissection
                             else:
@@ -741,7 +740,6 @@ def process_text_v2(
                         else:
                             with redirect_stdout(io.StringIO()):
                                 dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=gcs_only_nouns, mask_unknown=gcs_mask_unknown)
-                            final_components = comp_split.merge_fractions(dissection)
                             
                             if gcs_skip_merge_fractions:
                                 final_components = dissection

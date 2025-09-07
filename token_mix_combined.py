@@ -396,7 +396,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
         
         was_split = False
         
-        if gcs and '-' in token.text:
+        if gcs and '-' in token.text and not token.like_url:
             was_split = True
             parts = token.text.split('-')
             
@@ -412,7 +412,6 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
                 if final_part_lemma:
                     candidate_lemmas.append(final_part_lemma)
 
-        ### ИСПРАВЛЕНИЕ ЗДЕСЬ ###
         elif gcs and ahocs and gcs_in_wordlist and nlp.lang == 'de' and not token.like_url and len(token.text) > 3 and (token.pos_ in gcs_pos_tags):
             try:
                 word_to_split = token.text
@@ -525,7 +524,7 @@ def process_text_v1(
 
                 was_split = False
                 
-                if gcs and '-' in token.text:
+                if gcs and '-' in token.text and not token.like_url:
                     was_split = True
                     parts = token.text.split('-')
                     
@@ -698,7 +697,7 @@ def process_text_v2(
                 
                 was_split = False
 
-                if gcs and '-' in token.text:
+                if gcs and '-' in token.text and not token.like_url:
                     was_split = True
                     parts = token.text.split('-')
                     

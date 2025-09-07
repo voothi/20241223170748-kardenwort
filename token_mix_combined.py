@@ -541,7 +541,7 @@ def process_text_v1(
                         if final_part_lemma:
                             candidate_lemmas.append(final_part_lemma)
                 
-                elif gcs and ahocs and language == 'de' and len(token.text) > 3 and (token.pos_ in gcs_pos_tags):
+                elif gcs and ahocs and language == 'de' and not token.like_url and len(token.text) > 3 and (token.pos_ in gcs_pos_tags):
                     try:
                         word_to_split = token.text
                         if no_make_singular: should_make_singular = False
@@ -715,7 +715,7 @@ def process_text_v2(
                         if final_part_lemma:
                             candidate_lemmas.append(final_part_lemma)
                 
-                elif gcs and ahocs and language == 'de' and len(token.text) > 3 and (token.pos_ in gcs_pos_tags):
+                elif gcs and ahocs and language == 'de' and not token.like_url and len(token.text) > 3 and (token.pos_ in gcs_pos_tags):
                     try:
                         word_to_split = token.text
                         if no_make_singular: should_make_singular = False

@@ -315,7 +315,7 @@ def generate_autoname_prefix(text, num_words):
     return "-".join(selected_words)
 
 def get_capitalized_lemma(token, spacy_lemma, force_capitalization=False):
-    if token.like_url:
+    if token.like_url or token.like_email:
         return spacy_lemma.lower()
 
     original_text = token.text
@@ -395,8 +395,9 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
         parent_lemma = apply_word_override(default_lemma, original_inflected_form, lemma_overrides, sentence)
         
         was_split = False
-        
-        if gcs and '-' in token.text and not token.like_url:
+        is_protected_token = token.like_url or token.like_email
+
+        if gcs and '-' in token.text and not is_protected_token:
             was_split = True
             parts = token.text.split('-')
             
@@ -412,7 +413,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
                 if final_part_lemma:
                     candidate_lemmas.append(final_part_lemma)
 
-        elif gcs and ahocs and gcs_in_wordlist and nlp.lang == 'de' and not token.like_url and len(token.text) > 3 and (token.pos_ in gcs_pos_tags):
+        elif gcs and ahocs and gcs_in_wordlist and nlp.lang == 'de' and not is_protected_token and len(token.text) > 3 and (token.pos_ in gcs_pos_tags):
             try:
                 word_to_split = token.text
                 if no_make_singular: should_make_singular = False
@@ -523,8 +524,9 @@ def process_text_v1(
                 parent_lemma = apply_word_override(default_lemma, original_inflected_form, lemma_overrides, line1)
 
                 was_split = False
-                
-                if gcs and '-' in token.text and not token.like_url:
+                is_protected_token = token.like_url or token.like_email
+
+                if gcs and '-' in token.text and not is_protected_token:
                     was_split = True
                     parts = token.text.split('-')
                     
@@ -540,7 +542,7 @@ def process_text_v1(
                         if final_part_lemma:
                             candidate_lemmas.append(final_part_lemma)
                 
-                elif gcs and ahocs and language == 'de' and not token.like_url and len(token.text) > 3 and (token.pos_ in gcs_pos_tags):
+                elif gcs and ahocs and language == 'de' and not is_protected_token and len(token.text) > 3 and (token.pos_ in gcs_pos_tags):
                     try:
                         word_to_split = token.text
                         if no_make_singular: should_make_singular = False
@@ -696,8 +698,9 @@ def process_text_v2(
                 parent_lemma = apply_word_override(default_lemma, original_inflected_form, lemma_overrides, unit_text)
                 
                 was_split = False
+                is_protected_token = token.like_url or token.like_email
 
-                if gcs and '-' in token.text and not token.like_url:
+                if gcs and '-' in token.text and not is_protected_token:
                     was_split = True
                     parts = token.text.split('-')
                     
@@ -713,7 +716,7 @@ def process_text_v2(
                         if final_part_lemma:
                             candidate_lemmas.append(final_part_lemma)
                 
-                elif gcs and ahocs and language == 'de' and not token.like_url and len(token.text) > 3 and (token.pos_ in gcs_pos_tags):
+                elif gcs and ahocs and language == 'de' and not is_protected_token and len(token.text) > 3 and (token.pos_ in gcs_pos_tags):
                     try:
                         word_to_split = token.text
                         if no_make_singular: should_make_singular = False

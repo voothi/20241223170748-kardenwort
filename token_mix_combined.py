@@ -402,7 +402,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
         
         was_split = False
         
-        if '-' in token.text:
+        if gcs and '-' in token.text:
             was_split = True
             parts = token.text.split('-')
             
@@ -531,7 +531,7 @@ def process_text_v1(
 
                 was_split = False
                 
-                if '-' in token.text:
+                if gcs and '-' in token.text:
                     was_split = True
                     parts = token.text.split('-')
                     
@@ -705,7 +705,7 @@ def process_text_v2(
                 
                 was_split = False
 
-                if '-' in token.text:
+                if gcs and '-' in token.text:
                     was_split = True
                     parts = token.text.split('-')
                     

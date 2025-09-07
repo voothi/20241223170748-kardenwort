@@ -48,8 +48,10 @@ def get_token_args(args, python_path, token_workspace):
                 "--gcs",
                 "--gcs-include-compound",
                 "--gcs-combine-noun-modes",
+                # "--gcs-only-nouns-false",
                 "--gcs-in-wordlist",
-                "--no-make-singular",
+                # "--no-make-singular",
+                # "--make-singular",
                 "--gcs-skip-merge-fractions",
             ]
 

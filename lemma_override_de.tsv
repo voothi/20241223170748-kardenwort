@@ -71,18 +71,10 @@
 	Würmer	Wurm	
 	Zeichensätze	Zeichensatz	
 	Zugangs	Zugang	
-#Date	Audiodaten	Daten
-#Date	Bilddaten	Daten	
-#Date	Datenbanken	Daten	
-#Date	Datenbankschnittstelle	Daten	
-#Date	Datenfernübertragung	Daten	
-#Date	Datenverarbeitung	Daten	
-#Date	Textdaten	Daten	
 aller		all	
-#atIon		ation	
 Beispiele		Beispiel	
 Betriebs		Betrieb	
-date	regex:(?i)\w*daten\w*	Daten	
+Date	regex:(?i)\w*daten\w*	Daten	
 digitale		digital	
 Eingabegerat		Eingabegeräte	
 ethernet		Ethernet	

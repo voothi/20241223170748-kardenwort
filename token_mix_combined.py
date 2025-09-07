@@ -315,6 +315,12 @@ def generate_autoname_prefix(text, num_words):
     return "-".join(selected_words)
 
 def get_capitalized_lemma(token, spacy_lemma):
+    if token.like_url:
+        return spacy_lemma.lower()
+
+    original_text = token.text
+    is_all_caps = original_text.isupper() and len(original_text) > 1
+
     original_text = token.text
     is_all_caps = original_text.isupper() and len(original_text) > 1
     has_internal_caps = any(c.isupper() for c in original_text[1:])

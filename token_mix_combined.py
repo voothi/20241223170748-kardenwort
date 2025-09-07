@@ -314,12 +314,9 @@ def generate_autoname_prefix(text, num_words):
         return ""
     return "-".join(selected_words)
 
-def get_capitalized_lemma(token, spacy_lemma):
+def get_capitalized_lemma(token, spacy_lemma, force_capitalization=False):
     if token.like_url:
         return spacy_lemma.lower()
-
-    original_text = token.text
-    is_all_caps = original_text.isupper() and len(original_text) > 1
 
     original_text = token.text
     is_all_caps = original_text.isupper() and len(original_text) > 1
@@ -328,9 +325,10 @@ def get_capitalized_lemma(token, spacy_lemma):
     if is_all_caps or has_internal_caps:
         return original_text
     
-    if (nlp.lang == 'de' and token.pos_ in ["NOUN", "PROPN"]) or \
-       (nlp.lang != 'de' and token.pos_ == "PROPN"):
-        return spacy_lemma.capitalize()
+    if force_capitalization:
+        if (nlp.lang == 'de' and token.pos_ in ["NOUN", "PROPN"]) or \
+           (nlp.lang != 'de' and token.pos_ == "PROPN"):
+            return spacy_lemma.capitalize()
 
     if token.is_sent_start and token.pos_ not in ["NOUN", "PROPN"]:
         return spacy_lemma
@@ -338,14 +336,7 @@ def get_capitalized_lemma(token, spacy_lemma):
     return spacy_lemma
 
 def collapse_lemmas_for_token(candidates):
-    """
-    Collapses a list of lemmas based on capitalization, preferring capitalized forms,
-    but DOES NOT prioritize the compound word over its parts.
-    Example: ['ausbildung', 'Ausbildung', 'Erfahrung', 'Ausbildungserfahrung']
-    -> ['Ausbildung', 'Erfahrung', 'Ausbildungserfahrung']
-    """
     lemmas_by_lower = {}
-    # Группируем леммы по их версии в нижнем регистре
     for lemma in candidates:
         if not lemma: continue
         lower_lemma = lemma.lower()
@@ -354,20 +345,17 @@ def collapse_lemmas_for_token(candidates):
         lemmas_by_lower[lower_lemma].add(lemma)
     
     final_lemmas = []
-    # Для каждой группы выбираем предпочтительную (заглавную) форму
     for _, variants in lemmas_by_lower.items():
-        # Ищем вариант, который начинается с заглавной буквы
         preferred_variant = next((v for v in variants if v[0].isupper()), None)
         
-        # Если заглавный вариант найден, используем его. Иначе - используем любой из доступных.
         if preferred_variant:
             final_lemmas.append(preferred_variant)
-        elif variants: # Убедимся, что сет не пустой
+        elif variants:
             final_lemmas.append(list(variants)[0])
             
     return final_lemmas
 
-def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overrides, gcs_pos_tags, **kwargs):
+def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overrides, gcs_pos_tags, args, **kwargs):
     gcs = kwargs.get('gcs', False)
     ahocs = kwargs.get('ahocs', None)
     gcs_in_wordlist = kwargs.get('gcs_in_wordlist', False)
@@ -403,7 +391,7 @@ def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overr
             original_inflected_form = f"{token.text} {particle.text}"
         else:
             spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
-            default_lemma = get_capitalized_lemma(token, spacy_lemma)
+            default_lemma = get_capitalized_lemma(token, spacy_lemma, force_capitalization=args.force_lemma_capitalization)
         parent_lemma = apply_word_override(default_lemma, original_inflected_form, lemma_overrides, sentence)
         
         was_split = False
@@ -488,7 +476,7 @@ def process_text_v1(
     input_text, lemma_index, language, text2, text3, sentence_context_size,
     output_file, two_column_output_to_file, include_simple_list,
     with_fields, with_br, pipe, gcs, ahocs, gcs_in_wordlist, german_dict, lemma_overrides,
-    gcs_pos_tags, **kwargs
+    gcs_pos_tags, args, **kwargs
 ):
     gcs_only_nouns = kwargs.get('gcs_only_nouns', True)
     make_singular = kwargs.get('make_singular', False)
@@ -532,7 +520,7 @@ def process_text_v1(
                     original_inflected_form = f"{token.text} {particle.text}"
                 else:
                     spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
-                    default_lemma = get_capitalized_lemma(token, spacy_lemma)
+                    default_lemma = get_capitalized_lemma(token, spacy_lemma, force_capitalization=args.force_lemma_capitalization)
                 parent_lemma = apply_word_override(default_lemma, original_inflected_form, lemma_overrides, line1)
 
                 was_split = False
@@ -650,7 +638,7 @@ def process_text_v1(
                 row_data[12] = l1_sentence
                 if include_simple_list:
                     all_kwargs = {**kwargs, 'gcs': gcs, 'ahocs': ahocs, 'gcs_in_wordlist': gcs_in_wordlist}
-                    lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, german_dict, lemma_overrides, gcs_pos_tags, **all_kwargs)
+                    lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, german_dict, lemma_overrides, gcs_pos_tags, args, **all_kwargs)
                     row_data[11] = "<br>".join(lemmas) if with_br else "\n".join(lemmas)
                 if language == "de":
                     row_data[58] = "1"; row_data[65] = "1"
@@ -663,7 +651,7 @@ def process_text_v2(
     input_text, lemma_index, language, sentence_context_size,
     output_file, two_column_output_to_file, include_simple_list,
     with_fields, with_br, pipe, gcs, ahocs, gcs_in_wordlist, german_dict, lemma_overrides, 
-    gcs_pos_tags, **kwargs
+    gcs_pos_tags, args, **kwargs
 ):
     gcs_only_nouns = kwargs.get('gcs_only_nouns', True)
     make_singular = kwargs.get('make_singular', False)
@@ -706,7 +694,7 @@ def process_text_v2(
                     original_inflected_form = f"{token.text} {particle.text}"
                 else:
                     spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
-                    default_lemma = get_capitalized_lemma(token, spacy_lemma)
+                    default_lemma = get_capitalized_lemma(token, spacy_lemma, force_capitalization=args.force_lemma_capitalization)
                 parent_lemma = apply_word_override(default_lemma, original_inflected_form, lemma_overrides, unit_text)
                 
                 was_split = False
@@ -847,7 +835,7 @@ def process_text_v2(
             row_data[12] = l1_sentence
             if include_simple_list:
                 all_kwargs = {**kwargs, 'gcs': gcs, 'ahocs': ahocs, 'gcs_in_wordlist': gcs_in_wordlist}
-                lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, german_dict, lemma_overrides, gcs_pos_tags, **all_kwargs)
+                lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, german_dict, lemma_overrides, gcs_pos_tags, args, **all_kwargs)
                 row_data[11] = "<br>".join(lemmas) if with_br else "\n".join(lemmas)
             if language == "de":
                 row_data[58] = "1"; row_data[65] = "1"
@@ -859,7 +847,7 @@ def process_text_v2(
 
 def process_sentences(
     language, lemma_index, text1, text2, text3, sentence_context_size,
-    output_file, include_simple_list, with_fields, with_br, pipe, gcs_pos_tags, **kwargs
+    output_file, include_simple_list, with_fields, with_br, pipe, gcs_pos_tags, args, **kwargs
 ):
     lemma_overrides = kwargs.get('lemma_overrides', {})
     
@@ -894,7 +882,7 @@ def process_sentences(
             row_data[9] = l2_sentence
             row_data[10] = " ".join(line.strip() for line in text2_lines[i + 1:end_idx])
             if include_simple_list:
-                lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, german_dict, lemma_overrides, gcs_pos_tags, **kwargs)
+                lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, german_dict, lemma_overrides, gcs_pos_tags, args, **kwargs)
                 row_data[11] = "<br>".join(lemmas) if with_br else "\n".join(lemmas)
             row_data[12] = l1_sentence
             if text3:
@@ -935,6 +923,12 @@ def main():
     parser.add_argument("--original-form-in-simple-list", action="store_true")
     parser.add_argument("--lemma-override-file", help="Path to a TSV file for context-aware lemma overrides.")
     
+    parser.add_argument(
+        "--force-lemma-capitalization",
+        action="store_true",
+        help="Force capitalization of noun lemmas (NOUN, PROPN). Use if the spaCy model returns lowercase lemmas (e.g., 'haus' instead of 'Haus')."
+    )
+
     gcs_group = parser.add_argument_group('GCS (German Compound Splitting) options')
     gcs_group.add_argument("--gcs", action="store_true", help="Enable German Compound Splitting. Requires --language de.")
     gcs_group.add_argument(
@@ -1115,7 +1109,7 @@ def main():
                 args.two_column_output_to_file, args.include_simple_list,
                 args.with_fields, args.with_br, args.pipe,
                 args.gcs, ahocs, args.gcs_in_wordlist, german_dict, lemma_overrides,
-                args.gcs_pos_tags, **kwargs_for_processing
+                args.gcs_pos_tags, args, **kwargs_for_processing
             )
         else:
              processed_output_file = process_text_v2(
@@ -1123,7 +1117,7 @@ def main():
                 final_output_path, args.two_column_output_to_file, args.include_simple_list,
                 args.with_fields, args.with_br, args.pipe,
                 args.gcs, ahocs, args.gcs_in_wordlist, german_dict, lemma_overrides,
-                args.gcs_pos_tags, **kwargs_for_processing
+                args.gcs_pos_tags, args, **kwargs_for_processing
             )
 
     elif args.type == "sentence":
@@ -1151,7 +1145,7 @@ def main():
             args.language, lemma_index, args.text1, args.text2, args.text3,
             args.sentence_context_size, final_output_path,
             args.include_simple_list, args.with_fields, args.with_br, args.pipe,
-            args.gcs_pos_tags, **kwargs_for_processing
+            args.gcs_pos_tags, args, **kwargs_for_processing
         )
 
     if args.pipe and processed_output_file:

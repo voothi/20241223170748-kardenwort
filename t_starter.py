@@ -43,7 +43,7 @@ def get_word_args(args, python_path, word_workspace):
         ]
         base_args.extend(german_enhancement_args)
 
-        if args.gcs:
+        if args.de_gcs:
             gcs_args = [
                 "--de-gcs",
                 "--de-gcs-preserve-compound-word",
@@ -51,10 +51,10 @@ def get_word_args(args, python_path, word_workspace):
                 "--de-gcs-split-mode", "combined",
                 "--de-gcs-skip-merge-fractions",
             ]
-
-            if args.gcs_pos_tags:
+            
+            if args.de_gcs_pos_tags:
                 gcs_args.append("--de-gcs-pos-tags")
-                gcs_args.extend(args.gcs_pos_tags)
+                gcs_args.extend(args.de_gcs_pos_tags)
             
             base_args.extend(gcs_args)
 
@@ -130,12 +130,12 @@ def main():
         help="Directly pass a text string for 'single' mode processing, bypassing the default text1.txt file.",
     )
     parser.add_argument(
-        "--gcs",
+        "--de-gcs",
         action='store_true',
         help="Enable German Compound Splitting (only effective when --language is 'de').",
     )
     parser.add_argument(
-        "--gcs-pos-tags",
+        "--de-gcs-pos-tags",
         nargs='+',
         default=['NOUN', 'PROPN', 'ADV', 'ADJ'],
         help="Specify which Part-of-Speech tags to apply GCS splitting to (e.g., NOUN PROPN or !VERB).",

@@ -951,7 +951,7 @@ def main():
     de_group.add_argument("--de-force-noun-capitalization", action="store_true", help="[German only] Force capitalization of all noun lemmas (NOUN, PROPN) as per German orthography rules. Overrides --force-proper-noun-capitalization for German.")
     de_group.add_argument("--de-gcs", action="store_true", help="Enable German Compound Splitting (GCS).")
     de_group.add_argument(
-        "--gcs-pos-tags", 
+        "--de-gcs-pos-tags", 
         nargs='+', 
         default=['NOUN', 'PROPN', 'ADV', 'ADJ'],
         help='''Specify which Part-of-Speech tags to apply splitting to.
@@ -962,17 +962,17 @@ def main():
 
   1. INCLUSION MODE (default behavior):
      List the specific tags you want to process.
-     Example: --gcs-pos-tags NOUN PROPN ADJ
+     Example: --de-gcs-pos-tags NOUN PROPN ADJ
 
   2. EXCLUSION MODE:
      Prefix tags with '!' to process all tags except the ones specified.
-     Example: --gcs-pos-tags !VERB !AUX
+     Example: --de-gcs-pos-tags !VERB !AUX
      (This splits everything except verbs and auxiliary verbs)
 
   PRECEDENCE RULE:
      If even one tag is prefixed with '!', the mode switches to exclusion.
      Any tags listed without '!' in the same command will be ignored.
-     For instance, '--gcs-pos-tags NOUN !VERB' is treated as just '!VERB'.
+     For instance, '--de-gcs-pos-tags NOUN !VERB' is treated as just '!VERB'.
 
   SPECIAL KEYWORD:
      ALL - A shortcut to process all available tags.

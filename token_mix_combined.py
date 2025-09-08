@@ -1031,11 +1031,11 @@ def main():
     lemma_override_rules = load_lemma_override_rules(args.lemma_override_file) if args.lemma_override_file else {}
 
     gcs_automaton = None
-    global german_dict
-    german_dict = set()
+    global german_dictionary
+    german_dictionary = set()
     if args.language == 'de':
-        german_dict = load_dictionary(args.gcs_dictionary)
-        if not german_dict:
+        german_dictionary = load_dictionary(args.gcs_dictionary)
+        if not german_dictionary:
              print("Warning: German dictionary for validation is empty or not loaded.", file=sys.stderr)
 
         if args.gcs:
@@ -1108,7 +1108,7 @@ def main():
                 args.sentence_context_size, final_output_path,
                 args.two_column_output_to_file, args.include_simple_list,
                 args.with_fields, args.with_br, args.pipe,
-                args.gcs, gcs_automaton, args.gcs_in_wordlist, german_dict, lemma_override_rules,
+                args.gcs, gcs_automaton, args.gcs_in_wordlist, german_dictionary, lemma_override_rules,
                 args.gcs_pos_tags, args, **processing_options
             )
         else:
@@ -1116,7 +1116,7 @@ def main():
                 input_text, lemma_index, args.language, args.sentence_context_size,
                 final_output_path, args.two_column_output_to_file, args.include_simple_list,
                 args.with_fields, args.with_br, args.pipe,
-                args.gcs, gcs_automaton, args.gcs_in_wordlist, german_dict, lemma_override_rules,
+                args.gcs, gcs_automaton, args.gcs_in_wordlist, german_dictionary, lemma_override_rules,
                 args.gcs_pos_tags, args, **processing_options
             )
 
@@ -1139,7 +1139,7 @@ def main():
             'gcs_mask_unknown': args.gcs_mask_unknown,
             'gcs_include_compound': args.gcs_include_compound,
             'gcs_skip_merge_fractions': args.gcs_skip_merge_fractions,
-            'german_dict': german_dict
+            'german_dictionary': german_dictionary
         }
         processed_output_file = process_parallel_sentences_to_csv(
             args.language, lemma_index, args.text1, args.text2, args.text3,

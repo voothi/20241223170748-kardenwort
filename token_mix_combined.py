@@ -360,8 +360,6 @@ def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, ger
     gcs_automaton = kwargs.get('gcs_automaton', None)
     add_gcs_components_to_wordlist = kwargs.get('add_gcs_components_to_wordlist', False)
     gcs_only_nouns = kwargs.get('gcs_only_nouns', True)
-    make_singular = kwargs.get('make_singular', False)
-    no_make_singular = kwargs.get('no_make_singular', False)
     gcs_combine_noun_modes = kwargs.get('gcs_combine_noun_modes', False)
     gcs_fix_genitive = kwargs.get('gcs_fix_genitive', False)
     gcs_mask_unknown = kwargs.get('gcs_mask_unknown', False)
@@ -416,8 +414,8 @@ def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, ger
         elif gcs and gcs_automaton and add_gcs_components_to_wordlist and nlp.lang == 'de' and not is_special_token and len(token.text) > 3 and (token.pos_ in gcs_pos_tags):
             try:
                 word_to_split = token.text
-                if no_make_singular: make_singular_flag = False
-                elif make_singular: make_singular_flag = True
+                if args.gcs_singularize_parts == 'none': make_singular_flag = False
+                elif args.gcs_singularize_parts == 'all': make_singular_flag = True
                 else: make_singular_flag = (token.pos_ in ['NOUN', 'PROPN'])
 
                 split_components = []
@@ -479,8 +477,6 @@ def process_parallel_text_files(
     gcs_pos_tags, args, **kwargs
 ):
     gcs_only_nouns = kwargs.get('gcs_only_nouns', True)
-    make_singular = kwargs.get('make_singular', False)
-    no_make_singular = kwargs.get('no_make_singular', False)
     gcs_combine_noun_modes = kwargs.get('gcs_combine_noun_modes', False)
     gcs_fix_genitive = kwargs.get('gcs_fix_genitive', False)
     gcs_mask_unknown = kwargs.get('gcs_mask_unknown', False)
@@ -545,8 +541,8 @@ def process_parallel_text_files(
                 elif gcs and gcs_automaton and language == 'de' and not is_special_token and len(token.text) > 3 and (token.pos_ in gcs_pos_tags):
                     try:
                         word_to_split = token.text
-                        if no_make_singular: make_singular_flag = False
-                        elif make_singular: make_singular_flag = True
+                        if args.gcs_singularize_parts == 'none': make_singular_flag = False
+                        elif args.gcs_singularize_parts == 'all': make_singular_flag = True
                         else: make_singular_flag = (token.pos_ in ['NOUN', 'PROPN'])
 
                         split_components = []
@@ -654,8 +650,6 @@ def process_single_text(
     gcs_pos_tags, args, **kwargs
 ):
     gcs_only_nouns = kwargs.get('gcs_only_nouns', True)
-    make_singular = kwargs.get('make_singular', False)
-    no_make_singular = kwargs.get('no_make_singular', False)
     gcs_combine_noun_modes = kwargs.get('gcs_combine_noun_modes', False)
     gcs_fix_genitive = kwargs.get('gcs_fix_genitive', False)
     gcs_mask_unknown = kwargs.get('gcs_mask_unknown', False)
@@ -719,8 +713,8 @@ def process_single_text(
                 elif gcs and gcs_automaton and language == 'de' and not is_special_token and len(token.text) > 3 and (token.pos_ in gcs_pos_tags):
                     try:
                         word_to_split = token.text
-                        if no_make_singular: make_singular_flag = False
-                        elif make_singular: make_singular_flag = True
+                        if args.gcs_singularize_parts == 'none': make_singular_flag = False
+                        elif args.gcs_singularize_parts == 'all': make_singular_flag = True
                         else: make_singular_flag = (token.pos_ in ['NOUN', 'PROPN'])
                             
                         split_components = []
@@ -785,18 +779,15 @@ def process_single_text(
         return u if is_processing_by_line else u.text
 
     if not output_file_path:
-        detailed = kwargs.get('detailed', False)
-        two_column_output = kwargs.get('two_column_output', False)
-        html = kwargs.get('html', False)
-        if html:
+        if args.console_format == 'html':
             print("<table>")
             for token in sorted_tokens:
                 print(f"<tr><td>{token}</td><td>{lemma_to_shortest_form.get(token, '')}</td></tr>")
             print("</table>")
-        elif two_column_output:
+        elif args.console_format == 'columns':
             for token in sorted_tokens:
                 print(f"{token}\t{lemma_to_shortest_form.get(token, '')}")
-        elif detailed:
+        elif args.console_format == 'detailed':
              for token in sorted_tokens:
                 unit_index, source_sentence_unit = lemma_to_sentence_info[token]
                 source_sentence = get_unit_text(source_sentence_unit)
@@ -809,7 +800,7 @@ def process_single_text(
                 print(source_sentence.strip())
                 if source_context_right: print(source_context_right)
                 print()
-        else:
+        else: # lemmas-only
             for token in sorted_tokens:
                 print(token)
         return None
@@ -928,9 +919,8 @@ def main():
     
     # --- Console Output Arguments ---
     console_group = parser.add_argument_group('Console Output Arguments (used only if --output is not specified)')
-    console_group.add_argument("--detailed", action="store_true", help="[STDOUT] Print lemmas with their full sentence context to the console.")
-    console_group.add_argument("--two-column-output", action="store_true", help="[STDOUT] Print a simple two-column list (lemma, source word) to the console.")
-    console_group.add_argument("--html", action="store_true", help="[STDOUT] Print the two-column list as an HTML table to the console.")
+    console_group.add_argument("--console-format", choices=['lemmas-only', 'detailed', 'columns', 'html'], default='lemmas-only', 
+                               help="[STDOUT] Select the output format for the console. 'lemmas-only' (default): a simple list of lemmas. 'detailed': lemmas with full sentence context. 'columns': two-column list (lemma, source word). 'html': the two-column list as an HTML table.")
     
     # --- Lemmatization Arguments ---
     lemma_group = parser.add_argument_group('Lemmatization Control Arguments')
@@ -981,8 +971,8 @@ def main():
     gcs_group.add_argument("--gcs-combine-noun-modes", action="store_true", help="Run GCS in two modes (nouns-only and any-POS) and combine the unique components from both.")
     gcs_group.add_argument("--gcs-fix-genitive", action="store_true", help="Corrects German genitive noun lemmas (e.g., 'Hauses' -> 'Haus') by checking against the dictionary.")
     gcs_group.add_argument("--gcs-mask-unknown", action="store_true", help="During GCS splitting, mask word parts not found in the dictionary as 'unknown'.")
-    gcs_group.add_argument("--make-singular", action="store_true", help="Force making compound parts singular during GCS splitting, regardless of the word's part of speech. Default is to only do this for nouns.")
-    gcs_group.add_argument("--no-make-singular", action="store_true", help="Prevent making compound parts singular during GCS splitting, keeping their original form. Overrides default behavior and --make-singular.")
+    gcs_group.add_argument("--gcs-singularize-parts", choices=['auto', 'all', 'none'], default='auto',
+                               help="Controls how compound parts are made singular. 'auto' (default): only for nouns. 'all': for all parts. 'none': disable singularization.")
     gcs_group.add_argument(
         "--gcs-skip-merge-fractions", 
         action="store_true", 
@@ -1011,8 +1001,6 @@ def main():
     if args.gcs and args.language != 'de':
         print("Warning: GCS is designed for German language (--language de). The --gcs flag will be ignored.", file=sys.stderr)
         args.gcs = False
-    if args.make_singular and args.no_make_singular:
-        print("Error: --make-singular and --no-make-singular cannot be used together.", file=sys.stderr); exit(1)
     if args.gcs_combine_noun_modes and args.gcs_allow_any_pos:
         print("Error: --gcs-combine-noun-modes and --gcs-allow-any-pos cannot be used together.", file=sys.stderr); exit(1)
     if args.add_gcs_components_to_wordlist and not args.gcs:
@@ -1085,16 +1073,11 @@ def main():
 
         processing_options = {
             'gcs_only_nouns': use_gcs_only_on_nouns,
-            'make_singular': args.make_singular,
-            'no_make_singular': args.no_make_singular,
             'gcs_combine_noun_modes': args.gcs_combine_noun_modes,
             'gcs_fix_genitive': args.gcs_fix_genitive,
             'gcs_mask_unknown': args.gcs_mask_unknown,
             'gcs_include_compound': args.gcs_include_compound,
             'gcs_skip_merge_fractions': args.gcs_skip_merge_fractions,
-            'detailed': args.detailed,
-            'two_column_output': args.two_column_output,
-            'html': args.html
         }
 
         if args.text2:
@@ -1116,7 +1099,7 @@ def main():
             )
 
     elif args.type == "sentence":
-        if any([args.gcs, args.gcs_combine_noun_modes, args.gcs_allow_any_pos, args.make_singular, args.no_make_singular, args.gcs_fix_genitive, args.gcs_mask_unknown]):
+        if any([args.gcs, args.gcs_combine_noun_modes, args.gcs_allow_any_pos, args.gcs_fix_genitive, args.gcs_mask_unknown]):
             print("Warning: GCS-related flags are only applicable for --type token and will be ignored.", file=sys.stderr)
         if not args.text1 or not args.text2:
             print("Error: --text1 and --text2 must be specified for sentence mode.", file=sys.stderr); exit(1)
@@ -1127,8 +1110,6 @@ def main():
             'gcs_automaton': gcs_automaton,
             'add_gcs_components_to_wordlist': args.add_gcs_components_to_wordlist,
             'gcs_only_nouns': not args.gcs_allow_any_pos,
-            'make_singular': args.make_singular,
-            'no_make_singular': args.no_make_singular,
             'gcs_combine_noun_modes': args.gcs_combine_noun_modes,
             'gcs_fix_genitive': args.gcs_fix_genitive,
             'gcs_mask_unknown': args.gcs_mask_unknown,

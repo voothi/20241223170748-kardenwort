@@ -314,7 +314,7 @@ def generate_filename_prefix_from_text(text, word_count):
         return ""
     return "-".join(prefix_words)
 
-def format_lemma_capitalization(token, initial_lemma, force_capitalization=False):
+def format_lemma_capitalization(token, initial_lemma, args):
     if token.like_url or token.like_email:
         return initial_lemma.lower()
 
@@ -325,9 +325,12 @@ def format_lemma_capitalization(token, initial_lemma, force_capitalization=False
     if is_all_caps or has_internal_caps:
         return source_token_text
     
-    if force_capitalization:
-        if (nlp.lang == 'de' and token.pos_ in ["NOUN", "PROPN"]) or \
-           (nlp.lang != 'de' and token.pos_ == "PROPN"):
+    if args.de_force_noun_capitalization and nlp.lang == 'de':
+        if token.pos_ in ["NOUN", "PROPN"]:
+            return initial_lemma.capitalize()
+    
+    if args.force_proper_noun_capitalization:
+        if token.pos_ == "PROPN":
             return initial_lemma.capitalize()
 
     if token.is_sent_start and token.pos_ not in ["NOUN", "PROPN"]:
@@ -389,7 +392,7 @@ def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, de_
             source_word_form = f"{token.text} {particle.text}"
         else:
             spacy_lemma = correct_spacy_lemma(token, de_dictionary, de_fix_genitive)
-            default_lemma = format_lemma_capitalization(token, spacy_lemma, force_capitalization=args.force_lemma_capitalization)
+            default_lemma = format_lemma_capitalization(token, spacy_lemma, args)
         base_lemma = get_overridden_lemma_for_word(default_lemma, source_word_form, lemma_override_rules, sentence_text)
         
         was_split = False
@@ -418,7 +421,7 @@ def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, de_
                     make_singular_flag = False
                 elif args.de_gcs_part_singularization == 'all':
                     make_singular_flag = True
-                else: # 'only-nouns'
+                else: 
                     make_singular_flag = (token.pos_ in ['NOUN', 'PROPN'])
 
                 split_components = []
@@ -519,7 +522,7 @@ def process_parallel_text_files(
                     source_word_form = f"{token.text} {particle.text}"
                 else:
                     spacy_lemma = correct_spacy_lemma(token, de_dictionary, de_fix_genitive)
-                    default_lemma = format_lemma_capitalization(token, spacy_lemma, force_capitalization=args.force_lemma_capitalization)
+                    default_lemma = format_lemma_capitalization(token, spacy_lemma, args)
                 base_lemma = get_overridden_lemma_for_word(default_lemma, source_word_form, lemma_override_rules, source_sentence)
 
                 was_split = False
@@ -548,7 +551,7 @@ def process_parallel_text_files(
                             make_singular_flag = False
                         elif args.de_gcs_part_singularization == 'all':
                             make_singular_flag = True
-                        else: # 'only-nouns'
+                        else:
                             make_singular_flag = (token.pos_ in ['NOUN', 'PROPN'])
 
                         split_components = []
@@ -694,7 +697,7 @@ def process_single_text(
                     source_word_form = f"{token.text} {particle.text}"
                 else:
                     spacy_lemma = correct_spacy_lemma(token, de_dictionary, de_fix_genitive)
-                    default_lemma = format_lemma_capitalization(token, spacy_lemma, force_capitalization=args.force_lemma_capitalization)
+                    default_lemma = format_lemma_capitalization(token, spacy_lemma, args)
                 base_lemma = get_overridden_lemma_for_word(default_lemma, source_word_form, lemma_override_rules, unit_text)
                 
                 was_split = False
@@ -723,7 +726,7 @@ def process_single_text(
                             make_singular_flag = False
                         elif args.de_gcs_part_singularization == 'all':
                             make_singular_flag = True
-                        else: # 'only-nouns'
+                        else:
                             make_singular_flag = (token.pos_ in ['NOUN', 'PROPN'])
                             
                         split_components = []
@@ -809,7 +812,7 @@ def process_single_text(
                 print(source_sentence.strip(), file=sys.stdout)
                 if source_context_right: print(source_context_right, file=sys.stdout)
                 print(file=sys.stdout)
-        else: # lemmas-only
+        else: 
             for token in sorted_tokens:
                 print(token, file=sys.stdout)
         return None
@@ -903,7 +906,7 @@ def main():
         description="Extract and process tokens or sentences from text.",
         formatter_class=argparse.RawTextHelpFormatter
     )
-    # --- I/O Arguments ---
+    
     io_group = parser.add_argument_group('Input/Output Arguments')
     io_group.add_argument("--type", required=True, choices=["token", "sentence"], help="Specify the processing type: 'token' for word extraction, 'sentence' for parallel sentence processing.")
     io_group.add_argument("--language", default="de", choices=["de", "en"], help="The language of the text to be processed.")
@@ -915,7 +918,6 @@ def main():
     io_group.add_argument("--output", help="Path to the output file. If not provided, results are printed to standard output.")
     io_group.add_argument("--lemma-override-file", help="Path to a TSV file that defines rules for correcting specific lemma results.")
     
-    # --- Filename & Output Format Arguments ---
     format_group = parser.add_argument_group('Filename and Output Format Arguments')
     format_group.add_argument("--sentence-context-size", type=int, default=1, help="The number of sentences to include before and after the source sentence as context.")
     format_group.add_argument("--timestamp", action="store_true", help="Prepend the output filename with a 'YYYYMMDDHHMMSS' timestamp.")
@@ -926,23 +928,25 @@ def main():
     format_group.add_argument("--use-br-for-wordlist", action="store_true", help="Use HTML <br> tags instead of newlines as separators in the sentence wordlist. Requires --add-sentence-wordlist.")
     format_group.add_argument("--print-output-filename", action="store_true", help="Print the basename of the generated output file to stdout. Useful for scripting.")
     
-    # --- Console Output Arguments ---
     console_group = parser.add_argument_group('Console Output Arguments (used only if --output is not specified)')
     console_group.add_argument("--console-format", choices=['lemmas-only', 'detailed', 'columns', 'html'], default='lemmas-only', 
                                help="[STDOUT] Select the output format for the console. 'lemmas-only' (default): a simple list of lemmas. 'detailed': lemmas with full sentence context. 'columns': two-column list (lemma, source word). 'html': the two-column list as an HTML table.")
     
-    # --- Lemmatization Arguments ---
     lemma_group = parser.add_argument_group('Lemmatization Control Arguments')
     lemma_group.add_argument(
-        "--force-lemma-capitalization",
+        "--force-proper-noun-capitalization",
         action="store_true",
-        help="Force capitalization of noun lemmas (NOUN, PROPN). Use if the spaCy model returns lowercase lemmas (e.g., 'haus' instead of 'Haus')."
+        help="Force capitalization of proper noun lemmas (PROPN). Useful for any language if a model returns lowercase proper nouns."
     )
 
-    # --- German Language Specific Arguments ---
     de_group = parser.add_argument_group('German Language Specific Arguments')
     de_group.add_argument("--de-dictionary", default="german.dic", help="Path to the dictionary file for German-specific operations.")
     de_group.add_argument("--de-fix-genitive", action="store_true", help="Corrects German genitive noun lemmas (e.g., 'Hauses' -> 'Haus') by checking against the dictionary.")
+    de_group.add_argument(
+        "--de-force-noun-capitalization",
+        action="store_true",
+        help="[German only] Force capitalization of all noun lemmas (NOUN, PROPN) as per German orthography rules. Overrides --force-proper-noun-capitalization for German."
+    )
     de_group.add_argument("--de-gcs", action="store_true", help="Enable German Compound Splitting (GCS).")
     de_group.add_argument(
         "--de-gcs-pos-tags", 

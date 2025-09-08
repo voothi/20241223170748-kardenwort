@@ -3,7 +3,7 @@ from pathlib import Path
 import argparse
 
 def get_token_args(args, python_path, token_workspace):
-    """Configures arguments for token extraction based on input parameters."""
+    """Builds the list of command-line arguments for calling token_mix_combined.py."""
     if args.language == "en":
         lemma_file = "en-news-2023-1m-words.csv"
         override_file = "U:\\voothi\\20241223170748-token-extraction\\lemma_override_en.tsv"
@@ -25,14 +25,14 @@ def get_token_args(args, python_path, token_workspace):
         "--sentence-context-size",
         "2",
         "--timestamp",
-        "--two-column-output-to-file",
-        "--include-simple-list",
-        "--with-fields",
-        "--with-br",
+        "--include-source-word",
+        "--add-sentence-wordlist",
+        "--add-anki-header",
+        "--use-br-for-wordlist",
         "--autoname",
         "--lemma-override-file",
         override_file,
-        "--pipe",
+        "--print-output-filename",
     ]
 
     if args.language == "de":
@@ -48,10 +48,7 @@ def get_token_args(args, python_path, token_workspace):
                 "--gcs",
                 "--gcs-include-compound",
                 "--gcs-combine-noun-modes",
-                # "--gcs-only-nouns-false",
-                "--gcs-in-wordlist",
-                # "--no-make-singular",
-                # "--make-singular",
+                "--add-gcs-components-to-wordlist",
                 "--gcs-skip-merge-fractions",
             ]
 
@@ -104,44 +101,44 @@ def get_token_args(args, python_path, token_workspace):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Extract and process tokens or sentences from text."
+        description="A wrapper script to extract and process tokens or sentences from text files and import them."
     )
     parser.add_argument(
         "--type",
         type=str,
         required=True,
         choices=["token", "sentence"],
-        help="Type of processing: token or sentence",
+        help="Type of processing: 'token' for word extraction, 'sentence' for parallel sentences.",
     )
     parser.add_argument(
         "--mode",
         type=str,
         required=True,
         choices=["single", "dual", "triple"],
-        help="Processing mode: single (text1), dual (text1 + text2), or triple (text1 + text2 + text3)",
+        help="Processing mode: single (text1), dual (text1 + text2), or triple (text1 + text2 + text3).",
     )
     parser.add_argument(
         "--language",
         type=str,
         required=True,
         choices=["de", "en"],
-        help="Language for processing: German (de) or English (en)",
+        help="Language for processing: German (de) or English (en).",
     )
     parser.add_argument(
         "--text",
         type=str,
-        help="Directly pass a text string for 'single' mode processing, bypassing the text1.txt file."
+        help="Directly pass a text string for 'single' mode processing, bypassing the default text1.txt file.",
     )
     parser.add_argument(
         "--gcs",
         action='store_true',
-        help="Enable German Compound Splitting (only for '--language de')."
+        help="Enable German Compound Splitting (only effective when --language is 'de').",
     )
     parser.add_argument(
         "--gcs-pos-tags",
         nargs='+',
         default=['NOUN', 'PROPN', 'ADV', 'ADJ'],
-        help="Specify which Part-of-Speech tags to apply GCS splitting to (e.g., NOUN PROPN or !VERB)."
+        help="Specify which Part-of-Speech tags to apply GCS splitting to (e.g., NOUN PROPN or !VERB).",
     )
     args = parser.parse_args()
 

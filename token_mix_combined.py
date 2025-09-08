@@ -14,6 +14,10 @@ try:
 except ImportError:
     GCS_AVAILABLE = False
 
+# ==============================================================================
+#  Resource Loading & Helper Functions
+# ==============================================================================
+
 def _smooth_gcs_case(lemma):
     if not lemma or len(lemma) < 2:
         return lemma
@@ -32,228 +36,50 @@ def load_dictionary_to_set(file_path):
     return dictionary
 
 def load_lemma_overrides(file_path):
-    overrides = {
-        'priority1': {},
-        'priority1_regex': [],
-        'priority2': {},
-        'priority2_regex': [],
-        'priority3': {}
-    }
+    overrides = {'priority1': {}, 'priority1_regex': [], 'priority2': {}, 'priority2_regex': [], 'priority3': {}}
+    if not file_path: return overrides
     try:
         with open(file_path, "r", encoding="utf-8") as f:
             reader = csv.reader(f, delimiter="\t")
             for i, row in enumerate(reader):
-                if not row or row[0].startswith('#'):
-                    continue
+                if not row or row[0].startswith('#'): continue
+                if len(row) < 3: continue
 
-                if len(row) < 3:
-                    print(f"Warning: Skipping malformed line {i+1} in {file_path}: expected at least 3 columns.", file=sys.stderr)
-                    continue
-                
-                match_spacy_lemma = row[0].strip()
-                raw_match_source_word = row[1]
-                result_override_lemma = row[2].strip()
+                match_spacy_lemma, raw_match_source_word, result_override_lemma = row[0].strip(), row[1], row[2].strip()
+                raw_context = row[3] if len(row) > 3 and row[3] else None
 
-                context = None
-                if len(row) > 3 and row[3]:
-                    raw_context = row[3]
-                    if raw_context.startswith('regex:'):
-                        context = raw_context
-                    else:
-                        context = raw_context.strip()
+                if not result_override_lemma or (not match_spacy_lemma and not raw_match_source_word.strip()): continue
 
-                if not result_override_lemma or (not match_spacy_lemma and not raw_match_source_word.strip()):
-                    print(f"Warning: Skipping invalid rule on line {i+1} in {file_path}: Override_Lemma (col 3) and at least one of Match_Spacy_Lemma (col 1) or Match_Source_Word (col 2) must be set.", file=sys.stderr)
-                    continue
-
+                context = raw_context.strip() if raw_context and not raw_context.startswith('regex:') else raw_context
                 rule = (result_override_lemma, context)
-
                 is_regex_word = raw_match_source_word.startswith('regex:')
                 match_source_word = raw_match_source_word.strip()
 
                 if match_spacy_lemma and match_source_word:
-                    if is_regex_word:
-                        pattern = raw_match_source_word[6:]
-                        overrides['priority1_regex'].append((match_spacy_lemma, pattern, rule))
+                    if is_regex_word: overrides['priority1_regex'].append((match_spacy_lemma, raw_match_source_word[6:], rule))
                     else:
                         key = (match_spacy_lemma, match_source_word)
-                        if key not in overrides['priority1']:
-                            overrides['priority1'][key] = []
+                        if key not in overrides['priority1']: overrides['priority1'][key] = []
                         overrides['priority1'][key].append(rule)
-                
                 elif match_source_word:
-                    if is_regex_word:
-                        pattern = raw_match_source_word[6:]
-                        overrides['priority2_regex'].append((pattern, rule))
+                    if is_regex_word: overrides['priority2_regex'].append((raw_match_source_word[6:], rule))
                     else:
                         key = match_source_word
-                        if key not in overrides['priority2']:
-                            overrides['priority2'][key] = []
+                        if key not in overrides['priority2']: overrides['priority2'][key] = []
                         overrides['priority2'][key].append(rule)
-                
                 elif match_spacy_lemma:
                     key = match_spacy_lemma
-                    if key not in overrides['priority3']:
-                        overrides['priority3'][key] = []
+                    if key not in overrides['priority3']: overrides['priority3'][key] = []
                     overrides['priority3'][key].append(rule)
-
     except FileNotFoundError:
         print(f"Lemma override file not found: {file_path}", file=sys.stderr)
     except Exception as e:
         print(f"Error reading lemma override file {file_path}: {e}", file=sys.stderr)
     return overrides
 
-def _find_matching_rule(rules, context_sentence):
-    if not rules:
-        return None
-    context_rules = [r for r in rules if r[1]]
-    global_rule = next((r for r in rules if not r[1]), None)
-    
-    for target_lemma, context in context_rules:
-        if context:
-            if context.startswith('regex:'):
-                pattern = context[6:]
-                try:
-                    if re.search(pattern, context_sentence):
-                        return target_lemma
-                except re.error as e:
-                    print(f"Warning: Invalid regex in override rule: '{pattern}'. Error: {e}", file=sys.stderr)
-            else:
-                if context in context_sentence:
-                    return target_lemma
-            
-    if global_rule:
-        return global_rule[0]
-        
-    return None
-
-def apply_word_override(default_lemma, source_word, overrides, context_sentence):
-    rules1 = overrides.get('priority1', {}).get((default_lemma, source_word))
-    match1 = _find_matching_rule(rules1, context_sentence)
-    if match1 is not None:
-        return match1
-
-    for res_lemma_rule, pattern, rule in overrides.get('priority1_regex', []):
-        if res_lemma_rule == default_lemma:
-            try:
-                if re.fullmatch(pattern, source_word):
-                    match_regex1 = _find_matching_rule([rule], context_sentence)
-                    if match_regex1 is not None:
-                        return match_regex1
-            except re.error as e:
-                print(f"Warning: Invalid regex original word pattern: '{pattern}'. Error: {e}", file=sys.stderr)
-
-    rules2 = overrides.get('priority2', {}).get(source_word)
-    match2 = _find_matching_rule(rules2, context_sentence)
-    if match2 is not None:
-        return match2
-
-    for pattern, rule in overrides.get('priority2_regex', []):
-        try:
-            if re.fullmatch(pattern, source_word):
-                match_regex2 = _find_matching_rule([rule], context_sentence)
-                if match_regex2 is not None:
-                    return match_regex2
-        except re.error as e:
-            print(f"Warning: Invalid regex original word pattern: '{pattern}'. Error: {e}", file=sys.stderr)
-
-    rules3 = overrides.get('priority3', {}).get(default_lemma)
-    match3 = _find_matching_rule(rules3, context_sentence)
-    if match3 is not None:
-        return match3
-            
-    return default_lemma
-
-def apply_part_override(default_lemma, part, source_word, overrides, context_sentence):
-    rules1 = overrides.get('priority1', {}).get((default_lemma, source_word))
-    match1 = _find_matching_rule(rules1, context_sentence)
-    if match1 is not None:
-        return match1
-
-    for res_lemma_rule, pattern, rule in overrides.get('priority1_regex', []):
-        if res_lemma_rule == default_lemma:
-            try:
-                if re.fullmatch(pattern, source_word):
-                    match_regex1 = _find_matching_rule([rule], context_sentence)
-                    if match_regex1 is not None:
-                        return match_regex1
-            except re.error as e:
-                print(f"Warning: Invalid regex original word pattern: '{pattern}'. Error: {e}", file=sys.stderr)
-
-    rules2 = overrides.get('priority2', {}).get(part)
-    match2 = _find_matching_rule(rules2, context_sentence)
-    if match2 is not None:
-        return match2
-
-    for pattern, rule in overrides.get('priority2_regex', []):
-        try:
-            if re.fullmatch(pattern, part):
-                match_regex2 = _find_matching_rule([rule], context_sentence)
-                if match_regex2 is not None:
-                    return match_regex2
-        except re.error as e:
-            print(f"Warning: Invalid regex original word pattern: '{pattern}'. Error: {e}", file=sys.stderr)
-
-    rules3 = overrides.get('priority3', {}).get(default_lemma)
-    match3 = _find_matching_rule(rules3, context_sentence)
-    if match3 is not None:
-        return match3
-            
-    return default_lemma
-
-def get_lemma_for_compound_part(part, nlp, german_dict):
-    if not part:
-        return ""
-
-    is_all_caps = part.isupper() and len(part) > 1
-    has_internal_caps = any(c.isupper() for c in part[1:])
-
-    if is_all_caps or has_internal_caps:
-        return part
-
-    part_doc = nlp(part)
-    if not part_doc or len(part_doc) == 0:
-        return ""
-
-    token = part_doc[0]
-    
-    if token.pos_ not in ["NOUN", "PROPN"]:
-        return token.lemma_
-    
-    spacy_lemma = token.lemma_.capitalize()
-    original_part_capitalized = part.capitalize()
-
-    if spacy_lemma in german_dict:
-        return spacy_lemma
-
-    if original_part_capitalized in german_dict:
-        return original_part_capitalized
-
-    return spacy_lemma
-
-def get_corrected_lemma(token, german_dict, fix_genitive_flag=False):
-    spacy_lemma = token.lemma_
-    if (fix_genitive_flag and
-        nlp.lang == 'de' and
-        token.pos_ in ["NOUN", "PROPN"] and
-        'Gen' in token.morph.get("Case", [])):
-
-        if spacy_lemma.endswith('s') and len(spacy_lemma) > 1:
-            candidate_lemma = spacy_lemma[:-1]
-            if candidate_lemma.capitalize() in german_dict:
-                return candidate_lemma
-
-    return spacy_lemma
-
-def find_verb_particle_pairs(doc):
-    pairs = {}
-    for token in doc:
-        if token.dep_ == "svp":
-            pairs[token.head.i] = token
-    return pairs
-
 def load_lemma_index(file_path):
     lemma_index = {}
+    if not file_path: return lemma_index
     try:
         with open(file_path, "r", newline="", encoding="utf-8") as csvfile:
             csv_reader = csv.reader(csvfile)
@@ -262,645 +88,402 @@ def load_lemma_index(file_path):
                     lemma_index[row[0]] = line_number
     except FileNotFoundError:
         print(f"File not found: {file_path}", file=sys.stderr)
-        return {}
     except Exception as e:
         print(f"Error reading file {file_path}: {e}", file=sys.stderr)
-        return {}
     return lemma_index
 
-def read_input_text(input_file):
-    try:
-        with open(input_file, "r", encoding="utf-8") as file:
-            return file.read()
-    except FileNotFoundError:
-        print(f"File not found: {input_file}", file=sys.stderr); exit(1)
-    except Exception as e:
-        print(f"Error reading file {input_file}: {e}", file=sys.stderr); exit(1)
+def find_verb_particle_pairs(doc):
+    pairs = {}
+    for token in doc:
+        if token.dep_ == "svp":
+            pairs[token.head.i] = token
+    return pairs
 
 def get_full_header():
-    return [
-        "Quotation", "WordSource", "WordSourceInflectedForm", "WordDestination", "WordSourceContext",
-        "SentenceSourceContextLeft", "SentenceSource", "SentenceSourceContextRight",
-        "SentenceDestinationContextLeft", "SentenceDestination", "SentenceDestinationContextRight",
-        "SentenceSourceWordlist", "SentenceSourceCloze", "SentenceSourceRewriteAISentenceSource",
-        "SentenceSourceRewriteAISentenceDestination", "WordSourceMorphologyAI", "Note", "WordRussian",
-        "WordUkrainian", "WordEnglish", "WordGerman", "WordSourceMorphemeFirst",
-        "WordSourceMorphemeFirstDefinition", "WordSourceMorphemeSecond", "WordSourceMorphemeSecondDefinition",
-        "WordSourceMorphemeThird", "WordSourceMorphemeThirdDefinition", "WordSourceMorphemeFourth",
-        "WordSourceMorphemeFourthDefinition", "WordSourceMorphemeFifth", "WordSourceMorphemeFifthDefinition",
-        "WordSourceIPA", "WordSourceSynonymAI", "WordSourceDefinitionAISentenceSource",
-        "WordSourceDefinitionAISentenceDestination", "WordSourceDefinitionFirst",
-        "WordSourceDefinitionFirstClipping", "WordSourceDefinitionSecond", "WordDestinationDefinitionFirst",
-        "WordDestinationDefinitionSecond", "WordSourceAudio", "SentenceSourceIPA", "SentenceSourceAudio",
-        "Image", "WordSourceCloze", "WordSourceContextAI", "TextSource", "TextDestination",
-        "TextSourceURL", "SentenceEnglish", "SentenceGerman", "SentenceUkrainian", "SentenceRussian",
-        "Source", "SourceURL", "SeparatorAudio", "Source-en-GB", "Source-en-US", "Source-de-DE",
-        "Source-uk-UA", "Source-ru-RU", "Destination-en-GB", "Destination-en-US",
-        "Destination-de-DE", "Destination-uk-UA", "Destination-ru-RU", "Overlapping",
-        "ToggleAlwaysEmptyField", "Note ID", "am-all-morphs", "am-all-morphs-count",
-        "am-unknown-morphs", "am-unknown-morphs-count", "am-highlighted", "am-score",
-        "am-score-terms", "am-study-morphs", "SentenceDestination2ContextLeft",
-        "SentenceDestination2", "SentenceDestination2ContextRight"
-    ]
+    return ["Quotation", "WordSource", "WordSourceInflectedForm", "WordDestination", "WordSourceContext", "SentenceSourceContextLeft", "SentenceSource", "SentenceSourceContextRight", "SentenceDestinationContextLeft", "SentenceDestination", "SentenceDestinationContextRight", "SentenceSourceWordlist", "SentenceSourceCloze", "SentenceSourceRewriteAISentenceSource", "SentenceSourceRewriteAISentenceDestination", "WordSourceMorphologyAI", "Note", "WordRussian", "WordUkrainian", "WordEnglish", "WordGerman", "WordSourceMorphemeFirst", "WordSourceMorphemeFirstDefinition", "WordSourceMorphemeSecond", "WordSourceMorphemeSecondDefinition", "WordSourceMorphemeThird", "WordSourceMorphemeThirdDefinition", "WordSourceMorphemeFourth", "WordSourceMorphemeFourthDefinition", "WordSourceMorphemeFifth", "WordSourceMorphemeFifthDefinition", "WordSourceIPA", "WordSourceSynonymAI", "WordSourceDefinitionAISentenceSource", "WordSourceDefinitionAISentenceDestination", "WordSourceDefinitionFirst", "WordSourceDefinitionFirstClipping", "WordSourceDefinitionSecond", "WordDestinationDefinitionFirst", "WordDestinationDefinitionSecond", "WordSourceAudio", "SentenceSourceIPA", "SentenceSourceAudio", "Image", "WordSourceCloze", "WordSourceContextAI", "TextSource", "TextDestination", "TextSourceURL", "SentenceEnglish", "SentenceGerman", "SentenceUkrainian", "SentenceRussian", "Source", "SourceURL", "SeparatorAudio", "Source-en-GB", "Source-en-US", "Source-de-DE", "Source-uk-UA", "Source-ru-RU", "Destination-en-GB", "Destination-en-US", "Destination-de-DE", "Destination-uk-UA", "Destination-ru-RU", "Overlapping", "ToggleAlwaysEmptyField", "Note ID", "am-all-morphs", "am-all-morphs-count", "am-unknown-morphs", "am-unknown-morphs-count", "am-highlighted", "am-score", "am-score-terms", "am-study-morphs", "SentenceDestination2ContextLeft", "SentenceDestination2", "SentenceDestination2ContextRight"]
 
-def generate_autoname_prefix(text, num_words):
-    if not text:
-        return ""
-    processed_text = text.lower()
-    processed_text = processed_text.replace('ä', 'ae').replace('ö', 'oe').replace('ü', 'ue').replace('ß', 'ss')
-    words = re.findall(r'[a-z0-9]+', processed_text)
-    selected_words = words[:num_words]
-    if not selected_words:
-        return ""
-    return "-".join(selected_words)
+# ==============================================================================
+#  Core Token Processing Class
+# ==============================================================================
 
-def get_capitalized_lemma(token, spacy_lemma, force_capitalization=False):
-    if token.like_url or token.like_email:
-        return spacy_lemma.lower()
+class TokenProcessor:
+    def __init__(self, args):
+        self.args = args
+        self.nlp = spacy.load("de_core_news_lg" if args.language == "de" else "en_core_web_lg")
+        self.german_dict = set()
+        self.ahocs = None
 
-    original_text = token.text
-    is_all_caps = original_text.isupper() and len(original_text) > 1
-    has_internal_caps = any(c.isupper() for c in original_text[1:])
+        if args.language == 'de':
+            self.german_dict = load_dictionary_to_set(args.gcs_dictionary)
+            if not self.german_dict:
+                 print("Warning: German dictionary for validation is empty or not loaded.", file=sys.stderr)
 
-    if is_all_caps or has_internal_caps:
-        return original_text
-    
-    if force_capitalization:
-        if (nlp.lang == 'de' and token.pos_ in ["NOUN", "PROPN"]) or \
-           (nlp.lang != 'de' and token.pos_ == "PROPN"):
-            return spacy_lemma.capitalize()
+            if args.gcs:
+                if not GCS_AVAILABLE:
+                    print("Error: 'german-compound-splitter' library not installed.", file=sys.stderr); sys.exit(1)
+                if not os.path.exists(args.gcs_dictionary):
+                    print(f"Error: GCS dictionary file '{args.gcs_dictionary}' not found!", file=sys.stderr); sys.exit(1)
+                try:
+                    with redirect_stdout(io.StringIO()):
+                        self.ahocs = comp_split.read_dictionary_from_file(args.gcs_dictionary)
+                except Exception as e:
+                    print(f"Error loading GCS dictionary: {e}", file=sys.stderr); sys.exit(1)
 
-    if token.is_sent_start and token.pos_ not in ["NOUN", "PROPN"]:
-        return spacy_lemma
+        self.lemma_overrides = load_lemma_overrides(args.lemma_override_file)
 
-    return spacy_lemma
-
-def collapse_lemmas_for_token(candidates):
-    lemmas_by_lower = {}
-    for lemma in candidates:
-        if not lemma: continue
-        lower_lemma = lemma.lower()
-        if lower_lemma not in lemmas_by_lower:
-            lemmas_by_lower[lower_lemma] = set()
-        lemmas_by_lower[lower_lemma].add(lemma)
-    
-    final_lemmas = []
-    for _, variants in lemmas_by_lower.items():
-        preferred_variant = next((v for v in variants if v[0].isupper()), None)
-        
-        if preferred_variant:
-            final_lemmas.append(preferred_variant)
-        elif variants:
-            final_lemmas.append(list(variants)[0])
-            
-    return final_lemmas
-
-def process_sentence_lemmas(sentence, lemma_index, nlp, german_dict, lemma_overrides, gcs_pos_tags, args, **kwargs):
-    gcs = kwargs.get('gcs', False)
-    ahocs = kwargs.get('ahocs', None)
-    gcs_in_wordlist = kwargs.get('gcs_in_wordlist', False)
-    gcs_only_nouns = kwargs.get('gcs_only_nouns', True)
-    make_singular = kwargs.get('make_singular', False)
-    no_make_singular = kwargs.get('no_make_singular', False)
-    gcs_combine_noun_modes = kwargs.get('gcs_combine_noun_modes', False)
-    gcs_fix_genitive = kwargs.get('gcs_fix_genitive', False)
-    gcs_mask_unknown = kwargs.get('gcs_mask_unknown', False)
-    gcs_include_compound = kwargs.get('gcs_include_compound', False)
-    gcs_skip_merge_fractions = kwargs.get('gcs_skip_merge_fractions', False)
-
-    doc = nlp(sentence)
-    final_tokens = set()
-
-    verb_particle_map = find_verb_particle_pairs(doc)
-    processed_particles_indices = {p.i for p in verb_particle_map.values()}
-
-    for token in doc:
-        if token.i in processed_particles_indices:
-            continue
-
-        if not (token.is_alpha or '-' in token.text):
-            continue
-
+    def get_lemmas_for_token(self, token, sentence_text):
         candidate_lemmas = []
-        
-        original_inflected_form = token.text
-        parent_lemma = ""
-        if token.i in verb_particle_map:
-            particle = verb_particle_map[token.i]
-            default_lemma = f"{particle.text.lower()}{token.lemma_}".lower()
-            original_inflected_form = f"{token.text} {particle.text}"
-        else:
-            spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
-            default_lemma = get_capitalized_lemma(token, spacy_lemma, force_capitalization=args.force_lemma_capitalization)
-        parent_lemma = apply_word_override(default_lemma, original_inflected_form, lemma_overrides, sentence)
-        
-        was_split = False
         is_protected_token = token.like_url or token.like_email
 
-        if gcs and '-' in token.text and not is_protected_token:
-            was_split = True
-            parts = token.text.split('-')
-            
-            if gcs_include_compound:
-                candidate_lemmas.append(parent_lemma)
+        spacy_lemma = self._get_corrected_lemma(token)
+        default_lemma = self._get_capitalized_lemma(token, spacy_lemma)
+        parent_lemma = self._apply_word_override(default_lemma, token.text, sentence_text)
 
+        was_split = False
+
+        if self.args.gcs and '-' in token.text and not is_protected_token:
+            was_split = True
+            if self.args.gcs_include_compound:
+                candidate_lemmas.append(parent_lemma)
+            parts = token.text.split('-')
             for part in parts:
                 part = part.strip()
-                if not part or len(part) <= 1: continue
+                if part and len(part) > 1:
+                    part_doc = self.nlp(part)
+                    if not part_doc: continue
+                    default_part_lemma = self._get_lemma_for_compound_part(part, part_doc[0])
+                    final_part_lemma = self._apply_word_override(default_part_lemma, part, sentence_text)
+                    if final_part_lemma: candidate_lemmas.append(final_part_lemma)
 
-                default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
-                final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, sentence)
-                if final_part_lemma:
-                    candidate_lemmas.append(final_part_lemma)
-
-        elif gcs and ahocs and gcs_in_wordlist and nlp.lang == 'de' and not is_protected_token and len(token.text) > 3 and (token.pos_ in gcs_pos_tags):
+        elif self.args.gcs and self.ahocs and self.args.language == 'de' and not is_protected_token and len(token.text) > 3 and (token.pos_ in self.args.gcs_pos_tags):
             try:
-                word_to_split = token.text
-                if no_make_singular: should_make_singular = False
-                elif make_singular: should_make_singular = True
-                else: should_make_singular = (token.pos_ in ['NOUN', 'PROPN'])
-
-                final_components = []
-                if gcs_combine_noun_modes:
-                    with redirect_stdout(io.StringIO()):
-                        dissection1 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=True, mask_unknown=gcs_mask_unknown)
-                    final_components.extend(comp_split.merge_fractions(dissection1))
-                    with redirect_stdout(io.StringIO()):
-                        dissection2 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=False, mask_unknown=gcs_mask_unknown)
-                    final_components.extend(comp_split.merge_fractions(dissection2))
-
-                    if gcs_skip_merge_fractions:
-                        final_components.extend(dissection1)
-                        final_components.extend(dissection2)
-                    else:
-                        final_components.extend(comp_split.merge_fractions(dissection1))
-                        final_components.extend(comp_split.merge_fractions(dissection2))
-
-                else:
-                    with redirect_stdout(io.StringIO()):
-                        dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=gcs_only_nouns, mask_unknown=gcs_mask_unknown)
-                    
-                    if gcs_skip_merge_fractions:
-                        final_components = dissection
-                    else:
-                        final_components = comp_split.merge_fractions(dissection)
-
+                final_components = self._run_gcs_splitter(token)
                 if len(final_components) > 1:
                     was_split = True
-                    if gcs_include_compound:
+                    if self.args.gcs_include_compound:
                         candidate_lemmas.append(parent_lemma)
-                        
                     for part_raw in set(final_components):
                         part = part_raw.strip('-')
-                        if not part or len(part) < 3: continue
-                        
-                        default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
-                        overridden_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, sentence)
-                        final_part_lemma = _smooth_gcs_case(overridden_lemma)
-
-                        if final_part_lemma:
-                            candidate_lemmas.append(final_part_lemma)
+                        if part and len(part) >= 3:
+                            part_doc = self.nlp(part)
+                            if not part_doc: continue
+                            default_part_lemma = self._get_lemma_for_compound_part(part, part_doc[0])
+                            overridden_lemma = self._apply_word_override(default_part_lemma, part, sentence_text)
+                            final_part_lemma = _smooth_gcs_case(overridden_lemma)
+                            if final_part_lemma: candidate_lemmas.append(final_part_lemma)
             except Exception:
                 was_split = False
-        
+
         if not was_split:
             candidate_lemmas.append(parent_lemma)
 
-        finalized_lemmas = collapse_lemmas_for_token(candidate_lemmas)
-        for lemma in finalized_lemmas:
-            final_tokens.add(lemma)
+        return self._collapse_lemmas(candidate_lemmas)
 
-    return sorted(list(final_tokens), key=lambda x: (x not in lemma_index, lemma_index.get(x, 0), x.lower()))
-
-def process_text_v1(
-    input_text, lemma_index, language, text2, text3, sentence_context_size,
-    output_file, two_column_output_to_file, include_simple_list,
-    with_fields, with_br, pipe, gcs, ahocs, gcs_in_wordlist, german_dict, lemma_overrides,
-    gcs_pos_tags, args, **kwargs
-):
-    gcs_only_nouns = kwargs.get('gcs_only_nouns', True)
-    make_singular = kwargs.get('make_singular', False)
-    no_make_singular = kwargs.get('no_make_singular', False)
-    gcs_combine_noun_modes = kwargs.get('gcs_combine_noun_modes', False)
-    gcs_fix_genitive = kwargs.get('gcs_fix_genitive', False)
-    gcs_mask_unknown = kwargs.get('gcs_mask_unknown', False)
-    gcs_include_compound = kwargs.get('gcs_include_compound', False)
-    gcs_skip_merge_fractions = kwargs.get('gcs_skip_merge_fractions', False)
-
-    if "\n" in input_text or not os.path.exists(input_text):
-        text1_lines = input_text.splitlines()
-    else:
-        with open(input_text, "r", encoding="utf-8") as f1: text1_lines = [line.rstrip("\n") for line in f1]
-
-    if text2:
-        with open(text2, "r", encoding="utf-8") as f2: text2_lines = [line.rstrip("\n") for line in f2]
-
-    text3_lines = []
-    if text3:
-        with open(text3, "r", encoding="utf-8") as f3: text3_lines = [line.rstrip("\n") for line in f3]
-
-    unique_lemmatized_tokens, token_to_sentence, token_to_original_form = {}, {}, {}
-    for i, line1 in enumerate(text1_lines):
-        doc = nlp(line1)
+    def get_lemmas_for_sentence(self, sentence_text):
+        doc = self.nlp(sentence_text)
         verb_particle_map = find_verb_particle_pairs(doc)
         processed_particles_indices = {p.i for p in verb_particle_map.values()}
+        final_tokens = set()
 
         for token in doc:
-            if token.i in processed_particles_indices:
+            if token.i in processed_particles_indices or not (token.is_alpha or '-' in token.text):
                 continue
 
-            if (token.is_alpha or '-' in token.text):
-                candidate_lemmas = []
-                
+            original_inflected_form = token.text
+            finalized_lemmas = []
+            if token.i in verb_particle_map:
+                particle = verb_particle_map[token.i]
+                combined_lemma = f"{particle.text.lower()}{token.lemma_}".lower()
+                original_inflected_form = f"{token.text} {particle.text}"
+                finalized_lemmas = [self._apply_word_override(combined_lemma, original_inflected_form, sentence_text)]
+            else:
+                finalized_lemmas = self.get_lemmas_for_token(token, sentence_text)
+
+            for lemma in finalized_lemmas:
+                 if lemma:
+                    final_tokens.add(lemma)
+        return list(final_tokens)
+
+    def process_text_stream(self, text_stream):
+        unique_lemmatized_tokens = {}
+        token_to_sentence_info = {}
+
+        for i, sentence_text in enumerate(text_stream):
+            doc = self.nlp(sentence_text.strip())
+            verb_particle_map = find_verb_particle_pairs(doc)
+            processed_particles_indices = {p.i for p in verb_particle_map.values()}
+
+            for token in doc:
+                if token.i in processed_particles_indices or not (token.is_alpha or '-' in token.text):
+                    continue
+
                 original_inflected_form = token.text
-                parent_lemma = ""
                 if token.i in verb_particle_map:
                     particle = verb_particle_map[token.i]
-                    default_lemma = f"{particle.text.lower()}{token.lemma_}".lower()
+                    combined_lemma = f"{particle.text.lower()}{token.lemma_}".lower()
                     original_inflected_form = f"{token.text} {particle.text}"
+                    finalized_lemmas = [self._apply_word_override(combined_lemma, original_inflected_form, sentence_text)]
                 else:
-                    spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
-                    default_lemma = get_capitalized_lemma(token, spacy_lemma, force_capitalization=args.force_lemma_capitalization)
-                parent_lemma = apply_word_override(default_lemma, original_inflected_form, lemma_overrides, line1)
-
-                was_split = False
-                is_protected_token = token.like_url or token.like_email
-
-                if gcs and '-' in token.text and not is_protected_token:
-                    was_split = True
-                    parts = token.text.split('-')
-                    
-                    if gcs_include_compound:
-                        candidate_lemmas.append(parent_lemma)
-
-                    for part in parts:
-                        part = part.strip()
-                        if not part or len(part) <= 1: continue
-
-                        default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
-                        final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, line1)
-                        if final_part_lemma:
-                            candidate_lemmas.append(final_part_lemma)
-                
-                elif gcs and ahocs and language == 'de' and not is_protected_token and len(token.text) > 3 and (token.pos_ in gcs_pos_tags):
-                    try:
-                        word_to_split = token.text
-                        if no_make_singular: should_make_singular = False
-                        elif make_singular: should_make_singular = True
-                        else: should_make_singular = (token.pos_ in ['NOUN', 'PROPN'])
-
-                        final_components = []
-                        if gcs_combine_noun_modes:
-                            with redirect_stdout(io.StringIO()):
-                                dissection1 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=True, mask_unknown=gcs_mask_unknown)
-                            final_components.extend(comp_split.merge_fractions(dissection1))
-                            with redirect_stdout(io.StringIO()):
-                                dissection2 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=False, mask_unknown=gcs_mask_unknown)
-                            final_components.extend(comp_split.merge_fractions(dissection2))
-
-                            if gcs_skip_merge_fractions:
-                                final_components.extend(dissection1)
-                                final_components.extend(dissection2)
-                            else:
-                                final_components.extend(comp_split.merge_fractions(dissection1))
-                                final_components.extend(comp_split.merge_fractions(dissection2))
-
-                        else:
-                            with redirect_stdout(io.StringIO()):
-                                dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=gcs_only_nouns, mask_unknown=gcs_mask_unknown)
-                            
-                            if gcs_skip_merge_fractions:
-                                final_components = dissection
-                            else:
-                                final_components = comp_split.merge_fractions(dissection)
-
-                        if len(final_components) > 1:
-                            was_split = True
-                            if gcs_include_compound:
-                                candidate_lemmas.append(parent_lemma)
-
-                            for part_raw in set(final_components):
-                                part = part_raw.strip('-')
-                                if not part: continue
-                                if len(part) < 3: continue
-
-                                default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
-                                overridden_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, line1)
-                                final_part_lemma = _smooth_gcs_case(overridden_lemma)
-                                
-                                if final_part_lemma:
-                                    candidate_lemmas.append(final_part_lemma)
-                    except Exception:
-                        was_split = False
-                
-                if not was_split:
-                    candidate_lemmas.append(parent_lemma)
-
-                finalized_lemmas = collapse_lemmas_for_token(candidate_lemmas)
+                    finalized_lemmas = self.get_lemmas_for_token(token, sentence_text)
 
                 for lemma in finalized_lemmas:
                     if lemma:
                         if lemma not in unique_lemmatized_tokens:
                             unique_lemmatized_tokens[lemma] = original_inflected_form
-                            token_to_sentence[lemma] = (i, line1)
+                            token_to_sentence_info[lemma] = (i, sentence_text)
                         elif len(original_inflected_form) < len(unique_lemmatized_tokens[lemma]):
                              unique_lemmatized_tokens[lemma] = original_inflected_form
 
-    sorted_tokens = sorted(list(unique_lemmatized_tokens.keys()), key=lambda token: (token not in lemma_index, lemma_index.get(token, 0), token.lower()))
-    if output_file:
-        with open(output_file, "w", newline="", encoding="utf-8") as tsvfile:
-            tsv_writer = csv.writer(tsvfile, delimiter="\t")
-            if with_fields:
-                tsv_writer.writerow(get_full_header())
+        return unique_lemmatized_tokens, token_to_sentence_info
 
-            for token in sorted_tokens:
-                row_data = [""] * 80
-                sent_index, l1_sentence = token_to_sentence.get(token, (-1, ""))
-                if sent_index == -1: continue
-                l1_sentence = l1_sentence.strip()
-                l2_sentence = text2_lines[sent_index].strip() if text2 and sent_index < len(text2_lines) else ""
-                start_idx, end_idx = max(0, sent_index - sentence_context_size), sent_index + sentence_context_size + 1
-                row_data[5] = " ".join(line.strip() for line in text1_lines[start_idx:sent_index])
-                row_data[6] = l1_sentence
-                row_data[7] = " ".join(line.strip() for line in text1_lines[sent_index + 1:end_idx])
-                if text2:
-                    row_data[8] = " ".join(line.strip() for line in text2_lines[start_idx:sent_index])
-                    row_data[9] = l2_sentence
-                    row_data[10] = " ".join(line.strip() for line in text2_lines[sent_index + 1:end_idx])
-                if text3:
-                    row_data[77] = " ".join(line.strip() for line in text3_lines[start_idx:sent_index])
-                    row_data[78] = text3_lines[sent_index].strip() if sent_index < len(text3_lines) else ""
-                    row_data[79] = " ".join(line.strip() for line in text3_lines[sent_index + 1:end_idx])
-                row_data[0] = token
-                row_data[1] = token
-                if two_column_output_to_file:
-                    row_data[2] = unique_lemmatized_tokens.get(token, '')
-                row_data[12] = l1_sentence
-                if include_simple_list:
-                    all_kwargs = {**kwargs, 'gcs': gcs, 'ahocs': ahocs, 'gcs_in_wordlist': gcs_in_wordlist}
-                    lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, german_dict, lemma_overrides, gcs_pos_tags, args, **all_kwargs)
-                    row_data[11] = "<br>".join(lemmas) if with_br else "\n".join(lemmas)
-                if language == "de":
-                    row_data[58] = "1"; row_data[65] = "1"
-                elif language == "en":
-                    row_data[56] = "1"; row_data[65] = "1"
-                tsv_writer.writerow(row_data)
-    return output_file
+    def _run_gcs_splitter(self, token):
+        word_to_split = token.text
+        if self.args.no_make_singular: should_make_singular = False
+        elif self.args.make_singular: should_make_singular = True
+        else: should_make_singular = (token.pos_ in ['NOUN', 'PROPN'])
 
-def process_text_v2(
-    input_text, lemma_index, language, sentence_context_size,
-    output_file, two_column_output_to_file, include_simple_list,
-    with_fields, with_br, pipe, gcs, ahocs, gcs_in_wordlist, german_dict, lemma_overrides, 
-    gcs_pos_tags, args, **kwargs
-):
-    gcs_only_nouns = kwargs.get('gcs_only_nouns', True)
-    make_singular = kwargs.get('make_singular', False)
-    no_make_singular = kwargs.get('no_make_singular', False)
-    gcs_combine_noun_modes = kwargs.get('gcs_combine_noun_modes', False)
-    gcs_fix_genitive = kwargs.get('gcs_fix_genitive', False)
-    gcs_mask_unknown = kwargs.get('gcs_mask_unknown', False)
-    gcs_include_compound = kwargs.get('gcs_include_compound', False)
-    gcs_skip_merge_fractions = kwargs.get('gcs_skip_merge_fractions', False)
-
-    if '\n' in input_text.strip():
-        processing_units = input_text.splitlines()
-        is_line_based = True
-    else:
-        doc = nlp(input_text)
-        processing_units = list(doc.sents)
-        is_line_based = False
-
-    unique_lemmatized_tokens, token_to_sentence, token_to_original_form = {}, {}, {}
-
-    for unit_index, unit in enumerate(processing_units):
-        unit_text = unit if is_line_based else unit.text
-        doc_unit = nlp(unit_text)
-
-        verb_particle_map = find_verb_particle_pairs(doc_unit)
-        processed_particles_indices = {p.i for p in verb_particle_map.values()}
-
-        for token in doc_unit:
-            if token.i in processed_particles_indices:
-                continue
-
-            if (token.is_alpha or '-' in token.text):
-                candidate_lemmas = []
-
-                original_inflected_form = token.text
-                parent_lemma = ""
-                if token.i in verb_particle_map:
-                    particle = verb_particle_map[token.i]
-                    default_lemma = f"{particle.text.lower()}{token.lemma_}".lower()
-                    original_inflected_form = f"{token.text} {particle.text}"
+        final_components = []
+        with redirect_stdout(io.StringIO()):
+            if self.args.gcs_combine_noun_modes:
+                dissection1 = comp_split.dissect(word_to_split, self.ahocs, make_singular=should_make_singular, only_nouns=True, mask_unknown=self.args.gcs_mask_unknown)
+                dissection2 = comp_split.dissect(word_to_split, self.ahocs, make_singular=should_make_singular, only_nouns=False, mask_unknown=self.args.gcs_mask_unknown)
+                if self.args.gcs_skip_merge_fractions:
+                    final_components.extend(dissection1); final_components.extend(dissection2)
                 else:
-                    spacy_lemma = get_corrected_lemma(token, german_dict, gcs_fix_genitive)
-                    default_lemma = get_capitalized_lemma(token, spacy_lemma, force_capitalization=args.force_lemma_capitalization)
-                parent_lemma = apply_word_override(default_lemma, original_inflected_form, lemma_overrides, unit_text)
-                
-                was_split = False
-                is_protected_token = token.like_url or token.like_email
+                    final_components.extend(comp_split.merge_fractions(dissection1)); final_components.extend(comp_split.merge_fractions(dissection2))
+            else:
+                gcs_only_nouns = not self.args.gcs_only_nouns_false
+                dissection = comp_split.dissect(word_to_split, self.ahocs, make_singular=should_make_singular, only_nouns=gcs_only_nouns, mask_unknown=self.args.gcs_mask_unknown)
+                final_components = dissection if self.args.gcs_skip_merge_fractions else comp_split.merge_fractions(dissection)
+        return final_components
 
-                if gcs and '-' in token.text and not is_protected_token:
-                    was_split = True
-                    parts = token.text.split('-')
-                    
-                    if gcs_include_compound:
-                        candidate_lemmas.append(parent_lemma)
+    def _get_corrected_lemma(self, token):
+        spacy_lemma = token.lemma_
+        if (self.args.gcs_fix_genitive and self.nlp.lang == 'de' and token.pos_ in ["NOUN", "PROPN"] and 'Gen' in token.morph.get("Case", [])):
+            if spacy_lemma.endswith('s') and len(spacy_lemma) > 1:
+                candidate_lemma = spacy_lemma[:-1]
+                if candidate_lemma.capitalize() in self.german_dict:
+                    return candidate_lemma
+        return spacy_lemma
 
-                    for part in parts:
-                        part = part.strip()
-                        if not part or len(part) <= 1: continue
+    def _get_lemma_for_compound_part(self, part_text, part_token):
+        if part_text.isupper() and len(part_text) > 1 or any(c.isupper() for c in part_text[1:]): return part_text
+        if part_token.pos_ not in ["NOUN", "PROPN"]: return part_token.lemma_
+        spacy_lemma = part_token.lemma_.capitalize()
+        original_part_capitalized = part_text.capitalize()
+        if spacy_lemma in self.german_dict: return spacy_lemma
+        if original_part_capitalized in self.german_dict: return original_part_capitalized
+        return spacy_lemma
 
-                        default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
-                        final_part_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, unit_text)
-                        if final_part_lemma:
-                            candidate_lemmas.append(final_part_lemma)
-                
-                elif gcs and ahocs and language == 'de' and not is_protected_token and len(token.text) > 3 and (token.pos_ in gcs_pos_tags):
+    def _get_capitalized_lemma(self, token, spacy_lemma):
+        if token.like_url or token.like_email: return spacy_lemma.lower()
+        original_text = token.text
+        if (original_text.isupper() and len(original_text) > 1) or any(c.isupper() for c in original_text[1:]): return original_text
+        if self.args.force_lemma_capitalization:
+            if (self.nlp.lang == 'de' and token.pos_ in ["NOUN", "PROPN"]) or (self.nlp.lang != 'de' and token.pos_ == "PROPN"):
+                return spacy_lemma.capitalize()
+        if token.is_sent_start and token.pos_ not in ["NOUN", "PROPN"]: return spacy_lemma
+        return spacy_lemma
+
+    def _collapse_lemmas(self, candidates):
+        lemmas_by_lower = {}
+        for lemma in candidates:
+            if not lemma: continue
+            lower_lemma = lemma.lower()
+            if lower_lemma not in lemmas_by_lower: lemmas_by_lower[lower_lemma] = set()
+            lemmas_by_lower[lower_lemma].add(lemma)
+        final_lemmas = []
+        for _, variants in lemmas_by_lower.items():
+            preferred_variant = next((v for v in variants if v[0].isupper()), None)
+            final_lemmas.append(preferred_variant if preferred_variant else list(variants)[0] if variants else None)
+        return [lemma for lemma in final_lemmas if lemma]
+
+    def _find_matching_override_rule(self, rules, context_sentence):
+        if not rules: return None
+        context_rules = [r for r in rules if r[1]]
+        global_rule = next((r for r in rules if not r[1]), None)
+        for target_lemma, context in context_rules:
+            if context:
+                if context.startswith('regex:'):
+                    pattern = context[6:]
                     try:
-                        word_to_split = token.text
-                        if no_make_singular: should_make_singular = False
-                        elif make_singular: should_make_singular = True
-                        else: should_make_singular = (token.pos_ in ['NOUN', 'PROPN'])
-                            
-                        final_components = []
-                        if gcs_combine_noun_modes:
-                            with redirect_stdout(io.StringIO()):
-                                dissection1 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=True, mask_unknown=gcs_mask_unknown)
-                            final_components.extend(comp_split.merge_fractions(dissection1))
-                            with redirect_stdout(io.StringIO()):
-                                dissection2 = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=False, mask_unknown=gcs_mask_unknown)
-                            final_components.extend(comp_split.merge_fractions(dissection2))
+                        if re.search(pattern, context_sentence): return target_lemma
+                    except re.error as e:
+                        print(f"Warning: Invalid regex in override rule: '{pattern}'. Error: {e}", file=sys.stderr)
+                elif context in context_sentence:
+                    return target_lemma
+        return global_rule[0] if global_rule else None
 
-                            if gcs_skip_merge_fractions:
-                                final_components.extend(dissection1)
-                                final_components.extend(dissection2)
-                            else:
-                                final_components.extend(comp_split.merge_fractions(dissection1))
-                                final_components.extend(comp_split.merge_fractions(dissection2))
+    def _apply_word_override(self, default_lemma, source_word, context_sentence):
+        rules1 = self.lemma_overrides.get('priority1', {}).get((default_lemma, source_word))
+        if (match1 := self._find_matching_override_rule(rules1, context_sentence)) is not None: return match1
+        for res_lemma, pattern, rule in self.lemma_overrides.get('priority1_regex', []):
+            if res_lemma == default_lemma and re.fullmatch(pattern, source_word):
+                if (match_regex1 := self._find_matching_override_rule([rule], context_sentence)) is not None: return match_regex1
+        rules2 = self.lemma_overrides.get('priority2', {}).get(source_word)
+        if (match2 := self._find_matching_override_rule(rules2, context_sentence)) is not None: return match2
+        for pattern, rule in self.lemma_overrides.get('priority2_regex', []):
+            if re.fullmatch(pattern, source_word):
+                if (match_regex2 := self._find_matching_override_rule([rule], context_sentence)) is not None: return match_regex2
+        rules3 = self.lemma_overrides.get('priority3', {}).get(default_lemma)
+        if (match3 := self._find_matching_override_rule(rules3, context_sentence)) is not None: return match3
+        return default_lemma
 
-                        else:
-                            with redirect_stdout(io.StringIO()):
-                                dissection = comp_split.dissect(word_to_split, ahocs, make_singular=should_make_singular, only_nouns=gcs_only_nouns, mask_unknown=gcs_mask_unknown)
-                            
-                            if gcs_skip_merge_fractions:
-                                final_components = dissection
-                            else:
-                                final_components = comp_split.merge_fractions(dissection)
+# ==============================================================================
+#  Output and File Handling
+# ==============================================================================
 
-                        if len(final_components) > 1:
-                            was_split = True
-                            if gcs_include_compound:
-                                candidate_lemmas.append(parent_lemma)
-                            
-                            for part_raw in set(final_components):
-                                part = part_raw.strip('-')
-                                if not part: continue
-                                if len(part) < 3: continue
-
-                                default_part_lemma = get_lemma_for_compound_part(part, nlp, german_dict)
-                                overridden_lemma = apply_part_override(default_part_lemma, part, token.text, lemma_overrides, unit_text)
-                                final_part_lemma = _smooth_gcs_case(overridden_lemma)
-
-                                if final_part_lemma:
-                                    candidate_lemmas.append(final_part_lemma)
-                    except Exception:
-                        was_split = False
-
-                if not was_split:
-                    candidate_lemmas.append(parent_lemma)
-
-                finalized_lemmas = collapse_lemmas_for_token(candidate_lemmas)
-
-                for lemma in finalized_lemmas:
-                    if lemma:
-                        if lemma not in unique_lemmatized_tokens:
-                            unique_lemmatized_tokens[lemma] = original_inflected_form
-                            token_to_sentence[lemma] = (unit_index, unit_text)
-                        elif len(original_inflected_form) < len(unique_lemmatized_tokens[lemma]):
-                             unique_lemmatized_tokens[lemma] = original_inflected_form
-
-    sorted_tokens = sorted(list(unique_lemmatized_tokens.keys()), key=lambda token: (token not in lemma_index, lemma_index.get(token, 0), token.lower()))
-    def get_unit_text(u):
-        return u if is_line_based else u.text
-
-    if not output_file:
-        detailed = kwargs.get('detailed', False)
-        two_column_output = kwargs.get('two_column_output', False)
-        html = kwargs.get('html', False)
-        if html:
-            print("<table>")
-            for token in sorted_tokens:
-                print(f"<tr><td>{token}</td><td>{unique_lemmatized_tokens.get(token, '')}</td></tr>")
-            print("</table>")
-        elif two_column_output:
-            for token in sorted_tokens:
-                print(f"{token}\t{unique_lemmatized_tokens.get(token, '')}")
-        elif detailed:
-             for token in sorted_tokens:
-                unit_index, l1_sentence = token_to_sentence[token]
-                start_idx = max(0, unit_index - sentence_context_size)
-                end_idx = min(len(processing_units), unit_index + sentence_context_size + 1)
-                l1_left = " ".join(get_unit_text(u).strip() for u in processing_units[start_idx:unit_index])
-                l1_right = " ".join(get_unit_text(u).strip() for u in processing_units[unit_index + 1:end_idx])
-                print(token)
-                if l1_left: print(l1_left)
-                print(l1_sentence.strip())
-                if l1_right: print(l1_right)
-                print()
+def read_text_from_source(source):
+    try:
+        if '\n' in source or not os.path.exists(source):
+            return [line for line in source.splitlines() if line.strip()]
         else:
-            for token in sorted_tokens:
-                print(token)
+            with open(source, "r", encoding="utf-8") as f:
+                return [line.rstrip("\n") for line in f if line.strip()]
+    except Exception as e:
+        print(f"Error reading source {source}: {e}", file=sys.stderr); sys.exit(1)
+
+def generate_autoname_prefix(text, num_words):
+    if not text: return ""
+    processed_text = text.lower().replace('ä', 'ae').replace('ö', 'oe').replace('ü', 'ue').replace('ß', 'ss')
+    words = re.findall(r'[a-z0-9]+', processed_text)
+    return "-".join(words[:num_words]) if words else ""
+
+def get_final_output_path(args, text_source_content):
+    if not args.output: return None
+    final_path = args.output
+    if args.timestamp or args.autoname is not None:
+        zid = datetime.now().strftime('%Y%m%d%H%M%S')
+        output_dir, filename = os.path.dirname(args.output) or '.', os.path.basename(args.output)
+        new_filename_part = ""
+        if args.autoname is not None:
+            autoname_part = generate_autoname_prefix(text_source_content, args.autoname)
+            if autoname_part:
+                first_dot_pos = filename.find('.')
+                suffix = filename[first_dot_pos:] if first_dot_pos != -1 else ""
+                new_filename_part = f"{autoname_part}{suffix}"
+        if new_filename_part:
+            final_path = os.path.join(output_dir, f"{zid}-{new_filename_part}")
+        else:
+            final_path = os.path.join(output_dir, f"{zid}-{filename}")
+    return final_path
+
+# ==============================================================================
+#  Execution Logic
+# ==============================================================================
+
+def run_token_mode(args, processor, lemma_index):
+    input_source_content = ""
+    if args.text and args.text1: print("Error: --text and --text1 are mutually exclusive.", file=sys.stderr); sys.exit(1)
+    if args.text:
+        input_source_content = args.text
+        text_stream = [line for line in args.text.splitlines() if line.strip()]
+    elif args.text1:
+        text_stream = read_text_from_source(args.text1)
+        input_source_content = "\n".join(text_stream)
+    else:
+        print("Error: Either --text or --text1 must be specified for token mode.", file=sys.stderr); sys.exit(1)
+
+    unique_lemmas, token_info = processor.process_text_stream(text_stream)
+    sorted_tokens = sorted(list(unique_lemmas.keys()), key=lambda token: (token not in lemma_index, lemma_index.get(token, 0), token.lower()))
+
+    output_path = get_final_output_path(args, input_source_content)
+
+    if not output_path:
+        if args.html:
+            print("<table>")
+            for token in sorted_tokens: print(f"<tr><td>{token}</td><td>{unique_lemmas.get(token, '')}</td></tr>")
+            print("</table>")
+        elif args.two_column_output:
+            for token in sorted_tokens: print(f"{token}\t{unique_lemmas.get(token, '')}")
+        else:
+            for token in sorted_tokens: print(token)
         return None
 
-    with open(output_file, "w", newline="", encoding="utf-8") as tsvfile:
+    text2_lines = read_text_from_source(args.text2) if args.text2 else None
+    text3_lines = read_text_from_source(args.text3) if args.text3 else None
+
+    with open(output_path, "w", newline="", encoding="utf-8") as tsvfile:
         tsv_writer = csv.writer(tsvfile, delimiter="\t")
-        if with_fields:
-            tsv_writer.writerow(get_full_header())
+        if args.with_fields: tsv_writer.writerow(get_full_header())
 
         for token in sorted_tokens:
             row_data = [""] * 80
-            unit_index, l1_sentence = token_to_sentence.get(token, (-1, ""))
-            if unit_index == -1: continue
-            l1_sentence = l1_sentence.strip()
-            start_idx = max(0, unit_index - sentence_context_size)
-            end_idx = min(len(processing_units), unit_index + sentence_context_size + 1)
-            row_data[5] = " ".join(get_unit_text(u).strip() for u in processing_units[start_idx:unit_index])
-            row_data[6] = l1_sentence
-            row_data[7] = " ".join(get_unit_text(u).strip() for u in processing_units[unit_index + 1:end_idx])
-            row_data[0] = token
-            row_data[1] = token
-            if two_column_output_to_file:
-                row_data[2] = unique_lemmatized_tokens.get(token, '')
-            row_data[12] = l1_sentence
-            if include_simple_list:
-                all_kwargs = {**kwargs, 'gcs': gcs, 'ahocs': ahocs, 'gcs_in_wordlist': gcs_in_wordlist}
-                lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, german_dict, lemma_overrides, gcs_pos_tags, args, **all_kwargs)
-                row_data[11] = "<br>".join(lemmas) if with_br else "\n".join(lemmas)
-            if language == "de":
-                row_data[58] = "1"; row_data[65] = "1"
-            elif language == "en":
-                row_data[56] = "1"; row_data[65] = "1"
+            sent_index, sentence = token_info.get(token, (-1, ""))
+            if sent_index == -1: continue
+
+            start_idx = max(0, sent_index - args.sentence_context_size)
+            end_idx = sent_index + args.sentence_context_size + 1
+
+            row_data[0] = row_data[1] = token
+            row_data[2] = unique_lemmas.get(token, '') if args.two_column_output_to_file else ''
+            row_data[5] = " ".join(line.strip() for line in text_stream[start_idx:sent_index])
+            row_data[6] = row_data[12] = sentence.strip()
+            row_data[7] = " ".join(line.strip() for line in text_stream[sent_index + 1:end_idx])
+            if text2_lines:
+                row_data[8] = " ".join(line.strip() for line in text2_lines[start_idx:sent_index])
+                row_data[9] = text2_lines[sent_index].strip() if sent_index < len(text2_lines) else ""
+                row_data[10] = " ".join(line.strip() for line in text2_lines[sent_index + 1:end_idx])
+            if text3_lines:
+                row_data[77] = " ".join(line.strip() for line in text3_lines[start_idx:sent_index])
+                row_data[78] = text3_lines[sent_index].strip() if sent_index < len(text3_lines) else ""
+                row_data[79] = " ".join(line.strip() for line in text3_lines[sent_index + 1:end_idx])
+
+            if args.include_simple_list:
+                lemmas = processor.get_lemmas_for_sentence(sentence)
+                sorted_lemmas = sorted(lemmas, key=lambda x: (x not in lemma_index, lemma_index.get(x, 0), x.lower()))
+                row_data[11] = "<br>".join(sorted_lemmas) if args.with_br else "\n".join(sorted_lemmas)
             tsv_writer.writerow(row_data)
+    return output_path
 
-    return output_file
-
-def process_sentences(
-    language, lemma_index, text1, text2, text3, sentence_context_size,
-    output_file, include_simple_list, with_fields, with_br, pipe, gcs_pos_tags, args, **kwargs
-):
-    lemma_overrides = kwargs.get('lemma_overrides', {})
+def run_sentence_mode(args, processor, lemma_index):
+    if not args.text1 or not args.text2:
+        print("Error: --text1 and --text2 must be specified for sentence mode.", file=sys.stderr); sys.exit(1)
     
-    try:
-        with open(text1, "r", encoding="utf-8") as f: text1_lines = [line.rstrip("\n") for line in f]
-        with open(text2, "r", encoding="utf-8") as f: text2_lines = [line.rstrip("\n") for line in f]
-        text3_lines = []
-        if text3:
-            with open(text3, "r", encoding="utf-8") as f: text3_lines = [line.rstrip("\n") for line in f]
-    except IOError as e:
-        print(f"Error reading files: {e}", file=sys.stderr); sys.exit(1)
+    text1_lines = read_text_from_source(args.text1)
+    text2_lines = read_text_from_source(args.text2)
+    text3_lines = read_text_from_source(args.text3) if args.text3 else []
+    
+    output_path = get_final_output_path(args, "\n".join(text1_lines))
+    if not output_path:
+        print("Error: --output must be specified for sentence mode.", file=sys.stderr); sys.exit(1)
 
-    lengths = [len(text1_lines), len(text2_lines)]
-    if text3: lengths.append(len(text3_lines))
-    min_length = min(lengths)
+    min_length = min(len(text1_lines), len(text2_lines))
 
-    with open(output_file, "w", newline="", encoding="utf-8") as out_file:
+    with open(output_path, "w", newline="", encoding="utf-8") as out_file:
         tsv_writer = csv.writer(out_file, delimiter="\t")
-        if with_fields:
-            tsv_writer.writerow(get_full_header())
+        if args.with_fields: tsv_writer.writerow(get_full_header())
 
         for i in range(min_length):
             row_data = [""] * 80
+            start_idx = max(0, i - args.sentence_context_size)
+            end_idx = i + args.sentence_context_size + 1
+
             l1_sentence = text1_lines[i].strip()
-            l2_sentence = text2_lines[i].strip()
-            start_idx, end_idx = max(0, i - sentence_context_size), i + sentence_context_size + 1
             row_data[0] = l1_sentence
             row_data[5] = " ".join(line.strip() for line in text1_lines[start_idx:i])
             row_data[6] = l1_sentence
             row_data[7] = " ".join(line.strip() for line in text1_lines[i + 1:end_idx])
             row_data[8] = " ".join(line.strip() for line in text2_lines[start_idx:i])
-            row_data[9] = l2_sentence
+            row_data[9] = text2_lines[i].strip()
             row_data[10] = " ".join(line.strip() for line in text2_lines[i + 1:end_idx])
-            if include_simple_list:
-                lemmas = process_sentence_lemmas(l1_sentence, lemma_index, nlp, german_dict, lemma_overrides, gcs_pos_tags, args, **kwargs)
-                row_data[11] = "<br>".join(lemmas) if with_br else "\n".join(lemmas)
             row_data[12] = l1_sentence
-            if text3:
+
+            if args.include_simple_list:
+                lemmas = processor.get_lemmas_for_sentence(l1_sentence)
+                sorted_lemmas = sorted(lemmas, key=lambda x: (x not in lemma_index, lemma_index.get(x, 0), x.lower()))
+                row_data[11] = "<br>".join(sorted_lemmas) if args.with_br else "\n".join(sorted_lemmas)
+
+            if i < len(text3_lines):
                 row_data[77] = " ".join(line.strip() for line in text3_lines[start_idx:i])
                 row_data[78] = text3_lines[i].strip()
                 row_data[79] = " ".join(line.strip() for line in text3_lines[i + 1:end_idx])
-            if language == "de":
-                row_data[58] = "1"; row_data[65] = "1"
-            elif language == "en":
-                row_data[56] = "1"; row_data[65] = "1"
+
             tsv_writer.writerow(row_data)
-    return output_file
+    return output_path
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Extract and process tokens or sentences from text.",
-        formatter_class=argparse.RawTextHelpFormatter
-    )
+    parser = argparse.ArgumentParser(description="Extract and process tokens or sentences from text.", formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("--type", required=True, choices=["token", "sentence"])
     parser.add_argument("--language", default="de", choices=["de", "en"])
     parser.add_argument("--lemma-index-file", default="")
@@ -920,233 +503,38 @@ def main():
     parser.add_argument("--detailed", action="store_true")
     parser.add_argument("--two-column-output", action="store_true")
     parser.add_argument("--html", action="store_true")
-    parser.add_argument("--original-form-in-simple-list", action="store_true")
     parser.add_argument("--lemma-override-file", help="Path to a TSV file for context-aware lemma overrides.")
-    
-    parser.add_argument(
-        "--force-lemma-capitalization",
-        action="store_true",
-        help="Force capitalization of noun lemmas (NOUN, PROPN). Use if the spaCy model returns lowercase lemmas (e.g., 'haus' instead of 'Haus')."
-    )
-
+    parser.add_argument("--force-lemma-capitalization", action="store_true", help="Force capitalization of noun lemmas (NOUN, PROPN).")
     gcs_group = parser.add_argument_group('GCS (German Compound Splitting) options')
     gcs_group.add_argument("--gcs", action="store_true", help="Enable German Compound Splitting. Requires --language de.")
-    gcs_group.add_argument(
-        "--gcs-pos-tags", 
-        nargs='+', 
-        default=['NOUN', 'PROPN', 'ADV', 'ADJ'],
-        help='''Specify which Part-of-Speech tags to apply splitting to.
-
-  Default: NOUN PROPN ADV ADJ
-
-  This argument operates in two main modes:
-
-  1. INCLUSION MODE (default behavior):
-     List the specific tags you want to process.
-     Example: --gcs-pos-tags NOUN PROPN ADJ
-
-  2. EXCLUSION MODE:
-     Prefix tags with '!' to process all tags except the ones specified.
-     Example: --gcs-pos-tags !VERB !AUX
-     (This splits everything except verbs and auxiliary verbs)
-
-  PRECEDENCE RULE:
-     If even one tag is prefixed with '!', the mode switches to exclusion.
-     Any tags listed without '!' in the same command will be ignored.
-     For instance, '--gcs-pos-tags NOUN !VERB' is treated as just '!VERB'.
-
-  SPECIAL KEYWORD:
-     ALL - A shortcut to process all available tags.
-
-  Available Tags (Universal Dependencies):
-    ADJ   - Adjective (Adjektiv; e.g., groß, alt, schön)
-    ADP   - Adposition (Präposition; e.g., in, zu, auf, mit)
-    ADV   - Adverb (Adverb; e.g., schnell, sehr, hier)
-    AUX   - Auxiliary verb (Hilfsverb; e.g., sein, haben, werden, können)
-    CCONJ - Coordinating Conjunction (Konjunktion; e.g., und, aber, oder)
-    DET   - Determiner (Artikel/Demonstrativpronomen; e.g., der, eine, dieser)
-    INTJ  - Interjection (Interjektion; e.g., ach, hallo, oje)
-    NOUN  - Noun (Nomen/Substantiv; e.g., Haus, Tisch, Buch)
-    NUM   - Numeral (Numerale; e.g., eins, zwei, 100)
-    PART  - Particle (Partikel; e.g., nicht, zu bei Infinitiv, ja)
-    PRON  - Pronoun (Pronomen; e.g., ich, du, er, sie)
-    PROPN - Proper Noun (Eigenname; e.g., Peter, Berlin, Google)
-    PUNCT - Punctuation (Interpunktion; e.g., ., ,, ?, !)
-    SCONJ - Subordinating Conjunction (Subjunktion; e.g., dass, weil, wenn)
-    SYM   - Symbol (Symbol; e.g., €, %%, §)
-    VERB  - Verb (Verb; e.g., gehen, sagen, machen)
-    X     - Other (Sonstiges; e.g., Fremdwörter, Tippfehler)'''
-    )
+    gcs_group.add_argument("--gcs-pos-tags", nargs='+', default=['NOUN', 'PROPN', 'ADV', 'ADJ'], help='Specify which Part-of-Speech tags to apply splitting to.')
     gcs_group.add_argument("--gcs-dictionary", default="german.dic", help="Path to the dictionary file for GCS.")
-    gcs_group.add_argument("--gcs-in-wordlist", action="store_true", help="Also add German compound components to the SentenceSourceWordlist field. Requires --gcs.")
-    gcs_group.add_argument("--gcs-include-compound", action="store_true", help="Include the original compound word in the lemma list along with its split components. Requires --gcs.")
-    gcs_group.add_argument("--gcs-only-nouns-false", action="store_true", help="Allows any type of word (verb, adjective, etc.) to be used for GCS splitting. Ignored if --gcs-combine-noun-modes is used.")
+    gcs_group.add_argument("--gcs-include-compound", action="store_true", help="Include the original compound word in the lemma list along with its split components.")
+    gcs_group.add_argument("--gcs-only-nouns-false", action="store_true", help="Allows any type of word to be used for GCS splitting. Ignored if --gcs-combine-noun-modes is used.")
     gcs_group.add_argument("--gcs-combine-noun-modes", action="store_true", help="Run GCS in both modes (only_nouns=True and False) and combine the unique resulting components.")
-    gcs_group.add_argument("--gcs-fix-genitive", action="store_true", help="Corrects German genitive noun lemmas (e.g., 'Hauses' -> 'Haus') by checking against the dictionary.")
+    gcs_group.add_argument("--gcs-fix-genitive", action="store_true", help="Corrects German genitive noun lemmas (e.g., 'Hauses' -> 'Haus').")
     gcs_group.add_argument("--gcs-mask-unknown", action="store_true", help="During GCS splitting, mask word parts not found in the dictionary as 'unknown'.")
-    gcs_group.add_argument("--make-singular", action="store_true", help="Force making compound parts singular during GCS splitting, regardless of the word's part of speech. Default is to only do this for nouns.")
-    gcs_group.add_argument("--no-make-singular", action="store_true", help="Prevent making compound parts singular during GCS splitting, keeping their original form. Overrides default behavior and --make-singular.")
-    gcs_group.add_argument(
-        "--gcs-skip-merge-fractions", 
-        action="store_true", 
-        help="Disable the merging of GCS components, outputting the raw, unmerged parts from the dissection."
-    )
+    gcs_group.add_argument("--make-singular", action="store_true", help="Force making compound parts singular during GCS splitting.")
+    gcs_group.add_argument("--no-make-singular", action="store_true", help="Prevent making compound parts singular during GCS splitting.")
+    gcs_group.add_argument("--gcs-skip-merge-fractions", action="store_true", help="Disable the merging of GCS components, outputting raw parts.")
 
     args = parser.parse_args()
 
-    ALL_POS_TAGS = {'ADJ', 'ADP', 'ADV', 'AUX', 'CCONJ', 'DET', 'INTJ', 'NOUN', 
-                    'NUM', 'PART', 'PRON', 'PROPN', 'PUNCT', 'SCONJ', 'SYM', 'VERB', 'X'}
-
-    user_tags = args.gcs_pos_tags
-
-    has_negation = any(tag.startswith('!') for tag in user_tags)
-
-    final_pos_tags = set()
-
-    if has_negation:
+    ALL_POS_TAGS = {'ADJ', 'ADP', 'ADV', 'AUX', 'CCONJ', 'DET', 'INTJ', 'NOUN', 'NUM', 'PART', 'PRON', 'PROPN', 'PUNCT', 'SCONJ', 'SYM', 'VERB', 'X'}
+    user_tags = set(args.gcs_pos_tags)
+    if 'ALL' in user_tags: args.gcs_pos_tags = list(ALL_POS_TAGS)
+    elif any(tag.startswith('!') for tag in user_tags):
         excluded_tags = {tag[1:] for tag in user_tags if tag.startswith('!')}
-        final_pos_tags = ALL_POS_TAGS - excluded_tags
-    elif 'ALL' in user_tags:
-        final_pos_tags = ALL_POS_TAGS
-    else:
-        final_pos_tags = set(user_tags)
+        args.gcs_pos_tags = list(ALL_POS_TAGS - excluded_tags)
 
-    args.gcs_pos_tags = list(final_pos_tags)
-
-    if args.gcs and args.language != 'de':
-        print("Warning: GCS is designed for German language (--language de). The --gcs flag will be ignored.", file=sys.stderr)
-        args.gcs = False
-    if args.make_singular and args.no_make_singular:
-        print("Error: --make-singular and --no-make-singular cannot be used together.", file=sys.stderr); exit(1)
-    if args.gcs_combine_noun_modes and args.gcs_only_nouns_false:
-        print("Error: --gcs-combine-noun-modes and --gcs-only-nouns-false cannot be used together.", file=sys.stderr); exit(1)
-    if args.gcs_in_wordlist and not args.gcs:
-        print("Error: --gcs-in-wordlist requires --gcs to be enabled.", file=sys.stderr); exit(1)
-    if args.gcs_include_compound and not args.gcs:
-        print("Error: --gcs-include-compound requires --gcs to be enabled.", file=sys.stderr); exit(1)
-
-    global nlp
-    nlp = spacy.load("de_core_news_lg" if args.language == "de" else "en_core_web_lg")
-
-    lemma_overrides = load_lemma_overrides(args.lemma_override_file) if args.lemma_override_file else {}
-
-    ahocs = None
-    global german_dict
-    german_dict = set()
-    if args.language == 'de':
-        german_dict = load_dictionary_to_set(args.gcs_dictionary)
-        if not german_dict:
-             print("Warning: German dictionary for validation is empty or not loaded.", file=sys.stderr)
-
-        if args.gcs:
-            if not GCS_AVAILABLE:
-                print("Error: 'german-compound-splitter' library not installed. Please run 'pip install german-compound-splitter'.", file=sys.stderr); exit(1)
-            if not os.path.exists(args.gcs_dictionary):
-                print(f"Error: GCS dictionary file '{args.gcs_dictionary}' not found!", file=sys.stderr); exit(1)
-            try:
-                with redirect_stdout(io.StringIO()):
-                    ahocs = comp_split.read_dictionary_from_file(args.gcs_dictionary)
-            except Exception as e:
-                print(f"Error loading GCS dictionary: {e}", file=sys.stderr); exit(1)
-
+    processor = TokenProcessor(args)
     lemma_index = load_lemma_index(args.lemma_index_file)
     processed_output_file = None
-    final_output_path = args.output
-    
-    if args.output and (args.timestamp or args.autoname is not None):
-        zid = datetime.now().strftime('%Y%m%d%H%M%S')
-        output_dir, filename = os.path.dirname(args.output) or '.', os.path.basename(args.output)
 
-        if args.autoname is not None:
-            source_text_for_autoname = ""
-            if args.text:
-                source_text_for_autoname = args.text
-            elif args.text1:
-                try:
-                    with open(args.text1, 'r', encoding='utf-8') as f:
-                        source_text_for_autoname = f.read(1024)
-                except Exception as e:
-                    print(f"Warning: Could not read {args.text1} for autonaming: {e}", file=sys.stderr)
-            autoname_part = generate_autoname_prefix(source_text_for_autoname, args.autoname)
-            if autoname_part:
-                first_dot_pos = filename.find('.')
-                suffix = filename[first_dot_pos:] if first_dot_pos != -1 else ""
-                new_filename = f"{zid}-{autoname_part}{suffix}"
-            else:
-                 new_filename = f"{zid}-{filename}"
-            final_output_path = os.path.join(output_dir, new_filename)
-        elif args.timestamp:
-            new_filename = f"{zid}-{filename}"
-            final_output_path = os.path.join(output_dir, new_filename)
-            
     if args.type == "token":
-        if args.text and args.text1:
-            print("Error: --text and --text1 are mutually exclusive.", file=sys.stderr); exit(1)
-        input_text = args.text or (read_input_text(args.text1) if args.text1 else "")
-        if not input_text:
-            print("Error: Either --text or --text1 must be specified.", file=sys.stderr); exit(1)
-
-        gcs_only_nouns_param = not args.gcs_only_nouns_false
-
-        kwargs_for_processing = {
-            'gcs_only_nouns': gcs_only_nouns_param,
-            'make_singular': args.make_singular,
-            'no_make_singular': args.no_make_singular,
-            'gcs_combine_noun_modes': args.gcs_combine_noun_modes,
-            'gcs_fix_genitive': args.gcs_fix_genitive,
-            'gcs_mask_unknown': args.gcs_mask_unknown,
-            'gcs_include_compound': args.gcs_include_compound,
-            'gcs_skip_merge_fractions': args.gcs_skip_merge_fractions,
-            'detailed': args.detailed,
-            'two_column_output': args.two_column_output,
-            'html': args.html
-        }
-
-        if args.text2:
-            processed_output_file = process_text_v1(
-                input_text, lemma_index, args.language, args.text2, args.text3,
-                args.sentence_context_size, final_output_path,
-                args.two_column_output_to_file, args.include_simple_list,
-                args.with_fields, args.with_br, args.pipe,
-                args.gcs, ahocs, args.gcs_in_wordlist, german_dict, lemma_overrides,
-                args.gcs_pos_tags, args, **kwargs_for_processing
-            )
-        else:
-             processed_output_file = process_text_v2(
-                input_text, lemma_index, args.language, args.sentence_context_size,
-                final_output_path, args.two_column_output_to_file, args.include_simple_list,
-                args.with_fields, args.with_br, args.pipe,
-                args.gcs, ahocs, args.gcs_in_wordlist, german_dict, lemma_overrides,
-                args.gcs_pos_tags, args, **kwargs_for_processing
-            )
-
+        processed_output_file = run_token_mode(args, processor, lemma_index)
     elif args.type == "sentence":
-        if any([args.gcs, args.gcs_combine_noun_modes, args.gcs_only_nouns_false, args.make_singular, args.no_make_singular, args.gcs_fix_genitive, args.gcs_mask_unknown]):
-            print("Warning: GCS-related flags are only applicable for --type token and will be ignored.", file=sys.stderr)
-        if not args.text1 or not args.text2:
-            print("Error: --text1 and --text2 must be specified for sentence mode.", file=sys.stderr); exit(1)
-        
-        kwargs_for_processing = {
-            'lemma_overrides': lemma_overrides,
-            'gcs': args.gcs,
-            'ahocs': ahocs,
-            'gcs_in_wordlist': args.gcs_in_wordlist,
-            'gcs_only_nouns': not args.gcs_only_nouns_false,
-            'make_singular': args.make_singular,
-            'no_make_singular': args.no_make_singular,
-            'gcs_combine_noun_modes': args.gcs_combine_noun_modes,
-            'gcs_fix_genitive': args.gcs_fix_genitive,
-            'gcs_mask_unknown': args.gcs_mask_unknown,
-            'gcs_include_compound': args.gcs_include_compound,
-            'gcs_skip_merge_fractions': args.gcs_skip_merge_fractions,
-            'german_dict': german_dict
-        }
-        processed_output_file = process_sentences(
-            args.language, lemma_index, args.text1, args.text2, args.text3,
-            args.sentence_context_size, final_output_path,
-            args.include_simple_list, args.with_fields, args.with_br, args.pipe,
-            args.gcs_pos_tags, args, **kwargs_for_processing
-        )
+        processed_output_file = run_sentence_mode(args, processor, lemma_index)
 
     if args.pipe and processed_output_file:
         print(os.path.basename(processed_output_file))

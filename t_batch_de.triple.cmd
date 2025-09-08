@@ -20,15 +20,15 @@ if errorlevel 1 (
 )
 
 REM Run script with different modes
-echo Running token extraction in different modes...
+echo Running word extraction in different modes...
 
-@REM echo 1. Simple token mode...
-@REM call "%PYTHON_PATH%" "%SCRIPT%" --type token --mode simple
+@REM echo 1. Simple word mode...
+@REM call "%PYTHON_PATH%" "%SCRIPT%" --type word --mode simple
 @REM if errorlevel 1 goto :error
 
 @REM echo.
-@REM echo 2. Dual token mode...
-@REM call "%PYTHON_PATH%" "%SCRIPT%" --language de --type token --mode dual
+@REM echo 2. Dual word mode...
+@REM call "%PYTHON_PATH%" "%SCRIPT%" --language de --type word --mode dual
 @REM if errorlevel 1 goto :error
 
 @REM echo.
@@ -37,8 +37,8 @@ echo Running token extraction in different modes...
 @REM if errorlevel 1 goto :error
 
 echo.
-echo 4. Triple token mode...
-call "%PYTHON_PATH%" "%SCRIPT%" --language de --type token --mode triple
+echo 4. Triple word mode...
+call "%PYTHON_PATH%" "%SCRIPT%" --language de --type word --mode triple
 if errorlevel 1 goto :error
 
 echo.

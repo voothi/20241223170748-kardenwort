@@ -2,7 +2,7 @@ import subprocess
 from pathlib import Path
 import argparse
 
-def get_token_args(args, python_path, token_workspace):
+def get_word_args(args, python_path, word_workspace):
     """Builds the list of command-line arguments for calling token_mix_combined.py."""
     if args.language == "en":
         lemma_file = "en-news-2023-1m-words.csv"
@@ -15,13 +15,13 @@ def get_token_args(args, python_path, token_workspace):
 
     base_args = [
         str(python_path),
-        str(token_workspace / "token_mix_combined.py"),
+        str(word_workspace / "token_mix_combined.py"),
         "--type",
         args.type,
         "--language",
         args.language,
         "--lemma-index-file",
-        str(token_workspace / lemma_file),
+        str(word_workspace / lemma_file),
         "--sentence-context-size",
         "2",
         "--file-timestamp",
@@ -58,7 +58,7 @@ def get_token_args(args, python_path, token_workspace):
             
             base_args.extend(gcs_args)
 
-    output_suffix = "sentence" if args.type == "sentence" else "token"
+    output_suffix = "sentence" if args.type == "sentence" else "word"
 
     if args.mode == "single":
         single_mode_args = []
@@ -66,11 +66,11 @@ def get_token_args(args, python_path, token_workspace):
         if args.text:
             single_mode_args.extend(["--text", args.text])
         else:
-            single_mode_args.extend(["--text1", str(token_workspace / "in/text1.txt")])
+            single_mode_args.extend(["--text1", str(word_workspace / "in/text1.txt")])
             
         single_mode_args.extend([
             "--output",
-            str(token_workspace / f"out/result.single.{output_suffix}.{args.language}.tsv"),
+            str(word_workspace / f"out/result.single.{output_suffix}.{args.language}.tsv"),
         ])
         
         return base_args + single_mode_args
@@ -78,22 +78,22 @@ def get_token_args(args, python_path, token_workspace):
     elif args.mode == "dual":
         return base_args + [
             "--text1",
-            str(token_workspace / "in/text1.txt"),
+            str(word_workspace / "in/text1.txt"),
             "--text2",
-            str(token_workspace / "in/text2.txt"),
+            str(word_workspace / "in/text2.txt"),
             "--output",
-            str(token_workspace / f"out/result.dual.{output_suffix}.{args.language}.tsv"),
+            str(word_workspace / f"out/result.dual.{output_suffix}.{args.language}.tsv"),
         ]
     elif args.mode == "triple":
         return base_args + [
             "--text1",
-            str(token_workspace / "in/text1.txt"),
+            str(word_workspace / "in/text1.txt"),
             "--text2",
-            str(token_workspace / "in/text2.txt"),
+            str(word_workspace / "in/text2.txt"),
             "--text3",
-            str(token_workspace / "in/text3.txt"),
+            str(word_workspace / "in/text3.txt"),
             "--output",
-            str(token_workspace / f"out/result.triple.{output_suffix}.{args.language}.tsv"),
+            str(word_workspace / f"out/result.triple.{output_suffix}.{args.language}.tsv"),
         ]
 
     raise ValueError(f"Unknown mode: {args.mode}")
@@ -101,7 +101,7 @@ def get_token_args(args, python_path, token_workspace):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="A wrapper script to extract and process tokens or sentences from text files and import them."
+        description="A wrapper script to extract and process words or sentences from text files and import them."
     )
     parser.add_argument(
         "--type",
@@ -145,24 +145,24 @@ def main():
     python_path = Path(
         r"U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
     )
-    token_workspace = Path(r"U:/voothi/20241223170748-token-extraction")
+    word_workspace = Path(r"U:/voothi/20241223170748-token-extraction")
     importer_workspace = Path(r"U:/voothi/20250401192017-anki-csv-importer")
 
-    token_args = get_token_args(args, python_path, token_workspace)
+    word_args = get_word_args(args, python_path, word_workspace)
 
-    print(f"Running token extraction with command:\n{' '.join(token_args)}\n")
-    token_process = subprocess.Popen(
-        token_args,
+    print(f"Running word extraction with command:\n{' '.join(word_args)}\n")
+    word_process = subprocess.Popen(
+        word_args,
         stdout=subprocess.PIPE,
         text=True,
         encoding='utf-8',
         errors='replace'
     )
 
-    output_file = token_process.stdout.readline().strip()
+    output_file = word_process.stdout.readline().strip()
     if not output_file:
         print("ERROR: No output file was captured from token_mix_combined.py")
-        stderr_output, _ = token_process.communicate()
+        stderr_output, _ = word_process.communicate()
         if stderr_output:
             print("--- Stderr from token_mix_combined.py ---")
             print(stderr_output)
@@ -175,7 +175,7 @@ def main():
         str(python_path),
         str(importer_workspace / "anki-csv-importer.py"),
         "--path",
-        str(token_workspace / "out" / output_file),
+        str(word_workspace / "out" / output_file),
         "--deck",
         output_file,
         "--note",

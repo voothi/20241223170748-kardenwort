@@ -201,7 +201,7 @@ def get_overridden_lemma_for_compound_part(initial_lemma, part, original_word, o
             
     return initial_lemma
 
-def lemmatize_compound_part(part, nlp_model, german_dictionary):
+def lemmatize_compound_part(part, nlp_model, de_dictionary):
     if not part:
         return ""
 
@@ -223,15 +223,15 @@ def lemmatize_compound_part(part, nlp_model, german_dictionary):
     spacy_lemma = token.lemma_.capitalize()
     capitalized_part = part.capitalize()
 
-    if spacy_lemma in german_dictionary:
+    if spacy_lemma in de_dictionary:
         return spacy_lemma
 
-    if capitalized_part in german_dictionary:
+    if capitalized_part in de_dictionary:
         return capitalized_part
 
     return spacy_lemma
 
-def correct_spacy_lemma(token, german_dictionary, fix_genitive=False):
+def correct_spacy_lemma(token, de_dictionary, fix_genitive=False):
     spacy_lemma = token.lemma_
     if (fix_genitive and
         nlp.lang == 'de' and
@@ -240,7 +240,7 @@ def correct_spacy_lemma(token, german_dictionary, fix_genitive=False):
 
         if spacy_lemma.endswith('s') and len(spacy_lemma) > 1:
             lemma_without_genitive_s = spacy_lemma[:-1]
-            if lemma_without_genitive_s.capitalize() in german_dictionary:
+            if lemma_without_genitive_s.capitalize() in de_dictionary:
                 return lemma_without_genitive_s
 
     return spacy_lemma
@@ -355,7 +355,7 @@ def deduplicate_lemmas(candidate_lemmas):
             
     return final_lemmas
 
-def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, german_dictionary, lemma_override_rules, gcs_pos_tags, args, **kwargs):
+def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, de_dictionary, lemma_override_rules, gcs_pos_tags, args, **kwargs):
     gcs = kwargs.get('gcs', False)
     gcs_automaton = kwargs.get('gcs_automaton', None)
     gcs_add_parts_to_wordlist = kwargs.get('gcs_add_parts_to_wordlist', False)
@@ -388,7 +388,7 @@ def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, ger
             default_lemma = f"{particle.text.lower()}{token.lemma_}".lower()
             source_word_form = f"{token.text} {particle.text}"
         else:
-            spacy_lemma = correct_spacy_lemma(token, german_dictionary, de_fix_genitive)
+            spacy_lemma = correct_spacy_lemma(token, de_dictionary, de_fix_genitive)
             default_lemma = format_lemma_capitalization(token, spacy_lemma, force_capitalization=args.force_lemma_capitalization)
         base_lemma = get_overridden_lemma_for_word(default_lemma, source_word_form, lemma_override_rules, sentence_text)
         
@@ -406,7 +406,7 @@ def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, ger
                 part = part.strip()
                 if not part or len(part) <= 1: continue
 
-                initial_part_lemma = lemmatize_compound_part(part, nlp_model, german_dictionary)
+                initial_part_lemma = lemmatize_compound_part(part, nlp_model, de_dictionary)
                 processed_part_lemma = get_overridden_lemma_for_compound_part(initial_part_lemma, part, token.text, lemma_override_rules, sentence_text)
                 if processed_part_lemma:
                     lemmas_for_current_token.append(processed_part_lemma)
@@ -455,7 +455,7 @@ def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, ger
                         component = raw_component.strip('-')
                         if not component or len(component) < 3: continue
                         
-                        initial_part_lemma = lemmatize_compound_part(component, nlp_model, german_dictionary)
+                        initial_part_lemma = lemmatize_compound_part(component, nlp_model, de_dictionary)
                         overridden_part_lemma = get_overridden_lemma_for_compound_part(initial_part_lemma, component, token.text, lemma_override_rules, sentence_text)
                         processed_part_lemma = _format_gcs_component_case(overridden_part_lemma)
 
@@ -476,7 +476,7 @@ def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, ger
 def process_parallel_text_files(
     source_text_path, lemma_sort_index, language, target_text_path, tertiary_text_path, sentence_context_size,
     output_file_path, include_source_word, add_sentence_wordlist,
-    add_anki_header, use_br_for_wordlist, print_output_filename, gcs, gcs_automaton, gcs_add_parts_to_wordlist, german_dictionary, lemma_override_rules,
+    add_anki_header, use_br_for_wordlist, print_output_filename, gcs, gcs_automaton, gcs_add_parts_to_wordlist, de_dictionary, lemma_override_rules,
     gcs_pos_tags, args, **kwargs
 ):
     gcs_only_nouns = kwargs.get('gcs_only_nouns', True)
@@ -518,7 +518,7 @@ def process_parallel_text_files(
                     default_lemma = f"{particle.text.lower()}{token.lemma_}".lower()
                     source_word_form = f"{token.text} {particle.text}"
                 else:
-                    spacy_lemma = correct_spacy_lemma(token, german_dictionary, de_fix_genitive)
+                    spacy_lemma = correct_spacy_lemma(token, de_dictionary, de_fix_genitive)
                     default_lemma = format_lemma_capitalization(token, spacy_lemma, force_capitalization=args.force_lemma_capitalization)
                 base_lemma = get_overridden_lemma_for_word(default_lemma, source_word_form, lemma_override_rules, source_sentence)
 
@@ -536,7 +536,7 @@ def process_parallel_text_files(
                         part = part.strip()
                         if not part or len(part) <= 1: continue
 
-                        initial_part_lemma = lemmatize_compound_part(part, nlp, german_dictionary)
+                        initial_part_lemma = lemmatize_compound_part(part, nlp, de_dictionary)
                         processed_part_lemma = get_overridden_lemma_for_compound_part(initial_part_lemma, part, token.text, lemma_override_rules, source_sentence)
                         if processed_part_lemma:
                             lemmas_for_current_token.append(processed_part_lemma)
@@ -586,7 +586,7 @@ def process_parallel_text_files(
                                 if not component: continue
                                 if len(component) < 3: continue
 
-                                initial_part_lemma = lemmatize_compound_part(component, nlp, german_dictionary)
+                                initial_part_lemma = lemmatize_compound_part(component, nlp, de_dictionary)
                                 overridden_part_lemma = get_overridden_lemma_for_compound_part(initial_part_lemma, component, token.text, lemma_override_rules, source_sentence)
                                 processed_part_lemma = _format_gcs_component_case(overridden_part_lemma)
                                 
@@ -640,7 +640,7 @@ def process_parallel_text_files(
                 csv_row[12] = source_sentence
                 if add_sentence_wordlist:
                     wordlist_generation_args = {**kwargs, 'gcs': gcs, 'gcs_automaton': gcs_automaton, 'gcs_add_parts_to_wordlist': gcs_add_parts_to_wordlist}
-                    lemmas = extract_lemmas_from_sentence(source_sentence, lemma_sort_index, nlp, german_dictionary, lemma_override_rules, gcs_pos_tags, args, **wordlist_generation_args)
+                    lemmas = extract_lemmas_from_sentence(source_sentence, lemma_sort_index, nlp, de_dictionary, lemma_override_rules, gcs_pos_tags, args, **wordlist_generation_args)
                     csv_row[11] = "<br>".join(lemmas) if use_br_for_wordlist else "\n".join(lemmas)
                 if language == "de":
                     csv_row[58] = "1"; csv_row[65] = "1"
@@ -652,7 +652,7 @@ def process_parallel_text_files(
 def process_single_text(
     source_text, lemma_sort_index, language, sentence_context_size,
     output_file_path, include_source_word, add_sentence_wordlist,
-    add_anki_header, use_br_for_wordlist, print_output_filename, gcs, gcs_automaton, gcs_add_parts_to_wordlist, german_dictionary, lemma_override_rules, 
+    add_anki_header, use_br_for_wordlist, print_output_filename, gcs, gcs_automaton, gcs_add_parts_to_wordlist, de_dictionary, lemma_override_rules, 
     gcs_pos_tags, args, **kwargs
 ):
     gcs_only_nouns = kwargs.get('gcs_only_nouns', True)
@@ -693,7 +693,7 @@ def process_single_text(
                     default_lemma = f"{particle.text.lower()}{token.lemma_}".lower()
                     source_word_form = f"{token.text} {particle.text}"
                 else:
-                    spacy_lemma = correct_spacy_lemma(token, german_dictionary, de_fix_genitive)
+                    spacy_lemma = correct_spacy_lemma(token, de_dictionary, de_fix_genitive)
                     default_lemma = format_lemma_capitalization(token, spacy_lemma, force_capitalization=args.force_lemma_capitalization)
                 base_lemma = get_overridden_lemma_for_word(default_lemma, source_word_form, lemma_override_rules, unit_text)
                 
@@ -711,7 +711,7 @@ def process_single_text(
                         part = part.strip()
                         if not part or len(part) <= 1: continue
 
-                        initial_part_lemma = lemmatize_compound_part(part, nlp, german_dictionary)
+                        initial_part_lemma = lemmatize_compound_part(part, nlp, de_dictionary)
                         processed_part_lemma = get_overridden_lemma_for_compound_part(initial_part_lemma, part, token.text, lemma_override_rules, unit_text)
                         if processed_part_lemma:
                             lemmas_for_current_token.append(processed_part_lemma)
@@ -761,7 +761,7 @@ def process_single_text(
                                 if not component: continue
                                 if len(component) < 3: continue
 
-                                initial_part_lemma = lemmatize_compound_part(component, nlp, german_dictionary)
+                                initial_part_lemma = lemmatize_compound_part(component, nlp, de_dictionary)
                                 overridden_part_lemma = get_overridden_lemma_for_compound_part(initial_part_lemma, component, token.text, lemma_override_rules, unit_text)
                                 processed_part_lemma = _format_gcs_component_case(overridden_part_lemma)
 
@@ -837,7 +837,7 @@ def process_single_text(
             csv_row[12] = source_sentence
             if add_sentence_wordlist:
                 wordlist_generation_args = {**kwargs, 'gcs': gcs, 'gcs_automaton': gcs_automaton, 'gcs_add_parts_to_wordlist': gcs_add_parts_to_wordlist}
-                lemmas = extract_lemmas_from_sentence(source_sentence, lemma_sort_index, nlp, german_dictionary, lemma_override_rules, gcs_pos_tags, args, **wordlist_generation_args)
+                lemmas = extract_lemmas_from_sentence(source_sentence, lemma_sort_index, nlp, de_dictionary, lemma_override_rules, gcs_pos_tags, args, **wordlist_generation_args)
                 csv_row[11] = "<br>".join(lemmas) if use_br_for_wordlist else "\n".join(lemmas)
             if language == "de":
                 csv_row[58] = "1"; csv_row[65] = "1"
@@ -884,7 +884,7 @@ def process_parallel_sentences_to_csv(
             csv_row[9] = target_sentence
             csv_row[10] = " ".join(line.strip() for line in target_text_lines[i + 1:context_end_index])
             if add_sentence_wordlist:
-                lemmas = extract_lemmas_from_sentence(source_sentence, lemma_sort_index, nlp, german_dictionary, lemma_override_rules, gcs_pos_tags, args, **kwargs)
+                lemmas = extract_lemmas_from_sentence(source_sentence, lemma_sort_index, nlp, de_dictionary, lemma_override_rules, gcs_pos_tags, args, **kwargs)
                 csv_row[11] = "<br>".join(lemmas) if use_br_for_wordlist else "\n".join(lemmas)
             csv_row[12] = source_sentence
             if tertiary_text_path:
@@ -941,7 +941,7 @@ def main():
 
     # --- German Language Enhancements ---
     de_group = parser.add_argument_group('German Language Enhancements')
-    de_group.add_argument("--german-dictionary", default="german.dic", help="Path to the dictionary file for German-specific operations like genitive correction.")
+    de_group.add_argument("--de-dictionary", default="german.dic", help="Path to the dictionary file for German-specific operations like genitive correction.")
     de_group.add_argument("--de-fix-genitive", action="store_true", help="Corrects German genitive noun lemmas (e.g., 'Hauses' -> 'Haus') by checking against the dictionary.")
 
     # --- GCS - Compound Splitting Control ---
@@ -998,21 +998,21 @@ def main():
     lemma_override_rules = load_lemma_override_rules(args.lemma_override_file) if args.lemma_override_file else {}
 
     gcs_automaton = None
-    global german_dictionary
-    german_dictionary = set()
+    global de_dictionary
+    de_dictionary = set()
     if args.language == 'de':
-        german_dictionary = load_dictionary(args.german_dictionary)
-        if not german_dictionary:
+        de_dictionary = load_dictionary(args.de_dictionary)
+        if not de_dictionary:
              print("Warning: German dictionary for validation is empty or not loaded.", file=sys.stderr)
 
         if args.gcs:
             if not GCS_AVAILABLE:
                 print("Error: 'german-compound-splitter' library not installed. Please run 'pip install german-compound-splitter'.", file=sys.stderr); exit(1)
-            if not os.path.exists(args.german_dictionary):
-                print(f"Error: GCS dictionary file '{args.german_dictionary}' not found!", file=sys.stderr); exit(1)
+            if not os.path.exists(args.de_dictionary):
+                print(f"Error: GCS dictionary file '{args.de_dictionary}' not found!", file=sys.stderr); exit(1)
             try:
                 with redirect_stdout(io.StringIO()):
-                    gcs_automaton = comp_split.read_dictionary_from_file(args.german_dictionary)
+                    gcs_automaton = comp_split.read_dictionary_from_file(args.de_dictionary)
             except Exception as e:
                 print(f"Error loading GCS dictionary: {e}", file=sys.stderr); exit(1)
 
@@ -1068,7 +1068,7 @@ def main():
                 args.sentence_context_size, final_output_path,
                 args.include_source_word, args.add_sentence_wordlist,
                 args.add_anki_header, args.use_br_for_wordlist, args.print_output_filename,
-                args.gcs, gcs_automaton, args.gcs_add_parts_to_wordlist, german_dictionary, lemma_override_rules,
+                args.gcs, gcs_automaton, args.gcs_add_parts_to_wordlist, de_dictionary, lemma_override_rules,
                 args.gcs_pos_tags, args, **processing_options
             )
         else:
@@ -1076,7 +1076,7 @@ def main():
                 input_text, lemma_index, args.language, args.sentence_context_size,
                 final_output_path, args.include_source_word, args.add_sentence_wordlist,
                 args.add_anki_header, args.use_br_for_wordlist, args.print_output_filename,
-                args.gcs, gcs_automaton, args.gcs_add_parts_to_wordlist, german_dictionary, lemma_override_rules,
+                args.gcs, gcs_automaton, args.gcs_add_parts_to_wordlist, de_dictionary, lemma_override_rules,
                 args.gcs_pos_tags, args, **processing_options
             )
 
@@ -1097,7 +1097,7 @@ def main():
             'gcs_mask_unknown_parts': args.gcs_mask_unknown_parts,
             'gcs_include_compound': args.gcs_include_compound,
             'gcs_skip_merge_fractions': args.gcs_skip_merge_fractions,
-            'german_dictionary': german_dictionary
+            'de_dictionary': de_dictionary
         }
         processed_output_file = process_parallel_sentences_to_csv(
             args.language, lemma_index, args.text1, args.text2, args.text3,

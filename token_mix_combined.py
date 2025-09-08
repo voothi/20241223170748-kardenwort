@@ -950,7 +950,37 @@ def main():
     de_group.add_argument("--de-fix-genitive", action="store_true", help="Corrects German genitive noun lemmas (e.g., 'Hauses' -> 'Haus') by checking against the dictionary.")
     de_group.add_argument("--de-force-noun-capitalization", action="store_true", help="[German only] Force capitalization of all noun lemmas (NOUN, PROPN) as per German orthography rules. Overrides --force-proper-noun-capitalization for German.")
     de_group.add_argument("--de-gcs", action="store_true", help="Enable German Compound Splitting (GCS).")
-    de_group.add_argument("--de-gcs-pos-tags", nargs='+', default=['NOUN', 'PROPN', 'ADV', 'ADJ'], help='''[GCS] Specify which Part-of-Speech tags to apply splitting to. (Default: NOUN PROPN ADV ADJ). Use '!' to exclude (e.g., !VERB), or 'ALL' for all tags.''')
+    de_group.add_argument(
+        "--gcs-pos-tags", 
+        nargs='+', 
+        default=['NOUN', 'PROPN', 'ADV', 'ADJ'],
+        help='''Specify which Part-of-Speech tags to apply splitting to.
+
+  Default: NOUN PROPN ADV ADJ
+
+  This argument operates in two main modes:
+
+  1. INCLUSION MODE (default behavior):
+     List the specific tags you want to process.
+     Example: --gcs-pos-tags NOUN PROPN ADJ
+
+  2. EXCLUSION MODE:
+     Prefix tags with '!' to process all tags except the ones specified.
+     Example: --gcs-pos-tags !VERB !AUX
+     (This splits everything except verbs and auxiliary verbs)
+
+  PRECEDENCE RULE:
+     If even one tag is prefixed with '!', the mode switches to exclusion.
+     Any tags listed without '!' in the same command will be ignored.
+     For instance, '--gcs-pos-tags NOUN !VERB' is treated as just '!VERB'.
+
+  SPECIAL KEYWORD:
+     ALL - A shortcut to process all available tags.
+
+  Available Tags (Universal Dependencies):
+    ADJ, ADP, ADV, AUX, CCONJ, DET, INTJ, NOUN, NUM, PART, 
+    PRON, PROPN, PUNCT, SCONJ, SYM, VERB, X'''
+    )
     de_group.add_argument("--de-gcs-split-mode", choices=['only-nouns', 'any', 'combined'], default='only-nouns', help="[GCS] Set the splitting mode. 'only-nouns' (default): safe mode, splits based on nouns. 'any': aggressive mode, uses any part of speech. 'combined': combines results from both modes.")
     de_group.add_argument("--de-gcs-mask-unknown-parts", action="store_true", help="[GCS] Mask word parts not found in the dictionary as 'unknown' during splitting.")
     de_group.add_argument("--de-gcs-part-singularization", choices=['only-nouns', 'all', 'none'], default='only-nouns', help="[GCS] Controls how compound parts are made singular. 'only-nouns' (default): only for nouns. 'all': for all parts. 'none': disable singularization.")

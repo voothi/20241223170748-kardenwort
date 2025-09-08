@@ -37,8 +37,8 @@ def get_token_args(args, python_path, token_workspace):
 
     if args.language == "de":
         german_enhancement_args = [
-            "--gcs-fix-genitive",
-            "--gcs-dictionary",
+            "--de-fix-genitive",
+            "--de-dictionary",
             "U:\\voothi\\20241223170748-token-extraction\\20250826000433-test\\german.dic",
         ]
         base_args.extend(german_enhancement_args)

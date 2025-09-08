@@ -791,15 +791,15 @@ def process_single_text(
         return u if is_processing_by_line else u.text
 
     if not output_file_path:
-        if args.console_format == 'html':
+        if args.stdout_format == 'html':
             print("<table>", file=sys.stdout)
             for token in sorted_tokens:
                 print(f"<tr><td>{token}</td><td>{lemma_to_shortest_form.get(token, '')}</td></tr>", file=sys.stdout)
             print("</table>", file=sys.stdout)
-        elif args.console_format == 'columns':
+        elif args.stdout_format == 'tsv':
             for token in sorted_tokens:
                 print(f"{token}\t{lemma_to_shortest_form.get(token, '')}", file=sys.stdout)
-        elif args.console_format == 'detailed':
+        elif args.stdout_format == 'context':
              for token in sorted_tokens:
                 unit_index, source_sentence_unit = lemma_to_sentence_info[token]
                 source_sentence = get_unit_text(source_sentence_unit)
@@ -812,7 +812,7 @@ def process_single_text(
                 print(source_sentence.strip(), file=sys.stdout)
                 if source_context_right: print(source_context_right, file=sys.stdout)
                 print(file=sys.stdout)
-        else: 
+        else:
             for token in sorted_tokens:
                 print(token, file=sys.stdout)
         return None
@@ -907,7 +907,7 @@ def main():
         formatter_class=argparse.RawTextHelpFormatter
     )
     
-    io_group = parser.add_argument_group('Input/Output Arguments')
+    io_group = parser.add_argument_group('Input & Output Arguments')
     io_group.add_argument("--type", required=True, choices=["token", "sentence"], help="Specify the processing type: 'token' for word extraction, 'sentence' for parallel sentence processing.")
     io_group.add_argument("--language", default="de", choices=["de", "en"], help="The language of the text to be processed.")
     io_group.add_argument("--lemma-index-file", default="", help="Path to a CSV file with lemmas, used for frequency-based sorting of the output.")
@@ -928,9 +928,13 @@ def main():
     format_group.add_argument("--use-br-for-wordlist", action="store_true", help="Use HTML <br> tags instead of newlines as separators in the sentence wordlist. Requires --add-sentence-wordlist.")
     format_group.add_argument("--print-output-filename", action="store_true", help="Print the basename of the generated output file to stdout. Useful for scripting.")
     
-    console_group = parser.add_argument_group('Console Output Arguments (used only if --output is not specified)')
-    console_group.add_argument("--console-format", choices=['lemmas-only', 'detailed', 'columns', 'html'], default='lemmas-only', 
-                               help="[STDOUT] Select the output format for the console. 'lemmas-only' (default): a simple list of lemmas. 'detailed': lemmas with full sentence context. 'columns': two-column list (lemma, source word). 'html': the two-column list as an HTML table.")
+    stdout_group = parser.add_argument_group('Standard Output (STDOUT) Arguments (used only if --output is not specified)')
+    stdout_group.add_argument("--stdout-format", choices=['list', 'context', 'tsv', 'html'], default='list', 
+                               help="Select the output format for STDOUT.\n"
+                                    "'list' (default): A simple, one-lemma-per-line list.\n"
+                                    "'context': Lemmas with full sentence context.\n"
+                                    "'tsv': A two-column list (lemma, source word) separated by a tab.\n"
+                                    "'html': The two-column list formatted as an HTML table.")
     
     lemma_group = parser.add_argument_group('Lemmatization Control Arguments')
     lemma_group.add_argument(

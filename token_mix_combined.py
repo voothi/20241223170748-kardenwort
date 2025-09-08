@@ -811,7 +811,7 @@ def process_single_text(
                 print()
         else: # lemmas-only
             for token in sorted_tokens:
-                print(token)
+                print(token, file=sys.stdout)
         return None
 
     with open(output_file_path, "w", newline="", encoding="utf-8") as tsvfile:
@@ -1049,9 +1049,17 @@ def main():
     if args.type == "token":
         if args.text and args.text1:
             print("Error: --text and --text1 are mutually exclusive.", file=sys.stderr); exit(1)
-        input_text = args.text or (read_text_from_file(args.text1) if args.text1 else "")
+
+        input_text = ""
+        if args.text:
+            input_text = args.text
+        elif args.text1:
+            input_text = read_text_from_file(args.text1)
+        elif not sys.stdin.isatty():
+            input_text = sys.stdin.read()
+
         if not input_text:
-            print("Error: Either --text or --text1 must be specified.", file=sys.stderr); exit(1)
+            print("Error: No input provided. Use --text, --text1, or pipe data via stdin.", file=sys.stderr); exit(1)
 
         processing_options = {
             'gcs_only_nouns': (args.gcs_split_mode == 'only-nouns'),

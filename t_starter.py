@@ -24,15 +24,15 @@ def get_token_args(args, python_path, token_workspace):
         str(token_workspace / lemma_file),
         "--sentence-context-size",
         "2",
-        "--timestamp",
-        "--include-source-word",
-        "--add-sentence-wordlist",
-        "--add-anki-header",
-        "--use-br-for-wordlist",
-        "--autoname",
+        "--file-timestamp",
+        "--file-autoname",
+        "--file-print-name",
+        "--output-anki-header",
+        "--column-source-word",
+        "--column-sentence-wordlist",
+        "--column-wordlist-use-br",
         "--lemma-override-file",
         override_file,
-        "--print-output-filename",
     ]
 
     if args.language == "de":
@@ -45,15 +45,15 @@ def get_token_args(args, python_path, token_workspace):
 
         if args.gcs:
             gcs_args = [
-                "--gcs",
-                "--gcs-include-compound",
-                "--gcs-combine-noun-modes",
-                "--add-gcs-components-to-wordlist",
-                "--gcs-skip-merge-fractions",
+                "--de-gcs",
+                "--de-gcs-preserve-compound-word",
+                "--de-gcs-add-parts-to-wordlist",
+                "--de-gcs-split-mode", "combined",
+                "--de-gcs-skip-merge-fractions",
             ]
 
             if args.gcs_pos_tags:
-                gcs_args.append("--gcs-pos-tags")
+                gcs_args.append("--de-gcs-pos-tags")
                 gcs_args.extend(args.gcs_pos_tags)
             
             base_args.extend(gcs_args)
@@ -107,8 +107,8 @@ def main():
         "--type",
         type=str,
         required=True,
-        choices=["token", "sentence"],
-        help="Type of processing: 'token' for word extraction, 'sentence' for parallel sentences.",
+        choices=["word", "sentence"],
+        help="Type of processing: 'word' for word extraction, 'sentence' for parallel sentences.",
     )
     parser.add_argument(
         "--mode",

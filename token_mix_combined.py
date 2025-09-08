@@ -366,7 +366,7 @@ def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, de_
     de_gcs_combine_noun_modes = kwargs.get('de_gcs_combine_noun_modes', False)
     de_fix_genitive = kwargs.get('de_fix_genitive', False)
     de_gcs_mask_unknown_parts = kwargs.get('de_gcs_mask_unknown_parts', False)
-    de_gcs_include_compound = kwargs.get('de_gcs_include_compound', False)
+    de_gcs_preserve_compound_word = kwargs.get('de_gcs_preserve_compound_word', False)
     de_gcs_skip_merge_fractions = kwargs.get('de_gcs_skip_merge_fractions', False)
 
     sentence_doc = nlp_model(sentence_text)
@@ -402,7 +402,7 @@ def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, de_
             was_split = True
             hyphenated_parts = token.text.split('-')
             
-            if de_gcs_include_compound:
+            if de_gcs_preserve_compound_word:
                 lemmas_for_current_token.append(base_lemma)
 
             for part in hyphenated_parts:
@@ -451,7 +451,7 @@ def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, de_
 
                 if len(split_components) > 1:
                     was_split = True
-                    if de_gcs_include_compound:
+                    if de_gcs_preserve_compound_word:
                         lemmas_for_current_token.append(base_lemma)
                         
                     for raw_component in set(split_components):
@@ -486,7 +486,7 @@ def process_parallel_text_files(
     de_gcs_combine_noun_modes = kwargs.get('de_gcs_combine_noun_modes', False)
     de_fix_genitive = kwargs.get('de_fix_genitive', False)
     de_gcs_mask_unknown_parts = kwargs.get('de_gcs_mask_unknown_parts', False)
-    de_gcs_include_compound = kwargs.get('de_gcs_include_compound', False)
+    de_gcs_preserve_compound_word = kwargs.get('de_gcs_preserve_compound_word', False)
     de_gcs_skip_merge_fractions = kwargs.get('de_gcs_skip_merge_fractions', False)
 
     if "\n" in source_text_path or not os.path.exists(source_text_path):
@@ -532,7 +532,7 @@ def process_parallel_text_files(
                     was_split = True
                     hyphenated_parts = token.text.split('-')
                     
-                    if de_gcs_include_compound:
+                    if de_gcs_preserve_compound_word:
                         lemmas_for_current_token.append(base_lemma)
 
                     for part in hyphenated_parts:
@@ -581,7 +581,7 @@ def process_parallel_text_files(
 
                         if len(split_components) > 1:
                             was_split = True
-                            if de_gcs_include_compound:
+                            if de_gcs_preserve_compound_word:
                                 lemmas_for_current_token.append(base_lemma)
 
                             for raw_component in set(split_components):
@@ -662,7 +662,7 @@ def process_single_text(
     de_gcs_combine_noun_modes = kwargs.get('de_gcs_combine_noun_modes', False)
     de_fix_genitive = kwargs.get('de_fix_genitive', False)
     de_gcs_mask_unknown_parts = kwargs.get('de_gcs_mask_unknown_parts', False)
-    de_gcs_include_compound = kwargs.get('de_gcs_include_compound', False)
+    de_gcs_preserve_compound_word = kwargs.get('de_gcs_preserve_compound_word', False)
     de_gcs_skip_merge_fractions = kwargs.get('de_gcs_skip_merge_fractions', False)
 
     if '\n' in source_text.strip():
@@ -707,7 +707,7 @@ def process_single_text(
                     was_split = True
                     hyphenated_parts = token.text.split('-')
                     
-                    if de_gcs_include_compound:
+                    if de_gcs_preserve_compound_word:
                         lemmas_for_current_token.append(base_lemma)
 
                     for part in hyphenated_parts:
@@ -756,7 +756,7 @@ def process_single_text(
 
                         if len(split_components) > 1:
                             was_split = True
-                            if de_gcs_include_compound:
+                            if de_gcs_preserve_compound_word:
                                 lemmas_for_current_token.append(base_lemma)
                             
                             for raw_component in set(split_components):
@@ -963,7 +963,7 @@ def main():
     de_group.add_argument("--de-gcs-mask-unknown-parts", action="store_true", help="[GCS] Mask word parts not found in the dictionary as 'unknown' during splitting.")
     de_group.add_argument("--de-gcs-part-singularization", choices=['only-nouns', 'all', 'none'], default='only-nouns',
                                       help="[GCS] Controls how compound parts are made singular. 'only-nouns' (default): only for nouns. 'all': for all parts. 'none': disable singularization.")
-    de_group.add_argument("--de-gcs-include-compound", action="store_true", help="[GCS] Include the original compound word in the lemma list along with its split components.")
+    de_group.add_argument("--de-gcs-preserve-compound-word", action="store_true", help="[GCS] Preserve the original compound word in the lemma list along with its split components.")
     de_group.add_argument("--de-gcs-add-parts-to-wordlist", action="store_true", help="[GCS] Include the components from compound splitting in the sentence wordlist. Requires --add-sentence-wordlist.")
     de_group.add_argument("--de-gcs-skip-merge-fractions", action="store_true", help="[GCS] Disable the merging of components, outputting the raw, unmerged parts from the dissection.")
 
@@ -991,8 +991,8 @@ def main():
         args.de_gcs = False
     if args.de_gcs_add_parts_to_wordlist and not args.de_gcs:
         print("Error: --de-gcs-add-parts-to-wordlist requires --de-gcs to be enabled.", file=sys.stderr); exit(1)
-    if args.de_gcs_include_compound and not args.de_gcs:
-        print("Error: --de-gcs-include-compound requires --de-gcs to be enabled.", file=sys.stderr); exit(1)
+    if args.de_gcs_preserve_compound_word and not args.de_gcs:
+        print("Error: --de-gcs-preserve-compound-word requires --de-gcs to be enabled.", file=sys.stderr); exit(1)
 
     global nlp
     nlp = spacy.load("de_core_news_lg" if args.language == "de" else "en_core_web_lg")
@@ -1068,7 +1068,7 @@ def main():
             'de_gcs_combine_noun_modes': (args.de_gcs_split_mode == 'combined'),
             'de_fix_genitive': args.de_fix_genitive,
             'de_gcs_mask_unknown_parts': args.de_gcs_mask_unknown_parts,
-            'de_gcs_include_compound': args.de_gcs_include_compound,
+            'de_gcs_preserve_compound_word': args.de_gcs_preserve_compound_word,
             'de_gcs_skip_merge_fractions': args.de_gcs_skip_merge_fractions,
         }
 
@@ -1105,7 +1105,7 @@ def main():
             'de_gcs_combine_noun_modes': (args.de_gcs_split_mode == 'combined'),
             'de_fix_genitive': args.de_fix_genitive,
             'de_gcs_mask_unknown_parts': args.de_gcs_mask_unknown_parts,
-            'de_gcs_include_compound': args.de_gcs_include_compound,
+            'de_gcs_preserve_compound_word': args.de_gcs_preserve_compound_word,
             'de_gcs_skip_merge_fractions': args.de_gcs_skip_merge_fractions,
             'de_dictionary': de_dictionary
         }

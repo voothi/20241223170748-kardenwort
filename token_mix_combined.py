@@ -611,16 +611,16 @@ def process_parallel_text_files(
                         elif len(source_word_form) < len(lemma_to_shortest_form[lemma]):
                              lemma_to_shortest_form[lemma] = source_word_form
 
-    sorted_tokens = sorted(list(lemma_to_shortest_form.keys()), key=lambda token: (token not in lemma_sort_index, lemma_sort_index.get(token, 0), token.lower()))
+    sorted_words = sorted(list(lemma_to_shortest_form.keys()), key=lambda word: (word not in lemma_sort_index, lemma_sort_index.get(word, 0), word.lower()))
     if output_file_path:
         with open(output_file_path, "w", newline="", encoding="utf-8") as tsvfile:
             tsv_writer = csv.writer(tsvfile, delimiter="\t")
             if output_anki_header:
                 tsv_writer.writerow(get_anki_csv_header())
 
-            for token in sorted_tokens:
+            for word in sorted_words:
                 csv_row = [""] * 80
-                sentence_index, source_sentence = lemma_to_sentence_info.get(token, (-1, ""))
+                sentence_index, source_sentence = lemma_to_sentence_info.get(word, (-1, ""))
                 if sentence_index == -1: continue
                 source_sentence = source_sentence.strip()
                 target_sentence = target_text_lines[sentence_index].strip() if target_text_path and sentence_index < len(target_text_lines) else ""
@@ -636,10 +636,10 @@ def process_parallel_text_files(
                     csv_row[77] = " ".join(line.strip() for line in tertiary_text_lines[context_start_index:sentence_index])
                     csv_row[78] = tertiary_text_lines[sentence_index].strip() if sentence_index < len(tertiary_text_lines) else ""
                     csv_row[79] = " ".join(line.strip() for line in tertiary_text_lines[sentence_index + 1:context_end_index])
-                csv_row[0] = token
-                csv_row[1] = token
+                csv_row[0] = word
+                csv_row[1] = word
                 if column_source_word:
-                    csv_row[2] = lemma_to_shortest_form.get(token, '')
+                    csv_row[2] = lemma_to_shortest_form.get(word, '')
                 csv_row[12] = source_sentence
                 if column_sentence_wordlist:
                     wordlist_generation_args = {**kwargs, 'de_gcs': de_gcs, 'gcs_automaton': gcs_automaton, 'de_gcs_add_parts_to_wordlist': de_gcs_add_parts_to_wordlist}
@@ -786,35 +786,35 @@ def process_single_text(
                         elif len(source_word_form) < len(lemma_to_shortest_form[lemma]):
                              lemma_to_shortest_form[lemma] = source_word_form
 
-    sorted_tokens = sorted(list(lemma_to_shortest_form.keys()), key=lambda token: (token not in lemma_sort_index, lemma_sort_index.get(token, 0), token.lower()))
+    sorted_words = sorted(list(lemma_to_shortest_form.keys()), key=lambda word: (word not in lemma_sort_index, lemma_sort_index.get(word, 0), word.lower()))
     def get_unit_text(u):
         return u if is_processing_by_line else u.text
 
     if not output_file_path:
         if args.stdout_format == 'html':
             print("<table>", file=sys.stdout)
-            for token in sorted_tokens:
-                print(f"<tr><td>{token}</td><td>{lemma_to_shortest_form.get(token, '')}</td></tr>", file=sys.stdout)
+            for word in sorted_words:
+                print(f"<tr><td>{word}</td><td>{lemma_to_shortest_form.get(word, '')}</td></tr>", file=sys.stdout)
             print("</table>", file=sys.stdout)
         elif args.stdout_format == 'tsv':
-            for token in sorted_tokens:
-                print(f"{token}\t{lemma_to_shortest_form.get(token, '')}", file=sys.stdout)
+            for word in sorted_words:
+                print(f"{word}\t{lemma_to_shortest_form.get(word, '')}", file=sys.stdout)
         elif args.stdout_format == 'context':
-             for token in sorted_tokens:
-                unit_index, source_sentence_unit = lemma_to_sentence_info[token]
+             for word in sorted_words:
+                unit_index, source_sentence_unit = lemma_to_sentence_info[word]
                 source_sentence = get_unit_text(source_sentence_unit)
                 context_start_index = max(0, unit_index - sentence_context_size)
                 context_end_index = min(len(text_units), unit_index + sentence_context_size + 1)
                 source_context_left = " ".join(get_unit_text(u).strip() for u in text_units[context_start_index:unit_index])
                 source_context_right = " ".join(get_unit_text(u).strip() for u in text_units[unit_index + 1:context_end_index])
-                print(token, file=sys.stdout)
+                print(word, file=sys.stdout)
                 if source_context_left: print(source_context_left, file=sys.stdout)
                 print(source_sentence.strip(), file=sys.stdout)
                 if source_context_right: print(source_context_right, file=sys.stdout)
                 print(file=sys.stdout)
         else:
-            for token in sorted_tokens:
-                print(token, file=sys.stdout)
+            for word in sorted_words:
+                print(word, file=sys.stdout)
         return None
 
     with open(output_file_path, "w", newline="", encoding="utf-8") as tsvfile:
@@ -822,9 +822,9 @@ def process_single_text(
         if output_anki_header:
             tsv_writer.writerow(get_anki_csv_header())
 
-        for token in sorted_tokens:
+        for word in sorted_words:
             csv_row = [""] * 80
-            unit_index, source_sentence_unit = lemma_to_sentence_info.get(token, (-1, ""))
+            unit_index, source_sentence_unit = lemma_to_sentence_info.get(word, (-1, ""))
             if unit_index == -1: continue
             
             source_sentence = get_unit_text(source_sentence_unit).strip()
@@ -833,10 +833,10 @@ def process_single_text(
             csv_row[5] = " ".join(get_unit_text(u).strip() for u in text_units[context_start_index:unit_index])
             csv_row[6] = source_sentence
             csv_row[7] = " ".join(get_unit_text(u).strip() for u in text_units[unit_index + 1:context_end_index])
-            csv_row[0] = token
-            csv_row[1] = token
+            csv_row[0] = word
+            csv_row[1] = word
             if column_source_word:
-                csv_row[2] = lemma_to_shortest_form.get(token, '')
+                csv_row[2] = lemma_to_shortest_form.get(word, '')
             csv_row[12] = source_sentence
             if column_sentence_wordlist:
                 wordlist_generation_args = {**kwargs, 'de_gcs': de_gcs, 'gcs_automaton': gcs_automaton, 'de_gcs_add_parts_to_wordlist': de_gcs_add_parts_to_wordlist}
@@ -903,12 +903,12 @@ def process_parallel_sentences_to_csv(
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Extract and process tokens or sentences from text.",
+        description="Extract and process words or sentences from text.",
         formatter_class=argparse.RawTextHelpFormatter
     )
     
     io_group = parser.add_argument_group('Input & Output Arguments')
-    io_group.add_argument("--type", required=True, choices=["token", "sentence"], help="Specify the processing type: 'token' for word extraction, 'sentence' for parallel sentence processing.")
+    io_group.add_argument("--type", required=True, choices=["word", "sentence"], help="Specify the processing type: 'word' for word extraction, 'sentence' for parallel sentence processing.")
     io_group.add_argument("--language", default="de", choices=["de", "en"], help="The language of the text to be processed.")
     io_group.add_argument("--lemma-index-file", default="", help="Path to a CSV file with lemmas, used for frequency-based sorting of the output.")
     io_group.add_argument("--text", help="A single string of input text to process. Mutually exclusive with --text1.")
@@ -1039,7 +1039,7 @@ def main():
             new_filename = f"{timestamp_id}-{filename}"
             final_output_path = os.path.join(output_directory, new_filename)
             
-    if args.type == "token":
+    if args.type == "word":
         if args.text and args.text1:
             print("Error: --text and --text1 are mutually exclusive.", file=sys.stderr); exit(1)
 
@@ -1083,7 +1083,7 @@ def main():
 
     elif args.type == "sentence":
         if any([args.de_gcs, args.de_gcs_mask_unknown_parts]):
-            print("Warning: GCS-related flags are only applicable for --type token and will be ignored.", file=sys.stderr)
+            print("Warning: GCS-related flags are only applicable for --type word and will be ignored.", file=sys.stderr)
         if not args.text1 or not args.text2:
             print("Error: --text1 and --text2 must be specified for sentence mode.", file=sys.stderr); exit(1)
         

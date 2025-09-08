@@ -478,8 +478,8 @@ def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, de_
 
 def process_parallel_text_files(
     source_text_path, lemma_sort_index, language, target_text_path, tertiary_text_path, sentence_context_size,
-    output_file_path, include_source_word, add_sentence_wordlist,
-    add_anki_header, use_br_for_wordlist, print_output_filename, de_gcs, gcs_automaton, de_gcs_add_parts_to_wordlist, de_dictionary, lemma_override_rules,
+    output_file_path, column_source_word, column_sentence_wordlist,
+    output_anki_header, column_wordlist_use_br, file_print_name, de_gcs, gcs_automaton, de_gcs_add_parts_to_wordlist, de_dictionary, lemma_override_rules,
     de_gcs_pos_tags, args, **kwargs
 ):
     de_gcs_only_nouns = kwargs.get('de_gcs_only_nouns', True)
@@ -615,7 +615,7 @@ def process_parallel_text_files(
     if output_file_path:
         with open(output_file_path, "w", newline="", encoding="utf-8") as tsvfile:
             tsv_writer = csv.writer(tsvfile, delimiter="\t")
-            if add_anki_header:
+            if output_anki_header:
                 tsv_writer.writerow(get_anki_csv_header())
 
             for token in sorted_tokens:
@@ -638,13 +638,13 @@ def process_parallel_text_files(
                     csv_row[79] = " ".join(line.strip() for line in tertiary_text_lines[sentence_index + 1:context_end_index])
                 csv_row[0] = token
                 csv_row[1] = token
-                if include_source_word:
+                if column_source_word:
                     csv_row[2] = lemma_to_shortest_form.get(token, '')
                 csv_row[12] = source_sentence
-                if add_sentence_wordlist:
+                if column_sentence_wordlist:
                     wordlist_generation_args = {**kwargs, 'de_gcs': de_gcs, 'gcs_automaton': gcs_automaton, 'de_gcs_add_parts_to_wordlist': de_gcs_add_parts_to_wordlist}
                     lemmas = extract_lemmas_from_sentence(source_sentence, lemma_sort_index, nlp, de_dictionary, lemma_override_rules, de_gcs_pos_tags, args, **wordlist_generation_args)
-                    csv_row[11] = "<br>".join(lemmas) if use_br_for_wordlist else "\n".join(lemmas)
+                    csv_row[11] = "<br>".join(lemmas) if column_wordlist_use_br else "\n".join(lemmas)
                 if language == "de":
                     csv_row[58] = "1"; csv_row[65] = "1"
                 elif language == "en":
@@ -654,8 +654,8 @@ def process_parallel_text_files(
 
 def process_single_text(
     source_text, lemma_sort_index, language, sentence_context_size,
-    output_file_path, include_source_word, add_sentence_wordlist,
-    add_anki_header, use_br_for_wordlist, print_output_filename, de_gcs, gcs_automaton, de_gcs_add_parts_to_wordlist, de_dictionary, lemma_override_rules, 
+    output_file_path, column_source_word, column_sentence_wordlist,
+    output_anki_header, column_wordlist_use_br, file_print_name, de_gcs, gcs_automaton, de_gcs_add_parts_to_wordlist, de_dictionary, lemma_override_rules, 
     de_gcs_pos_tags, args, **kwargs
 ):
     de_gcs_only_nouns = kwargs.get('de_gcs_only_nouns', True)
@@ -819,7 +819,7 @@ def process_single_text(
 
     with open(output_file_path, "w", newline="", encoding="utf-8") as tsvfile:
         tsv_writer = csv.writer(tsvfile, delimiter="\t")
-        if add_anki_header:
+        if output_anki_header:
             tsv_writer.writerow(get_anki_csv_header())
 
         for token in sorted_tokens:
@@ -835,13 +835,13 @@ def process_single_text(
             csv_row[7] = " ".join(get_unit_text(u).strip() for u in text_units[unit_index + 1:context_end_index])
             csv_row[0] = token
             csv_row[1] = token
-            if include_source_word:
+            if column_source_word:
                 csv_row[2] = lemma_to_shortest_form.get(token, '')
             csv_row[12] = source_sentence
-            if add_sentence_wordlist:
+            if column_sentence_wordlist:
                 wordlist_generation_args = {**kwargs, 'de_gcs': de_gcs, 'gcs_automaton': gcs_automaton, 'de_gcs_add_parts_to_wordlist': de_gcs_add_parts_to_wordlist}
                 lemmas = extract_lemmas_from_sentence(source_sentence, lemma_sort_index, nlp, de_dictionary, lemma_override_rules, de_gcs_pos_tags, args, **wordlist_generation_args)
-                csv_row[11] = "<br>".join(lemmas) if use_br_for_wordlist else "\n".join(lemmas)
+                csv_row[11] = "<br>".join(lemmas) if column_wordlist_use_br else "\n".join(lemmas)
             if language == "de":
                 csv_row[58] = "1"; csv_row[65] = "1"
             elif language == "en":
@@ -852,7 +852,7 @@ def process_single_text(
 
 def process_parallel_sentences_to_csv(
     language, lemma_sort_index, source_text_path, target_text_path, tertiary_text_path, sentence_context_size,
-    output_file_path, add_sentence_wordlist, add_anki_header, use_br_for_wordlist, print_output_filename, de_gcs_pos_tags, args, **kwargs
+    output_file_path, column_sentence_wordlist, output_anki_header, column_wordlist_use_br, file_print_name, de_gcs_pos_tags, args, **kwargs
 ):
     lemma_override_rules = kwargs.get('lemma_override_rules', {})
     
@@ -871,7 +871,7 @@ def process_parallel_sentences_to_csv(
 
     with open(output_file_path, "w", newline="", encoding="utf-8") as output_csv_file:
         tsv_writer = csv.writer(output_csv_file, delimiter="\t")
-        if add_anki_header:
+        if output_anki_header:
             tsv_writer.writerow(get_anki_csv_header())
 
         for i in range(min_length):
@@ -886,9 +886,9 @@ def process_parallel_sentences_to_csv(
             csv_row[8] = " ".join(line.strip() for line in target_text_lines[context_start_index:i])
             csv_row[9] = target_sentence
             csv_row[10] = " ".join(line.strip() for line in target_text_lines[i + 1:context_end_index])
-            if add_sentence_wordlist:
+            if column_sentence_wordlist:
                 lemmas = extract_lemmas_from_sentence(source_sentence, lemma_sort_index, nlp, de_dictionary, lemma_override_rules, de_gcs_pos_tags, args, **kwargs)
-                csv_row[11] = "<br>".join(lemmas) if use_br_for_wordlist else "\n".join(lemmas)
+                csv_row[11] = "<br>".join(lemmas) if column_wordlist_use_br else "\n".join(lemmas)
             csv_row[12] = source_sentence
             if tertiary_text_path:
                 csv_row[77] = " ".join(line.strip() for line in tertiary_text_lines[context_start_index:i])
@@ -918,15 +918,21 @@ def main():
     io_group.add_argument("--output", help="Path to the output file. If not provided, results are printed to standard output.")
     io_group.add_argument("--lemma-override-file", help="Path to a TSV file that defines rules for correcting specific lemma results.")
     
-    format_group = parser.add_argument_group('Filename and Output Format Arguments')
-    format_group.add_argument("--sentence-context-size", type=int, default=1, help="The number of sentences to include before and after the source sentence as context.")
-    format_group.add_argument("--timestamp", action="store_true", help="Prepend the output filename with a 'YYYYMMDDHHMMSS' timestamp.")
-    format_group.add_argument("--autoname", nargs='?', type=int, const=4, default=None, help="Automatically generate part of the filename from the first N words of the text. Defaults to 4 words if no number is given.")
-    format_group.add_argument("--add-anki-header", action="store_true", help="Prepend the output file with the full Anki CSV header.")
-    format_group.add_argument("--include-source-word", action="store_true", help="In the output file, add a column with the original, inflected source word for each lemma.")
-    format_group.add_argument("--add-sentence-wordlist", action="store_true", help="For each entry, add a field containing all unique lemmas from the source sentence.")
-    format_group.add_argument("--use-br-for-wordlist", action="store_true", help="Use HTML <br> tags instead of newlines as separators in the sentence wordlist. Requires --add-sentence-wordlist.")
-    format_group.add_argument("--print-output-filename", action="store_true", help="Print the basename of the generated output file to stdout. Useful for scripting.")
+    file_group = parser.add_argument_group('Filename Arguments')
+    file_group.add_argument("--file-timestamp", action="store_true", help="Prepend the output filename with a 'YYYYMMDDHHMMSS' timestamp.")
+    file_group.add_argument("--file-autoname", nargs='?', type=int, const=4, default=None, help="Automatically generate part of the filename from the first N words of the text. Defaults to 4 words if no number is given.")
+    file_group.add_argument("--file-print-name", action="store_true", help="Print the basename of the generated output file to stdout. Useful for scripting.")
+    
+    column_group = parser.add_argument_group('Output Column Arguments')
+    column_group.add_argument("--column-source-word", action="store_true", help="In the output file, add a column with the original, inflected source word for each lemma.")
+    column_group.add_argument("--column-sentence-wordlist", action="store_true", help="For each entry, add a field containing all unique lemmas from the source sentence.")
+    column_group.add_argument("--column-wordlist-use-br", action="store_true", help="Use HTML <br> tags instead of newlines as separators in the wordlist column. Requires --column-sentence-wordlist.")
+    
+    output_group = parser.add_argument_group('General Output Format Arguments')
+    output_group.add_argument("--output-anki-header", action="store_true", help="Prepend the output file with the full Anki CSV header.")
+    
+    processing_group = parser.add_argument_group('Data Processing Arguments')
+    processing_group.add_argument("--sentence-context-size", type=int, default=1, help="The number of sentences to include before and after the source sentence as context.")
     
     stdout_group = parser.add_argument_group('Standard Output (STDOUT) Arguments (used only if --output is not specified)')
     stdout_group.add_argument("--stdout-format", choices=['list', 'context', 'tsv', 'html'], default='list', 
@@ -937,34 +943,19 @@ def main():
                                     "'html': The two-column list formatted as an HTML table.")
     
     lemma_group = parser.add_argument_group('Lemmatization Control Arguments')
-    lemma_group.add_argument(
-        "--force-proper-noun-capitalization",
-        action="store_true",
-        help="Force capitalization of proper noun lemmas (PROPN). Useful for any language if a model returns lowercase proper nouns."
-    )
+    lemma_group.add_argument("--force-proper-noun-capitalization", action="store_true", help="Force capitalization of proper noun lemmas (PROPN). Useful for any language if a model returns lowercase proper nouns.")
 
     de_group = parser.add_argument_group('German Language Specific Arguments')
     de_group.add_argument("--de-dictionary", default="german.dic", help="Path to the dictionary file for German-specific operations.")
     de_group.add_argument("--de-fix-genitive", action="store_true", help="Corrects German genitive noun lemmas (e.g., 'Hauses' -> 'Haus') by checking against the dictionary.")
-    de_group.add_argument(
-        "--de-force-noun-capitalization",
-        action="store_true",
-        help="[German only] Force capitalization of all noun lemmas (NOUN, PROPN) as per German orthography rules. Overrides --force-proper-noun-capitalization for German."
-    )
+    de_group.add_argument("--de-force-noun-capitalization", action="store_true", help="[German only] Force capitalization of all noun lemmas (NOUN, PROPN) as per German orthography rules. Overrides --force-proper-noun-capitalization for German.")
     de_group.add_argument("--de-gcs", action="store_true", help="Enable German Compound Splitting (GCS).")
-    de_group.add_argument(
-        "--de-gcs-pos-tags", 
-        nargs='+', 
-        default=['NOUN', 'PROPN', 'ADV', 'ADJ'],
-        help='''[GCS] Specify which Part-of-Speech tags to apply splitting to. (Default: NOUN PROPN ADV ADJ). Use '!' to exclude (e.g., !VERB), or 'ALL' for all tags.'''
-    )
-    de_group.add_argument("--de-gcs-split-mode", choices=['only-nouns', 'any', 'combined'], default='only-nouns',
-                           help="[GCS] Set the splitting mode. 'only-nouns' (default): safe mode, splits based on nouns. 'any': aggressive mode, uses any part of speech. 'combined': combines results from both modes.")
+    de_group.add_argument("--de-gcs-pos-tags", nargs='+', default=['NOUN', 'PROPN', 'ADV', 'ADJ'], help='''[GCS] Specify which Part-of-Speech tags to apply splitting to. (Default: NOUN PROPN ADV ADJ). Use '!' to exclude (e.g., !VERB), or 'ALL' for all tags.''')
+    de_group.add_argument("--de-gcs-split-mode", choices=['only-nouns', 'any', 'combined'], default='only-nouns', help="[GCS] Set the splitting mode. 'only-nouns' (default): safe mode, splits based on nouns. 'any': aggressive mode, uses any part of speech. 'combined': combines results from both modes.")
     de_group.add_argument("--de-gcs-mask-unknown-parts", action="store_true", help="[GCS] Mask word parts not found in the dictionary as 'unknown' during splitting.")
-    de_group.add_argument("--de-gcs-part-singularization", choices=['only-nouns', 'all', 'none'], default='only-nouns',
-                                      help="[GCS] Controls how compound parts are made singular. 'only-nouns' (default): only for nouns. 'all': for all parts. 'none': disable singularization.")
+    de_group.add_argument("--de-gcs-part-singularization", choices=['only-nouns', 'all', 'none'], default='only-nouns', help="[GCS] Controls how compound parts are made singular. 'only-nouns' (default): only for nouns. 'all': for all parts. 'none': disable singularization.")
     de_group.add_argument("--de-gcs-preserve-compound-word", action="store_true", help="[GCS] Preserve the original compound word in the lemma list along with its split components.")
-    de_group.add_argument("--de-gcs-add-parts-to-wordlist", action="store_true", help="[GCS] Include the components from compound splitting in the sentence wordlist. Requires --add-sentence-wordlist.")
+    de_group.add_argument("--de-gcs-add-parts-to-wordlist", action="store_true", help="[GCS] Include the components from compound splitting in the sentence wordlist. Requires --column-sentence-wordlist.")
     de_group.add_argument("--de-gcs-skip-merge-fractions", action="store_true", help="[GCS] Disable the merging of components, outputting the raw, unmerged parts from the dissection.")
 
     args = parser.parse_args()
@@ -1022,11 +1013,11 @@ def main():
     processed_output_file = None
     final_output_path = args.output
     
-    if args.output and (args.timestamp or args.autoname is not None):
+    if args.output and (args.file_timestamp or args.file_autoname is not None):
         timestamp_id = datetime.now().strftime('%Y%m%d%H%M%S')
         output_directory, filename = os.path.dirname(args.output) or '.', os.path.basename(args.output)
 
-        if args.autoname is not None:
+        if args.file_autoname is not None:
             text_for_filename_prefix = ""
             if args.text:
                 text_for_filename_prefix = args.text
@@ -1036,7 +1027,7 @@ def main():
                         text_for_filename_prefix = f.read(1024)
                 except Exception as e:
                     print(f"Warning: Could not read {args.text1} for autonaming: {e}", file=sys.stderr)
-            filename_prefix = generate_filename_prefix_from_text(text_for_filename_prefix, args.autoname)
+            filename_prefix = generate_filename_prefix_from_text(text_for_filename_prefix, args.file_autoname)
             if filename_prefix:
                 extension_dot_position = filename.find('.')
                 file_extension = filename[extension_dot_position:] if extension_dot_position != -1 else ""
@@ -1044,7 +1035,7 @@ def main():
             else:
                  new_filename = f"{timestamp_id}-{filename}"
             final_output_path = os.path.join(output_directory, new_filename)
-        elif args.timestamp:
+        elif args.file_timestamp:
             new_filename = f"{timestamp_id}-{filename}"
             final_output_path = os.path.join(output_directory, new_filename)
             
@@ -1076,16 +1067,16 @@ def main():
             processed_output_file = process_parallel_text_files(
                 input_text, lemma_index, args.language, args.text2, args.text3,
                 args.sentence_context_size, final_output_path,
-                args.include_source_word, args.add_sentence_wordlist,
-                args.add_anki_header, args.use_br_for_wordlist, args.print_output_filename,
+                args.column_source_word, args.column_sentence_wordlist,
+                args.output_anki_header, args.column_wordlist_use_br, args.file_print_name,
                 args.de_gcs, gcs_automaton, args.de_gcs_add_parts_to_wordlist, de_dictionary, lemma_override_rules,
                 args.de_gcs_pos_tags, args, **processing_options
             )
         else:
              processed_output_file = process_single_text(
                 input_text, lemma_index, args.language, args.sentence_context_size,
-                final_output_path, args.include_source_word, args.add_sentence_wordlist,
-                args.add_anki_header, args.use_br_for_wordlist, args.print_output_filename,
+                final_output_path, args.column_source_word, args.column_sentence_wordlist,
+                args.output_anki_header, args.column_wordlist_use_br, args.file_print_name,
                 args.de_gcs, gcs_automaton, args.de_gcs_add_parts_to_wordlist, de_dictionary, lemma_override_rules,
                 args.de_gcs_pos_tags, args, **processing_options
             )
@@ -1112,11 +1103,11 @@ def main():
         processed_output_file = process_parallel_sentences_to_csv(
             args.language, lemma_index, args.text1, args.text2, args.text3,
             args.sentence_context_size, final_output_path,
-            args.add_sentence_wordlist, args.add_anki_header, args.use_br_for_wordlist, args.print_output_filename,
+            args.column_sentence_wordlist, args.output_anki_header, args.column_wordlist_use_br, args.file_print_name,
             args.de_gcs_pos_tags, args, **processing_options
         )
 
-    if args.print_output_filename and processed_output_file:
+    if args.file_print_name and processed_output_file:
         print(os.path.basename(processed_output_file), file=sys.stdout)
 
 if __name__ == "__main__":

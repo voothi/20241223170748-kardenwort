@@ -358,11 +358,11 @@ def deduplicate_lemmas(candidate_lemmas):
 def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, german_dictionary, lemma_override_rules, gcs_pos_tags, args, **kwargs):
     gcs = kwargs.get('gcs', False)
     gcs_automaton = kwargs.get('gcs_automaton', None)
-    add_gcs_components_to_wordlist = kwargs.get('add_gcs_components_to_wordlist', False)
+    gcs_add_parts_to_wordlist = kwargs.get('gcs_add_parts_to_wordlist', False)
     gcs_only_nouns = kwargs.get('gcs_only_nouns', True)
     gcs_combine_noun_modes = kwargs.get('gcs_combine_noun_modes', False)
-    gcs_fix_genitive = kwargs.get('gcs_fix_genitive', False)
-    gcs_mask_unknown = kwargs.get('gcs_mask_unknown', False)
+    de_fix_genitive = kwargs.get('de_fix_genitive', False)
+    gcs_mask_unknown_parts = kwargs.get('gcs_mask_unknown_parts', False)
     gcs_include_compound = kwargs.get('gcs_include_compound', False)
     gcs_skip_merge_fractions = kwargs.get('gcs_skip_merge_fractions', False)
 
@@ -388,7 +388,7 @@ def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, ger
             default_lemma = f"{particle.text.lower()}{token.lemma_}".lower()
             source_word_form = f"{token.text} {particle.text}"
         else:
-            spacy_lemma = correct_spacy_lemma(token, german_dictionary, gcs_fix_genitive)
+            spacy_lemma = correct_spacy_lemma(token, german_dictionary, de_fix_genitive)
             default_lemma = format_lemma_capitalization(token, spacy_lemma, force_capitalization=args.force_lemma_capitalization)
         base_lemma = get_overridden_lemma_for_word(default_lemma, source_word_form, lemma_override_rules, sentence_text)
         
@@ -411,20 +411,23 @@ def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, ger
                 if processed_part_lemma:
                     lemmas_for_current_token.append(processed_part_lemma)
 
-        elif gcs and gcs_automaton and add_gcs_components_to_wordlist and nlp.lang == 'de' and not is_special_token and len(token.text) > 3 and (token.pos_ in gcs_pos_tags):
+        elif gcs and gcs_automaton and gcs_add_parts_to_wordlist and nlp.lang == 'de' and not is_special_token and len(token.text) > 3 and (token.pos_ in gcs_pos_tags):
             try:
                 word_to_split = token.text
-                if args.gcs_singularize_parts == 'none': make_singular_flag = False
-                elif args.gcs_singularize_parts == 'all': make_singular_flag = True
-                else: make_singular_flag = (token.pos_ in ['NOUN', 'PROPN'])
+                if args.gcs_part_singularization == 'none':
+                    make_singular_flag = False
+                elif args.gcs_part_singularization == 'all':
+                    make_singular_flag = True
+                else: # 'only-nouns'
+                    make_singular_flag = (token.pos_ in ['NOUN', 'PROPN'])
 
                 split_components = []
                 if gcs_combine_noun_modes:
                     with redirect_stdout(io.StringIO()):
-                        dissection1 = comp_split.dissect(word_to_split, gcs_automaton, make_singular=make_singular_flag, only_nouns=True, mask_unknown=gcs_mask_unknown)
+                        dissection1 = comp_split.dissect(word_to_split, gcs_automaton, make_singular=make_singular_flag, only_nouns=True, mask_unknown=gcs_mask_unknown_parts)
                     split_components.extend(comp_split.merge_fractions(dissection1))
                     with redirect_stdout(io.StringIO()):
-                        dissection2 = comp_split.dissect(word_to_split, gcs_automaton, make_singular=make_singular_flag, only_nouns=False, mask_unknown=gcs_mask_unknown)
+                        dissection2 = comp_split.dissect(word_to_split, gcs_automaton, make_singular=make_singular_flag, only_nouns=False, mask_unknown=gcs_mask_unknown_parts)
                     split_components.extend(comp_split.merge_fractions(dissection2))
 
                     if gcs_skip_merge_fractions:
@@ -436,7 +439,7 @@ def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, ger
 
                 else:
                     with redirect_stdout(io.StringIO()):
-                        dissection = comp_split.dissect(word_to_split, gcs_automaton, make_singular=make_singular_flag, only_nouns=gcs_only_nouns, mask_unknown=gcs_mask_unknown)
+                        dissection = comp_split.dissect(word_to_split, gcs_automaton, make_singular=make_singular_flag, only_nouns=gcs_only_nouns, mask_unknown=gcs_mask_unknown_parts)
                     
                     if gcs_skip_merge_fractions:
                         split_components = dissection
@@ -473,13 +476,13 @@ def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, ger
 def process_parallel_text_files(
     source_text_path, lemma_sort_index, language, target_text_path, tertiary_text_path, sentence_context_size,
     output_file_path, include_source_word, add_sentence_wordlist,
-    add_anki_header, use_br_for_wordlist, print_output_filename, gcs, gcs_automaton, add_gcs_components_to_wordlist, german_dictionary, lemma_override_rules,
+    add_anki_header, use_br_for_wordlist, print_output_filename, gcs, gcs_automaton, gcs_add_parts_to_wordlist, german_dictionary, lemma_override_rules,
     gcs_pos_tags, args, **kwargs
 ):
     gcs_only_nouns = kwargs.get('gcs_only_nouns', True)
     gcs_combine_noun_modes = kwargs.get('gcs_combine_noun_modes', False)
-    gcs_fix_genitive = kwargs.get('gcs_fix_genitive', False)
-    gcs_mask_unknown = kwargs.get('gcs_mask_unknown', False)
+    de_fix_genitive = kwargs.get('de_fix_genitive', False)
+    gcs_mask_unknown_parts = kwargs.get('gcs_mask_unknown_parts', False)
     gcs_include_compound = kwargs.get('gcs_include_compound', False)
     gcs_skip_merge_fractions = kwargs.get('gcs_skip_merge_fractions', False)
 
@@ -515,7 +518,7 @@ def process_parallel_text_files(
                     default_lemma = f"{particle.text.lower()}{token.lemma_}".lower()
                     source_word_form = f"{token.text} {particle.text}"
                 else:
-                    spacy_lemma = correct_spacy_lemma(token, german_dictionary, gcs_fix_genitive)
+                    spacy_lemma = correct_spacy_lemma(token, german_dictionary, de_fix_genitive)
                     default_lemma = format_lemma_capitalization(token, spacy_lemma, force_capitalization=args.force_lemma_capitalization)
                 base_lemma = get_overridden_lemma_for_word(default_lemma, source_word_form, lemma_override_rules, source_sentence)
 
@@ -541,17 +544,20 @@ def process_parallel_text_files(
                 elif gcs and gcs_automaton and language == 'de' and not is_special_token and len(token.text) > 3 and (token.pos_ in gcs_pos_tags):
                     try:
                         word_to_split = token.text
-                        if args.gcs_singularize_parts == 'none': make_singular_flag = False
-                        elif args.gcs_singularize_parts == 'all': make_singular_flag = True
-                        else: make_singular_flag = (token.pos_ in ['NOUN', 'PROPN'])
+                        if args.gcs_part_singularization == 'none':
+                            make_singular_flag = False
+                        elif args.gcs_part_singularization == 'all':
+                            make_singular_flag = True
+                        else: # 'only-nouns'
+                            make_singular_flag = (token.pos_ in ['NOUN', 'PROPN'])
 
                         split_components = []
                         if gcs_combine_noun_modes:
                             with redirect_stdout(io.StringIO()):
-                                dissection1 = comp_split.dissect(word_to_split, gcs_automaton, make_singular=make_singular_flag, only_nouns=True, mask_unknown=gcs_mask_unknown)
+                                dissection1 = comp_split.dissect(word_to_split, gcs_automaton, make_singular=make_singular_flag, only_nouns=True, mask_unknown=gcs_mask_unknown_parts)
                             split_components.extend(comp_split.merge_fractions(dissection1))
                             with redirect_stdout(io.StringIO()):
-                                dissection2 = comp_split.dissect(word_to_split, gcs_automaton, make_singular=make_singular_flag, only_nouns=False, mask_unknown=gcs_mask_unknown)
+                                dissection2 = comp_split.dissect(word_to_split, gcs_automaton, make_singular=make_singular_flag, only_nouns=False, mask_unknown=gcs_mask_unknown_parts)
                             split_components.extend(comp_split.merge_fractions(dissection2))
 
                             if gcs_skip_merge_fractions:
@@ -563,7 +569,7 @@ def process_parallel_text_files(
 
                         else:
                             with redirect_stdout(io.StringIO()):
-                                dissection = comp_split.dissect(word_to_split, gcs_automaton, make_singular=make_singular_flag, only_nouns=gcs_only_nouns, mask_unknown=gcs_mask_unknown)
+                                dissection = comp_split.dissect(word_to_split, gcs_automaton, make_singular=make_singular_flag, only_nouns=gcs_only_nouns, mask_unknown=gcs_mask_unknown_parts)
                             
                             if gcs_skip_merge_fractions:
                                 split_components = dissection
@@ -633,7 +639,7 @@ def process_parallel_text_files(
                     csv_row[2] = lemma_to_shortest_form.get(token, '')
                 csv_row[12] = source_sentence
                 if add_sentence_wordlist:
-                    wordlist_generation_args = {**kwargs, 'gcs': gcs, 'gcs_automaton': gcs_automaton, 'add_gcs_components_to_wordlist': add_gcs_components_to_wordlist}
+                    wordlist_generation_args = {**kwargs, 'gcs': gcs, 'gcs_automaton': gcs_automaton, 'gcs_add_parts_to_wordlist': gcs_add_parts_to_wordlist}
                     lemmas = extract_lemmas_from_sentence(source_sentence, lemma_sort_index, nlp, german_dictionary, lemma_override_rules, gcs_pos_tags, args, **wordlist_generation_args)
                     csv_row[11] = "<br>".join(lemmas) if use_br_for_wordlist else "\n".join(lemmas)
                 if language == "de":
@@ -646,13 +652,13 @@ def process_parallel_text_files(
 def process_single_text(
     source_text, lemma_sort_index, language, sentence_context_size,
     output_file_path, include_source_word, add_sentence_wordlist,
-    add_anki_header, use_br_for_wordlist, print_output_filename, gcs, gcs_automaton, add_gcs_components_to_wordlist, german_dictionary, lemma_override_rules, 
+    add_anki_header, use_br_for_wordlist, print_output_filename, gcs, gcs_automaton, gcs_add_parts_to_wordlist, german_dictionary, lemma_override_rules, 
     gcs_pos_tags, args, **kwargs
 ):
     gcs_only_nouns = kwargs.get('gcs_only_nouns', True)
     gcs_combine_noun_modes = kwargs.get('gcs_combine_noun_modes', False)
-    gcs_fix_genitive = kwargs.get('gcs_fix_genitive', False)
-    gcs_mask_unknown = kwargs.get('gcs_mask_unknown', False)
+    de_fix_genitive = kwargs.get('de_fix_genitive', False)
+    gcs_mask_unknown_parts = kwargs.get('gcs_mask_unknown_parts', False)
     gcs_include_compound = kwargs.get('gcs_include_compound', False)
     gcs_skip_merge_fractions = kwargs.get('gcs_skip_merge_fractions', False)
 
@@ -687,7 +693,7 @@ def process_single_text(
                     default_lemma = f"{particle.text.lower()}{token.lemma_}".lower()
                     source_word_form = f"{token.text} {particle.text}"
                 else:
-                    spacy_lemma = correct_spacy_lemma(token, german_dictionary, gcs_fix_genitive)
+                    spacy_lemma = correct_spacy_lemma(token, german_dictionary, de_fix_genitive)
                     default_lemma = format_lemma_capitalization(token, spacy_lemma, force_capitalization=args.force_lemma_capitalization)
                 base_lemma = get_overridden_lemma_for_word(default_lemma, source_word_form, lemma_override_rules, unit_text)
                 
@@ -713,17 +719,20 @@ def process_single_text(
                 elif gcs and gcs_automaton and language == 'de' and not is_special_token and len(token.text) > 3 and (token.pos_ in gcs_pos_tags):
                     try:
                         word_to_split = token.text
-                        if args.gcs_singularize_parts == 'none': make_singular_flag = False
-                        elif args.gcs_singularize_parts == 'all': make_singular_flag = True
-                        else: make_singular_flag = (token.pos_ in ['NOUN', 'PROPN'])
+                        if args.gcs_part_singularization == 'none':
+                            make_singular_flag = False
+                        elif args.gcs_part_singularization == 'all':
+                            make_singular_flag = True
+                        else: # 'only-nouns'
+                            make_singular_flag = (token.pos_ in ['NOUN', 'PROPN'])
                             
                         split_components = []
                         if gcs_combine_noun_modes:
                             with redirect_stdout(io.StringIO()):
-                                dissection1 = comp_split.dissect(word_to_split, gcs_automaton, make_singular=make_singular_flag, only_nouns=True, mask_unknown=gcs_mask_unknown)
+                                dissection1 = comp_split.dissect(word_to_split, gcs_automaton, make_singular=make_singular_flag, only_nouns=True, mask_unknown=gcs_mask_unknown_parts)
                             split_components.extend(comp_split.merge_fractions(dissection1))
                             with redirect_stdout(io.StringIO()):
-                                dissection2 = comp_split.dissect(word_to_split, gcs_automaton, make_singular=make_singular_flag, only_nouns=False, mask_unknown=gcs_mask_unknown)
+                                dissection2 = comp_split.dissect(word_to_split, gcs_automaton, make_singular=make_singular_flag, only_nouns=False, mask_unknown=gcs_mask_unknown_parts)
                             split_components.extend(comp_split.merge_fractions(dissection2))
 
                             if gcs_skip_merge_fractions:
@@ -735,7 +744,7 @@ def process_single_text(
 
                         else:
                             with redirect_stdout(io.StringIO()):
-                                dissection = comp_split.dissect(word_to_split, gcs_automaton, make_singular=make_singular_flag, only_nouns=gcs_only_nouns, mask_unknown=gcs_mask_unknown)
+                                dissection = comp_split.dissect(word_to_split, gcs_automaton, make_singular=make_singular_flag, only_nouns=gcs_only_nouns, mask_unknown=gcs_mask_unknown_parts)
                             
                             if gcs_skip_merge_fractions:
                                 split_components = dissection
@@ -827,7 +836,7 @@ def process_single_text(
                 csv_row[2] = lemma_to_shortest_form.get(token, '')
             csv_row[12] = source_sentence
             if add_sentence_wordlist:
-                wordlist_generation_args = {**kwargs, 'gcs': gcs, 'gcs_automaton': gcs_automaton, 'add_gcs_components_to_wordlist': add_gcs_components_to_wordlist}
+                wordlist_generation_args = {**kwargs, 'gcs': gcs, 'gcs_automaton': gcs_automaton, 'gcs_add_parts_to_wordlist': gcs_add_parts_to_wordlist}
                 lemmas = extract_lemmas_from_sentence(source_sentence, lemma_sort_index, nlp, german_dictionary, lemma_override_rules, gcs_pos_tags, args, **wordlist_generation_args)
                 csv_row[11] = "<br>".join(lemmas) if use_br_for_wordlist else "\n".join(lemmas)
             if language == "de":
@@ -930,54 +939,31 @@ def main():
         help="Force capitalization of noun lemmas (NOUN, PROPN). Use if the spaCy model returns lowercase lemmas (e.g., 'haus' instead of 'Haus')."
     )
 
-    # --- GCS Arguments ---
-    gcs_group = parser.add_argument_group('GCS (German Compound Splitting) options')
+    # --- German Language Enhancements ---
+    de_group = parser.add_argument_group('German Language Enhancements')
+    de_group.add_argument("--german-dictionary", default="german.dic", help="Path to the dictionary file for German-specific operations like genitive correction.")
+    de_group.add_argument("--de-fix-genitive", action="store_true", help="Corrects German genitive noun lemmas (e.g., 'Hauses' -> 'Haus') by checking against the dictionary.")
+
+    # --- GCS - Compound Splitting Control ---
+    gcs_group = parser.add_argument_group('GCS - Compound Splitting Control')
     gcs_group.add_argument("--gcs", action="store_true", help="Enable German Compound Splitting. Requires --language de.")
     gcs_group.add_argument(
         "--gcs-pos-tags", 
         nargs='+', 
         default=['NOUN', 'PROPN', 'ADV', 'ADJ'],
-        help='''Specify which Part-of-Speech tags to apply splitting to.
-
-  Default: NOUN PROPN ADV ADJ
-
-  This argument operates in two main modes:
-
-  1. INCLUSION MODE (default behavior):
-     List the specific tags you want to process.
-     Example: --gcs-pos-tags NOUN PROPN ADJ
-
-  2. EXCLUSION MODE:
-     Prefix tags with '!' to process all tags except the ones specified.
-     Example: --gcs-pos-tags !VERB !AUX
-     (This splits everything except verbs and auxiliary verbs)
-
-  PRECEDENCE RULE:
-     If even one tag is prefixed with '!', the mode switches to exclusion.
-     Any tags listed without '!' in the same command will be ignored.
-     For instance, '--gcs-pos-tags NOUN !VERB' is treated as just '!VERB'.
-
-  SPECIAL KEYWORD:
-     ALL - A shortcut to process all available tags.
-
-  Available Tags (Universal Dependencies):
-    ADJ, ADP, ADV, AUX, CCONJ, DET, INTJ, NOUN, NUM, PART, 
-    PRON, PROPN, PUNCT, SCONJ, SYM, VERB, X'''
+        help='''Specify which Part-of-Speech tags to apply splitting to. (Default: NOUN PROPN ADV ADJ). Use '!' to exclude (e.g., !VERB), or 'ALL' for all tags.'''
     )
-    gcs_group.add_argument("--gcs-dictionary", default="german.dic", help="Path to the dictionary file for GCS validation and splitting.")
-    gcs_group.add_argument("--add-gcs-components-to-wordlist", action="store_true", help="Include the components from compound splitting in the sentence wordlist. Requires --add-sentence-wordlist.")
-    gcs_group.add_argument("--gcs-include-compound", action="store_true", help="Include the original compound word in the lemma list along with its split components. Requires --gcs.")
-    gcs_group.add_argument("--gcs-allow-any-pos", action="store_true", help="Allows GCS to use any part of speech (verb, adjective, etc.) for splitting. Default is nouns only. Ignored if --gcs-combine-noun-modes is used.")
-    gcs_group.add_argument("--gcs-combine-noun-modes", action="store_true", help="Run GCS in two modes (nouns-only and any-POS) and combine the unique components from both.")
-    gcs_group.add_argument("--gcs-fix-genitive", action="store_true", help="Corrects German genitive noun lemmas (e.g., 'Hauses' -> 'Haus') by checking against the dictionary.")
-    gcs_group.add_argument("--gcs-mask-unknown", action="store_true", help="During GCS splitting, mask word parts not found in the dictionary as 'unknown'.")
-    gcs_group.add_argument("--gcs-singularize-parts", choices=['auto', 'all', 'none'], default='auto',
-                               help="Controls how compound parts are made singular. 'auto' (default): only for nouns. 'all': for all parts. 'none': disable singularization.")
-    gcs_group.add_argument(
-        "--gcs-skip-merge-fractions", 
-        action="store_true", 
-        help="Disable the merging of GCS components, outputting the raw, unmerged parts from the dissection."
-    )
+    gcs_group.add_argument("--gcs-split-mode", choices=['only-nouns', 'any', 'combined'], default='only-nouns',
+                           help="Set the splitting mode. 'only-nouns' (default): safe mode, splits based on nouns. 'any': aggressive mode, uses any part of speech. 'combined': combines results from both modes.")
+    gcs_group.add_argument("--gcs-mask-unknown-parts", action="store_true", help="During splitting, mask word parts not found in the dictionary as 'unknown'.")
+    
+    # --- GCS - Component Handling ---
+    gcs_components_group = parser.add_argument_group('GCS - Component Handling')
+    gcs_components_group.add_argument("--gcs-part-singularization", choices=['only-nouns', 'all', 'none'], default='only-nouns',
+                                      help="Controls how compound parts are made singular. 'only-nouns' (default): only for nouns. 'all': for all parts. 'none': disable singularization.")
+    gcs_components_group.add_argument("--gcs-include-compound", action="store_true", help="Include the original compound word in the lemma list along with its split components.")
+    gcs_components_group.add_argument("--gcs-add-parts-to-wordlist", action="store_true", help="Include the components from compound splitting in the sentence wordlist. Requires --add-sentence-wordlist.")
+    gcs_components_group.add_argument("--gcs-skip-merge-fractions", action="store_true", help="Disable the merging of GCS components, outputting the raw, unmerged parts from the dissection.")
 
     args = parser.parse_args()
 
@@ -1001,10 +987,8 @@ def main():
     if args.gcs and args.language != 'de':
         print("Warning: GCS is designed for German language (--language de). The --gcs flag will be ignored.", file=sys.stderr)
         args.gcs = False
-    if args.gcs_combine_noun_modes and args.gcs_allow_any_pos:
-        print("Error: --gcs-combine-noun-modes and --gcs-allow-any-pos cannot be used together.", file=sys.stderr); exit(1)
-    if args.add_gcs_components_to_wordlist and not args.gcs:
-        print("Error: --add-gcs-components-to-wordlist requires --gcs to be enabled.", file=sys.stderr); exit(1)
+    if args.gcs_add_parts_to_wordlist and not args.gcs:
+        print("Error: --gcs-add-parts-to-wordlist requires --gcs to be enabled.", file=sys.stderr); exit(1)
     if args.gcs_include_compound and not args.gcs:
         print("Error: --gcs-include-compound requires --gcs to be enabled.", file=sys.stderr); exit(1)
 
@@ -1017,18 +1001,18 @@ def main():
     global german_dictionary
     german_dictionary = set()
     if args.language == 'de':
-        german_dictionary = load_dictionary(args.gcs_dictionary)
+        german_dictionary = load_dictionary(args.german_dictionary)
         if not german_dictionary:
              print("Warning: German dictionary for validation is empty or not loaded.", file=sys.stderr)
 
         if args.gcs:
             if not GCS_AVAILABLE:
                 print("Error: 'german-compound-splitter' library not installed. Please run 'pip install german-compound-splitter'.", file=sys.stderr); exit(1)
-            if not os.path.exists(args.gcs_dictionary):
-                print(f"Error: GCS dictionary file '{args.gcs_dictionary}' not found!", file=sys.stderr); exit(1)
+            if not os.path.exists(args.german_dictionary):
+                print(f"Error: GCS dictionary file '{args.german_dictionary}' not found!", file=sys.stderr); exit(1)
             try:
                 with redirect_stdout(io.StringIO()):
-                    gcs_automaton = comp_split.read_dictionary_from_file(args.gcs_dictionary)
+                    gcs_automaton = comp_split.read_dictionary_from_file(args.german_dictionary)
             except Exception as e:
                 print(f"Error loading GCS dictionary: {e}", file=sys.stderr); exit(1)
 
@@ -1069,13 +1053,11 @@ def main():
         if not input_text:
             print("Error: Either --text or --text1 must be specified.", file=sys.stderr); exit(1)
 
-        use_gcs_only_on_nouns = not args.gcs_allow_any_pos
-
         processing_options = {
-            'gcs_only_nouns': use_gcs_only_on_nouns,
-            'gcs_combine_noun_modes': args.gcs_combine_noun_modes,
-            'gcs_fix_genitive': args.gcs_fix_genitive,
-            'gcs_mask_unknown': args.gcs_mask_unknown,
+            'gcs_only_nouns': (args.gcs_split_mode == 'only-nouns'),
+            'gcs_combine_noun_modes': (args.gcs_split_mode == 'combined'),
+            'de_fix_genitive': args.de_fix_genitive,
+            'gcs_mask_unknown_parts': args.gcs_mask_unknown_parts,
             'gcs_include_compound': args.gcs_include_compound,
             'gcs_skip_merge_fractions': args.gcs_skip_merge_fractions,
         }
@@ -1086,7 +1068,7 @@ def main():
                 args.sentence_context_size, final_output_path,
                 args.include_source_word, args.add_sentence_wordlist,
                 args.add_anki_header, args.use_br_for_wordlist, args.print_output_filename,
-                args.gcs, gcs_automaton, args.add_gcs_components_to_wordlist, german_dictionary, lemma_override_rules,
+                args.gcs, gcs_automaton, args.gcs_add_parts_to_wordlist, german_dictionary, lemma_override_rules,
                 args.gcs_pos_tags, args, **processing_options
             )
         else:
@@ -1094,12 +1076,12 @@ def main():
                 input_text, lemma_index, args.language, args.sentence_context_size,
                 final_output_path, args.include_source_word, args.add_sentence_wordlist,
                 args.add_anki_header, args.use_br_for_wordlist, args.print_output_filename,
-                args.gcs, gcs_automaton, args.add_gcs_components_to_wordlist, german_dictionary, lemma_override_rules,
+                args.gcs, gcs_automaton, args.gcs_add_parts_to_wordlist, german_dictionary, lemma_override_rules,
                 args.gcs_pos_tags, args, **processing_options
             )
 
     elif args.type == "sentence":
-        if any([args.gcs, args.gcs_combine_noun_modes, args.gcs_allow_any_pos, args.gcs_fix_genitive, args.gcs_mask_unknown]):
+        if any([args.gcs, args.gcs_mask_unknown_parts]):
             print("Warning: GCS-related flags are only applicable for --type token and will be ignored.", file=sys.stderr)
         if not args.text1 or not args.text2:
             print("Error: --text1 and --text2 must be specified for sentence mode.", file=sys.stderr); exit(1)
@@ -1108,11 +1090,11 @@ def main():
             'lemma_override_rules': lemma_override_rules,
             'gcs': args.gcs,
             'gcs_automaton': gcs_automaton,
-            'add_gcs_components_to_wordlist': args.add_gcs_components_to_wordlist,
-            'gcs_only_nouns': not args.gcs_allow_any_pos,
-            'gcs_combine_noun_modes': args.gcs_combine_noun_modes,
-            'gcs_fix_genitive': args.gcs_fix_genitive,
-            'gcs_mask_unknown': args.gcs_mask_unknown,
+            'gcs_add_parts_to_wordlist': args.gcs_add_parts_to_wordlist,
+            'gcs_only_nouns': (args.gcs_split_mode == 'only-nouns'),
+            'gcs_combine_noun_modes': (args.gcs_split_mode == 'combined'),
+            'de_fix_genitive': args.de_fix_genitive,
+            'gcs_mask_unknown_parts': args.gcs_mask_unknown_parts,
             'gcs_include_compound': args.gcs_include_compound,
             'gcs_skip_merge_fractions': args.gcs_skip_merge_fractions,
             'german_dictionary': german_dictionary

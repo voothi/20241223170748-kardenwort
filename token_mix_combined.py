@@ -789,13 +789,13 @@ def process_single_text(
 
     if not output_file_path:
         if args.console_format == 'html':
-            print("<table>")
+            print("<table>", file=sys.stdout)
             for token in sorted_tokens:
-                print(f"<tr><td>{token}</td><td>{lemma_to_shortest_form.get(token, '')}</td></tr>")
-            print("</table>")
+                print(f"<tr><td>{token}</td><td>{lemma_to_shortest_form.get(token, '')}</td></tr>", file=sys.stdout)
+            print("</table>", file=sys.stdout)
         elif args.console_format == 'columns':
             for token in sorted_tokens:
-                print(f"{token}\t{lemma_to_shortest_form.get(token, '')}")
+                print(f"{token}\t{lemma_to_shortest_form.get(token, '')}", file=sys.stdout)
         elif args.console_format == 'detailed':
              for token in sorted_tokens:
                 unit_index, source_sentence_unit = lemma_to_sentence_info[token]
@@ -804,11 +804,11 @@ def process_single_text(
                 context_end_index = min(len(text_units), unit_index + sentence_context_size + 1)
                 source_context_left = " ".join(get_unit_text(u).strip() for u in text_units[context_start_index:unit_index])
                 source_context_right = " ".join(get_unit_text(u).strip() for u in text_units[unit_index + 1:context_end_index])
-                print(token)
-                if source_context_left: print(source_context_left)
-                print(source_sentence.strip())
-                if source_context_right: print(source_context_right)
-                print()
+                print(token, file=sys.stdout)
+                if source_context_left: print(source_context_left, file=sys.stdout)
+                print(source_sentence.strip(), file=sys.stdout)
+                if source_context_right: print(source_context_right, file=sys.stdout)
+                print(file=sys.stdout)
         else: # lemmas-only
             for token in sorted_tokens:
                 print(token, file=sys.stdout)
@@ -1115,7 +1115,7 @@ def main():
         )
 
     if args.print_output_filename and processed_output_file:
-        print(os.path.basename(processed_output_file))
+        print(os.path.basename(processed_output_file), file=sys.stdout)
 
 if __name__ == "__main__":
     main()

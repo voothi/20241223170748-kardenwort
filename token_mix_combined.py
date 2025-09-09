@@ -976,8 +976,23 @@ def main():
      ALL - A shortcut to process all available tags.
 
   Available Tags (Universal Dependencies):
-    ADJ, ADP, ADV, AUX, CCONJ, DET, INTJ, NOUN, NUM, PART, 
-    PRON, PROPN, PUNCT, SCONJ, SYM, VERB, X'''
+    ADJ   - Adjective (Adjektiv; e.g., groß, alt, schön)
+    ADP   - Adposition (Präposition; e.g., in, zu, auf, mit)
+    ADV   - Adverb (Adverb; e.g., schnell, sehr, hier)
+    AUX   - Auxiliary verb (Hilfsverb; e.g., sein, haben, werden, können)
+    CCONJ - Coordinating Conjunction (Konjunktion; e.g., und, aber, oder)
+    DET   - Determiner (Artikel/Demonstrativpronomen; e.g., der, eine, dieser)
+    INTJ  - Interjection (Interjektion; e.g., ach, hallo, oje)
+    NOUN  - Noun (Nomen/Substantiv; e.g., Haus, Tisch, Buch)
+    NUM   - Numeral (Numerale; e.g., eins, zwei, 100)
+    PART  - Particle (Partikel; e.g., nicht, zu bei Infinitiv, ja)
+    PRON  - Pronoun (Pronomen; e.g., ich, du, er, sie)
+    PROPN - Proper Noun (Eigenname; e.g., Peter, Berlin, Google)
+    PUNCT - Punctuation (Interpunktion; e.g., ., ,, ?, !)
+    SCONJ - Subordinating Conjunction (Subjunktion; e.g., dass, weil, wenn)
+    SYM   - Symbol (Symbol; e.g., €, %%, §)
+    VERB  - Verb (Verb; e.g., gehen, sagen, machen)
+    X     - Other (Sonstiges; e.g., Fremdwörter, Tippfehler)'''
     )
     gcs_group.add_argument("--de-gcs-split-mode", choices=['only-nouns', 'any', 'combined'], default='only-nouns', help="[GCS] Set the splitting mode: 'only-nouns' (safe), 'any' (aggressive), or 'combined'.")
     gcs_group.add_argument("--de-gcs-mask-unknown-parts", action="store_true", help="[GCS] Mask word parts not found in the dictionary during splitting.")

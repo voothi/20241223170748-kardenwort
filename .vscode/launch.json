@@ -13,14 +13,14 @@
             "args": [
                 "--type", "word",
                 "--language", "de",
-                "--text1-file", "U:\\voothi\\20241223170748-token-extraction\\in\\text1.txt",
+                "--text1-file", "U:/voothi/20241223170748-token-extraction/in/text1.txt",
                 "--sentence-context-size", "2",
-                "--output-file", ".\\out\\result.single.word.de.tsv",
+                "--output-file", "./out/result.single.word.de.tsv",
                 "--basename-add-timestamp",
                 "--add-source-word-col",
                 "--add-wordlist-col",
                 "--wordlist-use-br",
-                "--lemma-index-file", "U:\\voothi\\20241223170748-token-extraction\\deu-mixed-typical-2011-1m-words.csv"
+                "--lemma-index-file", "U:/voothi/20241223170748-token-extraction/deu-mixed-typical-2011-1m-words.csv"
             ],
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
@@ -55,15 +55,15 @@
             "args": [
                 "--type", "sentence",
                 "--language", "de",
-                "--text1-file", "U:\\voothi\\20241223170748-token-extraction\\in\\text1.txt",
-                "--text2-file", "U:\\voothi\\20241223170748-token-extraction\\in\\text2.txt",
+                "--text1-file", "U:/voothi/20241223170748-token-extraction/in/text1.txt",
+                "--text2-file", "U:/voothi/20241223170748-token-extraction/in/text2.txt",
                 "--sentence-context-size", "2",
-                "--output-file", ".\\out\\result.dual.sentence.de.tsv",
+                "--output-file", "./out/result.dual.sentence.de.tsv",
                 "--basename-add-timestamp",
                 "--add-header",
                 "--add-wordlist-col",
                 "--wordlist-use-br",
-                "--lemma-index-file", "U:\\voothi\\20241223170748-token-extraction\\deu-mixed-typical-2011-1m-words.csv"
+                "--lemma-index-file", "U:/voothi/20241223170748-token-extraction/deu-mixed-typical-2011-1m-words.csv"
             ],
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
@@ -78,11 +78,11 @@
                 "--language", "de",
                 "--text", "Morgen fährt der neue Donaudampfschifffahrtsgesellschaftskapitän mit seinem Boot donauabwärts ab.",
                 "--sentence-context-size", "0",
-                "--lemma-index-file", "U:\\voothi\\20241223170748-token-extraction\\deu-mixed-typical-2011-1m-words.csv",
+                "--lemma-index-file", "U:/voothi/20241223170748-token-extraction/deu-mixed-typical-2011-1m-words.csv",
                 "--de-gcs",
-                "--de-dictionary-file", "U:\\voothi\\20241223170748-token-extraction\\20250826000433-test\\german.dic"
+                "--de-dictionary-file", "U:/voothi/20241223170748-token-extraction/20250826000433-test/german.dic"
             ],
-            "python": "U:\\voothi\\20250825231214-spacy-env\\Scripts\\python.exe"
+            "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
         {
             "name": "Run token_mix_combined.py / Test 2 gcs / De / type word / text1-file",
@@ -93,9 +93,9 @@
             "args": [
                 "--type", "word",
                 "--language", "de",
-                "--text1-file", "U:\\voothi\\20241223170748-token-extraction\\in\\test\\text1.de.txt",
+                "--text1-file", "U:/voothi/20241223170748-token-extraction/in/test/text1.de.txt",
                 "--sentence-context-size", "2",
-                "--output-file", ".\\out\\result.single.word.de.tsv",
+                "--output-file", "./out/result.single.word.de.tsv",
                 "--basename-add-timestamp",
                 "--basename-add-first-words", "5",
                 "--stdout-print-output-basename",
@@ -103,10 +103,10 @@
                 "--add-source-word-col",
                 "--add-wordlist-col",
                 "--wordlist-use-br",
-                "--lemma-index-file", "U:\\voothi\\20241223170748-token-extraction\\de-default.csv",
-                "--lemma-override-file", "U:\\voothi\\20241223170748-token-extraction\\lemma_override_de.tsv",
+                "--lemma-index-file", "U:/voothi/20241223170748-token-extraction/de-default.csv",
+                "--lemma-override-file", "U:/voothi/20241223170748-token-extraction/lemma_override_de.tsv",
                 "--de-fix-genitive",
-                "--de-dictionary-file", "U:\\voothi\\20241223170748-token-extraction\\20250826000433-test\\german.dic",
+                "--de-dictionary-file", "U:/voothi/20241223170748-token-extraction/20250826000433-test/german.dic",
                 "--de-gcs",
                 "--de-gcs-pos-tags", "!VERB",
                 "--de-gcs-split-mode", "combined",
@@ -125,16 +125,16 @@
             "args": [
                 "--type", "word",
                 "--language", "de",
-                "--text1-file", "U:\\voothi\\20241223170748-token-extraction\\in\\test\\text1.de.txt",
-                "--text2-file", "U:\\voothi\\20241223170748-token-extraction\\in\\test\\text2.de.txt",
+                "--text1-file", "U:/voothi/20241223170748-token-extraction/in/test/text1.de.txt",
+                "--text2-file", "U:/voothi/20241223170748-token-extraction/in/test/text2.de.txt",
                 "--sentence-context-size", "2",
-                "--output-file", ".\\out\\result.dual.word.de.tsv",
+                "--output-file", "./out/result.dual.word.de.tsv",
                 "--basename-add-timestamp",
                 "--add-source-word-col",
                 "--add-header",
                 "--add-wordlist-col",
                 "--wordlist-use-br",
-                "--lemma-index-file", "U:\\voothi\\20241223170748-token-extraction\\de-default.csv"
+                "--lemma-index-file", "U:/voothi/20241223170748-token-extraction/de-default.csv"
             ],
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
@@ -147,14 +147,14 @@
             "args": [
                 "--type", "word",
                 "--language", "de",
-                "--text1-file", "U:\\voothi\\20241223170748-token-extraction\\in\\test\\text1.de.txt",
-                "--text2-file", "U:\\voothi\\20241223170748-token-extraction\\in\\test\\text2.de.txt",
-                "--text3-file", "U:\\voothi\\20241223170748-token-extraction\\in\\test\\text3.de.txt",
+                "--text1-file", "U:/voothi/20241223170748-token-extraction/in/test/text1.de.txt",
+                "--text2-file", "U:/voothi/20241223170748-token-extraction/in/test/text2.de.txt",
+                "--text3-file", "U:/voothi/20241223170748-token-extraction/in/test/text3.de.txt",
                 "--sentence-context-size", "2",
-                "--output-file", ".\\out\\result.triple.word.de.tsv",
+                "--output-file", "./out/result.triple.word.de.tsv",
                 "--basename-add-timestamp",
                 "--add-source-word-col",
-                "--lemma-index-file", "U:\\voothi\\20241223170748-token-extraction\\de-default.csv"
+                "--lemma-index-file", "U:/voothi/20241223170748-token-extraction/de-default.csv"
             ],
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
@@ -167,12 +167,12 @@
             "args": [
                 "--type", "sentence",
                 "--language", "de",
-                "--text1-file", "U:\\voothi\\20241223170748-token-extraction\\in\\test\\text1.de.txt",
-                "--text2-file", "U:\\voothi\\20241223170748-token-extraction\\in\\test\\text2.de.txt",
+                "--text1-file", "U:/voothi/20241223170748-token-extraction/in/test/text1.de.txt",
+                "--text2-file", "U:/voothi/20241223170748-token-extraction/in/test/text2.de.txt",
                 "--sentence-context-size", "2",
-                "--output-file", ".\\out\\result.dual.sentence.de.tsv",
+                "--output-file", "./out/result.dual.sentence.de.tsv",
                 "--basename-add-timestamp",
-                "--lemma-index-file", "U:\\voothi\\20241223170748-token-extraction\\de-default.csv"
+                "--lemma-index-file", "U:/voothi/20241223170748-token-extraction/de-default.csv"
             ],
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
@@ -185,13 +185,13 @@
             "args": [
                 "--type", "sentence",
                 "--language", "de",
-                "--text1-file", "U:\\voothi\\20241223170748-token-extraction\\in\\test\\text1.de.txt",
-                "--text2-file", "U:\\voothi\\20241223170748-token-extraction\\in\\test\\text2.de.txt",
-                "--text3-file", "U:\\voothi\\20241223170748-token-extraction\\in\\test\\text3.de.txt",
+                "--text1-file", "U:/voothi/20241223170748-token-extraction/in/test/text1.de.txt",
+                "--text2-file", "U:/voothi/20241223170748-token-extraction/in/test/text2.de.txt",
+                "--text3-file", "U:/voothi/20241223170748-token-extraction/in/test/text3.de.txt",
                 "--sentence-context-size", "2",
-                "--output-file", ".\\out\\result.triple.sentence.de.tsv",
+                "--output-file", "./out/result.triple.sentence.de.tsv",
                 "--basename-add-timestamp",
-                "--lemma-index-file", "U:\\voothi\\20241223170748-token-extraction\\de-default.csv"
+                "--lemma-index-file", "U:/voothi/20241223170748-token-extraction/de-default.csv"
             ],
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
@@ -204,12 +204,12 @@
             "args": [
                 "--type", "word",
                 "--language", "en",
-                "--text1-file", "U:\\voothi\\20241223170748-token-extraction\\in\\test\\text1.en.txt",
+                "--text1-file", "U:/voothi/20241223170748-token-extraction/in/test/text1.en.txt",
                 "--sentence-context-size", "2",
-                "--output-file", ".\\out\\result.single.word.en.tsv",
+                "--output-file", "./out/result.single.word.en.tsv",
                 "--basename-add-timestamp",
                 "--add-source-word-col",
-                "--lemma-index-file", "U:\\voothi\\20241223170748-token-extraction\\en-default.csv"
+                "--lemma-index-file", "U:/voothi/20241223170748-token-extraction/en-default.csv"
             ],
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
@@ -222,13 +222,13 @@
             "args": [
                 "--type", "word",
                 "--language", "en",
-                "--text1-file", "U:\\voothi\\20241223170748-token-extraction\\in\\test\\text1.en.txt",
-                "--text2-file", "U:\\voothi\\20241223170748-token-extraction\\in\\test\\text2.en.txt",
+                "--text1-file", "U:/voothi/20241223170748-token-extraction/in/test/text1.en.txt",
+                "--text2-file", "U:/voothi/20241223170748-token-extraction/in/test/text2.en.txt",
                 "--sentence-context-size", "2",
-                "--output-file", ".\\out\\result.dual.word.en.tsv",
+                "--output-file", "./out/result.dual.word.en.tsv",
                 "--basename-add-timestamp",
                 "--add-source-word-col",
-                "--lemma-index-file", "U:\\voothi\\20241223170748-token-extraction\\en-default.csv"
+                "--lemma-index-file", "U:/voothi/20241223170748-token-extraction/en-default.csv"
             ],
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
@@ -241,12 +241,12 @@
             "args": [
                 "--type", "word",
                 "--language", "en",
-                "--text1-file", "U:\\voothi\\20241223170748-token-extraction\\in\\text1.txt",
+                "--text1-file", "U:/voothi/20241223170748-token-extraction/in/text1.txt",
                 "--sentence-context-size", "2",
-                "--output-file", ".\\out\\result.single.word.en.tsv",
+                "--output-file", "./out/result.single.word.en.tsv",
                 "--basename-add-timestamp",
                 "--add-source-word-col",
-                "--lemma-index-file", "U:\\voothi\\20241223170748-token-extraction\\en-default.csv"
+                "--lemma-index-file", "U:/voothi/20241223170748-token-extraction/en-default.csv"
             ],
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
@@ -259,13 +259,13 @@
             "args": [
                 "--type", "word",
                 "--language", "en",
-                "--text1-file", "U:\\voothi\\20241223170748-token-extraction\\in\\text1.txt",
-                "--text2-file", "U:\\voothi\\20241223170748-token-extraction\\in\\text2.txt",
+                "--text1-file", "U:/voothi/20241223170748-token-extraction/in/text1.txt",
+                "--text2-file", "U:/voothi/20241223170748-token-extraction/in/text2.txt",
                 "--sentence-context-size", "2",
-                "--output-file", ".\\out\\result.dual.word.en.tsv",
+                "--output-file", "./out/result.dual.word.en.tsv",
                 "--basename-add-timestamp",
                 "--add-source-word-col",
-                "--lemma-index-file", "U:\\voothi\\20241223170748-token-extraction\\en-default.csv"
+                "--lemma-index-file", "U:/voothi/20241223170748-token-extraction/en-default.csv"
             ],
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
@@ -278,11 +278,11 @@
             "args": [
                 "--type", "sentence",
                 "--language", "en",
-                "--text1-file", "U:\\voothi\\20241223170748-token-extraction\\in\\test\\text1.en.txt",
+                "--text1-file", "U:/voothi/20241223170748-token-extraction/in/test/text1.en.txt",
                 "--sentence-context-size", "2",
-                "--output-file", ".\\out\\result-t.sentence.en.tsv",
+                "--output-file", "./out/result-t.sentence.en.tsv",
                 "--basename-add-timestamp",
-                "--lemma-index-file", "U:\\voothi\\20241223170748-token-extraction\\en-default.csv"
+                "--lemma-index-file", "U:/voothi/20241223170748-token-extraction/en-default.csv"
             ],
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
@@ -295,12 +295,12 @@
             "args": [
                 "--type", "sentence",
                 "--language", "en",
-                "--text1-file", "U:\\voothi\\20241223170748-token-extraction\\in\\test\\text1.en.txt",
-                "--text2-file", "U:\\voothi\\20241223170748-token-extraction\\in\\test\\text2.en.txt",
+                "--text1-file", "U:/voothi/20241223170748-token-extraction/in/test/text1.en.txt",
+                "--text2-file", "U:/voothi/20241223170748-token-extraction/in/test/text2.en.txt",
                 "--sentence-context-size", "2",
-                "--output-file", ".\\out\\result.dual.sentence.en.tsv",
+                "--output-file", "./out/result.dual.sentence.en.tsv",
                 "--basename-add-timestamp",
-                "--lemma-index-file", "U:\\voothi\\20241223170748-token-extraction\\en-default.csv"
+                "--lemma-index-file", "U:/voothi/20241223170748-token-extraction/en-default.csv"
             ],
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
@@ -313,12 +313,12 @@
             "args": [
                 "--type", "sentence",
                 "--language", "en",
-                "--text1-file", "U:\\voothi\\20241223170748-token-extraction\\in\\text1.txt",
-                "--text2-file", "U:\\voothi\\20241223170748-token-extraction\\in\\text2.txt",
+                "--text1-file", "U:/voothi/20241223170748-token-extraction/in/text1.txt",
+                "--text2-file", "U:/voothi/20241223170748-token-extraction/in/text2.txt",
                 "--sentence-context-size", "2",
-                "--output-file", ".\\out\\result.dual.sentence.en.tsv",
+                "--output-file", "./out/result.dual.sentence.en.tsv",
                 "--basename-add-timestamp",
-                "--lemma-index-file", "U:\\voothi\\20241223170748-token-extraction\\en-default.csv"
+                "--lemma-index-file", "U:/voothi/20241223170748-token-extraction/en-default.csv"
             ],
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         }

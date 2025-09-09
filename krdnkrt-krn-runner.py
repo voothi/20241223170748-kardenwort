@@ -1,6 +1,38 @@
 import subprocess
 from pathlib import Path
 import argparse
+import configparser
+import platform
+import sys
+
+def load_config():
+    """Reads paths from config.ini based on the operating system."""
+    config_path = Path(__file__).parent / 'config.ini'
+    if not config_path.exists():
+        print(f"ERROR: Configuration file not found at {config_path}", file=sys.stderr)
+        print("Please copy 'config.ini.template' to 'config.ini' and fill in the correct paths.", file=sys.stderr)
+        sys.exit(1)
+
+    config = configparser.ConfigParser()
+    config.read(config_path)
+
+    os_type = platform.system()
+    section = 'paths_nix' if os_type == "Linux" or os_type == "Darwin" else 'paths_windows'
+
+    if section not in config:
+        print(f"ERROR: Missing section [{section}] in {config_path}", file=sys.stderr)
+        sys.exit(1)
+
+    try:
+        python_path = Path(config[section]['python_path'])
+        importer_workspace = Path(config[section]['importer_workspace'])
+        workspace_path = Path(__file__).parent
+    except KeyError as e:
+        print(f"ERROR: Missing key {e} in section [{section}] of {config_path}", file=sys.stderr)
+        sys.exit(1)
+
+    return python_path, workspace_path, importer_workspace
+
 
 def get_script_args(args, python_path, workspace_path):
     """Builds the list of command-line arguments for calling the main script."""
@@ -90,6 +122,11 @@ def get_script_args(args, python_path, workspace_path):
 
 
 def main():
+    if "--get-python-path" in sys.argv:
+        python_path, _, _ = load_config()
+        print(python_path)
+        sys.exit(0)
+
     parser = argparse.ArgumentParser(
         description="A wrapper script to extract and process words or sentences from text files and import them."
     )
@@ -132,9 +169,7 @@ def main():
     )
     args = parser.parse_args()
 
-    python_path = Path(r"U:/voothi/20250825231214-spacy-env/Scripts/python.exe")
-    workspace_path = Path(r"U:/voothi/20241223170748-kardenwort-kern")
-    importer_workspace = Path(r"U:/voothi/20250401192017-anki-csv-importer")
+    python_path, workspace_path, importer_workspace = load_config()
 
     script_args = get_script_args(args, python_path, workspace_path)
 
@@ -149,12 +184,12 @@ def main():
 
     output_file = script_process.stdout.readline().strip()
     if not output_file:
-        print("ERROR: No output filename was captured from the script.")
+        print("ERROR: No output filename was captured from the script.", file=sys.stderr)
         stderr_output, _ = script_process.communicate()
         if stderr_output:
-            print("--- stderr from script ---")
-            print(stderr_output)
-            print("--------------------------")
+            print("--- stderr from script ---", file=sys.stderr)
+            print(stderr_output, file=sys.stderr)
+            print("--------------------------", file=sys.stderr)
         return
 
     print(f"Processing file: {output_file}")

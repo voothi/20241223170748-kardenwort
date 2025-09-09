@@ -17,7 +17,7 @@ def load_config():
     config.read(config_path)
 
     os_type = platform.system()
-    section = 'paths_nix' if os_type == "Linux" or os_type == "Darwin" else 'paths_windows'
+    section = 'paths_nix' if os_type == "Linux" or os_type == "Darwin" else 'paths_win'
 
     if section not in config:
         print(f"ERROR: Missing section [{section}] in {config_path}", file=sys.stderr)

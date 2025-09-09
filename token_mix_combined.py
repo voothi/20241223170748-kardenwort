@@ -782,7 +782,7 @@ def process_single_text(
                     if lemma:
                         if lemma not in lemma_to_shortest_form:
                             lemma_to_shortest_form[lemma] = source_word_form
-                            lemma_to_sentence_info[lemma] = (unit_index, unit_text)
+                            lemma_to_sentence_info[lemma] = (unit_index, text_unit)
                         elif len(source_word_form) < len(lemma_to_shortest_form[lemma]):
                              lemma_to_shortest_form[lemma] = source_word_form
 

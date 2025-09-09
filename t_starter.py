@@ -2,8 +2,8 @@ import subprocess
 from pathlib import Path
 import argparse
 
-def get_word_args(args, python_path, word_workspace):
-    """Builds the list of command-line arguments for calling token_mix_combined.py."""
+def get_script_args(args, python_path, workspace_path):
+    """Builds the list of command-line arguments for calling the main script."""
     if args.language == "en":
         lemma_file = "en-news-2023-1m-words.csv"
         override_file = "U:\\voothi\\20241223170748-token-extraction\\lemma_override_en.tsv"
@@ -15,31 +15,25 @@ def get_word_args(args, python_path, word_workspace):
 
     base_args = [
         str(python_path),
-        str(word_workspace / "token_mix_combined.py"),
-        "--type",
-        args.type,
-        "--language",
-        args.language,
-        "--lemma-index-file",
-        str(word_workspace / lemma_file),
-        "--sentence-context-size",
-        "2",
-        "--file-timestamp",
-        "--file-autoname",
-        "--file-print-name",
-        "--output-anki-header",
-        "--column-source-word",
-        "--column-sentence-wordlist",
-        "--column-wordlist-use-br",
-        "--lemma-override-file",
-        override_file,
+        str(workspace_path / "token_mix_combined.py"),
+        "--type", args.type,
+        "--language", args.language,
+        "--lemma-index-file", str(workspace_path / lemma_file),
+        "--sentence-context-size", "2",
+        "--basename-add-timestamp",
+        "--basename-add-first-words",
+        "--stdout-print-output-basename",
+        "--add-header",
+        "--add-source-word-col",
+        "--add-wordlist-col",
+        "--wordlist-use-br",
+        "--lemma-override-file", override_file,
     ]
 
     if args.language == "de":
         german_enhancement_args = [
             "--de-fix-genitive",
-            "--de-dictionary",
-            "U:\\voothi\\20241223170748-token-extraction\\20250826000433-test\\german.dic",
+            "--de-dictionary-file", "U:\\voothi\\20241223170748-token-extraction\\20250826000433-test\\german.dic",
         ]
         base_args.extend(german_enhancement_args)
 
@@ -66,34 +60,27 @@ def get_word_args(args, python_path, word_workspace):
         if args.text:
             single_mode_args.extend(["--text", args.text])
         else:
-            single_mode_args.extend(["--text1", str(word_workspace / "in/text1.txt")])
+            single_mode_args.extend(["--text1-file", str(workspace_path / "in/text1.txt")])
             
         single_mode_args.extend([
-            "--output",
-            str(word_workspace / f"out/result.single.{output_suffix}.{args.language}.tsv"),
+            "--output-file",
+            str(workspace_path / f"out/result.single.{output_suffix}.{args.language}.tsv"),
         ])
         
         return base_args + single_mode_args
         
     elif args.mode == "dual":
         return base_args + [
-            "--text1",
-            str(word_workspace / "in/text1.txt"),
-            "--text2",
-            str(word_workspace / "in/text2.txt"),
-            "--output",
-            str(word_workspace / f"out/result.dual.{output_suffix}.{args.language}.tsv"),
+            "--text1-file", str(workspace_path / "in/text1.txt"),
+            "--text2-file", str(workspace_path / "in/text2.txt"),
+            "--output-file", str(workspace_path / f"out/result.dual.{output_suffix}.{args.language}.tsv"),
         ]
     elif args.mode == "triple":
         return base_args + [
-            "--text1",
-            str(word_workspace / "in/text1.txt"),
-            "--text2",
-            str(word_workspace / "in/text2.txt"),
-            "--text3",
-            str(word_workspace / "in/text3.txt"),
-            "--output",
-            str(word_workspace / f"out/result.triple.{output_suffix}.{args.language}.tsv"),
+            "--text1-file", str(workspace_path / "in/text1.txt"),
+            "--text2-file", str(workspace_path / "in/text2.txt"),
+            "--text3-file", str(workspace_path / "in/text3.txt"),
+            "--output-file", str(workspace_path / f"out/result.triple.{output_suffix}.{args.language}.tsv"),
         ]
 
     raise ValueError(f"Unknown mode: {args.mode}")
@@ -142,31 +129,29 @@ def main():
     )
     args = parser.parse_args()
 
-    python_path = Path(
-        r"U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
-    )
-    word_workspace = Path(r"U:/voothi/20241223170748-token-extraction")
+    python_path = Path(r"U:/voothi/20250825231214-spacy-env/Scripts/python.exe")
+    workspace_path = Path(r"U:/voothi/20241223170748-token-extraction")
     importer_workspace = Path(r"U:/voothi/20250401192017-anki-csv-importer")
 
-    word_args = get_word_args(args, python_path, word_workspace)
+    script_args = get_script_args(args, python_path, workspace_path)
 
-    print(f"Running word extraction with command:\n{' '.join(word_args)}\n")
-    word_process = subprocess.Popen(
-        word_args,
+    print(f"Running extraction script with command:\n{' '.join(script_args)}\n")
+    script_process = subprocess.Popen(
+        script_args,
         stdout=subprocess.PIPE,
         text=True,
         encoding='utf-8',
         errors='replace'
     )
 
-    output_file = word_process.stdout.readline().strip()
+    output_file = script_process.stdout.readline().strip()
     if not output_file:
-        print("ERROR: No output file was captured from token_mix_combined.py")
-        stderr_output, _ = word_process.communicate()
+        print("ERROR: No output filename was captured from the script.")
+        stderr_output, _ = script_process.communicate()
         if stderr_output:
-            print("--- Stderr from token_mix_combined.py ---")
+            print("--- Stderr from script ---")
             print(stderr_output)
-            print("-----------------------------------------")
+            print("--------------------------")
         return
 
     print(f"Processing file: {output_file}")
@@ -174,12 +159,9 @@ def main():
     importer_command = [
         str(python_path),
         str(importer_workspace / "anki-csv-importer.py"),
-        "--path",
-        str(word_workspace / "out" / output_file),
-        "--deck",
-        output_file,
-        "--note",
-        "Basic 20240218092126",
+        "--path", str(workspace_path / "out" / output_file),
+        "--deck", output_file,
+        "--note", "Basic 20240218092126",
     ]
     print(f"Running importer with command:\n{' '.join(importer_command)}\n")
     subprocess.run(importer_command, check=True)

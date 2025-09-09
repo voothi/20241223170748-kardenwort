@@ -1,35 +1,45 @@
 @echo off
 setlocal EnableDelayedExpansion
 
-REM Set paths
-set PYTHON_PATH=U:\voothi\20250825231214-spacy-env\Scripts\python.exe
-set WORKSPACE=U:\voothi\20241223170748-kardenwort-kern
-set SCRIPT=krdnkrt-krn-runner.py
+REM --- Universal startup block ---
+set "WORKSPACE=%~dp0..\"
+set "RUNNER_SCRIPT=krdnkrt-krn-runner.py"
 
-REM Verify Python exists
-if not exist "%PYTHON_PATH%" (
-    echo ERROR: Python executable not found at: %PYTHON_PATH%
+where python >nul 2>nul
+if errorlevel 1 (
+    echo ERROR: 'python' command not found. Please ensure it is installed and in your PATH.
     exit /b 1
 )
 
-REM Change to workspace directory
+for /f "usebackq delims=" %%i in (`python "%WORKSPACE%%RUNNER_SCRIPT%" --get-python-path`) do set "PYTHON_PATH=%%i"
+
+if "!PYTHON_PATH!"=="" (
+    echo ERROR: Failed to get Python path from config.ini. See script output above for details.
+    exit /b 1
+)
+if not exist "%PYTHON_PATH%" (
+    echo ERROR: Python executable from config.ini not found: !PYTHON_PATH!
+    exit /b 1
+)
+
 cd /d "%WORKSPACE%"
 if errorlevel 1 (
     echo ERROR: Failed to change directory to %WORKSPACE%
     exit /b 1
 )
+REM --- End of universal block ---
 
-REM Run script with different modes
+
 echo Running extraction for English in triple mode...
 
 echo.
 echo Triple word mode...
-call "%PYTHON_PATH%" "%SCRIPT%" --language en --type word --mode triple
+call "%PYTHON_PATH%" "%RUNNER_SCRIPT%" --language en --type word --mode triple
 if errorlevel 1 goto :error
 
 echo.
 echo Triple sentence mode...
-call "%PYTHON_PATH%" "%SCRIPT%" --language en --type sentence --mode triple
+call "%PYTHON_PATH%" "%RUNNER_SCRIPT%" --language en --type sentence --mode triple
 if errorlevel 1 goto :error
 
 echo.

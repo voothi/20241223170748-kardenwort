@@ -1,0 +1,16 @@
+; Пожалуйста, скопируйте этот файл в config.ini и укажите правильные пути для вашей системы.
+
+[paths_windows]
+; Путь к исполняемому файлу python.exe в вашем виртуальном окружении
+python_path = U:\voothi\20250825231214-spacy-env\Scripts\python.exe
+
+; Путь к проекту anki-csv-importer
+importer_workspace = U:\voothi\20250401192017-anki-csv-importer
+
+
+[paths_linux]
+; Путь к исполняемому файлу python в вашем виртуальном окружении
+python_path = /path/to/voothi/20250825231214-spacy-env/bin/python
+
+; Путь к проекту anki-csv-importer
+importer_workspace = /path/to/voothi/20250401192017-anki-csv-importer

@@ -33,7 +33,7 @@ def get_script_args(args, python_path, workspace_path):
     if args.language == "de":
         german_enhancement_args = [
             "--de-fix-genitive",
-            "--de-dictionary-file", "U:/voothi/20241223170748-token-extraction/20250826000433-test/german.dic",
+            "--de-dictionary-file", "U:/voothi/20241223170748-token-extraction/german.dic",
         ]
         base_args.extend(german_enhancement_args)
 

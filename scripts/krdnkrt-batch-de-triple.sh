@@ -1,32 +1,34 @@
 #!/bin/bash
 set -e
 
-# Set paths - PLEASE UPDATE THESE FOR YOUR SYSTEM
-PYTHON_PATH="/path/to/voothi/20250825231214-spacy-env/bin/python"
-WORKSPACE="/path/to/voothi/20241223170748-kardenwort-kern"
-SCRIPT="krdnkrt-krn-runner.py"
+# --- Universal startup block ---
+WORKSPACE=$(cd "$(dirname "$0")/.." && pwd)
+RUNNER_SCRIPT="krdnkrt-krn-runner.py"
 
-# Verify Python exists
-if [ ! -f "$PYTHON_PATH" ]; then
-    echo "ERROR: Python executable not found at: $PYTHON_PATH" >&2
+if ! command -v python3 &> /dev/null; then
+    echo "ERROR: 'python3' command not found. Please ensure it is installed and in your PATH." >&2
     exit 1
 fi
 
-# Change to workspace directory
-cd "$WORKSPACE" || { echo "ERROR: Failed to change directory to $WORKSPACE" >&2; exit 1; }
+PYTHON_PATH=$(python3 "$WORKSPACE/$RUNNER_SCRIPT" --get-python-path)
+if [ $? -ne 0 ] || [ ! -f "$PYTHON_PATH" ]; then
+    echo "ERROR: Failed to get Python path from config.ini. See script output above for details." >&2
+    exit 1
+fi
 
-# Run script with different modes
+cd "$WORKSPACE" || { echo "ERROR: Failed to change directory to $WORKSPACE" >&2; exit 1; }
+# --- End of universal block ---
+
+
 echo "Running extraction in different modes..."
 
 echo
 echo "Triple word mode with GCS..."
-# The --de-gcs flag enables German Compound Splitting for word mode.
-"$PYTHON_PATH" "$SCRIPT" --language de --type word --mode triple --de-gcs --de-gcs-pos-tags "!VERB"
+"$PYTHON_PATH" "$RUNNER_SCRIPT" --language de --type word --mode triple --de-gcs --de-gcs-pos-tags "!VERB"
 
 echo
 echo "Triple sentence mode..."
-# GCS flags are not applicable for sentence mode and will be ignored.
-"$PYTHON_PATH" "$SCRIPT" --language de --type sentence --mode triple
+"$PYTHON_PATH" "$RUNNER_SCRIPT" --language de --type sentence --mode triple
 
 echo
 echo "All operations completed successfully."

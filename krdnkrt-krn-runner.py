@@ -6,16 +6,16 @@ def get_script_args(args, python_path, workspace_path):
     """Builds the list of command-line arguments for calling the main script."""
     if args.language == "en":
         lemma_file = "en-news-2023-1m-words.csv"
-        override_file = "U:/voothi/20241223170748-token-extraction/lemma_override_en.tsv"
+        override_file = "U:/voothi/20241223170748-token-extraction/data/lemma_override_en.tsv"
     elif args.language == "de":
         lemma_file = "deu-mixed-typical-2011-1m-words.csv"
-        override_file = "U:/voothi/20241223170748-token-extraction/lemma_override_de.tsv"
+        override_file = "U:/voothi/20241223170748-token-extraction/data/lemma_override_de.tsv"
     else:
         raise ValueError(f"Unsupported language: {args.language}")
 
     base_args = [
         str(python_path),
-        str(workspace_path / "token_mix_combined.py"),
+        str(workspace_path / "krdnkrt-krn.py"),
         "--type", args.type,
         "--language", args.language,
         "--lemma-index-file", str(workspace_path / lemma_file),
@@ -33,7 +33,7 @@ def get_script_args(args, python_path, workspace_path):
     if args.language == "de":
         german_enhancement_args = [
             "--de-fix-genitive",
-            "--de-dictionary-file", "U:/voothi/20241223170748-token-extraction/german.dic",
+            "--de-dictionary-file", "U:/voothi/20241223170748-token-extraction/data/german.dic",
         ]
         base_args.extend(german_enhancement_args)
 
@@ -149,7 +149,7 @@ def main():
         print("ERROR: No output filename was captured from the script.")
         stderr_output, _ = script_process.communicate()
         if stderr_output:
-            print("--- Stderr from script ---")
+            print("--- stderr from script ---")
             print(stderr_output)
             print("--------------------------")
         return

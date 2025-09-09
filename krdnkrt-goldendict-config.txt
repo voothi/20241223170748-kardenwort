@@ -1,6 +1,7 @@
 // Launch parameters of the utility in the GoldenDict-ng dictionary program.
 
 GoldenDict-ng.
+
 Main Window.
 Edit.
 Dictionaries... F3.
@@ -10,33 +11,33 @@ Programs.
 
 ---
 
-- [v] | Html | En TEx
-U:/voothi/20250825231214-spacy-env/Scripts/python.exe U:/voothi/20241223170748-token-extraction/token_mix_combined.py --type "word" --language "en" --text "%GDWORD%" --stdout-format "html" --sentence-context-size "0" --lemma-index-file "U:\voothi\20241223170748-token-extraction\en-news-2023-1m-words.csv" --lemma-override-file "U:/voothi/20241223170748-token-extraction/lemma_override_en.tsv"
+- [v] | Html | En kW
+U:/voothi/20250825231214-spacy-env/Scripts/python.exe U:/voothi/20241223170748-token-extraction/krdnkrt-krn.py --type "word" --language "en" --text "%GDWORD%" --stdout-format "html" --sentence-context-size "0" --lemma-index-file "U:/voothi/20241223170748-token-extraction/data/en-news-2023-1m-words.csv" --lemma-override-file "U:/voothi/20241223170748-token-extraction/data/lemma_override_en.tsv"
 
-- [v] | Plain Text | En TEx O
-U:/voothi/20250825231214-spacy-env/Scripts/python.exe U:/voothi/20241223170748-token-extraction/t_starter.py --type "word" --mode "single" --language "en" --text "%GDWORD%"
+- [v] | Plain Text | En kW O
+U:/voothi/20250825231214-spacy-env/Scripts/python.exe U:/voothi/20241223170748-token-extraction/krdnkrt-krn-runner.py --type "word" --mode "single" --language "en" --text "%GDWORD%"
 
 ---
 
 De TEx
-- [v] | Html | De TEx
-U:/voothi/20250825231214-spacy-env/Scripts/python.exe U:/voothi/20241223170748-token-extraction/token_mix_combined.py --type "word" --language "de" --text "%GDWORD%" --stdout-format "html" --sentence-context-size "0" --lemma-index-file "U:/voothi/20241223170748-token-extraction/deu-mixed-typical-2011-1m-words.csv" --de-fix-genitive --de-dictionary-file "U:/voothi/20241223170748-token-extraction/20250826000433-test/german.dic" --lemma-override-file "U:/voothi/20241223170748-token-extraction/lemma_override_de.tsv"
+- [v] | Html | De kW
+U:/voothi/20250825231214-spacy-env/Scripts/python.exe U:/voothi/20241223170748-token-extraction/krdnkrt-krn.py --type "word" --language "de" --text "%GDWORD%" --stdout-format "html" --sentence-context-size "0" --lemma-index-file "U:/voothi/20241223170748-token-extraction/data/deu-mixed-typical-2011-1m-words.csv" --de-fix-genitive --de-dictionary-file "U:/voothi/20241223170748-token-extraction/data/german.dic" --lemma-override-file "U:/voothi/20241223170748-token-extraction/data/lemma_override_de.tsv"
 
-- [v] | Plain Text | De TEx O
-U:/voothi/20250825231214-spacy-env/Scripts/python.exe U:/voothi/20241223170748-token-extraction/t_starter.py --type "word" --mode "single" --language "de" --text "%GDWORD%"
-
----
-
-- [v] | Html | De TEx 2
-U:/voothi/20250825231214-spacy-env/Scripts/python.exe U:/voothi/20241223170748-token-extraction/token_mix_combined.py --type "word" --language "de" --text "%GDWORD%" --stdout-format "html" --sentence-context-size "0" --lemma-index-file "U:/voothi/20241223170748-token-extraction/deu-mixed-typical-2011-1m-words.csv" --de-gcs --de-gcs-preserve-compound-word --de-gcs-split-mode "combined" --de-gcs-pos-tags "NOUN PRON ADV ADJ" --de-gcs-skip-merge-fractions --de-fix-genitive --de-dictionary-file "U:/voothi/20241223170748-token-extraction/20250826000433-test/german.dic" --lemma-override-file "U:/voothi/20241223170748-token-extraction/lemma_override_de.tsv"
-
-- [v] | Plain Text | De TEx 2 O
-U:/voothi/20250825231214-spacy-env/Scripts/python.exe U:/voothi/20241223170748-token-extraction/t_starter.py --type "word" --mode "single" --language "de" --de-gcs --text "%GDWORD%"
+- [v] | Plain Text | De kW O
+U:/voothi/20250825231214-spacy-env/Scripts/python.exe U:/voothi/20241223170748-token-extraction/krdnkrt-krn-runner.py --type "word" --mode "single" --language "de" --text "%GDWORD%"
 
 ---
 
-- [v] | Html | De TEx 3
-U:/voothi/20250825231214-spacy-env/Scripts/python.exe U:/voothi/20241223170748-token-extraction/token_mix_combined.py --type "word" --language "de" --text "%GDWORD%" --stdout-format "html" --sentence-context-size "0" --lemma-index-file "U:/voothi/20241223170748-token-extraction/deu-mixed-typical-2011-1m-words.csv" --de-gcs --de-gcs-preserve-compound-word --de-gcs-split-mode "combined" --de-gcs-pos-tags "!VERB" --de-gcs-skip-merge-fractions --de-fix-genitive --de-dictionary-file "U:/voothi/20241223170748-token-extraction/20250826000433-test/german.dic" --lemma-override-file "U:/voothi/20241223170748-token-extraction/lemma_override_de.tsv"
+- [v] | Html | De kW 2
+U:/voothi/20250825231214-spacy-env/Scripts/python.exe U:/voothi/20241223170748-token-extraction/krdnkrt-krn.py --type "word" --language "de" --text "%GDWORD%" --stdout-format "html" --sentence-context-size "0" --lemma-index-file "U:/voothi/20241223170748-token-extraction/data/deu-mixed-typical-2011-1m-words.csv" --de-gcs --de-gcs-preserve-compound-word --de-gcs-split-mode "combined" --de-gcs-pos-tags "NOUN PRON ADV ADJ" --de-gcs-skip-merge-fractions --de-fix-genitive --de-dictionary-file "U:/voothi/20241223170748-token-extraction/data/german.dic" --lemma-override-file "U:/voothi/20241223170748-token-extraction/data/lemma_override_de.tsv"
 
-- [v] | Plain Text | De TEx 3 O
-U:/voothi/20250825231214-spacy-env/Scripts/python.exe U:/voothi/20241223170748-token-extraction/t_starter.py --type "word" --mode "single" --language "de" --de-gcs --de-gcs-pos-tags "!VERB" --text "%GDWORD%"
+- [v] | Plain Text | De kW 2 O
+U:/voothi/20250825231214-spacy-env/Scripts/python.exe U:/voothi/20241223170748-token-extraction/krdnkrt-krn-runner.py --type "word" --mode "single" --language "de" --de-gcs --text "%GDWORD%"
+
+---
+
+- [v] | Html | De kW 3
+U:/voothi/20250825231214-spacy-env/Scripts/python.exe U:/voothi/20241223170748-token-extraction/krdnkrt-krn.py --type "word" --language "de" --text "%GDWORD%" --stdout-format "html" --sentence-context-size "0" --lemma-index-file "U:/voothi/20241223170748-token-extraction/data/deu-mixed-typical-2011-1m-words.csv" --de-gcs --de-gcs-preserve-compound-word --de-gcs-split-mode "combined" --de-gcs-pos-tags "!VERB" --de-gcs-skip-merge-fractions --de-fix-genitive --de-dictionary-file "U:/voothi/20241223170748-token-extraction/data/german.dic" --lemma-override-file "U:/voothi/20241223170748-token-extraction/data/lemma_override_de.tsv"
+
+- [v] | Plain Text | De kW 3 O
+U:/voothi/20250825231214-spacy-env/Scripts/python.exe U:/voothi/20241223170748-token-extraction/krdnkrt-krn-runner.py --type "word" --mode "single" --language "de" --de-gcs --de-gcs-pos-tags "!VERB" --text "%GDWORD%"

@@ -5,10 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Run token_mix_combined.py / Prod / De / type word / text1-file",
+            "name": "Run krdnkrt-krn.py / Prod / De / type word / text1-file",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/token_mix_combined.py",
+            "program": "${workspaceFolder}/krdnkrt-krn.py",
             "console": "integratedTerminal",
             "args": [
                 "--type", "word",
@@ -20,15 +20,15 @@
                 "--add-source-word-col",
                 "--add-wordlist-col",
                 "--wordlist-use-br",
-                "--lemma-index-file", "U:/voothi/20241223170748-token-extraction/deu-mixed-typical-2011-1m-words.csv"
+                "--lemma-index-file", "U:/voothi/20241223170748-token-extraction/data/deu-mixed-typical-2011-1m-words.csv"
             ],
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
         {
-            "name": "Run token_mix_combined.py / Prod / De / type word / text1-file text2-file",
+            "name": "Run krdnkrt-krn.py / Prod / De / type word / text1-file text2-file",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/token_mix_combined.py",
+            "program": "${workspaceFolder}/krdnkrt-krn.py",
             "console": "integratedTerminal",
             "args": [
                 "--type", "word",
@@ -42,15 +42,15 @@
                 "--add-header",
                 "--add-wordlist-col",
                 "--wordlist-use-br",
-                "--lemma-index-file", "U:/voothi/20241223170748-token-extraction/deu-mixed-typical-2011-1m-words.csv"
+                "--lemma-index-file", "U:/voothi/20241223170748-token-extraction/data/deu-mixed-typical-2011-1m-words.csv"
             ],
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
         {
-            "name": "Run token_mix_combined.py / Prod / De / type sentence / text1-file text2-file",
+            "name": "Run krdnkrt-krn.py / Prod / De / type sentence / text1-file text2-file",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/token_mix_combined.py",
+            "program": "${workspaceFolder}/krdnkrt-krn.py",
             "console": "integratedTerminal",
             "args": [
                 "--type", "sentence",
@@ -63,32 +63,32 @@
                 "--add-header",
                 "--add-wordlist-col",
                 "--wordlist-use-br",
-                "--lemma-index-file", "U:/voothi/20241223170748-token-extraction/deu-mixed-typical-2011-1m-words.csv"
+                "--lemma-index-file", "U:/voothi/20241223170748-token-extraction/data/deu-mixed-typical-2011-1m-words.csv"
             ],
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
         {
-            "name": "Run token_mix_combined.py / Test 1 gcs / De / type word / text",
+            "name": "Run krdnkrt-krn.py / Test 1 gcs / De / type word / text",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/token_mix_combined.py",
+            "program": "${workspaceFolder}/krdnkrt-krn.py",
             "console": "integratedTerminal",
             "args": [
                 "--type", "word",
                 "--language", "de",
                 "--text", "Morgen fährt der neue Donaudampfschifffahrtsgesellschaftskapitän mit seinem Boot donauabwärts ab.",
                 "--sentence-context-size", "0",
-                "--lemma-index-file", "U:/voothi/20241223170748-token-extraction/deu-mixed-typical-2011-1m-words.csv",
+                "--lemma-index-file", "U:/voothi/20241223170748-token-extraction/data/deu-mixed-typical-2011-1m-words.csv",
                 "--de-gcs",
                 "--de-dictionary-file", "U:/voothi/20241223170748-token-extraction/20250826000433-test/german.dic"
             ],
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
         {
-            "name": "Run token_mix_combined.py / Test 2 gcs / De / type word / text1-file",
+            "name": "Run krdnkrt-krn.py / Test 2 gcs / De / type word / text1-file",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/token_mix_combined.py",
+            "program": "${workspaceFolder}/krdnkrt-krn.py",
             "console": "integratedTerminal",
             "args": [
                 "--type", "word",
@@ -117,10 +117,10 @@
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
         {
-            "name": "Run token_mix_combined.py / Test 3 / De / type word / text1-file text2-file",
+            "name": "Run krdnkrt-krn.py / Test 3 / De / type word / text1-file text2-file",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/token_mix_combined.py",
+            "program": "${workspaceFolder}/krdnkrt-krn.py",
             "console": "integratedTerminal",
             "args": [
                 "--type", "word",
@@ -139,10 +139,10 @@
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
         {
-            "name": "Run token_mix_combined.py / Test 4 / De / type word / text1-file text2-file text3-file",
+            "name": "Run krdnkrt-krn.py / Test 4 / De / type word / text1-file text2-file text3-file",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/token_mix_combined.py",
+            "program": "${workspaceFolder}/krdnkrt-krn.py",
             "console": "integratedTerminal",
             "args": [
                 "--type", "word",
@@ -159,10 +159,10 @@
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
         {
-            "name": "Run token_mix_combined.py / Test (5) 7 / De / type sentence / text1-file text2-file",
+            "name": "Run krdnkrt-krn.py / Test (5) 7 / De / type sentence / text1-file text2-file",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/token_mix_combined.py",
+            "program": "${workspaceFolder}/krdnkrt-krn.py",
             "console": "integratedTerminal",
             "args": [
                 "--type", "sentence",
@@ -177,10 +177,10 @@
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
         {
-            "name": "Run token_mix_combined.py / Test (6) 8 / De / type sentence / text1-file text2-file text3-file",
+            "name": "Run krdnkrt-krn.py / Test (6) 8 / De / type sentence / text1-file text2-file text3-file",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/token_mix_combined.py",
+            "program": "${workspaceFolder}/krdnkrt-krn.py",
             "console": "integratedTerminal",
             "args": [
                 "--type", "sentence",
@@ -196,10 +196,10 @@
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
         {
-            "name": "Run token_mix_combined.py / Test / En / type word / text1-file",
+            "name": "Run krdnkrt-krn.py / Test / En / type word / text1-file",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/token_mix_combined.py",
+            "program": "${workspaceFolder}/krdnkrt-krn.py",
             "console": "integratedTerminal",
             "args": [
                 "--type", "word",
@@ -209,15 +209,15 @@
                 "--output-file", "./out/result.single.word.en.tsv",
                 "--basename-add-timestamp",
                 "--add-source-word-col",
-                "--lemma-index-file", "U:/voothi/20241223170748-token-extraction/en-default.csv"
+                "--lemma-index-file", "U:/voothi/20241223170748-token-extraction/data/en-news-2023-1m-words"
             ],
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
         {
-            "name": "Run token_mix_combined.py / Test / En / type word / text1-file text2-file",
+            "name": "Run krdnkrt-krn.py / Test / En / type word / text1-file text2-file",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/token_mix_combined.py",
+            "program": "${workspaceFolder}/krdnkrt-krn.py",
             "console": "integratedTerminal",
             "args": [
                 "--type", "word",
@@ -228,15 +228,15 @@
                 "--output-file", "./out/result.dual.word.en.tsv",
                 "--basename-add-timestamp",
                 "--add-source-word-col",
-                "--lemma-index-file", "U:/voothi/20241223170748-token-extraction/en-default.csv"
+                "--lemma-index-file", "U:/voothi/20241223170748-token-extraction/data/en-news-2023-1m-words"
             ],
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
         {
-            "name": "Run token_mix_combined.py / Prod / En / type word / text1-file",
+            "name": "Run krdnkrt-krn.py / Prod / En / type word / text1-file",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/token_mix_combined.py",
+            "program": "${workspaceFolder}/krdnkrt-krn.py",
             "console": "integratedTerminal",
             "args": [
                 "--type", "word",
@@ -246,15 +246,15 @@
                 "--output-file", "./out/result.single.word.en.tsv",
                 "--basename-add-timestamp",
                 "--add-source-word-col",
-                "--lemma-index-file", "U:/voothi/20241223170748-token-extraction/en-default.csv"
+                "--lemma-index-file", "U:/voothi/20241223170748-token-extraction/data/en-news-2023-1m-words"
             ],
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
         {
-            "name": "Run token_mix_combined.py / Prod / En / type word / text1-file text2-file",
+            "name": "Run krdnkrt-krn.py / Prod / En / type word / text1-file text2-file",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/token_mix_combined.py",
+            "program": "${workspaceFolder}/krdnkrt-krn.py",
             "console": "integratedTerminal",
             "args": [
                 "--type", "word",
@@ -265,15 +265,15 @@
                 "--output-file", "./out/result.dual.word.en.tsv",
                 "--basename-add-timestamp",
                 "--add-source-word-col",
-                "--lemma-index-file", "U:/voothi/20241223170748-token-extraction/en-default.csv"
+                "--lemma-index-file", "U:/voothi/20241223170748-token-extraction/data/en-news-2023-1m-words"
             ],
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
         {
-            "name": "Run token_mix_combined.py / Test / En / type sentence / text1-file",
+            "name": "Run krdnkrt-krn.py / Test / En / type sentence / text1-file",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/token_mix_combined.py",
+            "program": "${workspaceFolder}/krdnkrt-krn.py",
             "console": "integratedTerminal",
             "args": [
                 "--type", "sentence",
@@ -282,15 +282,15 @@
                 "--sentence-context-size", "2",
                 "--output-file", "./out/result-t.sentence.en.tsv",
                 "--basename-add-timestamp",
-                "--lemma-index-file", "U:/voothi/20241223170748-token-extraction/en-default.csv"
+                "--lemma-index-file", "U:/voothi/20241223170748-token-extraction/data/en-news-2023-1m-words"
             ],
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
         {
-            "name": "Run token_mix_combined.py / Test / En / type sentence / text1-file text2-file",
+            "name": "Run krdnkrt-krn.py / Test / En / type sentence / text1-file text2-file",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/token_mix_combined.py",
+            "program": "${workspaceFolder}/krdnkrt-krn.py",
             "console": "integratedTerminal",
             "args": [
                 "--type", "sentence",
@@ -300,15 +300,15 @@
                 "--sentence-context-size", "2",
                 "--output-file", "./out/result.dual.sentence.en.tsv",
                 "--basename-add-timestamp",
-                "--lemma-index-file", "U:/voothi/20241223170748-token-extraction/en-default.csv"
+                "--lemma-index-file", "U:/voothi/20241223170748-token-extraction/data/en-news-2023-1m-words"
             ],
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
         {
-            "name": "Run token_mix_combined.py / Prod / En / type sentence / text1-file text2-file",
+            "name": "Run krdnkrt-krn.py / Prod / En / type sentence / text1-file text2-file",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/token_mix_combined.py",
+            "program": "${workspaceFolder}/krdnkrt-krn.py",
             "console": "integratedTerminal",
             "args": [
                 "--type", "sentence",
@@ -318,7 +318,7 @@
                 "--sentence-context-size", "2",
                 "--output-file", "./out/result.dual.sentence.en.tsv",
                 "--basename-add-timestamp",
-                "--lemma-index-file", "U:/voothi/20241223170748-token-extraction/en-default.csv"
+                "--lemma-index-file", "U:/voothi/20241223170748-token-extraction/data/en-news-2023-1m-words"
             ],
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         }

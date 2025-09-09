@@ -2,9 +2,9 @@
 setlocal EnableDelayedExpansion
 
 REM Set paths
-set PYTHON_PATH=C:\Users\voothi\AppData\Roaming\Anki2\addons21\spacyenv\Scripts\python.exe
-set WORKSPACE=U:\voothi\20241223170748-token-extraction
-set SCRIPT=t_starter.py
+set PYTHON_PATH=U:\voothi\20250825231214-spacy-env\Scripts\python.exe
+set WORKSPACE=U:\voothi\20241223170748-kardenwort-kern
+set SCRIPT=krdnkrt-krn-runner.py
 
 REM Verify Python exists
 if not exist "%PYTHON_PATH%" (
@@ -19,22 +19,15 @@ if errorlevel 1 (
     exit /b 1
 )
 
-REM Run script with different modes
-echo Running word extraction in different modes...
-
-@REM echo 1. Simple word mode...
-@REM call "%PYTHON_PATH%" "%SCRIPT%" --type word --mode simple
-@REM if errorlevel 1 goto :error
+REM Run script for a single English text file
+echo Running extraction for a single English text...
 
 echo.
-echo 2. Dual word mode...
+echo Single word mode...
 call "%PYTHON_PATH%" "%SCRIPT%" --language en --type word --mode single
 if errorlevel 1 goto :error
 
-echo.
-echo 3. Dual sentence mode...
-call "%PYTHON_PATH%" "%SCRIPT%" --language en --type sentence --mode single
-if errorlevel 1 goto :error
+REM The 'sentence' mode requires at least two files ('dual' or 'triple' mode) and cannot be run in 'single' mode.
 
 echo.
 echo All operations completed successfully.

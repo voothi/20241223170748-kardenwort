@@ -2,9 +2,9 @@
 setlocal EnableDelayedExpansion
 
 REM Set paths
-set PYTHON_PATH=C:\Users\voothi\AppData\Roaming\Anki2\addons21\spacyenv\Scripts\python.exe
-set WORKSPACE=U:\voothi\20241223170748-token-extraction
-set SCRIPT=t_starter.py
+set PYTHON_PATH=U:\voothi\20250825231214-spacy-env\Scripts\python.exe
+set WORKSPACE=U:\voothi\20241223170748-kardenwort-kern
+set SCRIPT=krdnkrt-krn-runner.py
 
 REM Verify Python exists
 if not exist "%PYTHON_PATH%" (
@@ -20,29 +20,15 @@ if errorlevel 1 (
 )
 
 REM Run script with different modes
-echo Running word extraction in different modes...
-
-@REM echo 1. Simple word mode...
-@REM call "%PYTHON_PATH%" "%SCRIPT%" --type word --mode simple
-@REM if errorlevel 1 goto :error
-
-@REM echo.
-@REM echo 2. Dual word mode...
-@REM call "%PYTHON_PATH%" "%SCRIPT%" --language en --type word --mode dual
-@REM if errorlevel 1 goto :error
-
-@REM echo.
-@REM echo 3. Dual sentence mode...
-@REM call "%PYTHON_PATH%" "%SCRIPT%" --language en --type sentence --mode dual
-@REM if errorlevel 1 goto :error
+echo Running extraction for English in triple mode...
 
 echo.
-echo 4. Triple word mode...
+echo Triple word mode...
 call "%PYTHON_PATH%" "%SCRIPT%" --language en --type word --mode triple
 if errorlevel 1 goto :error
 
 echo.
-echo 5. Triple sentence mode...
+echo Triple sentence mode...
 call "%PYTHON_PATH%" "%SCRIPT%" --language en --type sentence --mode triple
 if errorlevel 1 goto :error
 

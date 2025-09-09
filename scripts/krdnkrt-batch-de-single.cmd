@@ -2,9 +2,9 @@
 setlocal EnableDelayedExpansion
 
 REM Set paths
-set PYTHON_PATH=C:\Users\voothi\AppData\Roaming\Anki2\addons21\spacyenv\Scripts\python.exe
-set WORKSPACE=U:\voothi\20241223170748-token-extraction
-set SCRIPT=t_starter.py
+set PYTHON_PATH=U:\voothi\20250825231214-spacy-env\Scripts\python.exe
+set WORKSPACE=U:\voothi\20241223170748-kardenwort-kern
+set SCRIPT=krdnkrt-krn-runner.py
 
 REM Verify Python exists
 if not exist "%PYTHON_PATH%" (
@@ -19,22 +19,13 @@ if errorlevel 1 (
     exit /b 1
 )
 
-REM Run script with different modes
-echo Running word extraction in different modes...
-
-@REM echo 1. Simple word mode...
-@REM call "%PYTHON_PATH%" "%SCRIPT%" --type word --mode simple
-@REM if errorlevel 1 goto :error
+REM Run script
+echo Running word extraction for a single German text...
 
 echo.
-echo 2. Single word mode...
-call "%PYTHON_PATH%" "%SCRIPT%" --language de --type word --mode single
+echo Single word mode with GCS (excluding verbs)...
+call "%PYTHON_PATH%" "%SCRIPT%" --language de --type word --mode single --de-gcs --de-gcs-pos-tags "!VERB"
 if errorlevel 1 goto :error
-
-@REM echo.
-@REM echo 3. Dual sentence mode...
-@REM call "%PYTHON_PATH%" "%SCRIPT%" --language de --type sentence --mode single
-@REM if errorlevel 1 goto :error
 
 echo.
 echo All operations completed successfully.

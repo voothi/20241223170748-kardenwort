@@ -6,10 +6,10 @@ def get_script_args(args, python_path, workspace_path):
     """Builds the list of command-line arguments for calling the main script."""
     if args.language == "en":
         lemma_file = "en-news-2023-1m-words.csv"
-        override_file = "U:\\voothi\\20241223170748-token-extraction\\lemma_override_en.tsv"
+        override_file = "U:/voothi/20241223170748-token-extraction/lemma_override_en.tsv"
     elif args.language == "de":
         lemma_file = "deu-mixed-typical-2011-1m-words.csv"
-        override_file = "U:\\voothi\\20241223170748-token-extraction\\lemma_override_de.tsv"
+        override_file = "U:/voothi/20241223170748-token-extraction/lemma_override_de.tsv"
     else:
         raise ValueError(f"Unsupported language: {args.language}")
 
@@ -33,7 +33,7 @@ def get_script_args(args, python_path, workspace_path):
     if args.language == "de":
         german_enhancement_args = [
             "--de-fix-genitive",
-            "--de-dictionary-file", "U:\\voothi\\20241223170748-token-extraction\\20250826000433-test\\german.dic",
+            "--de-dictionary-file", "U:/voothi/20241223170748-token-extraction/20250826000433-test/german.dic",
         ]
         base_args.extend(german_enhancement_args)
 

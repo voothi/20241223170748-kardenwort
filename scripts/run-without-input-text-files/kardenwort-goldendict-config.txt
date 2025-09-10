@@ -65,7 +65,12 @@ U:/voothi/20241223170748-kardenwort/kardenwort.py
 - [v] | Plain Text | De kW S Anki
 
 ```
-"U:/voothi/20250825231214-spacy-env/Scripts/python.exe" "U:/voothi/20241223170748-kardenwort/kardenwort-runner.py" --type "word" --language "de" --text "%GDWORD%" --mode "single"
+"U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
+"U:/voothi/20241223170748-kardenwort/kardenwort-runner.py"
+--type "word"
+--language "de"
+--text "%GDWORD%"
+--mode "single"
 ```
 
 ---

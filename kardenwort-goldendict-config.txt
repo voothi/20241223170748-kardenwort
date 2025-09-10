@@ -11,10 +11,10 @@ Programs.
 
 ---
 
-- [v] | Html | En kW
+- [v] | Html | En kW 2
 U:/voothi/20250825231214-spacy-env/Scripts/python.exe U:/voothi/20241223170748-kardenwort/kardenwort.py --type "word" --language "en" --text "%GDWORD%" --stdout-format "html" --sentence-context-size "0" --lemma-index-file "U:/voothi/20241223170748-kardenwort/data/en-news-2023-1m-words.csv" --lemma-override-file "U:/voothi/20241223170748-kardenwort/data/lemma_override_en.tsv"
 
-- [v] | Plain Text | En kW Anki
+- [v] | Plain Text | En kW 2 Anki
 U:/voothi/20250825231214-spacy-env/Scripts/python.exe U:/voothi/20241223170748-kardenwort/kardenwort-runner.py --type "word" --mode "single" --language "en" --text "%GDWORD%"
 
 ---

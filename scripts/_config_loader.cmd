@@ -1,5 +1,5 @@
 @echo off
-setlocal
+setlocal enabledelayedexpansion
 
 :: Path to the config file (assuming it's one level up from the script's directory)
 set "CONFIG_FILE=%~dp0..\config.ini"

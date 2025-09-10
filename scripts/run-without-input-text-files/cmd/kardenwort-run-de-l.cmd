@@ -1,13 +1,13 @@
 @echo off
-REM Setup the environment: enable delayed expansion and set UTF-8 encoding.
-setlocal enabledelayedexpansion
+REM Setup the environment and set UTF-8 encoding.
+setlocal
 chcp 65001 > nul
 
-REM Store the input from GoldenDict into a variable.
-set "INPUT_TEXT=%~1"
+REM Pass the input text to the Python script via an environment variable.
+set "KARDENWORT_INPUT_TEXT=%~1"
 
-REM Safely pipe the stored input to the Python script using delayed expansion (!VAR!).
-echo(!INPUT_TEXT!| "U:/voothi/20250825231214-spacy-env/Scripts/python.exe" ^
+REM Execute the Python script directly. It will read the environment variable internally.
+"U:/voothi/20250825231214-spacy-env/Scripts/python.exe" ^
 U:/voothi/20241223170748-kardenwort/kardenwort.py ^
 --type "word" ^
 --language "de" ^

@@ -1087,16 +1087,21 @@ def main():
             print("Error: --text and --text1-file are mutually exclusive.", file=sys.stderr); exit(1)
 
         input_text = ""
+        # Priority 1: Command-line argument
         if args.text:
             input_text = args.text
+        # Priority 2: Text file
         elif args.text1_file:
             input_text = read_text_from_file(args.text1_file)
+        # Priority 3: Environment variable (for GoldenDict)
+        elif 'KARDENWORT_INPUT_TEXT' in os.environ:
+            input_text = os.environ['KARDENWORT_INPUT_TEXT']
+        # Priority 4: Piped data from stdin (legacy)
         elif not sys.stdin.isatty():
             input_text = sys.stdin.read()
 
         if not input_text:
-            print("Error: No input provided. Use --text, --text1-file, or pipe data via stdin.", file=sys.stderr); exit(1)
-
+            print("Error: No input provided. Use --text, --text1-file, environment variable, or pipe data via stdin.", file=sys.stderr); exit(1)
         processing_options = {
             'de_gcs_only_nouns': (args.de_gcs_split_mode == 'only-nouns'),
             'de_gcs_combine_noun_modes': (args.de_gcs_split_mode == 'combined'),

@@ -5,76 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Run kardenwort.py / Prod / De / type word / text1-file",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/kardenwort.py",
-            "console": "integratedTerminal",
-            "args": [
-                "--type", "word",
-                "--language", "de",
-                "--text1-file", "U:/voothi/20241223170748-kardenwort/in/text1.txt",
-                "--sentence-context-size", "2",
-                "--output-file", "./out/result.single.word.de.tsv",
-                "--basename-add-timestamp",
-                "--add-source-word-col",
-                "--add-wordlist-col",
-                "--wordlist-use-br",
-                "--lemma-index-file", "U:/voothi/20241223170748-kardenwort/data/deu-mixed-typical-2011-1m-words.csv",
-                "--lemma-override-file", "U:/voothi/20241223170748-kardenwort/data/lemma_override_de.tsv",
-                "--de-dictionary-file", "U:/voothi/20241223170748-kardenwort/data/german.dic"
-            ],
-            "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
-        },
-        {
-            "name": "Run kardenwort.py / Prod / De / type word / text1-file text2-file",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/kardenwort.py",
-            "console": "integratedTerminal",
-            "args": [
-                "--type", "word",
-                "--language", "de",
-                "--text1-file", "U:/voothi/20241223170748-kardenwort/in/text1.txt",
-                "--text2-file", "U:/voothi/20241223170748-kardenwort/in/text2.txt",
-                "--sentence-context-size", "2",
-                "--output-file", "./out/result.dual.word.de.tsv",
-                "--basename-add-timestamp",
-                "--add-source-word-col",
-                "--add-header",
-                "--add-wordlist-col",
-                "--wordlist-use-br",
-                "--lemma-index-file", "U:/voothi/20241223170748-kardenwort/data/deu-mixed-typical-2011-1m-words.csv",
-                "--lemma-override-file", "U:/voothi/20241223170748-kardenwort/data/lemma_override_de.tsv",
-                "--de-dictionary-file", "U:/voothi/20241223170748-kardenwort/data/german.dic"
-            ],
-            "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
-        },
-        {
-            "name": "Run kardenwort.py / Prod / De / type sentence / text1-file text2-file",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/kardenwort.py",
-            "console": "integratedTerminal",
-            "args": [
-                "--type", "sentence",
-                "--language", "de",
-                "--text1-file", "U:/voothi/20241223170748-kardenwort/in/text1.txt",
-                "--text2-file", "U:/voothi/20241223170748-kardenwort/in/text2.txt",
-                "--sentence-context-size", "2",
-                "--output-file", "./out/result.dual.sentence.de.tsv",
-                "--basename-add-timestamp",
-                "--add-header",
-                "--add-wordlist-col",
-                "--wordlist-use-br",
-                "--lemma-index-file", "U:/voothi/20241223170748-kardenwort/data/deu-mixed-typical-2011-1m-words.csv",
-                "--lemma-override-file", "U:/voothi/20241223170748-kardenwort/data/lemma_override_de.tsv",
-                "--de-dictionary-file", "U:/voothi/20241223170748-kardenwort/data/german.dic"
-            ],
-            "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
-        },
-        {
-            "name": "Run kardenwort.py / Test 1 / De / type word / text",
+            "name": "Run kardenwort.py / Test 001 / De / type word / text",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/kardenwort.py",
@@ -92,7 +23,7 @@
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
         {
-            "name": "Run kardenwort.py / Test 1 GCS / De / type word / text",
+            "name": "Run kardenwort.py / Test 001 GCS / De / type word / text",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/kardenwort.py",
@@ -116,7 +47,7 @@
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
         {
-            "name": "Run kardenwort.py / Test 2 / De / type word / text1-file",
+            "name": "Run kardenwort.py / Test 002 / De / type word / single — text1-file",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/kardenwort.py",
@@ -141,7 +72,7 @@
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
         {
-            "name": "Run kardenwort.py / Test 2 GCS / De / type word / text1-file",
+            "name": "Run kardenwort.py / Test 002 GCS / De / type word / single — text1-file",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/kardenwort.py",
@@ -172,7 +103,7 @@
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
         {
-            "name": "Run kardenwort.py / Test 3 / De / type word / text1-file text2-file",
+            "name": "Run kardenwort.py / Test 003 / De / type word / dual — text1-file text2-file",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/kardenwort.py",
@@ -198,7 +129,7 @@
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
         {
-            "name": "Run kardenwort.py / Test 3 GCS / De / type word / text1-file text2-file",
+            "name": "Run kardenwort.py / Test 003 GCS / De / type word / dual — text1-file text2-file",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/kardenwort.py",
@@ -230,7 +161,7 @@
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
         {
-            "name": "Run kardenwort.py / Test 4 / De / type word / text1-file text2-file text3-file",
+            "name": "Run kardenwort.py / Test 004 / De / type word / triple — text1-file text2-file text3-file",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/kardenwort.py",
@@ -257,7 +188,7 @@
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
         {
-            "name": "Run kardenwort.py / Test 4 GCS / De / type word / text1-file text2-file text3-file",
+            "name": "Run kardenwort.py / Test 004 GCS / De / type word / triple — text1-file text2-file text3-file",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/kardenwort.py",
@@ -290,7 +221,7 @@
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
         {
-            "name": "Run kardenwort.py / Test 5 / De / type sentence / text1-file text2-file",
+            "name": "Run kardenwort.py / Test 005 / De / type sentence / dual — text1-file text2-file",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/kardenwort.py",
@@ -316,7 +247,7 @@
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
         {
-            "name": "Run kardenwort.py / Test 5 GCS / De / type sentence / text1-file text2-file",
+            "name": "Run kardenwort.py / Test 005 GCS / De / type sentence / dual — text1-file text2-file",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/kardenwort.py",
@@ -348,7 +279,7 @@
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
         {
-            "name": "Run kardenwort.py / Test 6 / De / type sentence / text1-file text2-file text3-file",
+            "name": "Run kardenwort.py / Test 006 / De / type sentence / triple — text1-file text2-file text3-file",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/kardenwort.py",
@@ -375,7 +306,7 @@
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
         {
-            "name": "Run kardenwort.py / Test 6 GCS / De / type sentence / text1-file text2-file text3-file",
+            "name": "Run kardenwort.py / Test 006 GCS / De / type sentence / triple — text1-file text2-file text3-file",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/kardenwort.py",
@@ -408,7 +339,30 @@
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
         {
-            "name": "Run kardenwort.py / Prod / En / type word / text1-file",
+            "name": "Run kardenwort.py / Test 101 / En / type word / text",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/kardenwort.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--type", "word",
+                "--language", "en",
+                "--text", "Hi everyone. So I've wanted to make this video for a while. It is a comprehensive but general audience introduction to large language models like ChatGPT. And what I'm hoping to achieve in this video is to give you kind of mental models for thinking through what it is that this tool is. It is obviously magical and amazing in some respects. It's really good at some things, not very good at other things, and there's also a lot of sharp edges to be aware of.",
+                "--sentence-context-size", "2",
+                "--output-file", "./out/result.single.word.en.tsv",
+                "--basename-add-timestamp",
+                "--stdout-print-output-basename",
+                "--add-header",
+                "--add-source-word-col",
+                "--add-wordlist-col",
+                "--wordlist-use-br",
+                "--lemma-index-file", "U:/voothi/20241223170748-kardenwort/data/en-news-2023-1m-words.csv",
+                "--lemma-override-file", "U:/voothi/20241223170748-kardenwort/data/lemma_override_en.tsv"
+            ],
+            "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
+        },
+        {
+            "name": "Run kardenwort.py / Test 102 / En / type word / single — text1-file",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/kardenwort.py",
@@ -420,14 +374,18 @@
                 "--sentence-context-size", "2",
                 "--output-file", "./out/result.single.word.en.tsv",
                 "--basename-add-timestamp",
+                "--stdout-print-output-basename",
+                "--add-header",
                 "--add-source-word-col",
+                "--add-wordlist-col",
+                "--wordlist-use-br",
                 "--lemma-index-file", "U:/voothi/20241223170748-kardenwort/data/en-news-2023-1m-words.csv",
                 "--lemma-override-file", "U:/voothi/20241223170748-kardenwort/data/lemma_override_en.tsv"
             ],
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
         {
-            "name": "Run kardenwort.py / Prod / En / type word / text1-file text2-file",
+            "name": "Run kardenwort.py / Test 103 / En / type word / text1-file text2-file",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/kardenwort.py",
@@ -440,14 +398,18 @@
                 "--sentence-context-size", "2",
                 "--output-file", "./out/result.dual.word.en.tsv",
                 "--basename-add-timestamp",
+                "--stdout-print-output-basename",
+                "--add-header",
                 "--add-source-word-col",
+                "--add-wordlist-col",
+                "--wordlist-use-br",
                 "--lemma-index-file", "U:/voothi/20241223170748-kardenwort/data/en-news-2023-1m-words.csv",
                 "--lemma-override-file", "U:/voothi/20241223170748-kardenwort/data/lemma_override_en.tsv"
             ],
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
         {
-            "name": "Run kardenwort.py / Prod / En / type sentence / text1-file text2-file",
+            "name": "Run kardenwort.py / Test 105 / En / type sentence / text1-file text2-file",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/kardenwort.py",

@@ -32,9 +32,6 @@ def load_config():
         print(f"ERROR: Missing key {e} in section [{section}] of {config_path}", file=sys.stderr)
         sys.exit(1)
 
-    if args.mode == "single":
-        single_mode_args = []
-
     return python_path, workspace_path, importer_workspace
 
 

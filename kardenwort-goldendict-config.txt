@@ -19,7 +19,7 @@ U:/voothi/20250825231214-spacy-env/Scripts/python.exe U:/voothi/20241223170748-k
 
 ---
 
-De TEx
+De kW
 - [v] | Html | De kW
 U:/voothi/20250825231214-spacy-env/Scripts/python.exe U:/voothi/20241223170748-kardenwort/kardenwort.py --type "word" --language "de" --text "%GDWORD%" --stdout-format "html" --sentence-context-size "0" --lemma-index-file "U:/voothi/20241223170748-kardenwort/data/deu-mixed-typical-2011-1m-words.csv" --de-fix-genitive --de-dictionary-file "U:/voothi/20241223170748-kardenwort/data/german.dic" --lemma-override-file "U:/voothi/20241223170748-kardenwort/data/lemma_override_de.tsv"
 

@@ -2,7 +2,7 @@
 setlocal enabledelayedexpansion
 chcp 65001 > nul
 
-:: Load configuration from config.ini
+:: Load configuration from config.ini, located two levels up
 call "%~dp0..\..\_config_loader.cmd"
 if errorlevel 1 exit /b 1
 

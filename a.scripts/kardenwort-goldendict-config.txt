@@ -1,0 +1,169 @@
+// Launch parameters of the utility in the GoldenDict-ng dictionary program.
+
+# GoldenDict-ng.
+
+---
+
+Main Window.
+Edit.
+Dictionaries... F3.
+Dictionaries Window.
+Sources.
+Programs.
+
+---
+
+## En
+#### - [v] | Html | En kW
+
+```
+"U:/voothi/20241223170748-kardenwort/scripts/run-without-input-text-files/cmd/kardenwort-run-en.cmd" "%GDWORD%"
+```
+
+```
+"U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
+"U:/voothi/20241223170748-kardenwort/kardenwort.py"
+--type "word"
+--language "en"
+--text "%GDWORD%"
+--lemma-index-file "U:/voothi/20241223170748-kardenwort/data/en-news-2023-1m-words.csv"
+--lemma-override-file "U:/voothi/20241223170748-kardenwort/data/lemma_override_en.tsv"
+--sentence-context-size "0"
+--stdout-format "html"
+```
+
+#### - [v] | Plain Text | En kW Anki
+```
+"U:/voothi/20241223170748-kardenwort/scripts/run-without-input-text-files/cmd/kardenwort-run-en-anki.cmd" "%GDWORD%"
+```
+
+```
+"U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
+"U:/voothi/20241223170748-kardenwort/kardenwort-runner.py"
+--type "word"
+--language "en"
+--text "%GDWORD%"
+--mode "single"
+---
+
+## De
+#### - [v] | Html | De kW S
+
+```
+"U:/voothi/20241223170748-kardenwort/scripts/run-without-input-text-files/cmd/kardenwort-run-de-s.cmd" "%GDWORD%"
+```
+
+```
+"U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
+"U:/voothi/20241223170748-kardenwort/kardenwort.py"
+--type "word"
+--language "de"
+--text "%GDWORD%"
+--lemma-index-file "U:/voothi/20241223170748-kardenwort/data/deu-mixed-typical-2011-1m-words.csv"
+--lemma-override-file "U:/voothi/20241223170748-kardenwort/data/lemma_override_de.tsv"
+--de-dictionary-file "U:/voothi/20241223170748-kardenwort/data/german.dic"
+--sentence-context-size "0"
+--stdout-format "html"
+--de-fix-genitive
+```
+
+#### - [v] | Plain Text | De kW S Anki
+
+```
+"U:/voothi/20241223170748-kardenwort/scripts/run-without-input-text-files/cmd/kardenwort-run-de-s-anki.cmd" "%GDWORD%"
+```
+
+```
+"U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
+"U:/voothi/20241223170748-kardenwort/kardenwort-runner.py"
+--type "word"
+--language "de"
+--text "%GDWORD%"
+--mode "single"
+```
+
+---
+
+#### - [v] | Html | De kW M
+
+```
+"U:/voothi/20241223170748-kardenwort/scripts/run-without-input-text-files/cmd/kardenwort-run-de-m.cmd" "%GDWORD%"
+```
+
+```
+"U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
+"U:/voothi/20241223170748-kardenwort/kardenwort.py"
+--type "word"
+--language "de"
+--text "%GDWORD%"
+--lemma-index-file "U:/voothi/20241223170748-kardenwort/data/deu-mixed-typical-2011-1m-words.csv"
+--lemma-override-file "U:/voothi/20241223170748-kardenwort/data/lemma_override_de.tsv"
+--de-dictionary-file "U:/voothi/20241223170748-kardenwort/data/german.dic"
+--sentence-context-size "0"
+--stdout-format "html"
+--de-fix-genitive
+--de-gcs
+--de-gcs-pos-tags "NOUN PRON ADV ADJ"
+--de-gcs-split-mode "combined"
+--de-gcs-preserve-compound-word
+--de-gcs-skip-merge-fractions
+```
+
+- [v] | Plain Text | De kW M Anki
+
+```
+"U:/voothi/20241223170748-kardenwort/scripts/run-without-input-text-files/cmd/kardenwort-run-de-m-anki.cmd" "%GDWORD%"
+```
+
+```
+"U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
+"U:/voothi/20241223170748-kardenwort/kardenwort-runner.py"
+--type "word"
+--language "de"
+--text "%GDWORD%"
+--de-gcs
+--mode "single"
+```
+---
+
+#### - [v] | Html | De kW L
+
+```
+"U:/voothi/20241223170748-kardenwort/scripts/run-without-input-text-files/cmd/kardenwort-run-de-l.cmd" "%GDWORD%"
+```
+
+```
+"U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
+"U:/voothi/20241223170748-kardenwort/kardenwort.py"
+--type "word"
+--language "de"
+--text "%GDWORD%"
+--lemma-index-file "U:/voothi/20241223170748-kardenwort/data/deu-mixed-typical-2011-1m-words.csv"
+--lemma-override-file "U:/voothi/20241223170748-kardenwort/data/lemma_override_de.tsv"
+--de-dictionary-file "U:/voothi/20241223170748-kardenwort/data/german.dic"
+--sentence-context-size "0"
+--stdout-format "html"
+--de-fix-genitive
+--de-gcs
+--de-gcs-pos-tags "!VERB"
+--de-gcs-split-mode "combined"
+--de-gcs-preserve-compound-word
+--de-gcs-skip-merge-fractions
+```
+
+#### - [v] | Plain Text | De kW L Anki
+
+```
+"U:/voothi/20241223170748-kardenwort/scripts/run-without-input-text-files/cmd/kardenwort-run-de-l-anki.cmd" "%GDWORD%"
+```
+
+```
+"U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
+"U:/voothi/20241223170748-kardenwort/kardenwort-runner.py"
+--type "word"
+--language "de"
+--text "%GDWORD%"
+--de-gcs
+--de-gcs-pos-tags "!VERB"
+--mode "single"
+```

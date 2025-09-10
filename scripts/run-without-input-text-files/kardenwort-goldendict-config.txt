@@ -62,9 +62,6 @@ U:/voothi/20241223170748-kardenwort/kardenwort.py
 --de-fix-genitive
 ```
 
-
-
-
 - [v] | Plain Text | De kW S Anki
 
 ```

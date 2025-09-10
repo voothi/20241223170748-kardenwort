@@ -398,17 +398,17 @@
                 "--type", "word",
                 "--language", "en",
                 "--text", "Hi everyone. So I've wanted to make this video for a while. It is a comprehensive but general audience introduction to large language models like ChatGPT.",
-                "--sentence-context-size", "0",
+                "--lemma-index-file", "U:/voothi/20241223170748-kardenwort/data/en-news-2023-1m-words.csv",
+                "--lemma-override-file", "U:/voothi/20241223170748-kardenwort/data/lemma_override_en.tsv",
                 "--output-file", "./out/result.single.word.en.tsv",
+                "--sentence-context-size", "0",
                 "--basename-add-timestamp",
                 "--basename-add-first-words",
                 "--stdout-print-output-basename",
-                "--add-header",
                 "--add-source-word-col",
                 "--add-wordlist-col",
-                "--wordlist-use-br",
-                "--lemma-index-file", "U:/voothi/20241223170748-kardenwort/data/en-news-2023-1m-words.csv",
-                "--lemma-override-file", "U:/voothi/20241223170748-kardenwort/data/lemma_override_en.tsv"
+                "--add-header",
+                "--wordlist-use-br"
             ],
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },

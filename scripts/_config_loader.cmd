@@ -17,20 +17,12 @@ for /f "usebackq delims=" %%L in ("%CONFIG_FILE%") do (
     )
 
     if !IN_WIN_SECTION! equ 1 (
-        :: CRITICAL FIX: Only process lines that contain an equals sign
-        echo "!LINE!" | find "=" >nul
-        if not errorlevel 1 (
-            for /f "tokens=1,* delims==" %%A in ("!LINE!") do (
-                set "KEY=%%A"
-                set "VALUE=%%B"
-                
-                for /f "tokens=* delims= " %%K in ("!KEY!") do set "TRIMMED_KEY=%%K"
-                for /f "tokens=* delims= " %%V in ("!VALUE!") do set "TRIMMED_VALUE=%%V"
-                
-                :: If a valid key was found, print the command to be executed
-                if defined TRIMMED_KEY (
-                    echo CFG_!TRIMMED_KEY!=!TRIMMED_VALUE!
-                )
+        :: This is the final, robust parsing logic.
+        :: It treats both space and equals sign as delimiters.
+        for /f "tokens=1,* delims== " %%A in ("!LINE!") do (
+            :: Check to ensure it's not a comment or empty line
+            if not "%%A"=="" if not "%%A"==";" (
+                echo CFG_%%A=%%B
             )
         )
     )

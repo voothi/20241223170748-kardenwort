@@ -17,16 +17,20 @@ for /f "usebackq delims=" %%L in ("%CONFIG_FILE%") do (
     )
 
     if !IN_WIN_SECTION! equ 1 (
-        for /f "tokens=1,* delims==" %%A in ("!LINE!") do (
-            set "KEY=%%A"
-            set "VALUE=%%B"
-            
-            for /f "tokens=* delims= " %%K in ("!KEY!") do set "TRIMMED_KEY=%%K"
-            for /f "tokens=* delims= " %%V in ("!VALUE!") do set "TRIMMED_VALUE=%%V"
-            
-            :: If a valid key was found, simply print the command to be executed
-            if defined TRIMMED_KEY (
-                echo CFG_!TRIMMED_KEY!=!TRIMMED_VALUE!
+        :: CRITICAL FIX: Only process lines that contain an equals sign
+        echo "!LINE!" | find "=" >nul
+        if not errorlevel 1 (
+            for /f "tokens=1,* delims==" %%A in ("!LINE!") do (
+                set "KEY=%%A"
+                set "VALUE=%%B"
+                
+                for /f "tokens=* delims= " %%K in ("!KEY!") do set "TRIMMED_KEY=%%K"
+                for /f "tokens=* delims= " %%V in ("!VALUE!") do set "TRIMMED_VALUE=%%V"
+                
+                :: If a valid key was found, print the command to be executed
+                if defined TRIMMED_KEY (
+                    echo CFG_!TRIMMED_KEY!=!TRIMMED_VALUE!
+                )
             )
         )
     )

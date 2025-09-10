@@ -854,7 +854,7 @@ def process_parallel_sentences_to_csv(
     language, lemma_sort_index, source_text_path, target_text_path, tertiary_text_path, sentence_context_size,
     output_file_path, add_wordlist_col, add_header, wordlist_use_br, stdout_print_output_basename, de_gcs_pos_tags, args, **kwargs
 ):
-    lemma_override_rules = kwargs.get('lemma_override_rules', {})
+    lemma_override_rules = kwargs.pop('lemma_override_rules', {})
     
     try:
         with open(source_text_path, "r", encoding="utf-8") as f: source_text_lines = [line.rstrip("\n") for line in f]

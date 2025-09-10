@@ -2,6 +2,8 @@
 
 GoldenDict-ng.
 
+---
+
 Main Window.
 Edit.
 Dictionaries... F3.
@@ -12,6 +14,12 @@ Programs.
 ---
 
 - [v] | Html | En kW
+
+```
+"U:/voothi/20241223170748-kardenwort/scripts/run-without-input-text-files/cmd/kardenwort-run-en.cmd" "%GDWORD%"
+```
+
+```
 U:/voothi/20250825231214-spacy-env/Scripts/python.exe
 U:/voothi/20241223170748-kardenwort/kardenwort.py
 --type "word"
@@ -21,19 +29,26 @@ U:/voothi/20241223170748-kardenwort/kardenwort.py
 --lemma-override-file "U:/voothi/20241223170748-kardenwort/data/lemma_override_en.tsv"
 --sentence-context-size "0"
 --stdout-format "html"
+```
 
 - [v] | Plain Text | En kW Anki
+
+```
 U:/voothi/20250825231214-spacy-env/Scripts/python.exe
 U:/voothi/20241223170748-kardenwort/kardenwort-runner.py
 --type "word"
 --language "en"
 --text "%GDWORD%"
 --mode "single"
-
 ---
 
-De kW
 - [v] | Html | De kW S
+
+```
+"U:/voothi/20241223170748-kardenwort/scripts/run-without-input-text-files/cmd/kardenwort-run-de-s.cmd" "%GDWORD%"
+```
+
+```
 U:/voothi/20250825231214-spacy-env/Scripts/python.exe
 U:/voothi/20241223170748-kardenwort/kardenwort.py
 --type "word"
@@ -45,18 +60,31 @@ U:/voothi/20241223170748-kardenwort/kardenwort.py
 --sentence-context-size "0"
 --stdout-format "html"
 --de-fix-genitive
+```
+
+
+
 
 - [v] | Plain Text | De kW S Anki
+
+```
 U:/voothi/20250825231214-spacy-env/Scripts/python.exe
 U:/voothi/20241223170748-kardenwort/kardenwort-runner.py
 --type "word"
 --language "de"
 --text "%GDWORD%"
 --mode "single"
+```
 
 ---
 
 - [v] | Html | De kW M
+
+```
+"U:/voothi/20241223170748-kardenwort/scripts/run-without-input-text-files/cmd/kardenwort-run-de-m.cmd" "%GDWORD%"
+```
+
+```
 U:/voothi/20250825231214-spacy-env/Scripts/python.exe
 U:/voothi/20241223170748-kardenwort/kardenwort.py
 --type "word"
@@ -73,8 +101,11 @@ U:/voothi/20241223170748-kardenwort/kardenwort.py
 --de-gcs-split-mode "combined"
 --de-gcs-preserve-compound-word
 --de-gcs-skip-merge-fractions
+```
 
 - [v] | Plain Text | De kW M Anki
+
+```
 U:/voothi/20250825231214-spacy-env/Scripts/python.exe
 U:/voothi/20241223170748-kardenwort/kardenwort-runner.py
 --type "word"
@@ -82,10 +113,16 @@ U:/voothi/20241223170748-kardenwort/kardenwort-runner.py
 --text "%GDWORD%"
 --de-gcs
 --mode "single"
-
+```
 ---
 
 - [v] | Html | De kW L
+
+```
+"U:/voothi/20241223170748-kardenwort/scripts/run-without-input-text-files/cmd/kardenwort-run-de-l.cmd" "%GDWORD%"
+```
+
+```
 U:/voothi/20250825231214-spacy-env/Scripts/python.exe
 U:/voothi/20241223170748-kardenwort/kardenwort.py
 --type "word"
@@ -102,8 +139,11 @@ U:/voothi/20241223170748-kardenwort/kardenwort.py
 --de-gcs-split-mode "combined"
 --de-gcs-preserve-compound-word
 --de-gcs-skip-merge-fractions
+```
 
 - [v] | Plain Text | De kW L Anki
+
+```
 U:/voothi/20250825231214-spacy-env/Scripts/python.exe
 U:/voothi/20241223170748-kardenwort/kardenwort-runner.py
 --type "word"
@@ -112,3 +152,4 @@ U:/voothi/20241223170748-kardenwort/kardenwort-runner.py
 --de-gcs
 --de-gcs-pos-tags "!VERB"
 --mode "single"
+```

@@ -1,6 +1,6 @@
 // Launch parameters of the utility in the GoldenDict-ng dictionary program.
 
-GoldenDict-ng.
+# GoldenDict-ng.
 
 ---
 
@@ -13,15 +13,16 @@ Programs.
 
 ---
 
-- [v] | Html | En kW
+## En
+#### - [v] | Html | En kW
 
 ```
 "U:/voothi/20241223170748-kardenwort/scripts/run-without-input-text-files/cmd/kardenwort-run-en.cmd" "%GDWORD%"
 ```
 
 ```
-U:/voothi/20250825231214-spacy-env/Scripts/python.exe
-U:/voothi/20241223170748-kardenwort/kardenwort.py
+"U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
+"U:/voothi/20241223170748-kardenwort/kardenwort.py"
 --type "word"
 --language "en"
 --text "%GDWORD%"
@@ -31,26 +32,27 @@ U:/voothi/20241223170748-kardenwort/kardenwort.py
 --stdout-format "html"
 ```
 
-- [v] | Plain Text | En kW Anki
+#### - [v] | Plain Text | En kW Anki
 
 ```
-U:/voothi/20250825231214-spacy-env/Scripts/python.exe
-U:/voothi/20241223170748-kardenwort/kardenwort-runner.py
+"U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
+"U:/voothi/20241223170748-kardenwort/kardenwort-runner.py"
 --type "word"
 --language "en"
 --text "%GDWORD%"
 --mode "single"
 ---
 
-- [v] | Html | De kW S
+## De
+#### - [v] | Html | De kW S
 
 ```
 "U:/voothi/20241223170748-kardenwort/scripts/run-without-input-text-files/cmd/kardenwort-run-de-s.cmd" "%GDWORD%"
 ```
 
 ```
-U:/voothi/20250825231214-spacy-env/Scripts/python.exe
-U:/voothi/20241223170748-kardenwort/kardenwort.py
+"U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
+"U:/voothi/20241223170748-kardenwort/kardenwort.py"
 --type "word"
 --language "de"
 --text "%GDWORD%"
@@ -62,7 +64,7 @@ U:/voothi/20241223170748-kardenwort/kardenwort.py
 --de-fix-genitive
 ```
 
-- [v] | Plain Text | De kW S Anki
+#### - [v] | Plain Text | De kW S Anki
 
 ```
 "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
@@ -75,15 +77,15 @@ U:/voothi/20241223170748-kardenwort/kardenwort.py
 
 ---
 
-- [v] | Html | De kW M
+#### - [v] | Html | De kW M
 
 ```
 "U:/voothi/20241223170748-kardenwort/scripts/run-without-input-text-files/cmd/kardenwort-run-de-m.cmd" "%GDWORD%"
 ```
 
 ```
-U:/voothi/20250825231214-spacy-env/Scripts/python.exe
-U:/voothi/20241223170748-kardenwort/kardenwort.py
+"U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
+"U:/voothi/20241223170748-kardenwort/kardenwort.py"
 --type "word"
 --language "de"
 --text "%GDWORD%"
@@ -103,8 +105,8 @@ U:/voothi/20241223170748-kardenwort/kardenwort.py
 - [v] | Plain Text | De kW M Anki
 
 ```
-U:/voothi/20250825231214-spacy-env/Scripts/python.exe
-U:/voothi/20241223170748-kardenwort/kardenwort-runner.py
+"U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
+"U:/voothi/20241223170748-kardenwort/kardenwort-runner.py"
 --type "word"
 --language "de"
 --text "%GDWORD%"
@@ -113,15 +115,15 @@ U:/voothi/20241223170748-kardenwort/kardenwort-runner.py
 ```
 ---
 
-- [v] | Html | De kW L
+#### - [v] | Html | De kW L
 
 ```
 "U:/voothi/20241223170748-kardenwort/scripts/run-without-input-text-files/cmd/kardenwort-run-de-l.cmd" "%GDWORD%"
 ```
 
 ```
-U:/voothi/20250825231214-spacy-env/Scripts/python.exe
-U:/voothi/20241223170748-kardenwort/kardenwort.py
+"U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
+"U:/voothi/20241223170748-kardenwort/kardenwort.py"
 --type "word"
 --language "de"
 --text "%GDWORD%"
@@ -138,11 +140,11 @@ U:/voothi/20241223170748-kardenwort/kardenwort.py
 --de-gcs-skip-merge-fractions
 ```
 
-- [v] | Plain Text | De kW L Anki
+#### - [v] | Plain Text | De kW L Anki
 
 ```
-U:/voothi/20250825231214-spacy-env/Scripts/python.exe
-U:/voothi/20241223170748-kardenwort/kardenwort-runner.py
+"U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
+"U:/voothi/20241223170748-kardenwort/kardenwort-runner.py"
 --type "word"
 --language "de"
 --text "%GDWORD%"

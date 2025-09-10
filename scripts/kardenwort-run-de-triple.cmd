@@ -3,7 +3,7 @@ setlocal EnableDelayedExpansion
 
 REM --- Universal startup block ---
 set "WORKSPACE=%~dp0..\"
-set "RUNNER_SCRIPT=krdnkrt-krn-runner.py"
+set "RUNNER_SCRIPT=kardenwort-runner.py"
 
 where python >nul 2>nul
 if errorlevel 1 (
@@ -30,16 +30,16 @@ if errorlevel 1 (
 REM --- End of universal block ---
 
 
-echo Running extraction for English in dual mode...
+echo Running extraction in different modes...
 
 echo.
-echo Dual word mode...
-call "%PYTHON_PATH%" "%RUNNER_SCRIPT%" --language en --type word --mode dual
+echo Triple word mode with GCS...
+call "%PYTHON_PATH%" "%RUNNER_SCRIPT%" --language de --type word --mode triple --de-gcs --de-gcs-pos-tags "!VERB"
 if errorlevel 1 goto :error
 
 echo.
-echo Dual sentence mode...
-call "%PYTHON_PATH%" "%RUNNER_SCRIPT%" --language en --type sentence --mode dual
+echo Triple sentence mode...
+call "%PYTHON_PATH%" "%RUNNER_SCRIPT%" --language de --type sentence --mode triple
 if errorlevel 1 goto :error
 
 echo.

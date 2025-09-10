@@ -12,32 +12,32 @@ Programs.
 ---
 
 - [v] | Html | En kW
-U:/voothi/20250825231214-spacy-env/Scripts/python.exe U:/voothi/20241223170748-kardenwort-kern/krdnkrt-krn.py --type "word" --language "en" --text "%GDWORD%" --stdout-format "html" --sentence-context-size "0" --lemma-index-file "U:/voothi/20241223170748-kardenwort-kern/data/en-news-2023-1m-words.csv" --lemma-override-file "U:/voothi/20241223170748-kardenwort-kern/data/lemma_override_en.tsv"
+U:/voothi/20250825231214-spacy-env/Scripts/python.exe U:/voothi/20241223170748-kardenwort/kardenwort.py --type "word" --language "en" --text "%GDWORD%" --stdout-format "html" --sentence-context-size "0" --lemma-index-file "U:/voothi/20241223170748-kardenwort/data/en-news-2023-1m-words.csv" --lemma-override-file "U:/voothi/20241223170748-kardenwort/data/lemma_override_en.tsv"
 
 - [v] | Plain Text | En kW O
-U:/voothi/20250825231214-spacy-env/Scripts/python.exe U:/voothi/20241223170748-kardenwort-kern/krdnkrt-krn-runner.py --type "word" --mode "single" --language "en" --text "%GDWORD%"
+U:/voothi/20250825231214-spacy-env/Scripts/python.exe U:/voothi/20241223170748-kardenwort/kardenwort-runner.py --type "word" --mode "single" --language "en" --text "%GDWORD%"
 
 ---
 
 De TEx
 - [v] | Html | De kW
-U:/voothi/20250825231214-spacy-env/Scripts/python.exe U:/voothi/20241223170748-kardenwort-kern/krdnkrt-krn.py --type "word" --language "de" --text "%GDWORD%" --stdout-format "html" --sentence-context-size "0" --lemma-index-file "U:/voothi/20241223170748-kardenwort-kern/data/deu-mixed-typical-2011-1m-words.csv" --de-fix-genitive --de-dictionary-file "U:/voothi/20241223170748-kardenwort-kern/data/german.dic" --lemma-override-file "U:/voothi/20241223170748-kardenwort-kern/data/lemma_override_de.tsv"
+U:/voothi/20250825231214-spacy-env/Scripts/python.exe U:/voothi/20241223170748-kardenwort/kardenwort.py --type "word" --language "de" --text "%GDWORD%" --stdout-format "html" --sentence-context-size "0" --lemma-index-file "U:/voothi/20241223170748-kardenwort/data/deu-mixed-typical-2011-1m-words.csv" --de-fix-genitive --de-dictionary-file "U:/voothi/20241223170748-kardenwort/data/german.dic" --lemma-override-file "U:/voothi/20241223170748-kardenwort/data/lemma_override_de.tsv"
 
 - [v] | Plain Text | De kW O
-U:/voothi/20250825231214-spacy-env/Scripts/python.exe U:/voothi/20241223170748-kardenwort-kern/krdnkrt-krn-runner.py --type "word" --mode "single" --language "de" --text "%GDWORD%"
+U:/voothi/20250825231214-spacy-env/Scripts/python.exe U:/voothi/20241223170748-kardenwort/kardenwort-runner.py --type "word" --mode "single" --language "de" --text "%GDWORD%"
 
 ---
 
 - [v] | Html | De kW 2
-U:/voothi/20250825231214-spacy-env/Scripts/python.exe U:/voothi/20241223170748-kardenwort-kern/krdnkrt-krn.py --type "word" --language "de" --text "%GDWORD%" --stdout-format "html" --sentence-context-size "0" --lemma-index-file "U:/voothi/20241223170748-kardenwort-kern/data/deu-mixed-typical-2011-1m-words.csv" --de-gcs --de-gcs-preserve-compound-word --de-gcs-split-mode "combined" --de-gcs-pos-tags "NOUN PRON ADV ADJ" --de-gcs-skip-merge-fractions --de-fix-genitive --de-dictionary-file "U:/voothi/20241223170748-kardenwort-kern/data/german.dic" --lemma-override-file "U:/voothi/20241223170748-kardenwort-kern/data/lemma_override_de.tsv"
+U:/voothi/20250825231214-spacy-env/Scripts/python.exe U:/voothi/20241223170748-kardenwort/kardenwort.py --type "word" --language "de" --text "%GDWORD%" --stdout-format "html" --sentence-context-size "0" --lemma-index-file "U:/voothi/20241223170748-kardenwort/data/deu-mixed-typical-2011-1m-words.csv" --de-gcs --de-gcs-preserve-compound-word --de-gcs-split-mode "combined" --de-gcs-pos-tags "NOUN PRON ADV ADJ" --de-gcs-skip-merge-fractions --de-fix-genitive --de-dictionary-file "U:/voothi/20241223170748-kardenwort/data/german.dic" --lemma-override-file "U:/voothi/20241223170748-kardenwort/data/lemma_override_de.tsv"
 
 - [v] | Plain Text | De kW 2 O
-U:/voothi/20250825231214-spacy-env/Scripts/python.exe U:/voothi/20241223170748-kardenwort-kern/krdnkrt-krn-runner.py --type "word" --mode "single" --language "de" --de-gcs --text "%GDWORD%"
+U:/voothi/20250825231214-spacy-env/Scripts/python.exe U:/voothi/20241223170748-kardenwort/kardenwort-runner.py --type "word" --mode "single" --language "de" --de-gcs --text "%GDWORD%"
 
 ---
 
 - [v] | Html | De kW 3
-U:/voothi/20250825231214-spacy-env/Scripts/python.exe U:/voothi/20241223170748-kardenwort-kern/krdnkrt-krn.py --type "word" --language "de" --text "%GDWORD%" --stdout-format "html" --sentence-context-size "0" --lemma-index-file "U:/voothi/20241223170748-kardenwort-kern/data/deu-mixed-typical-2011-1m-words.csv" --de-gcs --de-gcs-preserve-compound-word --de-gcs-split-mode "combined" --de-gcs-pos-tags "!VERB" --de-gcs-skip-merge-fractions --de-fix-genitive --de-dictionary-file "U:/voothi/20241223170748-kardenwort-kern/data/german.dic" --lemma-override-file "U:/voothi/20241223170748-kardenwort-kern/data/lemma_override_de.tsv"
+U:/voothi/20250825231214-spacy-env/Scripts/python.exe U:/voothi/20241223170748-kardenwort/kardenwort.py --type "word" --language "de" --text "%GDWORD%" --stdout-format "html" --sentence-context-size "0" --lemma-index-file "U:/voothi/20241223170748-kardenwort/data/deu-mixed-typical-2011-1m-words.csv" --de-gcs --de-gcs-preserve-compound-word --de-gcs-split-mode "combined" --de-gcs-pos-tags "!VERB" --de-gcs-skip-merge-fractions --de-fix-genitive --de-dictionary-file "U:/voothi/20241223170748-kardenwort/data/german.dic" --lemma-override-file "U:/voothi/20241223170748-kardenwort/data/lemma_override_de.tsv"
 
 - [v] | Plain Text | De kW 3 O
-U:/voothi/20250825231214-spacy-env/Scripts/python.exe U:/voothi/20241223170748-kardenwort-kern/krdnkrt-krn-runner.py --type "word" --mode "single" --language "de" --de-gcs --de-gcs-pos-tags "!VERB" --text "%GDWORD%"
+U:/voothi/20250825231214-spacy-env/Scripts/python.exe U:/voothi/20241223170748-kardenwort/kardenwort-runner.py --type "word" --mode "single" --language "de" --de-gcs --de-gcs-pos-tags "!VERB" --text "%GDWORD%"

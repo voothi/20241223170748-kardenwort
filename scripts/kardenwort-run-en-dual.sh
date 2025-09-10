@@ -3,7 +3,7 @@ set -e
 
 # --- Universal startup block ---
 WORKSPACE=$(cd "$(dirname "$0")/.." && pwd)
-RUNNER_SCRIPT="krdnkrt-krn-runner.py"
+RUNNER_SCRIPT="kardenwort-runner.py"
 
 if ! command -v python3 &> /dev/null; then
     echo "ERROR: 'python3' command not found. Please ensure it is installed and in your PATH." >&2
@@ -20,11 +20,15 @@ cd "$WORKSPACE" || { echo "ERROR: Failed to change directory to $WORKSPACE" >&2;
 # --- End of universal block ---
 
 
-echo "Running word extraction for a single German text..."
+echo "Running extraction for English in dual mode..."
 
 echo
-echo "Single word mode with GCS (excluding verbs)..."
-"$PYTHON_PATH" "$RUNNER_SCRIPT" --language de --type word --mode single --de-gcs --de-gcs-pos-tags "!VERB"
+echo "Dual word mode..."
+"$PYTHON_PATH" "$RUNNER_SCRIPT" --language en --type word --mode dual
+
+echo
+echo "Dual sentence mode..."
+"$PYTHON_PATH" "$RUNNER_SCRIPT" --language en --type sentence --mode dual
 
 echo
 echo "All operations completed successfully."

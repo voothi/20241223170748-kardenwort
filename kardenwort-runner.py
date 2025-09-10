@@ -4,6 +4,7 @@ import argparse
 import configparser
 import platform
 import sys
+import os
 
 def load_config():
     """Reads paths from config.ini based on the operating system."""
@@ -30,6 +31,9 @@ def load_config():
     except KeyError as e:
         print(f"ERROR: Missing key {e} in section [{section}] of {config_path}", file=sys.stderr)
         sys.exit(1)
+
+    if args.mode == "single":
+        single_mode_args = []
 
     return python_path, workspace_path, importer_workspace
 
@@ -92,11 +96,16 @@ def get_script_args(args, python_path, workspace_path):
     if args.mode == "single":
         single_mode_args = []
         
-        if args.text:
+        # NEW LOGIC: Check environment variable first!
+        input_text_from_env = os.environ.get('KARDENWORT_INPUT_TEXT')
+        
+        if input_text_from_env:
+            single_mode_args.extend(["--text", input_text_from_env])
+        elif args.text:
             single_mode_args.extend(["--text", args.text])
         else:
             single_mode_args.extend(["--text1-file", str(workspace_path / "in/text1.txt")])
-            
+        
         single_mode_args.extend([
             "--output-file",
             str(workspace_path / f"out/result.single.{output_suffix}.{args.language}.tsv"),

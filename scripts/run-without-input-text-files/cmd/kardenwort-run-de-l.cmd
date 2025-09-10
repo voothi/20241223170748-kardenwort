@@ -1,19 +1,31 @@
 @echo off
-REM Setup the environment and set UTF-8 encoding.
-setlocal
+setlocal enabledelayedexpansion
 chcp 65001 > nul
 
-REM Pass the input text to the Python script via an environment variable.
+:: Load configuration from config.ini
+call "%~dp0_config_loader.cmd"
+if errorlevel 1 exit /b 1
+
+:: Check if the required variables were loaded
+if not defined CFG_python_path (
+    echo ERROR: python_path not found in config.ini [paths_win] section. >&2
+    exit /b 1
+)
+if not defined CFG_kardenwort_workspace (
+    echo ERROR: kardenwort_workspace not found in config.ini [paths_win] section. >&2
+    exit /b 1
+)
+
 set "KARDENWORT_INPUT_TEXT=%~1"
 
-rem Execute the Python script. It will read the environment variable internally.
-"U:/voothi/20250825231214-spacy-env/Scripts/python.exe" ^
-U:/voothi/20241223170748-kardenwort/kardenwort.py ^
+:: Use variables loaded from the config file to build all paths
+"%CFG_python_path%" ^
+"%CFG_kardenwort_workspace%/kardenwort.py" ^
 --type "word" ^
 --language "de" ^
---lemma-index-file "U:/voothi/20241223170748-kardenwort/data/deu-mixed-typical-2011-1m-words.csv" ^
---lemma-override-file "U:/voothi/20241223170748-kardenwort/data/lemma_override_de.tsv" ^
---de-dictionary-file "U:/voothi/20241223170748-kardenwort/data/german.dic" ^
+--lemma-index-file "%CFG_kardenwort_workspace%/data/deu-mixed-typical-2011-1m-words.csv" ^
+--lemma-override-file "%CFG_kardenwort_workspace%/data/lemma_override_de.tsv" ^
+--de-dictionary-file "%CFG_kardenwort_workspace%/data/german.dic" ^
 --sentence-context-size "0" ^
 --stdout-format "html" ^
 --de-fix-genitive ^

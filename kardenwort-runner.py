@@ -54,15 +54,15 @@ def get_script_args(args, python_path, workspace_path):
         "--type", args.type,
         "--language", args.language,
         "--lemma-index-file", str(data_path / lemma_file),
-        "--sentence-context-size", "2",
+        "--lemma-override-file", override_file,
         "--basename-add-timestamp",
         "--basename-add-first-words",
         "--stdout-print-output-basename",
-        "--add-header",
         "--add-source-word-col",
         "--add-wordlist-col",
         "--wordlist-use-br",
-        "--lemma-override-file", override_file,
+        "--add-header",
+        "--sentence-context-size", "2",
     ]
 
     if args.language == "de":
@@ -75,9 +75,9 @@ def get_script_args(args, python_path, workspace_path):
         if args.de_gcs:
             gcs_args = [
                 "--de-gcs",
+                "--de-gcs-split-mode", "combined",
                 "--de-gcs-preserve-compound-word",
                 "--de-gcs-add-parts-to-wordlist",
-                "--de-gcs-split-mode", "combined",
                 "--de-gcs-skip-merge-fractions",
             ]
             

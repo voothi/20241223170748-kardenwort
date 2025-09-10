@@ -2,7 +2,7 @@
 setlocal EnableDelayedExpansion
 
 REM --- Universal startup block ---
-set "WORKSPACE=%~dp0..\"
+set "WORKSPACE=%~dp0..\..\..\"
 set "RUNNER_SCRIPT=kardenwort-runner.py"
 
 where python >nul 2>nul

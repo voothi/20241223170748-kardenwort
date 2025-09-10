@@ -2,9 +2,11 @@
 setlocal enabledelayedexpansion
 chcp 65001 > nul
 
-:: Load configuration from config.ini, located two levels up
-call "%~dp0..\..\_config_loader.cmd"
-if errorlevel 1 exit /b 1
+:: Execute the config loader and CAPTURE its output line by line with a FOR loop.
+:: Each line (e.g., "CFG_python_path=...") is then executed by the 'set' command.
+for /f "delims=" %%a in ('call "%~dp0..\..\_config_loader.cmd"') do (
+    set "%%a"
+)
 
 :: Check if the required variables were loaded
 if not defined CFG_python_path (
@@ -20,7 +22,7 @@ set "KARDENWORT_INPUT_TEXT=%~1"
 
 :: Use variables loaded from the config file to build all paths
 "%CFG_python_path%" ^
-"%CFG_kardenwort_workspace%/kardenwort.py" ^
+%CFG_kardenwort_workspace%/kardenwort.py ^
 --type "word" ^
 --language "de" ^
 --lemma-index-file "%CFG_kardenwort_workspace%/data/deu-mixed-typical-2011-1m-words.csv" ^

@@ -86,7 +86,8 @@ U:/voothi/20241223170748-kardenwort/kardenwort-runner.py
 ---
 
 - [v] | Html | De kW 3
-U:/voothi/20250825231214-spacy-env/Scripts/python.exe U:/voothi/20241223170748-kardenwort/kardenwort.py
+U:/voothi/20250825231214-spacy-env/Scripts/python.exe
+U:/voothi/20241223170748-kardenwort/kardenwort.py
 --type "word"
 --language "de"
 --text "%GDWORD%"
@@ -103,7 +104,8 @@ U:/voothi/20250825231214-spacy-env/Scripts/python.exe U:/voothi/20241223170748-k
 --de-gcs-skip-merge-fractions
 
 - [v] | Plain Text | De kW 3 Anki
-U:/voothi/20250825231214-spacy-env/Scripts/python.exe U:/voothi/20241223170748-kardenwort/kardenwort-runner.py
+U:/voothi/20250825231214-spacy-env/Scripts/python.exe
+U:/voothi/20241223170748-kardenwort/kardenwort-runner.py
 --type "word"
 --language "de"
 --text "%GDWORD%"

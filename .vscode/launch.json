@@ -434,7 +434,7 @@
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
         },
         {
-            "name": "Run kardenwort.py / Test 105 / En / type sentence / text1-file text2-file",
+            "name": "Run kardenwort.py / Test 105 / En / type sentence / dual — text1-file text2-file",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/kardenwort.py",
@@ -446,6 +446,31 @@
                 "--text2-file", "U:/voothi/20241223170748-kardenwort/in/text2.txt",
                 "--sentence-context-size", "2",
                 "--output-file", "./out/result.dual.sentence.en.tsv",
+                "--basename-add-timestamp",
+                "--stdout-print-output-basename",
+                "--add-header",
+                "--add-source-word-col",
+                "--add-wordlist-col",
+                "--wordlist-use-br",
+                "--lemma-index-file", "U:/voothi/20241223170748-kardenwort/data/en-news-2023-1m-words.csv",
+                "--lemma-override-file", "U:/voothi/20241223170748-kardenwort/data/lemma_override_en.tsv"
+            ],
+            "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
+        },
+        {
+            "name": "Run kardenwort.py / Test 106 / En / type sentence / triple — text1-file text2-file text3-file",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/kardenwort.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--type", "sentence",
+                "--language", "en",
+                "--text1-file", "U:/voothi/20241223170748-kardenwort/in/text1.txt",
+                "--text2-file", "U:/voothi/20241223170748-kardenwort/in/text2.txt",
+                "--text3-file", "U:/voothi/20241223170748-kardenwort/in/text3.txt",
+                "--sentence-context-size", "2",
+                "--output-file", "./out/result.triple.sentence.en.tsv",
                 "--basename-add-timestamp",
                 "--stdout-print-output-basename",
                 "--add-header",

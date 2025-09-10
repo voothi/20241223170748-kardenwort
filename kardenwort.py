@@ -1141,7 +1141,6 @@ def main():
             'de_gcs_mask_unknown_parts': args.de_gcs_mask_unknown_parts,
             'de_gcs_preserve_compound_word': args.de_gcs_preserve_compound_word,
             'de_gcs_skip_merge_fractions': args.de_gcs_skip_merge_fractions,
-            'de_dictionary': de_dictionary
         }
         processed_output_file = process_parallel_sentences_to_csv(
             args.language, lemma_index, args.text1_file, args.text2_file, args.text3_file,

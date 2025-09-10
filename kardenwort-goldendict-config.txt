@@ -11,7 +11,7 @@ Programs.
 
 ---
 
-- [v] | Html | En kW 2
+- [v] | Html | En kW
 U:/voothi/20250825231214-spacy-env/Scripts/python.exe
 U:/voothi/20241223170748-kardenwort/kardenwort.py
 --type "word"
@@ -22,7 +22,7 @@ U:/voothi/20241223170748-kardenwort/kardenwort.py
 --sentence-context-size "0"
 --stdout-format "html"
 
-- [v] | Plain Text | En kW 2 Anki
+- [v] | Plain Text | En kW Anki
 U:/voothi/20250825231214-spacy-env/Scripts/python.exe
 U:/voothi/20241223170748-kardenwort/kardenwort-runner.py
 --type "word"
@@ -33,7 +33,7 @@ U:/voothi/20241223170748-kardenwort/kardenwort-runner.py
 ---
 
 De kW
-- [v] | Html | De kW
+- [v] | Html | De kW S
 U:/voothi/20250825231214-spacy-env/Scripts/python.exe
 U:/voothi/20241223170748-kardenwort/kardenwort.py
 --type "word"
@@ -46,7 +46,7 @@ U:/voothi/20241223170748-kardenwort/kardenwort.py
 --stdout-format "html"
 --de-fix-genitive
 
-- [v] | Plain Text | De kW Anki
+- [v] | Plain Text | De kW S Anki
 U:/voothi/20250825231214-spacy-env/Scripts/python.exe
 U:/voothi/20241223170748-kardenwort/kardenwort-runner.py
 --type "word"
@@ -56,7 +56,7 @@ U:/voothi/20241223170748-kardenwort/kardenwort-runner.py
 
 ---
 
-- [v] | Html | De kW 2
+- [v] | Html | De kW M
 U:/voothi/20250825231214-spacy-env/Scripts/python.exe
 U:/voothi/20241223170748-kardenwort/kardenwort.py
 --type "word"
@@ -74,7 +74,7 @@ U:/voothi/20241223170748-kardenwort/kardenwort.py
 --de-gcs-preserve-compound-word
 --de-gcs-skip-merge-fractions
 
-- [v] | Plain Text | De kW 2 Anki
+- [v] | Plain Text | De kW M Anki
 U:/voothi/20250825231214-spacy-env/Scripts/python.exe
 U:/voothi/20241223170748-kardenwort/kardenwort-runner.py
 --type "word"
@@ -85,7 +85,7 @@ U:/voothi/20241223170748-kardenwort/kardenwort-runner.py
 
 ---
 
-- [v] | Html | De kW 3
+- [v] | Html | De kW L
 U:/voothi/20250825231214-spacy-env/Scripts/python.exe
 U:/voothi/20241223170748-kardenwort/kardenwort.py
 --type "word"
@@ -103,7 +103,7 @@ U:/voothi/20241223170748-kardenwort/kardenwort.py
 --de-gcs-preserve-compound-word
 --de-gcs-skip-merge-fractions
 
-- [v] | Plain Text | De kW 3 Anki
+- [v] | Plain Text | De kW L Anki
 U:/voothi/20250825231214-spacy-env/Scripts/python.exe
 U:/voothi/20241223170748-kardenwort/kardenwort-runner.py
 --type "word"

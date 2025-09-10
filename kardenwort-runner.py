@@ -50,7 +50,7 @@ def get_script_args(args, python_path, workspace_path):
 
     base_args = [
         str(python_path),
-        str(workspace_path / "krdnkrt-krn.py"),
+        str(workspace_path / "kardenkart.py"),
         "--type", args.type,
         "--language", args.language,
         "--lemma-index-file", str(data_path / lemma_file),

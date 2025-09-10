@@ -1,13 +1,16 @@
 @echo off
-REM We set the UTF-8 encoding for correct work with Python.
+rem Setup the environment and set UTF-8 encoding.
+setlocal
 chcp 65001 > nul
 
-REM We run the python script, passing it the first argument (%1) from GoldenDict.
-U:/voothi/20250825231214-spacy-env/Scripts/python.exe ^
-U:/voothi/20241223170748-kardenwort/kardenwort.py ^
+rem Pass the input text to the Python script via an environment variable.
+set "KARDENWORT_INPUT_TEXT=%~1"
+
+rem Execute the Python script. It will read the environment variable internally.
+"U:/voothi/20250825231214-spacy-env/Scripts/python.exe" ^
+"U:/voothi/20241223170748-kardenwort/kardenwort.py" ^
 --type "word" ^
 --language "de" ^
---text "%1" ^
 --lemma-index-file "U:/voothi/20241223170748-kardenwort/data/deu-mixed-typical-2011-1m-words.csv" ^
 --lemma-override-file "U:/voothi/20241223170748-kardenwort/data/lemma_override_de.tsv" ^
 --de-dictionary-file "U:/voothi/20241223170748-kardenwort/data/german.dic" ^

@@ -14,23 +14,25 @@
                 "--type", "word",
                 "--language", "de",
                 "--text", "Morgen fährt der neue Donaudampfschifffahrtsgesellschaftskapitän mit seinem Boot donauabwärts ab.",
-                "--sentence-context-size", "0",
                 "--lemma-index-file", "U:/voothi/20241223170748-kardenwort/data/deu-mixed-typical-2011-1m-words.csv",
                 "--lemma-override-file", "U:/voothi/20241223170748-kardenwort/data/lemma_override_de.tsv",
-                "--de-fix-genitive",
                 "--de-dictionary-file", "U:/voothi/20241223170748-kardenwort/data/german.dic",
+                "--sentence-context-size", "0",
+                "--stdout-format", "tsv",
+                "--de-fix-genitive",
             ],
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
-            // STDOUT:
-            // der
-            // mit
-            // sein
-            // neu
-            // Morgen
-            // Boot
-            // abfahren
-            // donauabwärts
-            // Donaudampfschifffahrtsgesellschaftskapitän
+        /*
+            der     der
+            mit     mit
+            sein    seinem
+            neu     neue
+            Morgen  Morgen
+            Boot    Boot
+            abfahren        fährt ab
+            donauabwärts    donauabwärts
+            Donaudampfschifffahrtsgesellschaftskapitän      Donaudampfschifffahrtsgesellschaftskapitän
+        */
         },
         {
             "name": "Run kardenwort.py / Test 001 GCS / De / type word / text",
@@ -55,27 +57,17 @@
                 "--de-gcs-skip-merge-fractions"
             ],
             "python": "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
-            // der
-            // mit
-            // sein
-            // neu
-            // Gesellschaft
-            // Morgen
-            // Fahrt
-            // Boot
-            // Kapitän
-            // Dampf
-            // abwärts
-            // Schifffahrt
-            // Don
-            // Donau
-            // Schaft
-            // abfahren
-            // chi
-            // Chiff
-            // donauabwärts
-            // Donaudampfschifffahrtsgesellschaftskapitän
-            // Gesell
+        /*
+            der     der
+            mit     mit
+            sein    seinem
+            neu     neue
+            Morgen  Morgen
+            Boot    Boot
+            abfahren        fährt ab
+            donauabwärts    donauabwärts
+            Donaudampfschifffahrtsgesellschaftskapitän      Donaudampfschifffahrtsgesellschaftskapitän
+        */
         },
         {
             "name": "Run kardenwort.py / Test 002 / De / type word / single — text1-file",

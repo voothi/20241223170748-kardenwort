@@ -33,6 +33,9 @@ def load_config():
         workspace_path = Path(workspace_path_str)
         importer_workspace = Path(importer_workspace_str)
         
+        if not python_path.is_absolute():
+            python_path = (project_root / python_path).resolve()
+
         if not workspace_path.is_absolute():
             workspace_path = (project_root / workspace_path).resolve()
 

@@ -40,7 +40,7 @@ text3_file = text3.txt
 output_template = result.{mode}.{suffix}.{language}.tsv
 
 [language_resources]
-; Language-specific data files
+; Language-specific data files (relative to data_dir)
 ; Language: English
 lemma_file_en = en/en-news-2023-1m-words.csv
 override_file_en = en/lemma_override_en.tsv

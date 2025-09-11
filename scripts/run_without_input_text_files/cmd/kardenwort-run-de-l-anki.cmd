@@ -36,5 +36,5 @@ set "KARDENWORT_INPUT_TEXT=%~1"
 --type "word" ^
 --language "de" ^
 --de-gcs ^
---de-gcs-pos-tags "!VERB"
---mode "single" ^
+--de-gcs-pos-tags "!VERB" ^
+--mode "single"

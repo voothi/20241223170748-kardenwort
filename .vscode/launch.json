@@ -41,7 +41,7 @@
                 "--stdout-format", "tsv",
                 "--de-fix-genitive",
                 "--de-gcs",
-                // "--de-gcs-pos-tags", "!VERB",
+                "--de-gcs-pos-tags", "!VERB",
                 "--de-gcs-split-mode", "combined",
                 "--de-gcs-preserve-compound-word",
                 "--de-gcs-add-parts-to-wordlist",

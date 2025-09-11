@@ -414,7 +414,7 @@ def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, de_
                 if processed_part_lemma:
                     lemmas_for_current_token.append(processed_part_lemma)
 
-        elif de_gcs and gcs_automaton and de_gcs_add_parts_to_wordlist and nlp.lang == 'de' and not is_special_token and len(token.text) > 3 and (token.pos_ in de_gcs_pos_tags):
+        elif de_gcs and gcs_automaton and nlp.lang == 'de' and not is_special_token and len(token.text) > 3 and (token.pos_ in de_gcs_pos_tags):
             try:
                 word_to_split = token.text
                 if args.de_gcs_part_singularization == 'none':
@@ -1087,16 +1087,12 @@ def main():
             print("Error: --text and --text1-file are mutually exclusive.", file=sys.stderr); exit(1)
 
         input_text = ""
-        # Priority 1: Command-line argument
         if args.text:
             input_text = args.text
-        # Priority 2: Text file
         elif args.text1_file:
             input_text = read_text_from_file(args.text1_file)
-        # Priority 3: Environment variable (for GoldenDict)
         elif 'KARDENWORT_INPUT_TEXT' in os.environ:
             input_text = os.environ['KARDENWORT_INPUT_TEXT']
-        # Priority 4: Piped data from stdin (legacy)
         elif not sys.stdin.isatty():
             input_text = sys.stdin.read()
 

@@ -96,6 +96,10 @@ def get_script_args(args, python_path, workspace_path, config):
     
     mode_args = []
     
+    text1_filename = config.get('filenames', 'text1_file', fallback='text1.txt')
+    text2_filename = config.get('filenames', 'text2_file', fallback='text2.txt')
+    text3_filename = config.get('filenames', 'text3_file', fallback='text3.txt')
+
     if args.mode == "single":
         input_text_from_env = os.environ.get('KARDENWORT_INPUT_TEXT')
         if input_text_from_env:
@@ -103,14 +107,14 @@ def get_script_args(args, python_path, workspace_path, config):
         elif args.text:
             mode_args.extend(["--text", args.text])
         else:
-            mode_args.extend(["--text1-file", str(input_path / "text1.txt")])
+            mode_args.extend(["--text1-file", str(input_path / text1_filename)])
     elif args.mode == "dual":
-        mode_args.extend(["--text1-file", str(input_path / "text1.txt")])
-        mode_args.extend(["--text2-file", str(input_path / "text2.txt")])
+        mode_args.extend(["--text1-file", str(input_path / text1_filename)])
+        mode_args.extend(["--text2-file", str(input_path / text2_filename)])
     elif args.mode == "triple":
-        mode_args.extend(["--text1-file", str(input_path / "text1.txt")])
-        mode_args.extend(["--text2-file", str(input_path / "text2.txt")])
-        mode_args.extend(["--text3-file", str(input_path / "text3.txt")])
+        mode_args.extend(["--text1-file", str(input_path / text1_filename)])
+        mode_args.extend(["--text2-file", str(input_path / text2_filename)])
+        mode_args.extend(["--text3-file", str(input_path / text3_filename)])
     else:
         raise ValueError(f"Unknown mode: {args.mode}")
 

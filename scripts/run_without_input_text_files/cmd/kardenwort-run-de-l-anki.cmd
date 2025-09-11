@@ -23,7 +23,6 @@ set "KARDENWORT_RUNNER_SCRIPT=%CFG_kardenwort_workspace%/%CFG_source_code_dir%/%
 :: Pass the input text to the Python script via an environment variable.
 set "KARDENWORT_INPUT_TEXT=%~1"
 
-
 :: ============================================================================
 :: 3. Execute the Python Script
 :: ============================================================================

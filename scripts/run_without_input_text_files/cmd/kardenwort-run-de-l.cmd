@@ -28,8 +28,8 @@ set "LEMMA_INDEX_FILE=%CFG_kardenwort_workspace%/%CFG_data_dir%/%CFG_lemma_file_
 set "LEMMA_OVERRIDE_FILE=%CFG_kardenwort_workspace%/%CFG_data_dir%/%CFG_override_file_de%"
 set "DE_DICT_FILE=%CFG_kardenwort_workspace%/%CFG_data_dir%/%CFG_dictionary_file_de%"
 
+:: Pass the input text to the Python script via an environment variable.
 set "KARDENWORT_INPUT_TEXT=%~1"
-
 
 :: ============================================================================
 :: 3. Execute the Python Script
@@ -37,7 +37,6 @@ set "KARDENWORT_INPUT_TEXT=%~1"
 "%PYTHON_EXE%" "%KARDENWORT_SCRIPT%" ^
 --type "word" ^
 --language "de" ^
---text "%KARDENWORT_INPUT_TEXT%" ^
 --lemma-index-file "%LEMMA_INDEX_FILE%" ^
 --lemma-override-file "%LEMMA_OVERRIDE_FILE%" ^
 --de-dictionary-file "%DE_DICT_FILE%" ^

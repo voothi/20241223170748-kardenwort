@@ -1,3 +1,4 @@
+// scripts/run_without_input_text_files/cmd/kardenwort-run-de-l-anki.cmd
 @echo off
 chcp 65001 > nul
 
@@ -9,12 +10,12 @@ for /f "delims=" %%a in ('call "%~dp0..\..\_config_loader.cmd"') do (
 )
 
 :: Check if the required variables were loaded from config.ini
-if not defined CFG_python_path (
-    echo ERROR: python_path not found in config.ini [paths_win] section. >&2
+if not defined CFG_python_executable (
+    echo ERROR: python_executable not found in config.ini [environment] section. >&2
     exit /b 1
 )
 if not defined CFG_kardenwort_workspace (
-    echo ERROR: kardenwort_workspace not found in config.ini [paths_win] section. >&2
+    echo ERROR: kardenwort_workspace not found in config.ini [environment] section. >&2
     exit /b 1
 )
 
@@ -22,8 +23,8 @@ if not defined CFG_kardenwort_workspace (
 :: 2. Define Full Paths and Input
 :: This makes the command block below clean and avoids parser bugs.
 :: ============================================================================
-set "PYTHON_EXE=%CFG_python_path%"
-set "KARDENWORT_SCRIPT=%CFG_kardenwort_workspace%/kardenwort-runner.py"
+set "PYTHON_EXE=%CFG_python_executable%"
+set "KARDENWORT_SCRIPT=%CFG_kardenwort_workspace%/src/kardenwort/core/kardenwort_runner.py"
 
 :: Pass the input text to the Python script via an environment variable.
 set "KARDENWORT_INPUT_TEXT=%~1"
@@ -36,5 +37,5 @@ set "KARDENWORT_INPUT_TEXT=%~1"
 --type "word" ^
 --language "de" ^
 --de-gcs ^
---de-gcs-pos-tags "!VERB" ^
---mode "single"
+--de-gcs-pos-tags "!VERB"
+--mode "single" ^

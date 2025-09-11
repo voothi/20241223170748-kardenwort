@@ -69,7 +69,7 @@ def get_script_args(args, python_path, workspace_path, config):
     ]
 
     if args.language == "de":
-        de_dictionary_file = config.get('language_resources', 'dictionary_de', fallback='german.dic')
+        de_dictionary_file = config.get('language_resources', 'dictionary_file_de', fallback='german.dic')
         german_enhancement_args = [
             "--de-fix-genitive",
             "--de-dictionary-file", str(data_path / de_dictionary_file),

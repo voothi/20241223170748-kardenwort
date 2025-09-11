@@ -1,4 +1,3 @@
-// scripts/_config_loader.cmd
 @echo off
 setlocal
 

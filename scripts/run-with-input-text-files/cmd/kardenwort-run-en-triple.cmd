@@ -2,7 +2,7 @@
 
 REM --- Universal startup block ---
 set "WORKSPACE=%~dp0..\..\..\"
-set "RUNNER_SCRIPT=krdnkrt-krn-runner.py"
+set "RUNNER_SCRIPT=kardenwort-runner.py"
 
 where python >nul 2>nul
 if errorlevel 1 (

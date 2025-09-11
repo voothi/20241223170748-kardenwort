@@ -7,18 +7,18 @@ import sys
 import os
 
 def load_config():
-    """Reads paths from config.ini based on the operating system."""
+    """Reads configuration from config.ini and returns paths and the config object."""
     config_path = Path(__file__).parent / 'config.ini'
     if not config_path.exists():
         print(f"ERROR: Configuration file not found at {config_path}", file=sys.stderr)
-        print("Please copy 'config.ini.template' to 'config.ini' and fill in the correct paths.", file=sys.stderr)
+        print("Please copy 'config.ini.template' to 'config.ini' and fill it in.", file=sys.stderr)
         sys.exit(1)
 
     config = configparser.ConfigParser()
     config.read(config_path)
 
     os_type = platform.system()
-    section = 'paths_nix' if os_type == "Linux" or os_type == "Darwin" else 'paths_win'
+    section = 'paths_nix' if os_type in ("Linux", "Darwin") else 'paths_win'
 
     if section not in config:
         print(f"ERROR: Missing section [{section}] in {config_path}", file=sys.stderr)
@@ -26,36 +26,39 @@ def load_config():
 
     try:
         python_path = Path(config[section]['python_path'])
+        workspace_path = Path(config[section]['kardenwort_workspace']) # Using the value from config
         importer_workspace = Path(config[section]['importer_workspace'])
-        workspace_path = Path(__file__).parent
     except KeyError as e:
         print(f"ERROR: Missing key {e} in section [{section}] of {config_path}", file=sys.stderr)
         sys.exit(1)
+        
+    return python_path, workspace_path, importer_workspace, config
 
-    return python_path, workspace_path, importer_workspace
 
+def get_script_args(args, python_path, workspace_path, config):
+    """Builds the list of command-line arguments using settings from the config object."""
 
-def get_script_args(args, python_path, workspace_path):
-    """Builds the list of command-line arguments for calling the main script."""
-
-    data_path = workspace_path / "data"
-
-    if args.language == "en":
-        lemma_file = "en-news-2023-1m-words.csv"
-        override_file = str(data_path / "lemma_override_en.tsv")
-    elif args.language == "de":
-        lemma_file = "deu-mixed-typical-2011-1m-words.csv"
-        override_file = str(data_path / "lemma_override_de.tsv")
-    else:
-        raise ValueError(f"Unsupported language: {args.language}")
+    # --- Get directories and script names from config ---
+    data_path = workspace_path / config.get('directories', 'data_dir', fallback='data')
+    input_path = workspace_path / config.get('directories', 'input_dir', fallback='in')
+    output_path = workspace_path / config.get('directories', 'output_dir', fallback='out')
+    
+    kardenwort_script = config.get('scripts', 'kardenwort_script', fallback='kardenwort.py')
+    
+    # --- Dynamically get filenames based on language from config ---
+    try:
+        lemma_file = config['filenames'][f'lemma_file_{args.language}']
+        override_file = config['filenames'][f'override_file_{args.language}']
+    except KeyError as e:
+        raise ValueError(f"Missing config for language '{args.language}': {e}") from e
 
     base_args = [
         str(python_path),
-        str(workspace_path / "kardenwort.py"),
+        str(workspace_path / kardenwort_script),
         "--type", args.type,
         "--language", args.language,
         "--lemma-index-file", str(data_path / lemma_file),
-        "--lemma-override-file", override_file,
+        "--lemma-override-file", str(data_path / override_file),
         "--basename-add-timestamp",
         "--basename-add-first-words",
         "--stdout-print-output-basename",
@@ -67,12 +70,13 @@ def get_script_args(args, python_path, workspace_path):
     ]
 
     if args.language == "de":
+        de_dictionary_file = config.get('filenames', 'dictionary_de', fallback='german.dic')
         german_enhancement_args = [
             "--de-fix-genitive",
-            "--de-dictionary-file", str(data_path / "german.dic"),
+            "--de-dictionary-file", str(data_path / de_dictionary_file),
         ]
         base_args.extend(german_enhancement_args)
-
+        
         if args.de_gcs:
             gcs_args = [
                 "--de-gcs",
@@ -81,55 +85,48 @@ def get_script_args(args, python_path, workspace_path):
                 "--de-gcs-add-parts-to-wordlist",
                 "--de-gcs-skip-merge-fractions",
             ]
-            
             if args.de_gcs_pos_tags:
                 gcs_args.append("--de-gcs-pos-tags")
                 gcs_args.extend(args.de_gcs_pos_tags)
-            
             base_args.extend(gcs_args)
 
     output_suffix = "sentence" if args.type == "sentence" else "word"
-
+    
+    # --- Get output filename template from config ---
+    output_template = config.get('filenames', 'output_template', fallback='result.{mode}.{suffix}.{language}.tsv')
+    output_filename = output_template.format(
+        mode=args.mode,
+        suffix=output_suffix,
+        language=args.language
+    )
+    
+    mode_args = []
+    
     if args.mode == "single":
-        single_mode_args = []
-        
-        # NEW LOGIC: Check environment variable first!
         input_text_from_env = os.environ.get('KARDENWORT_INPUT_TEXT')
-        
         if input_text_from_env:
-            single_mode_args.extend(["--text", input_text_from_env])
+            mode_args.extend(["--text", input_text_from_env])
         elif args.text:
-            single_mode_args.extend(["--text", args.text])
+            mode_args.extend(["--text", args.text])
         else:
-            single_mode_args.extend(["--text1-file", str(workspace_path / "in/text1.txt")])
-        
-        single_mode_args.extend([
-            "--output-file",
-            str(workspace_path / f"out/result.single.{output_suffix}.{args.language}.tsv"),
-        ])
-        
-        return base_args + single_mode_args
-        
+            mode_args.extend(["--text1-file", str(input_path / "text1.txt")])
     elif args.mode == "dual":
-        return base_args + [
-            "--text1-file", str(workspace_path / "in/text1.txt"),
-            "--text2-file", str(workspace_path / "in/text2.txt"),
-            "--output-file", str(workspace_path / f"out/result.dual.{output_suffix}.{args.language}.tsv"),
-        ]
+        mode_args.extend(["--text1-file", str(input_path / "text1.txt")])
+        mode_args.extend(["--text2-file", str(input_path / "text2.txt")])
     elif args.mode == "triple":
-        return base_args + [
-            "--text1-file", str(workspace_path / "in/text1.txt"),
-            "--text2-file", str(workspace_path / "in/text2.txt"),
-            "--text3-file", str(workspace_path / "in/text3.txt"),
-            "--output-file", str(workspace_path / f"out/result.triple.{output_suffix}.{args.language}.tsv"),
-        ]
+        mode_args.extend(["--text1-file", str(input_path / "text1.txt")])
+        mode_args.extend(["--text2-file", str(input_path / "text2.txt")])
+        mode_args.extend(["--text3-file", str(input_path / "text3.txt")])
+    else:
+        raise ValueError(f"Unknown mode: {args.mode}")
 
-    raise ValueError(f"Unknown mode: {args.mode}")
+    mode_args.extend(["--output-file", str(output_path / output_filename)])
+    return base_args + mode_args
 
 
 def main():
     if "--get-python-path" in sys.argv:
-        python_path, _, _ = load_config()
+        python_path, _, _, _ = load_config()
         print(python_path)
         sys.exit(0)
 
@@ -175,9 +172,8 @@ def main():
     )
     args = parser.parse_args()
 
-    python_path, workspace_path, importer_workspace = load_config()
-
-    script_args = get_script_args(args, python_path, workspace_path)
+    python_path, workspace_path, importer_workspace, config = load_config()
+    script_args = get_script_args(args, python_path, workspace_path, config)
 
     print(f"Running extraction script with command:\n{' '.join(script_args)}\n")
     script_process = subprocess.Popen(
@@ -200,12 +196,17 @@ def main():
 
     print(f"Processing file: {output_file}")
 
+    # --- Get importer settings from config ---
+    importer_script = config.get('scripts', 'importer_script', fallback='anki-csv-importer.py')
+    note_type = config.get('anki_importer', 'note_type', fallback='Basic')
+    output_dir = config.get('directories', 'output_dir', fallback='out')
+
     importer_command = [
         str(python_path),
-        str(importer_workspace / "anki-csv-importer.py"),
-        "--path", str(workspace_path / "out" / output_file),
+        str(importer_workspace / importer_script),
+        "--path", str(workspace_path / output_dir / output_file),
         "--deck", output_file,
-        "--note", "Basic 20240218092126",
+        "--note", note_type,
     ]
     print(f"Running importer with command:\n{' '.join(importer_command)}\n")
     subprocess.run(importer_command, check=True)

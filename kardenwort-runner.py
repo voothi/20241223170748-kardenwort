@@ -16,6 +16,7 @@ def load_config():
     config = configparser.ConfigParser()
     config.read(config_path)
 
+    # UPDATED: Section name changed from [paths] to [environment]
     section = 'environment'
 
     if section not in config:
@@ -23,6 +24,7 @@ def load_config():
         sys.exit(1)
 
     try:
+        # UPDATED: Key name changed from 'python_path' to 'python_executable'
         python_path = Path(config[section]['python_executable'])
         workspace_path = Path(config[section]['kardenwort_workspace'])
         importer_workspace = Path(config[section]['importer_workspace'])
@@ -35,13 +37,17 @@ def load_config():
 
 def get_script_args(args, python_path, workspace_path, config):
     """Builds the list of command-line arguments using settings from the config object."""
+    # UPDATED: Section [directories] is now [project_structure]
+    # UPDATED: Keys 'input_dir' and 'output_dir' changed
     data_path = workspace_path / config.get('project_structure', 'data_dir', fallback='data')
-    input_path = workspace_path / config.get('project_structure', 'input_dir', fallback='in')
-    output_path = workspace_path / config.get('project_structure', 'output_dir', fallback='out')
+    input_path = workspace_path / config.get('project_structure', 'source_texts_dir', fallback='source_texts')
+    output_path = workspace_path / config.get('project_structure', 'generated_results_dir', fallback='results')
     
-    kardenwort_script = config.get('scripts', 'kardenwort_script', fallback='kardenwort.py')
+    # UPDATED: Key 'kardenwort_script' is now 'kardenwort_script_filename'
+    kardenwort_script = config.get('scripts', 'kardenwort_script_filename', fallback='kardenwort.py')
     
     try:
+        # Section [language_resources] is correct
         lemma_file = config['language_resources'][f'lemma_file_{args.language}']
         override_file = config['language_resources'][f'override_file_{args.language}']
     except KeyError as e:
@@ -65,6 +71,7 @@ def get_script_args(args, python_path, workspace_path, config):
     ]
 
     if args.language == "de":
+        # Section [language_resources] is correct
         de_dictionary_file = config.get('language_resources', 'dictionary_de', fallback='german.dic')
         german_enhancement_args = [
             "--de-fix-genitive",
@@ -87,6 +94,7 @@ def get_script_args(args, python_path, workspace_path, config):
 
     output_suffix = "sentence" if args.type == "sentence" else "word"
     
+    # UPDATED: Section [filenames] is now [output_format]
     output_template = config.get('output_format', 'output_template', fallback='result.{mode}.{suffix}.{language}.tsv')
     output_filename = output_template.format(
         mode=args.mode,
@@ -96,6 +104,7 @@ def get_script_args(args, python_path, workspace_path, config):
     
     mode_args = []
     
+    # UPDATED: Section [filenames] is now [input_files]
     text1_filename = config.get('input_files', 'text1_file', fallback='text1.txt')
     text2_filename = config.get('input_files', 'text2_file', fallback='text2.txt')
     text3_filename = config.get('input_files', 'text3_file', fallback='text3.txt')
@@ -173,7 +182,7 @@ def main():
     python_path, workspace_path, importer_workspace, config = load_config()
     script_args = get_script_args(args, python_path, workspace_path, config)
 
-    print(f"Running extraction script with command:\n{' '.join(script_args)}\n")
+    print(f"Running extraction script with command:\n{' '.join(map(str, script_args))}\n")
     script_process = subprocess.Popen(
         script_args,
         stdout=subprocess.PIPE,
@@ -194,18 +203,21 @@ def main():
 
     print(f"Processing file: {output_file}")
 
-    importer_script = config.get('scripts', 'importer_script', fallback='anki-csv-importer.py')
+    # UPDATED: Key 'importer_script' is now 'importer_script_filename'
+    importer_script = config.get('scripts', 'importer_script_filename', fallback='anki-csv-importer.py')
+    # UPDATED: Section [anki_importer] is now [anki_importer_settings]
     note_type = config.get('anki_importer_settings', 'note_type', fallback='Basic')
-    output_dir = config.get('project_structure', 'output_dir', fallback='out')
+    # UPDATED: Section [directories] is now [project_structure] and key 'output_dir' is 'generated_results_dir'
+    output_dir_name = config.get('project_structure', 'generated_results_dir', fallback='results')
 
     importer_command = [
         str(python_path),
         str(importer_workspace / importer_script),
-        "--path", str(workspace_path / output_dir / output_file),
+        "--path", str(workspace_path / output_dir_name / output_file),
         "--deck", output_file,
         "--note", note_type,
     ]
-    print(f"Running importer with command:\n{' '.join(importer_command)}\n")
+    print(f"Running importer with command:\n{' '.join(map(str, importer_command))}\n")
     subprocess.run(importer_command, check=True)
 
 

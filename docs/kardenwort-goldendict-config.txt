@@ -103,7 +103,7 @@ Programs.
 --stdout-format "html"
 --de-fix-genitive
 --de-gcs
---de-gcs-pos-tags "NOUN PRON ADV ADJ"
+--de-gcs-pos-tags "NOUN PROPN ADV ADJ"
 --de-gcs-split-mode "combined"
 --de-gcs-preserve-compound-word
 --de-gcs-skip-merge-fractions
@@ -122,7 +122,6 @@ Programs.
 --language "de"
 --text "%GDWORD%"
 --de-gcs
---de-gcs-pos-tags "NOUN PRON ADV ADJ"
 --mode "single"
 ---
 

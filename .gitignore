@@ -124,3 +124,6 @@ in/
 bundle-for-prompt/
 
 /shortcuts/
+
+source_texts/
+results/

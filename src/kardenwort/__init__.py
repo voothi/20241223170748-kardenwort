@@ -1,1 +1,1 @@
-from .core.main import kardenwort
+from .core.kardenwort import kardenwort

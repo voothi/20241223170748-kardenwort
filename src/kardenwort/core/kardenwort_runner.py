@@ -8,7 +8,7 @@ import os
 def load_config():
     """Reads configuration from config.ini and returns paths and the config object."""
     # ИЗМЕНЕНО: Корректный путь к config.ini из нового расположения скрипта
-    config_path = Path(__file__).resolve().parent.parent.parent / 'config.ini'
+    config_path = Path(__file__).resolve().parent.parent.parent.parent / 'config.ini'
     if not config_path.exists():
         print(f"ERROR: Configuration file not found at {config_path}", file=sys.stderr)
         print("Please copy 'config.ini.template' to 'config.ini' and fill it in.", file=sys.stderr)

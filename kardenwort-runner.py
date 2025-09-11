@@ -16,7 +16,6 @@ def load_config():
     config = configparser.ConfigParser()
     config.read(config_path)
 
-    # UPDATED: Section name changed from 'paths' to 'environment'
     section = 'environment'
 
     if section not in config:
@@ -24,7 +23,6 @@ def load_config():
         sys.exit(1)
 
     try:
-        # UPDATED: Key name changed from 'python_path' to 'python_executable'
         python_path = Path(config[section]['python_executable'])
         workspace_path = Path(config[section]['kardenwort_workspace'])
         importer_workspace = Path(config[section]['importer_workspace'])
@@ -37,7 +35,6 @@ def load_config():
 
 def get_script_args(args, python_path, workspace_path, config):
     """Builds the list of command-line arguments using settings from the config object."""
-    # UPDATED: Section name changed from 'directories' to 'project_structure'
     data_path = workspace_path / config.get('project_structure', 'data_dir', fallback='data')
     input_path = workspace_path / config.get('project_structure', 'input_dir', fallback='in')
     output_path = workspace_path / config.get('project_structure', 'output_dir', fallback='out')
@@ -45,7 +42,6 @@ def get_script_args(args, python_path, workspace_path, config):
     kardenwort_script = config.get('scripts', 'kardenwort_script', fallback='kardenwort.py')
     
     try:
-        # UPDATED: Section name changed from 'filenames' to 'language_resources'
         lemma_file = config['language_resources'][f'lemma_file_{args.language}']
         override_file = config['language_resources'][f'override_file_{args.language}']
     except KeyError as e:
@@ -69,7 +65,6 @@ def get_script_args(args, python_path, workspace_path, config):
     ]
 
     if args.language == "de":
-        # UPDATED: Section name changed from 'filenames' to 'language_resources'
         de_dictionary_file = config.get('language_resources', 'dictionary_de', fallback='german.dic')
         german_enhancement_args = [
             "--de-fix-genitive",
@@ -92,7 +87,6 @@ def get_script_args(args, python_path, workspace_path, config):
 
     output_suffix = "sentence" if args.type == "sentence" else "word"
     
-    # UPDATED: Section name changed from 'filenames' to 'output_format'
     output_template = config.get('output_format', 'output_template', fallback='result.{mode}.{suffix}.{language}.tsv')
     output_filename = output_template.format(
         mode=args.mode,
@@ -102,7 +96,6 @@ def get_script_args(args, python_path, workspace_path, config):
     
     mode_args = []
     
-    # UPDATED: Section name changed from 'filenames' to 'input_files'
     text1_filename = config.get('input_files', 'text1_file', fallback='text1.txt')
     text2_filename = config.get('input_files', 'text2_file', fallback='text2.txt')
     text3_filename = config.get('input_files', 'text3_file', fallback='text3.txt')
@@ -202,9 +195,7 @@ def main():
     print(f"Processing file: {output_file}")
 
     importer_script = config.get('scripts', 'importer_script', fallback='anki-csv-importer.py')
-    # UPDATED: Section name changed from 'anki_importer' to 'anki_importer_settings'
     note_type = config.get('anki_importer_settings', 'note_type', fallback='Basic')
-    # UPDATED: Section name changed from 'directories' to 'project_structure'
     output_dir = config.get('project_structure', 'output_dir', fallback='out')
 
     importer_command = [

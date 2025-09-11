@@ -169,7 +169,7 @@ def main():
     parser.add_argument(
         "--de-gcs-pos-tags",
         nargs='+',
-        default=['NOUN', 'PROPN', 'ADV', 'ADJ'],
+        default=['NOUN', "PROPN", 'ADV', 'ADJ'],
         help="Specify which Part-of-Speech tags to apply GCS splitting to (e.g., NOUN PROPN or !VERB).",
     )
     args = parser.parse_args()

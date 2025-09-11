@@ -1,16 +1,55 @@
-; Please copy this file to config.ini and update the paths for your system.
+[environment]
+; ======================================================================
+; IMPORTANT: Fill in the paths for YOUR operating system.
+; Comment out or delete the examples for the other OS.
+; ======================================================================
 
-[paths_win]
-; Path to the python.exe executable within your virtual environment
-python_path = U:/voothi/20250825231214-spacy-env/Scripts/python.exe
-
-; Path to the anki-csv-importer project
+; --- Windows Example (use forward slashes or double backslashes) ---
+python_executable = U:/voothi/20250825231214-spacy-env/Scripts/python.exe
+kardenwort_workspace = U:/voothi/20241223170748-kardenwort
 importer_workspace = U:/voothi/20250401192017-anki-csv-importer
 
+; --- Linux/macOS Example ---
+; python_executable = /path/to/your/venv/bin/python
+; kardenwort_workspace = /path/to/your/kardenwort/project
+; importer_workspace = /path/to/your/anki-csv-importer
 
-[paths_nix]
-; Path to the python executable within your virtual environment
-python_path = /path/to/voothi/20250825231214-spacy-env/bin/python
+[scripts]
+; Names of the executable scripts
+kardenwort_script_filename = kardenwort.py
+kardenwort_runner_filename = kardenwort_runner.py
+importer_script_filename = anki-csv-importer.py
 
-; Path to the anki-csv-importer project
-importer_workspace = /path/to/voothi/20250401192017-anki-csv-importer
+[project_structure]
+; Path to the directory with the main source code scripts
+source_code_dir = src/kardenwort/core
+; Relative directory paths inside the kardenwort_workspace
+data_dir = data
+source_texts_dir = source_texts
+generated_results_dir = results
+
+[input_files]
+; Input files (relative to source_texts_dir)
+text1_file = text1.txt
+text2_file = text2.txt
+text3_file = text3.txt
+
+[output_format]
+; Template for generating the output filename
+; Variables: {mode}, {suffix}, {language}
+output_template = result.{mode}.{suffix}.{language}.tsv
+
+[language_resources]
+; Language-specific data files
+; Language: English
+lemma_file_en = en/en-news-2023-1m-words.csv
+override_file_en = en/lemma_override_en.tsv
+
+; Language: German
+lemma_file_de = de/deu-mixed-typical-2011-1m-words.csv
+override_file_de = de/lemma_override_de.tsv
+dictionary_file_de = de/german.dic
+
+[anki_importer_settings]
+; Settings for the Anki CSV Importer script
+note_type = Basic 20240218092126

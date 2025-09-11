@@ -2,7 +2,6 @@ import subprocess
 from pathlib import Path
 import argparse
 import configparser
-import platform
 import sys
 import os
 
@@ -17,8 +16,7 @@ def load_config():
     config = configparser.ConfigParser()
     config.read(config_path)
 
-    os_type = platform.system()
-    section = 'paths_nix' if os_type in ("Linux", "Darwin") else 'paths_win'
+    section = 'paths'
 
     if section not in config:
         print(f"ERROR: Missing section [{section}] in {config_path}", file=sys.stderr)
@@ -26,7 +24,7 @@ def load_config():
 
     try:
         python_path = Path(config[section]['python_path'])
-        workspace_path = Path(config[section]['kardenwort_workspace']) # Using the value from config
+        workspace_path = Path(config[section]['kardenwort_workspace'])
         importer_workspace = Path(config[section]['importer_workspace'])
     except KeyError as e:
         print(f"ERROR: Missing key {e} in section [{section}] of {config_path}", file=sys.stderr)
@@ -37,15 +35,12 @@ def load_config():
 
 def get_script_args(args, python_path, workspace_path, config):
     """Builds the list of command-line arguments using settings from the config object."""
-
-    # --- Get directories and script names from config ---
     data_path = workspace_path / config.get('directories', 'data_dir', fallback='data')
     input_path = workspace_path / config.get('directories', 'input_dir', fallback='in')
     output_path = workspace_path / config.get('directories', 'output_dir', fallback='out')
     
     kardenwort_script = config.get('scripts', 'kardenwort_script', fallback='kardenwort.py')
     
-    # --- Dynamically get filenames based on language from config ---
     try:
         lemma_file = config['filenames'][f'lemma_file_{args.language}']
         override_file = config['filenames'][f'override_file_{args.language}']
@@ -92,7 +87,6 @@ def get_script_args(args, python_path, workspace_path, config):
 
     output_suffix = "sentence" if args.type == "sentence" else "word"
     
-    # --- Get output filename template from config ---
     output_template = config.get('filenames', 'output_template', fallback='result.{mode}.{suffix}.{language}.tsv')
     output_filename = output_template.format(
         mode=args.mode,
@@ -196,7 +190,6 @@ def main():
 
     print(f"Processing file: {output_file}")
 
-    # --- Get importer settings from config ---
     importer_script = config.get('scripts', 'importer_script', fallback='anki-csv-importer.py')
     note_type = config.get('anki_importer', 'note_type', fallback='Basic')
     output_dir = config.get('directories', 'output_dir', fallback='out')

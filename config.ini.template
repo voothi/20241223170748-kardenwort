@@ -5,14 +5,16 @@
 ; ======================================================================
 
 ; --- Windows Example (use forward slashes or double backslashes) ---
+; The python executable path is often absolute as the venv can be anywhere.
 python_executable = U:/voothi/20250825231214-spacy-env/Scripts/python.exe
-kardenwort_workspace = U:/voothi/20241223170748-kardenwort
-importer_workspace = U:/voothi/20250401192017-anki-csv-importer
+; These workspace paths are now relative to the location of this config.ini file.
+kardenwort_workspace = 20241223170748-kardenwort
+importer_workspace = 20250401192017-anki-csv-importer
 
 ; --- Linux/macOS Example ---
 ; python_executable = /path/to/your/venv/bin/python
-; kardenwort_workspace = /path/to/your/kardenwort/project
-; importer_workspace = /path/to/your/anki-csv-importer
+; kardenwort_workspace = kardenwort
+; importer_workspace = anki-csv-importer
 
 [scripts]
 ; Names of the executable scripts

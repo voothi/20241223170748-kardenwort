@@ -7,13 +7,14 @@ import os
 
 def load_config():
     """Reads configuration from config.ini and returns paths and the config object."""
-    # ИЗМЕНЕНО: Корректный путь к config.ini из нового расположения скрипта
     config_path = Path(__file__).resolve().parent.parent.parent.parent / 'config.ini'
     if not config_path.exists():
         print(f"ERROR: Configuration file not found at {config_path}", file=sys.stderr)
         print("Please copy 'config.ini.template' to 'config.ini' and fill it in.", file=sys.stderr)
         sys.exit(1)
 
+    project_root = config_path.parent
+    
     config = configparser.ConfigParser()
     config.read(config_path, encoding='utf-8')
 
@@ -24,9 +25,20 @@ def load_config():
         sys.exit(1)
 
     try:
-        python_path = Path(config[section]['python_executable'])
-        workspace_path = Path(config[section]['kardenwort_workspace'])
-        importer_workspace = Path(config[section]['importer_workspace'])
+        python_path_str = config[section]['python_executable']
+        workspace_path_str = config[section]['kardenwort_workspace']
+        importer_workspace_str = config[section]['importer_workspace']
+
+        python_path = Path(python_path_str)
+        workspace_path = Path(workspace_path_str)
+        importer_workspace = Path(importer_workspace_str)
+        
+        if not workspace_path.is_absolute():
+            workspace_path = (project_root / workspace_path).resolve()
+
+        if not importer_workspace.is_absolute():
+            importer_workspace = (project_root / importer_workspace).resolve()
+
     except KeyError as e:
         print(f"ERROR: Missing key {e} in section [{section}] of {config_path}", file=sys.stderr)
         sys.exit(1)
@@ -36,7 +48,6 @@ def load_config():
 
 def get_script_args(args, python_path, workspace_path, config):
     """Builds the list of command-line arguments using settings from the config object."""
-    # ИЗМЕНЕНО: Добавлено чтение путей к исходникам и другим директориям
     src_path = workspace_path / config.get('project_structure', 'source_code_dir', fallback='src/kardenwort/core')
     data_path = workspace_path / config.get('project_structure', 'data_dir', fallback='data')
     input_path = workspace_path / config.get('project_structure', 'source_texts_dir', fallback='source_texts')
@@ -52,7 +63,6 @@ def get_script_args(args, python_path, workspace_path, config):
 
     base_args = [
         str(python_path),
-        # ИЗМЕНЕНО: Используется полный путь к скрипту kardenwort.py
         str(src_path / kardenwort_script),
         "--type", args.type,
         "--language", args.language,

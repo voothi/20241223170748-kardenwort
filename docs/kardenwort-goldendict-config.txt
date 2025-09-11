@@ -122,6 +122,7 @@ Programs.
 --language "de"
 --text "%GDWORD%"
 --de-gcs
+--de-gcs-pos-tags "NOUN PROPN ADV ADJ"
 --mode "single"
 ---
 

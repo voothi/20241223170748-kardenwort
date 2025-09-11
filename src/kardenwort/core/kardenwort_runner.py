@@ -7,14 +7,15 @@ import os
 
 def load_config():
     """Reads configuration from config.ini and returns paths and the config object."""
-    config_path = Path(__file__).parent / 'config.ini'
+    # ИЗМЕНЕНО: Корректный путь к config.ini из нового расположения скрипта
+    config_path = Path(__file__).resolve().parent.parent.parent / 'config.ini'
     if not config_path.exists():
         print(f"ERROR: Configuration file not found at {config_path}", file=sys.stderr)
         print("Please copy 'config.ini.template' to 'config.ini' and fill it in.", file=sys.stderr)
         sys.exit(1)
 
     config = configparser.ConfigParser()
-    config.read(config_path)
+    config.read(config_path, encoding='utf-8')
 
     section = 'environment'
 
@@ -35,6 +36,8 @@ def load_config():
 
 def get_script_args(args, python_path, workspace_path, config):
     """Builds the list of command-line arguments using settings from the config object."""
+    # ИЗМЕНЕНО: Добавлено чтение путей к исходникам и другим директориям
+    src_path = workspace_path / config.get('project_structure', 'source_code_dir', fallback='src/kardenwort/core')
     data_path = workspace_path / config.get('project_structure', 'data_dir', fallback='data')
     input_path = workspace_path / config.get('project_structure', 'source_texts_dir', fallback='source_texts')
     output_path = workspace_path / config.get('project_structure', 'generated_results_dir', fallback='results')
@@ -49,7 +52,8 @@ def get_script_args(args, python_path, workspace_path, config):
 
     base_args = [
         str(python_path),
-        str(workspace_path / kardenwort_script),
+        # ИЗМЕНЕНО: Используется полный путь к скрипту kardenwort.py
+        str(src_path / kardenwort_script),
         "--type", args.type,
         "--language", args.language,
         "--lemma-index-file", str(data_path / lemma_file),

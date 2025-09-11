@@ -1,5 +1,4 @@
 @echo off
-setlocal EnableDelayedExpansion
 
 REM --- Universal startup block ---
 set "WORKSPACE=%~dp0..\..\..\"

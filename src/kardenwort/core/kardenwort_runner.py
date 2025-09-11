@@ -84,7 +84,7 @@ def get_script_args(args, python_path, workspace_path, config):
                 "--de-gcs-add-parts-to-wordlist",
                 "--de-gcs-skip-merge-fractions",
             ]
-            if args.de_gcs_pos_tags:
+            if args.de_gcs_pos_tags is not None:
                 gcs_args.append("--de-gcs-pos-tags")
                 gcs_args.extend(args.de_gcs_pos_tags)
             base_args.extend(gcs_args)
@@ -169,7 +169,7 @@ def main():
     parser.add_argument(
         "--de-gcs-pos-tags",
         nargs='+',
-        default=['NOUN', 'PROPN', 'ADV', 'ADJ'],
+        default=None,
         help="Specify which Part-of-Speech tags to apply GCS splitting to (e.g., NOUN PROPN or !VERB).",
     )
     args = parser.parse_args()

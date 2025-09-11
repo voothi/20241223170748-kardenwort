@@ -122,8 +122,8 @@ Programs.
 --language "de"
 --text "%GDWORD%"
 --de-gcs
+--de-gcs-pos-tags "NOUN PRON ADV ADJ"
 --mode "single"
-```
 ---
 
 #### - [v] | Html | De kW L

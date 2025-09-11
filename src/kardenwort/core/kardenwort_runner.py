@@ -85,8 +85,13 @@ def get_script_args(args, python_path, workspace_path, config):
                 "--de-gcs-skip-merge-fractions",
             ]
             if args.de_gcs_pos_tags is not None:
-                gcs_args.append("--de-gcs-pos-tags")
-                gcs_args.extend(args.de_gcs_pos_tags)
+                pos_tags_to_use = args.de_gcs_pos_tags
+            else:
+                pos_tags_to_use = ['NOUN', 'PROPN', 'ADV', 'ADJ']
+
+            gcs_args.append("--de-gcs-pos-tags")
+            gcs_args.extend(pos_tags_to_use)
+
             base_args.extend(gcs_args)
 
     output_suffix = "sentence" if args.type == "sentence" else "word"

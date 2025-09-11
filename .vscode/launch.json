@@ -32,7 +32,8 @@
             "args": [
                 "--type", "word",
                 "--language", "de",
-                "--text", "Morgen fährt der neue Donaudampfschifffahrtsgesellschaftskapitän mit seinem Boot donauabwärts ab.",
+                // "--text", "Morgen fährt der neue Donaudampfschifffahrtsgesellschaftskapitän mit seinem Boot donauabwärts ab.",
+                "--text", "Informationstechnik",
                 "--lemma-index-file", "${workspaceFolder}/data/de/deu-mixed-typical-2011-1m-words.csv",
                 "--lemma-override-file", "${workspaceFolder}/data/de/lemma_override_de.tsv",
                 "--de-dictionary-file", "${workspaceFolder}/data/de/german.dic",

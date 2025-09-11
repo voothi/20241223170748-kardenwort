@@ -29,6 +29,7 @@ set "LEMMA_OVERRIDE_FILE=%CFG_kardenwort_workspace%/%CFG_data_dir%/%CFG_override
 :: Pass the input text to the Python script via an environment variable.
 set "KARDENWORT_INPUT_TEXT=%~1"
 
+
 :: ============================================================================
 :: 3. Execute the Python Script
 :: It will read the KARDENWORT_INPUT_TEXT environment variable internally.

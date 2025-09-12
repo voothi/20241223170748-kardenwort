@@ -1,44 +1,39 @@
 @echo off
+chcp 65001 > nul
 
-REM --- Universal startup block ---
-set "WORKSPACE=%~dp0..\..\..\"
-set "RUNNER_SCRIPT=kardenwort-runner.py"
-
-where python >nul 2>nul
-if errorlevel 1 (
-    echo ERROR: 'python' command not found. Please ensure it is installed and in your PATH.
-    exit /b 1
-)
-
-for /f "usebackq delims=" %%i in (`python "%WORKSPACE%%RUNNER_SCRIPT%" --get-python-path`) do set "PYTHON_PATH=%%i"
-
-if "!PYTHON_PATH!"=="" (
-    echo ERROR: Failed to get Python path from config.ini. See script output above for details.
-    exit /b 1
-)
-if not exist "%PYTHON_PATH%" (
-    echo ERROR: Python executable from config.ini not found: !PYTHON_PATH!
-    exit /b 1
-)
-
-cd /d "%WORKSPACE%"
-if errorlevel 1 (
-    echo ERROR: Failed to change directory to %WORKSPACE%
-    exit /b 1
-)
-REM --- End of universal block ---
+:: ============================================================================
+:: 1. Load Configuration from multiple sections
+:: ============================================================================
+for /f "delims=" %%a in ('call "%~dp0..\..\_config_loader.cmd" environment') do (set "%%a")
+for /f "delims=" %%a in ('call "%~dp0..\..\_config_loader.cmd" scripts') do (set "%%a")
+for /f "delims=" %%a in ('call "%~dp0..\..\_config_loader.cmd" project_structure') do (set "%%a")
 
 
+:: ============================================================================
+:: 2. Validate Configuration and Define Paths
+:: ============================================================================
+if not defined CFG_python_executable (echo ERROR: python_executable not found in [environment] section. >&2 & exit /b 1)
+if not defined CFG_kardenwort_workspace (echo ERROR: kardenwort_workspace not found in [environment] section. >&2 & exit /b 1)
+if not defined CFG_kardenwort_runner_filename (echo ERROR: kardenwort_runner_filename not found in [scripts] section. >&2 & exit /b 1)
+if not defined CFG_source_code_dir (echo ERROR: source_code_dir not found in [project_structure] section. >&2 & exit /b 1)
+
+set "PYTHON_EXE=%CFG_python_executable%"
+set "KARDENWORT_RUNNER_SCRIPT=%CFG_kardenwort_workspace%/%CFG_source_code_dir%/%CFG_kardenwort_runner_filename%"
+
+
+:: ============================================================================
+:: 3. Execute the Python Script
+:: ============================================================================
 echo Running extraction for English in triple mode...
 
 echo.
 echo Triple word mode...
-call "%PYTHON_PATH%" "%RUNNER_SCRIPT%" --language en --type word --mode triple
+call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language en --type word --mode triple
 if errorlevel 1 goto :error
 
 echo.
 echo Triple sentence mode...
-call "%PYTHON_PATH%" "%RUNNER_SCRIPT%" --language en --type sentence --mode triple
+call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language en --type sentence --mode triple
 if errorlevel 1 goto :error
 
 echo.

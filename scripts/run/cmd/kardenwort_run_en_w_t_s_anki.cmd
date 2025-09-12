@@ -2,6 +2,19 @@
 chcp 65001 > nul
 
 :: ============================================================================
+:: 1. Change to the Project Root Directory
+:: This is the crucial fix. It ensures that all subsequent relative paths
+:: (both in this script and in the Python script) are resolved correctly.
+:: ============================================================================
+set "PROJECT_ROOT=%~dp0..\..\.."
+cd /d "%PROJECT_ROOT%"
+if errorlevel 1 (
+    echo ERROR: Failed to change directory to the project root: "%PROJECT_ROOT%" >&2
+    exit /b 1
+)
+
+
+:: ============================================================================
 :: 1. Load Configuration from multiple sections
 :: ============================================================================
 for /f "delims=" %%a in ('call "%~dp0..\..\_config_loader.cmd" environment') do (set "%%a")

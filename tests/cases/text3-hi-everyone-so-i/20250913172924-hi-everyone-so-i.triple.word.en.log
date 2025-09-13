@@ -1,0 +1,29 @@
+(20250825231214-spacy-env) PS U:\voothi\20241223170748-kardenwort\scripts\run\cmd> .\kardenwort_run_en_ws_t3_s_anki.cmd
+Running extraction for English in triple mode...
+
+Triple word mode...
+Running extraction script with command:
+U:\voothi\20250825231214-spacy-env\Scripts\python.exe U:\voothi\20241223170748-kardenwort\src\kardenwort\core\kardenwort.py --type word --language en --lemma-index-file U:\voothi\20241223170748-kardenwort\data\en\en-news-2023-1m-words.csv --lemma-override-file U:\voothi\20241223170748-kardenwort\data\en\lemma_override_en.tsv --basename-add-timestamp --basename-add-first-words --stdout-print-output-basename --add-source-word-col --add-wordlist-col --wordlist-use-br --add-header --sentence-context-size 2 --text1-file U:\voothi\20241223170748-kardenwort\source_texts\text1.txt --text2-file U:\voothi\20241223170748-kardenwort\source_texts\text2.txt --text3-file U:\voothi\20241223170748-kardenwort\source_texts\text3.txt --output-file U:\voothi\20241223170748-kardenwort\results\result.triple.word.en.tsv
+
+Processing file: 20250913172924-hi-everyone-so-i.triple.word.en.tsv
+Running importer with command:
+U:\voothi\20250825231214-spacy-env\Scripts\python.exe U:\voothi\20250401192017-anki-csv-importer\anki-csv-importer.py --path U:\voothi\20241223170748-kardenwort\results\20250913172924-hi-everyone-so-i.triple.word.en.tsv --deck 20250913172924-hi-everyone-so-i.triple.word.en.tsv --note Basic 20240218092126
+
+[+] Adding 101 new notes and updating 0 existing notes
+[+] Removing outdated tags from notes
+[+] Syncing
+
+Triple sentence mode...
+Running extraction script with command:
+U:\voothi\20250825231214-spacy-env\Scripts\python.exe U:\voothi\20241223170748-kardenwort\src\kardenwort\core\kardenwort.py --type sentence --language en --lemma-index-file U:\voothi\20241223170748-kardenwort\data\en\en-news-2023-1m-words.csv --lemma-override-file U:\voothi\20241223170748-kardenwort\data\en\lemma_override_en.tsv --basename-add-timestamp --basename-add-first-words --stdout-print-output-basename --add-source-word-col --add-wordlist-col --wordlist-use-br --add-header --sentence-context-size 2 --text1-file U:\voothi\20241223170748-kardenwort\source_texts\text1.txt --text2-file U:\voothi\20241223170748-kardenwort\source_texts\text2.txt --text3-file U:\voothi\20241223170748-kardenwort\source_texts\text3.txt --output-file U:\voothi\20241223170748-kardenwort\results\result.triple.sentence.en.tsv
+
+Processing file: 20250913172945-hi-everyone-so-i.triple.sentence.en.tsv
+Running importer with command:
+U:\voothi\20250825231214-spacy-env\Scripts\python.exe U:\voothi\20250401192017-anki-csv-importer\anki-csv-importer.py --path U:\voothi\20241223170748-kardenwort\results\20250913172945-hi-everyone-so-i.triple.sentence.en.tsv --deck 20250913172945-hi-everyone-so-i.triple.sentence.en.tsv --note Basic 20240218092126
+
+[+] Adding 15 new notes and updating 0 existing notes
+[+] Removing outdated tags from notes
+[+] Syncing
+
+All operations completed successfully.
+(20250825231214-spacy-env) PS U:\voothi\20241223170748-kardenwort\scripts\run\cmd> 

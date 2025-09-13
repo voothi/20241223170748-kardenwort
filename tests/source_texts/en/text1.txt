@@ -1,0 +1,15 @@
+Hi everyone.
+So I've wanted to make this video for a while.
+It is a comprehensive but general audience introduction to large language models like ChatGPT.
+And what I'm hoping to achieve in this video is to give you kind of mental models for thinking through what it is that this tool is.
+It is obviously magical and amazing in some respects.
+It's really good at some things, not very good at other things, and there's also a lot of sharp edges to be aware of.
+So what is behind this text box?
+You can put anything in there and press Enter.
+But what should we be putting there?
+And what are these words generated back?
+How does this work and what are you talking to exactly?
+So I'm hoping to get at all those topics in this video.
+We're going to go through the entire pipeline of how this stuff is built, but I'm going to keep everything sort of accessible to a general audience.
+So let's take a look at first how you build something like ChatGPT.
+And along the way I'm going to talk about, you know, some of the sort of cognitive psychological implications of these tools.

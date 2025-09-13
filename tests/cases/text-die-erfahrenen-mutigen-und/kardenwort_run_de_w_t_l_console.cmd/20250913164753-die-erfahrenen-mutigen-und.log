@@ -1,0 +1,34 @@
+(20250825231214-spacy-env) PS U:\voothi\20241223170748-kardenwort\scripts\run\cmd> .\kardenwort_run_de_w_t_l_console.cmd "Die erfahrenen, mutigen und traditionsbewussten Donaudampfschifffahrtsgesellschaftskapitäne waren für ihre präzise Navigation auf der Donau bekannt."
+<table>
+<tr><td>der</td><td>Die</td></tr>
+<tr><td>auf</td><td>auf</td></tr>
+<tr><td>und</td><td>und</td></tr>
+<tr><td>für</td><td>für</td></tr>
+<tr><td>sein</td><td>waren</td></tr>
+<tr><td>ihr</td><td>ihre</td></tr>
+<tr><td>bekannt</td><td>bekannt</td></tr>
+<tr><td>Gesellschaft</td><td>Donaudampfschifffahrtsgesellschaftskapitäne</td></tr>
+<tr><td>Fahrt</td><td>Donaudampfschifffahrtsgesellschaftskapitäne</td></tr>
+<tr><td>Tradition</td><td>traditionsbewussten</td></tr>
+<tr><td>erfahren</td><td>erfahrenen</td></tr>
+<tr><td>Mut</td><td>mutigen</td></tr>
+<tr><td>Ware</td><td>waren</td></tr>
+<tr><td>Kapitän</td><td>Donaudampfschifffahrtsgesellschaftskapitäne</td></tr>
+<tr><td>bewusst</td><td>traditionsbewussten</td></tr>
+<tr><td>Navigation</td><td>Navigation</td></tr>
+<tr><td>präzise</td><td>präzise</td></tr>
+<tr><td>mutig</td><td>mutigen</td></tr>
+<tr><td>Dampf</td><td>Donaudampfschifffahrtsgesellschaftskapitäne</td></tr>
+<tr><td>Schifffahrt</td><td>Donaudampfschifffahrtsgesellschaftskapitäne</td></tr>
+<tr><td>Don</td><td>Donau</td></tr>
+<tr><td>Donau</td><td>Donau</td></tr>
+<tr><td>Schaft</td><td>Donaudampfschifffahrtsgesellschaftskapitäne</td></tr>
+<tr><td>präzis</td><td>präzise</td></tr>
+<tr><td>traditionsbewusst</td><td>traditionsbewussten</td></tr>
+<tr><td>chi</td><td>Donaudampfschifffahrtsgesellschaftskapitäne</td></tr>
+<tr><td>Chiff</td><td>Donaudampfschifffahrtsgesellschaftskapitäne</td></tr>
+<tr><td>Donaudampfschifffahrtsgesellschaftskapitän</td><td>Donaudampfschifffahrtsgesellschaftskapitäne</td></tr>
+<tr><td>Gesell</td><td>Donaudampfschifffahrtsgesellschaftskapitäne</td></tr>
+<tr><td>Prä</td><td>präzise</td></tr>
+</table>
+(20250825231214-spacy-env) PS U:\voothi\20241223170748-kardenwort\scripts\run\cmd> 

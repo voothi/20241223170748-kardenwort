@@ -126,5 +126,5 @@ bundle_for_prompt/
 
 /shortcuts/
 
-source_texts/
-results/
+/source_texts/
+/results/

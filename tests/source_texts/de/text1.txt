@@ -1,0 +1,14 @@
+T01 - S01 - Ich stehe morgen früh auf.
+T01 - S02 - Sie räumt ihr Zimmer immer auf.
+T01 - S03 - Er kommt heute Abend vorbei.
+T01 - S04 - Wir schlagen einen neuen Weg ein.
+T01 - S05 - Ich mache das Licht an. 
+T01 - S06 - Sie zieht die Jacke aus.
+T01 - S07 - Er bringt das Buch zurück. 
+T01 - S08 - Du schläfst nachmittags ein.
+T01 - S09 - Sie gibt die Hausaufgaben ab. 
+T01 - S10 - Ich esse die Suppe auf.
+T01 - S11 - Er fährt morgen weg.
+T01 - S12 - Morgen fährt der neue Donaudampfschifffahrtsgesellschaftskapitän mit seinem Boot donauabwärts ab.
+T01 - S13 - Vor der Anmeldung seines neuen Autos schließt der Besitzer schnell noch eine neue Kraftfahrzeughaftpflichtversicherung ab.
+T01 - S14 - Der Landtag von Mecklenburg-Vorpommern schafft das Rindfleischetikettierungsüberwachungsaufgabenübertragungsgesetz nach einer EU-Änderung wieder ab.

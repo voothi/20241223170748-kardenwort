@@ -1,0 +1,12 @@
+(20250825231214-spacy-env) PS U:\voothi\20241223170748-kardenwort\scripts\run\cmd> .\kardenwort_run_de_w_t_l_anki.cmd "Digitale Bilddaten und Audiodaten."
+Running extraction script with command:
+U:\voothi\20250825231214-spacy-env\Scripts\python.exe U:\voothi\20241223170748-kardenwort\src\kardenwort\core\kardenwort.py --type word --language de --lemma-index-file U:\voothi\20241223170748-kardenwort\data\de\deu-mixed-typical-2011-1m-words.csv --lemma-override-file U:\voothi\20241223170748-kardenwort\data\de\lemma_override_de.tsv --basename-add-timestamp --basename-add-first-words --stdout-print-output-basename --add-source-word-col --add-wordlist-col --wordlist-use-br --add-header --sentence-context-size 2 --de-fix-genitive --de-dictionary-file U:\voothi\20241223170748-kardenwort\data\de\german.dic --de-gcs --de-gcs-split-mode combined --de-gcs-preserve-compound-word --de-gcs-add-parts-to-wordlist --de-gcs-skip-merge-fractions --de-gcs-pos-tags !VERB --text Digitale Bilddaten und Audiodaten. --output-file U:\voothi\20241223170748-kardenwort\results\result.single.word.de.tsv
+
+Processing file: 20250913162418-digitale-bilddaten-und-audiodaten.single.word.de.tsv
+Running importer with command:
+U:\voothi\20250825231214-spacy-env\Scripts\python.exe U:\voothi\20250401192017-anki-csv-importer\anki-csv-importer.py --path U:\voothi\20241223170748-kardenwort\results\20250913162418-digitale-bilddaten-und-audiodaten.single.word.de.tsv --deck 20250913162418-digitale-bilddaten-und-audiodaten.single.word.de.tsv --note Basic 20240218092126
+
+[+] Adding 7 new notes and updating 0 existing notes
+[+] Removing outdated tags from notes
+[+] Syncing
+(20250825231214-spacy-env) PS U:\voothi\20241223170748-kardenwort\scripts\run\cmd> 

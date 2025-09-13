@@ -1,0 +1,29 @@
+(20250825231214-spacy-env) PS U:\voothi\20241223170748-kardenwort\scripts\run\cmd> .\kardenwort_run_de_ws_t2_l_anki.cmd
+Running extraction in different modes...
+
+Dual word mode with GCS (excluding verbs)...
+Running extraction script with command:
+U:\voothi\20250825231214-spacy-env\Scripts\python.exe U:\voothi\20241223170748-kardenwort\src\kardenwort\core\kardenwort.py --type word --language de --lemma-index-file U:\voothi\20241223170748-kardenwort\data\de\deu-mixed-typical-2011-1m-words.csv --lemma-override-file U:\voothi\20241223170748-kardenwort\data\de\lemma_override_de.tsv --basename-add-timestamp --basename-add-first-words --stdout-print-output-basename --add-source-word-col --add-wordlist-col --wordlist-use-br --add-header --sentence-context-size 2 --de-fix-genitive --de-dictionary-file U:\voothi\20241223170748-kardenwort\data\de\german.dic --de-gcs --de-gcs-split-mode combined --de-gcs-preserve-compound-word --de-gcs-add-parts-to-wordlist --de-gcs-skip-merge-fractions --de-gcs-pos-tags !VERB --text1-file U:\voothi\20241223170748-kardenwort\source_texts\text1.txt --text2-file U:\voothi\20241223170748-kardenwort\source_texts\text2.txt --output-file U:\voothi\20241223170748-kardenwort\results\result.dual.word.de.tsv
+
+Processing file: 20250913170737-t01-s01-ich-stehe.dual.word.de.tsv
+Running importer with command:
+U:\voothi\20250825231214-spacy-env\Scripts\python.exe U:\voothi\20250401192017-anki-csv-importer\anki-csv-importer.py --path U:\voothi\20241223170748-kardenwort\results\20250913170737-t01-s01-ich-stehe.dual.word.de.tsv --deck 20250913170737-t01-s01-ich-stehe.dual.word.de.tsv --note Basic 20240218092126
+
+[+] Adding 107 new notes and updating 0 existing notes
+[+] Removing outdated tags from notes
+[+] Syncing
+
+Dual sentence mode...
+Running extraction script with command:
+U:\voothi\20250825231214-spacy-env\Scripts\python.exe U:\voothi\20241223170748-kardenwort\src\kardenwort\core\kardenwort.py --type sentence --language de --lemma-index-file U:\voothi\20241223170748-kardenwort\data\de\deu-mixed-typical-2011-1m-words.csv --lemma-override-file U:\voothi\20241223170748-kardenwort\data\de\lemma_override_de.tsv --basename-add-timestamp --basename-add-first-words --stdout-print-output-basename --add-source-word-col --add-wordlist-col --wordlist-use-br --add-header --sentence-context-size 2 --de-fix-genitive --de-dictionary-file U:\voothi\20241223170748-kardenwort\data\de\german.dic --text1-file U:\voothi\20241223170748-kardenwort\source_texts\text1.txt --text2-file U:\voothi\20241223170748-kardenwort\source_texts\text2.txt --output-file U:\voothi\20241223170748-kardenwort\results\result.dual.sentence.de.tsv
+
+Processing file: 20250913170804-t01-s01-ich-stehe.dual.sentence.de.tsv
+Running importer with command:
+U:\voothi\20250825231214-spacy-env\Scripts\python.exe U:\voothi\20250401192017-anki-csv-importer\anki-csv-importer.py --path U:\voothi\20241223170748-kardenwort\results\20250913170804-t01-s01-ich-stehe.dual.sentence.de.tsv --deck 20250913170804-t01-s01-ich-stehe.dual.sentence.de.tsv --note Basic 20240218092126
+
+[+] Adding 14 new notes and updating 0 existing notes
+[+] Removing outdated tags from notes
+[+] Syncing
+
+All operations completed successfully.
+(20250825231214-spacy-env) PS U:\voothi\20241223170748-kardenwort\scripts\run\cmd> 

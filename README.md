@@ -148,14 +148,21 @@ While many text-processing tools for language learners exist (e.g., LWT, Lute, L
 Follow these steps to get the entire Kardenwort ecosystem up and running.
 
 **Prerequisites:**
-*   **Python 3.9 (3.9.13)**.
+*   **Python 3.9**: It is **strongly recommended** to use this specific version.
+    > **Important for Windows Users:** Versions of Python higher than 3.9 (e.g., 3.10+) may require a C++ compiler (like Visual Studio Build Tools) to install dependencies such as `spaCy`. To avoid these compilation issues, we recommend installing **Python 3.9** directly from the **Microsoft Store**, which provides a hassle-free setup.
 *   **Anki Desktop**: Must be installed and running.
 *   **AnkiConnect Add-on**: Install the [AnkiConnect](https://ankiweb.net/shared/info/2055492159) add-on in Anki.
 
 **Setup Steps:**
 
 1.  **Clone the Repositories**:
-    It's recommended to clone all three projects into the same parent directory for easier configuration.
+    Clone all three projects into a common parent directory. For example, if you have a `projects` folder, the structure should look like this:
+    ```
+    projects/
+    ├── 20250913122858-kardenwort/
+    ├── 20250913123240-kardenwort-anki-csv-importer/
+    └── 20250913123501-kardenwort-anki-templates/
+    ```
     ```bash
     git clone https://github.com/kardenwort/20250913122858-kardenwort.git
     git clone https://github.com/kardenwort/20250913123240-kardenwort-anki-csv-importer.git
@@ -165,18 +172,23 @@ Follow these steps to get the entire Kardenwort ecosystem up and running.
 2.  **Import the Anki Template**:
     In the `20250913123501-kardenwort-anki-templates` project, navigate to the `decks-for-first-initialize-templates` directory. Choose the latest version folder (e.g., `v1.0.0`), select **one** of the `.apkg` deck files inside, and import it into Anki Desktop. This will automatically add and configure the required note type.
 
-3.  **Set up the Python Environment**:
-    Create a shared virtual environment and install the required dependencies.
+3.  **Set up a Shared Python Environment**:
+    We will create a single virtual environment outside the project folders to manage dependencies for the entire ecosystem.
     ```bash
-    # Create a virtual environment (e.g., one level above the project folders)
-    python -m venv ../kardenwort-env
+    # Ensure you are in the parent directory (e.g., 'projects/') that contains the cloned repositories.
+
+    # Create the virtual environment
+    python -m venv kardenwort-env
 
     # Activate it
-    ../kardenwort-env/Scripts/activate  # Windows
-    # source ../kardenwort-env/bin/activate # macOS/Linux
+    kardenwort-env\Scripts\activate  # Windows
+    # source kardenwort-env/bin/activate # macOS/Linux
 
-    # Install Python packages
-    pip install spacy requests git+https://github.com/kardenwort/20250914005844-kardenwort-german-compound-splitter
+    # Navigate into the main project directory to install its requirements
+    cd 20250913122858-kardenwort
+
+    # Install all required dependencies from the lock file
+    pip install -r requirements.txt
 
     # Download SpaCy language models
     python -m spacy download en_core_web_lg
@@ -184,21 +196,18 @@ Follow these steps to get the entire Kardenwort ecosystem up and running.
     ```
 
 4.  **Configure Kardenwort**:
-    *   Navigate to the `20250913122858-kardenwort` directory.
-    *   Copy `config.ini.template` to `config.ini`.
-    *   Open `config.ini` and verify the paths under `[environment]`. The default paths should work if you followed the recommended cloning structure.
+    *   Inside the `20250913122858-kardenwort` directory, copy `config.ini.template` to `config.ini`.
+    *   Open `config.ini` and verify the paths under `[environment]`. The default relative paths should work perfectly with this setup.
 
 5.  **Run a Test:**
     *   Add some German text to `source_texts/text1.txt`.
     *   Ensure Anki is running.
-    *   Execute the runner script from your command line. **Important:** Make sure your virtual environment is still active. Your command prompt should show its name (e.g., `(kardenwort-env)`) to ensure you are using the correct Python interpreter.
+    *   Execute the runner script from the `20250913122858-kardenwort` directory. **Important:** Your virtual environment (`kardenwort-env`) must be active.
     ```bash
     # This creates vocabulary (word) cards from a single German text file
     python src/kardenwort/core/kardenwort_runner.py --type word --mode single --language de
     ```
-    If successful, a new deck will appear in Anki. Your setup is complete!
-
-[Return to Top](#map-of-contents)
+    If successful, a new deck will appear in Anki. Your setup is complete
 
 ---
 

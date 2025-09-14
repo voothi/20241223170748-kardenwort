@@ -156,38 +156,39 @@ Follow these steps to get the entire Kardenwort ecosystem up and running.
 **Setup Steps:**
 
 1.  **Clone the Repositories**:
-    Clone all three projects into a common parent directory. For example, if you have a `projects` folder, the structure should look like this:
-    ```
-    projects/
-    ├── 20250913122858-kardenwort/
-    ├── 20250913123240-kardenwort-anki-csv-importer/
-    └── 20250913123501-kardenwort-anki-templates/
-    ```
+    Clone all three projects into a common parent directory. For example, create a folder named `kardenwort-ecosystem` and clone the repositories inside it.
     ```bash
+    mkdir kardenwort-ecosystem
+    cd kardenwort-ecosystem
     git clone https://github.com/kardenwort/20250913122858-kardenwort.git
     git clone https://github.com/kardenwort/20250913123240-kardenwort-anki-csv-importer.git
     git clone https://github.com/kardenwort/20250913123501-kardenwort-anki-templates.git
+    ```
+    Your final structure will be:
+    ```
+    kardenwort-ecosystem/
+    ├── 20250913122858-kardenwort/
+    ├── 20250913123240-kardenwort-anki-csv-importer/
+    └── 20250913123501-kardenwort-anki-templates/
     ```
 
 2.  **Import the Anki Template**:
     In the `20250913123501-kardenwort-anki-templates` project, navigate to the `decks-for-first-initialize-templates` directory. Choose the latest version folder (e.g., `v1.0.0`), select **one** of the `.apkg` deck files inside, and import it into Anki Desktop. This will automatically add and configure the required note type.
 
 3.  **Set up a Shared Python Environment**:
-    We will create a single virtual environment outside the project folders to manage dependencies for the entire ecosystem.
+    We will create a single virtual environment one level above the project folders. This keeps the project directories clean and allows all scripts to use the same set of installed packages.
     ```bash
-    # Ensure you are in the parent directory (e.g., 'projects/') that contains the cloned repositories.
-
-    # Create the virtual environment
-    python -m venv kardenwort-env
-
-    # Activate it
-    kardenwort-env\Scripts\activate  # Windows
-    # source kardenwort-env/bin/activate # macOS/Linux
-
-    # Navigate into the main project directory to install its requirements
+    # First, navigate into the main project directory
     cd 20250913122858-kardenwort
 
-    # Install all required dependencies from the lock file
+    # Create the virtual environment in the parent directory (../)
+    python -m venv ../20250914043440-kardenwort-spacy-env
+
+    # Activate it
+    ../20250914043440-kardenwort-spacy-env/Scripts/Activate.ps1  # Windows (PowerShell)
+    # source ../20250914043440-kardenwort-spacy-env/bin/activate # macOS/Linux
+
+    # Now that the environment is active, install dependencies from the requirements file
     pip install -r requirements.txt
 
     # Download SpaCy language models
@@ -196,13 +197,13 @@ Follow these steps to get the entire Kardenwort ecosystem up and running.
     ```
 
 4.  **Configure Kardenwort**:
-    *   Inside the `20250913122858-kardenwort` directory, copy `config.ini.template` to `config.ini`.
-    *   Open `config.ini` and verify the paths under `[environment]`. The default relative paths should work perfectly with this setup.
+    *   While still inside the `20250913122858-kardenwort` directory, copy `config.ini.template` to `config.ini`.
+    *   Open `config.ini` and verify the paths under `[environment]`. The default relative paths are designed for this structure and should work without changes.
 
 5.  **Run a Test:**
     *   Add some German text to `source_texts/text1.txt`.
     *   Ensure Anki is running.
-    *   Execute the runner script from the `20250913122858-kardenwort` directory. **Important:** Your virtual environment (`kardenwort-env`) must be active.
+    *   From the root of the `20250913122858-kardenwort` project, execute the runner script. **Important:** Your virtual environment (`kardenwort-env`) must be active.
     ```bash
     # This creates vocabulary (word) cards from a single German text file
     python src/kardenwort/core/kardenwort_runner.py --type word --mode single --language de

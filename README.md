@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/ecbe377c-cec0-41a5-a5d8-df406de9f261" alt="Kardenwort Logo" width="300">
+  <img src="docs/assets/20250831013923.png" alt="Kardenwort Logo" width="300">
 </p>
 
 # Kardenwort
@@ -246,6 +246,10 @@ You can configure multiple "program" dictionaries in GoldenDict to run Kardenwor
 For detailed instructions and ready-to-use command-line examples, see the configuration file:
 **`docs/kardenwort-goldendict-config.txt`**
 
+<p align="center">
+  <img src="docs/assets/20250829201257.png" alt="GoldenDict-ng Main Window" width="600">
+</p>
+
 [Return to Top](#map-of-contents)
 
 ---
@@ -304,7 +308,7 @@ This mechanism directly determines what you will see as `SentenceSource` and con
 The generated TSV files are designed for our feature-rich Anki template, which organizes the information into a clean and interactive layout.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/kardenwort/20250913122858-kardenwort/main/docs/assets/20250829204605.png" alt="An example of a generated German vocabulary card using the template" width="800">
+  <img src="docs/assets/20250829204605.png" alt="An example of a generated German vocabulary card using the template" width="800">
 </p>
 
 **Template Features:**

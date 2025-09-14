@@ -148,7 +148,7 @@ While many text-processing tools for language learners exist (e.g., LWT, Lute, L
 Follow these steps to get the entire Kardenwort ecosystem up and running.
 
 **Prerequisites:**
-*   **Python 3.9+**.
+*   **Python 3.9 (3.9.13)**.
 *   **Anki Desktop**: Must be installed and running.
 *   **AnkiConnect Add-on**: Install the [AnkiConnect](https://ankiweb.net/shared/info/2055492159) add-on in Anki.
 

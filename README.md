@@ -1,466 +1,436 @@
 <p align="center">
-  <!-- ЗАГЛУШКА ДЛЯ ЛОГОТИПА: Замените src на путь к вашему файлу логотипа -->
-  <img src="assets/20250831013923.png" alt="Kardenwort Logo" width="300">
+  <img src="https://github.com/user-attachments/assets/ecbe377c-cec0-41a5-a5d8-df406de9f261" alt="Kardenwort Logo" width="300">
 </p>
 
-# **Kardenwort**
+# Kardenwort
 
-> *Kontext. Kern. Karte.*
+> *Kontext. Kern. Karte.* (Context. Core. Card.)
 
-![Version](https://img.shields.io/badge/version-v1.1.0-blue)
+[![Version](https://img.shields.io/badge/version-v2.0.0-blue)](https://github.com/kardenwort/20250913122858-kardenwort)
 
-Kardenwort is a powerful command-line utility designed to accelerate language learning by automatically creating Anki flashcards from any text. It intelligently processes your source material, extracts vocabulary (tokens) and full sentences, and generates a structured file ready for direct import into Anki.
+**Kardenwort** is an intelligent command-line utility designed to accelerate language learning by deconstructing text and automatically creating context-rich flashcards for **Anki**. It serves as a powerful offline companion to your study materials, transforming any text—books, articles, or AI-generated content—into a structured vocabulary list ready for efficient learning.
 
-This tool is perfect for language learners who want to build personalized decks from books, articles, subtitles, or any other text they are studying.
+This tool is not just a word collector; it's an intelligent pipeline powered by two NLP libraries, large dictionaries, semantic rules, and a user-trainable override system to achieve high-accuracy lemmatization and word deconstruction, especially for grammatically complex languages like German.
 
-## Project Philosophy and Core Concepts
-
-The Kardenwort project was created with one main goal: to provide an effective and flexible tool for mastering foreign language vocabulary by working with authentic text. At the heart of the project is `token_mix_combined.py`—a powerful command-line utility (CLI) developed for deep linguistic analysis of texts and the automatic creation of structured data for spaced repetition systems (SRS).
-
-Our philosophy can be summarized in three words:
-
-**Kontext. Kern. Karte.**
-
-*   **Kontext:** We believe that words cannot be learned in a vacuum. Language is context. Kardenwort ensures that every vocabulary card retains the original sentence and surrounding phrases, allowing you to understand usage, nuance, and grammar naturally.
-*   **Kern:** Our core engine, powered by advanced NLP, drills down to find the lexical kernel (the lemma or base form) of every word. It intelligently handles complex grammar, such as German compound nouns and separable verbs, to give you the most accurate and useful information.
-*   **Karte:** The final output is a perfectly structured card (`Karte`), ready for import into Anki. It's not just a word and its translation; it's a rich, data-filled canvas for learning, complete with context, inflectional forms, and word lists.
-
-This philosophy is supported by three core principles:
-
-1.  **Openness and Free Access:** This is an open-source development that can be used anywhere without restrictions.
-2.  **Your Data in Your Hands:** The project does not require registration or subscriptions. You are not dependent on third-party services that might one day charge a fee for access to the very cards you spent hours creating.
-3.  **Maximum Flexibility:** The output of the utility is a starting point, not a rigid system. You get full control over your learning materials.
-
-### Key Advantages and Differences from Alternatives
-
-There are many solutions on the market for working with texts: LWT, Lute, LinguaCafe, VocabSieve, LingQ, Readlang, AnkiMorphs, lemmatize, alexandria-reader, LanguageCrush, Smart Book - KursX, KOReader, and others. However, `Kardenwort` offers a unique combination of capabilities:
-
-*   **Intelligent German Language Processing:** None of the listed applications provide such a high level of German vocabulary processing. The utility correctly parses compound nouns, finds verbs with separable prefixes, and properly handles capitalization, which is a constant problem in other systems (e.g., nouns starting with a lowercase letter that cannot be corrected).
-*   **Complete Freedom After Export:** Unlike readers where a card is rigidly tied to the source text, here you receive completely autonomous data. With all the necessary context in the card, you can edit any field in Anki on both PC and mobile. This truly frees you up and allows you to adapt the material to your needs.
-*   **Quality You Can Influence:** The accuracy of the analysis depends on the capabilities of the `spaCy` library—a compromise between speed, resource consumption, and quality. However, you can directly influence the result by training the system through a rules/exceptions file (`lemma_override.tsv`), achieving perfect processing for your specific texts.
+## Map of Contents
+- [Kardenwort](#kardenwort)
+  - [Map of Contents](#map-of-contents)
+  - [The Kardenwort Philosophy in Brief](#the-kardenwort-philosophy-in-brief)
+  - [The Kardenwort Ecosystem](#the-kardenwort-ecosystem)
+  - [Key Features](#key-features)
+  - [Key Advantages and Differences from Alternatives](#key-advantages-and-differences-from-alternatives)
+  - [Project Structure](#project-structure)
+  - [Installation and Setup](#installation-and-setup)
+  - [Usage and Workflows](#usage-and-workflows)
+    - [Command-Line Runner](#command-line-runner)
+    - [Using Pre-configured Windows CMD Scripts](#using-pre-configured-windows-cmd-scripts)
+      - [⚠️ Important Limitation: Single-Line Processing](#️-important-limitation-single-line-processing)
+    - [GoldenDict-ng Integration](#goldendict-ng-integration)
+  - [Core Functionality: The Two Main Modes](#core-functionality-the-two-main-modes)
+  - [Understanding Input Processing](#understanding-input-processing)
+    - [The Hybrid Mechanism for Sentence Splitting](#the-hybrid-mechanism-for-sentence-splitting)
+  - [The Processing Pipeline in Detail](#the-processing-pipeline-in-detail)
+  - [The Anki Card Template](#the-anki-card-template)
+  - [Command-Line Arguments Reference](#command-line-arguments-reference)
+    - [Core Arguments](#core-arguments)
+    - [Input \& Output](#input--output)
+    - [NLP \& Lemmatization Control](#nlp--lemmatization-control)
+    - [Card Content \& Formatting](#card-content--formatting)
+    - [German Compound Splitting (GCS) Options](#german-compound-splitting-gcs-options)
+    - [Standard Output (STDOUT) Options](#standard-output-stdout-options)
+  - [Configuration](#configuration)
+  - [Important Notes](#important-notes)
+  - [Development and Testing](#development-and-testing)
+  - [My Personal Motivation](#my-personal-motivation)
+  - [License and Acknowledgements](#license-and-acknowledgements)
 
 ---
 
-## Quick Start
+## The Kardenwort Philosophy in Brief
 
-Get your first Anki deck in 5 minutes:
+The goal of Kardenwort is to reduce the complexity of language learning, particularly for synthetic languages like German where words are heavily inflected and compounded. It achieves this by automating the difficult task of deconstructing words to their base form (lemma).
 
-1.  **Prerequisites**: Make sure **Anki Desktop is running** with the [AnkiConnect](https://ankiweb.net/shared/info/2055492159) add-on installed.
-2.  **Clone & Setup**: Clone all three required projects and set up the Python environment.
-    ```bash
-    # Clone repositories
-    git clone <url-for-this-repo>
-    git clone <url-for-anki-csv-importer-repo>
-    git clone <url-for-anki-template-repo>
+Our core principles are:
+*   **Separating Reading from Study:** Reduce cognitive load by splitting content consumption and vocabulary acquisition into two distinct, focused activities.
+*   **Medium Independence:** Kardenwort is a companion to your learning material, not a replacement. Use it with physical books, PDFs, or any other media without losing the original context (diagrams, formatting, etc.).
+*   **Offline First & Privacy:** The entire process runs locally. Your data is never sent to the cloud, ensuring privacy and reliability.
+*   **Simple is Not Easy:** We do the complex work of linguistic analysis to provide you with a simple, clean, and actionable list of words, making your learning process easy.
 
-    # Create and activate virtual environment
-    python -m venv venv
-    .\venv\Scripts\activate  # Windows
+[Return to Top](#map-of-contents)
 
-    # Install dependencies
-    pip install spacy "german-compound-splitter>=2.0.0" requests
-    python -m spacy download de_core_news_lg
-    ```
-3.  **Import Anki Template**: Import the `basic-20240218092126` note type from the `20241106211123-anki-template` project into Anki.
-4.  **Prepare Text**: Open the file `in/text1.txt` and add some German sentences. For example:
-    ```
-    Die Fischer kennen die Austernbanken vor der Küste sehr gut.
-    Sie fahren sie gezielt an.
-    ```
-5.  **Run**: Execute the batch script.
-    ```bash
-    t_batch_de.single.bat
-    ```
-**Done!** Check Anki for a new deck filled with cards created from your text.
+---
+
+## The Kardenwort Ecosystem
+The power of Kardenwort is fully unlocked through its integration with other purpose-built tools, creating a seamless pipeline from text to flashcard.
+
+1.  **`20250913122858-kardenwort` (This Project):** The core engine. It performs the heavy lifting of text processing (NLP) and generates a structured TSV file.
+2.  **`20250913123240-kardenwort-anki-csv-importer`**: The bridge. A script that programmatically imports the generated TSV file into Anki using the AnkiConnect add-on.
+3.  **`20250913123501-kardenwort-anki-templates`**: The canvas. A feature-rich Anki note type with interactive fields designed to perfectly display the data generated by Kardenwort.
+
+Running a single command triggers the entire chain, making deck creation effortless.
+
+[Return to Top](#map-of-contents)
+
+---
 
 ## Key Features
-*   **Dual Card Types**: Create both vocabulary cards (single words) and sentence cards (full phrases).
-*   **Multiple Processing Modes**: `single`, `dual`, and `triple` text processing for monolingual, bilingual, or trilingual contexts.
-*   **Multi-Language Support**: Currently supports **English (en)** and **German (de)**.
-*   **Advanced NLP**: Uses `spaCy` for accurate lemmatization (finding the base form of words).
-*   **German Compound Splitting (GCS)**: Intelligently breaks down long German compound words into their components.
-*   **Direct Anki Integration**: Automatically imports the generated cards into your Anki collection using AnkiConnect.
-*   **GoldenDict-ng Integration**: Create Anki cards directly from your favorite dictionary application.
+*   **Intelligent Lemmatization:** Uses `spaCy` to accurately find the base form of words.
+*   **Advanced German Deconstruction:** Employs `german-compound-splitter` (GCS) to break down long German compound words into their components.
+*   **User-Trainable:** Fine-tune the lemmatization for your specific texts using a simple `lemma_override.tsv` file. Corrections are saved forever and automatically reapplied.
+*   **Rich Context:** Each word card includes the original sentence and surrounding context.
+*   **Dual Card Types:** Generates both vocabulary cards (`word` type) and full sentence cards (`sentence` type).
+*   **Multi-Language Support:** Currently supports **English (en)** and **German (de)**.
+*   **Direct Anki Integration:** Automatically imports generated cards into Anki via a runner script.
+*   **GoldenDict-ng Integration:** Create vocabulary lists on-the-fly directly from your favorite dictionary application.
+*   **Auditory-Focused Cards:** The template is designed to work with audio, helping you practice listening and pronunciation.
+
+[Return to Top](#map-of-contents)
 
 ---
 
-## Core Functionality: In-Depth
+## Key Advantages and Differences from Alternatives
 
-To analyze text, advanced NLP libraries are used:
-*   **`spaCy`**: for tokenization, lemmatization, part-of-speech tagging, and morphological analysis.
-*   **`german-compound-splitter`**: for the complex task of parsing German compound nouns.
+While many text-processing tools for language learners exist (e.g., LWT, Lute, LingQ, VocabSieve, Readlang), Kardenwort offers a unique combination of capabilities:
 
-The utility's primary goal is to extract material from the source text to create two types of cards. This is achieved through two fundamental modes of operation, determined by the `--type` parameter:
+*   **Superior German Language Processing:** No other tool provides this level of German vocabulary deconstruction. Kardenwort correctly parses compound nouns, finds verbs with separable prefixes, and handles capitalization properly—a common pain point in other systems.
+*   **Complete Freedom After Export:** Unlike integrated readers where a flashcard is tied to the source text, our output is a fully autonomous TSV file. You have complete control to edit any field in Anki on any device, truly freeing your data.
+*   **Quality You Can Influence:** While the initial analysis relies on `spaCy`, you can directly influence the results. By training the system through the `lemma_override.tsv` file, you can achieve perfect processing for your specific texts and domain.
 
-1.  **`--type token` (Vocabulary Cards):**
-    *   **Goal:** To create cards for studying individual words (one word per card).
-    *   **Mechanism:** The script analyzes the entire input text, extracts all unique words, reduces them to their base form (lemma), and creates a separate row in the output file for each unique lemma. Each row contains the lemma itself, its original inflected form, the sentence in which it first appeared, and the surrounding context.
-    *   **Special Feature:** This mode includes complex logic such as compound word splitting (GCS) and handling of separable prefixes for German verbs, making it particularly powerful for learning German.
+[Return to Top](#map-of-contents)
+
+---
+
+## Project Structure
+```
+20250913122858-kardenwort/
+├── data/
+│   ├── de/
+│   │   ├── deu-mixed-typical-2011-1m-words.csv
+│   │   ├── german.dic
+│   │   └── lemma_override_de.tsv
+│   └── en/
+│       ├── en-news-2023-1m-words.csv
+│       └── lemma_override_en.tsv
+├── docs/
+│   ├── assets/
+│   │   ├── 20250829201257.png
+│   │   └── ...
+│   └── kardenwort-goldendict-config.txt
+├── results/
+│   └── 20250913171939-morgen-faehrt-der-neue.triple.word.de.tsv
+├── source_texts/
+│   ├── text1.txt
+│   ├── text2.txt
+│   └── text3.txt
+├── src/
+│   └── kardenwort/
+│       └── core/
+│           ├── kardenwort.py
+│           └── kardenwort_runner.py
+├── tests/
+│   ├── cases/
+│   └── source_texts/
+│       ├── de/
+│       └── en/
+├── .gitignore
+├── config.ini
+├── config.ini.template
+├── LICENSE
+└── README.md
+```
+
+[Return to Top](#map-of-contents)
+
+---
+
+## Installation and Setup
+
+Follow these steps to get the entire Kardenwort ecosystem up and running.
+
+**Prerequisites:**
+*   **Python 3.9+**.
+*   **Anki Desktop**: Must be installed and running.
+*   **AnkiConnect Add-on**: Install the [AnkiConnect](https://ankiweb.net/shared/info/2055492159) add-on in Anki.
+
+**Setup Steps:**
+
+1.  **Clone the Repositories**:
+    It's recommended to clone all three projects into the same parent directory for easier configuration.
+    ```bash
+    git clone https://github.com/kardenwort/20250913122858-kardenwort.git
+    git clone https://github.com/kardenwort/20250913123240-kardenwort-anki-csv-importer.git
+    git clone https://github.com/kardenwort/20250913123501-kardenwort-anki-templates.git
+    ```
+
+2.  **Import the Anki Template**:
+    In the `20250913123501-kardenwort-anki-templates` project, navigate to the `decks-for-first-initialize-templates` directory. Choose the latest version folder (e.g., `v1.0.0`), select **one** of the `.apkg` deck files inside, and import it into Anki Desktop. This will automatically add and configure the required note type.
+
+3.  **Set up the Python Environment**:
+    Create a shared virtual environment and install the required dependencies.
+    ```bash
+    # Create a virtual environment (e.g., one level above the project folders)
+    python -m venv ../kardenwort-env
+
+    # Activate it
+    ../kardenwort-env/Scripts/activate  # Windows
+    # source ../kardenwort-env/bin/activate # macOS/Linux
+
+    # Install Python packages
+    pip install spacy requests git+https://github.com/kardenwort/20250914005844-kardenwort-german-compound-splitter
+
+    # Download SpaCy language models
+    python -m spacy download en_core_web_lg
+    python -m spacy download de_core_news_lg
+    ```
+
+4.  **Configure Kardenwort**:
+    *   Navigate to the `20250913122858-kardenwort` directory.
+    *   Copy `config.ini.template` to `config.ini`.
+    *   Open `config.ini` and verify the paths under `[environment]`. The default paths should work if you followed the recommended cloning structure.
+
+5.  **Run a Test:**
+    *   Add some German text to `source_texts/text1.txt`.
+    *   Ensure Anki is running.
+    *   Execute the runner script from your command line. **Important:** Make sure your virtual environment is still active. Your command prompt should show its name (e.g., `(kardenwort-env)`) to ensure you are using the correct Python interpreter.
+    ```bash
+    # This creates vocabulary (word) cards from a single German text file
+    python src/kardenwort/core/kardenwort_runner.py --type word --mode single --language de
+    ```
+    If successful, a new deck will appear in Anki. Your setup is complete!
+
+[Return to Top](#map-of-contents)
+
+---
+
+## Usage and Workflows
+
+### Command-Line Runner
+The primary way to use the utility is via the `kardenwort_runner.py` script, which automates the entire process of text analysis and Anki import.
+
+For a comprehensive and up-to-date list of command-line examples for various scenarios, please refer to the configuration file:
+`docs/kardenwort-goldendict-config.txt`
+
+**Examples:**
+```bash
+# Create German vocabulary cards from text1.txt and text2.txt with compound splitting
+python src/kardenwort/core/kardenwort_runner.py --type word --mode dual --language de --de-gcs
+
+# Create English sentence cards from text1.txt and text2.txt
+python src/kardenwort/core/kardenwort_runner.py --type sentence --mode dual --language en
+
+# Process a single string of text directly from the command line
+python src/kardenwort/core/kardenwort_runner.py --type word --mode single --language de --text "Das ist ein Test."
+```
+
+### Using Pre-configured Windows CMD Scripts
+For Windows users, we provide a collection of ready-to-use batch scripts (`.cmd`) that cover all common processing scenarios. You can find them in the `scripts/run/cmd/` directory (e.g., `kardenwort_run_de_w_t_l_anki.cmd`).
+
+These scripts offer a convenient way to run the tool without typing out all the arguments. However, they come with a significant limitation.
+
+#### ⚠️ Important Limitation: Single-Line Processing
+>
+> Please be aware that these `.cmd` scripts have a limitation when used for on-the-fly text processing: they can only handle a **single line of input**.
+>
+> This restriction applies when text is passed directly via the `--text` argument or from standard input (stdin), which is a common method for integration with tools like GoldenDict.
+>
+> To process **multi-line text** in GoldenDict, you must bypass these convenient `.cmd` scripts. The correct approach is to configure GoldenDict to call the `kardenwort.py` or `kardenwort_runner.py` script directly. You can find the correct commands for this in the provided configuration file: **`docs/kardenwort-goldendict-config.txt`**.
+
+### GoldenDict-ng Integration
+Create vocabulary lists or Anki cards instantly from any word or phrase you look up in GoldenDict. This is a powerful workflow for on-the-fly analysis.
+
+You can configure multiple "program" dictionaries in GoldenDict to run Kardenwort with different settings. For example, for German, you could have three modes:
+*   **Simple (S):** Fast analysis without compound splitting.
+*   **Medium (M):** Analysis with compound splitting for common word types.
+*   **Large (L):** Deepest analysis, splitting compounds for almost all word types.
+
+For detailed instructions and ready-to-use command-line examples, see the configuration file:
+**`docs/kardenwort-goldendict-config.txt`**
+
+[Return to Top](#map-of-contents)
+
+---
+
+## Core Functionality: The Two Main Modes
+
+The utility's primary goal is to extract material from text to create two types of cards, determined by the `--type` parameter:
+
+1.  **`--type word` (Vocabulary Cards):**
+    *   **Goal:** To create cards for studying individual words.
+    *   **Mechanism:** The script analyzes the entire input text, extracts all unique words, reduces them to their base form (lemma), and creates a separate row for each unique lemma. Each row contains the lemma, its original inflected form, the sentence in which it first appeared, and surrounding context.
+    *   **Specialty:** This mode includes advanced logic like German compound splitting (GCS) and handling of separable verbs, making it exceptionally powerful for German.
 
 2.  **`--type sentence` (Sentence Cards):**
-    *   **Goal:** To create cards with sentences for studying phrases and grammar in context.
-    *   **Mechanism:** The script processes input files line by line, assuming each line is a complete sentence. For each line from the first file (`--text1`), one record is created in the output file. If parallel texts are provided (`--text2`, `--text3`), the corresponding lines from them are added to the same record, creating a card with a translation.
-    *   **Special Feature:** In this mode, a list of all lemmas found in the sentence can also be generated for the `SentenceSourceWordlist` field.
+    *   **Goal:** To create cards with full sentences for studying phrases and grammar in context.
+    *   **Mechanism:** The script processes input files line-by-line. For each line from the first file (`text1.txt`), one record is created. If parallel texts are provided (`text2.txt`, `text3.txt`), the corresponding lines are added to the same record.
 
-### The Result of Processing
+The result of the script's execution is a **TSV (Tab-Separated Values) file**, which is ready for direct import into Anki or can be opened in any spreadsheet application (e.g., MS Excel, LibreOffice Calc) for analysis.
 
-The result of the script's execution is a **TSV (Tab-Separated Values) file**, which:
-*   Is fully ready for direct import into **Anki** when used with the corresponding template.
-*   Can be easily opened and analyzed in any spreadsheet application (e.g., MS Excel, LibreOffice Calc) or an editor like VS Code with the `vscode-edit-csv` plugin. This allows using the exports to create custom word lists and other study materials.
+[Return to Top](#map-of-contents)
 
 ---
 
 ## Understanding Input Processing
 
-Understanding how the utility receives and interprets input data is key to its effective use.
+How the utility receives and interprets input data is key to its effective use.
 
-### Ways to Provide Data
+*   **Ways to Provide Data:** You can provide text via a command-line string (`--text "..."`), a file path (`--text1-file ...`), an environment variable, or piped through standard input.
+*   **File Format:** Input files must be plain text (`.txt`) with **UTF-8** encoding. For parallel texts, line-by-line correspondence is crucial.
 
-*   **`--text "..."`**: Directly providing text as a string. This method is ideal for integration with other programs (e.g., GoldenDict, where the selected word `%GDWORD%` is passed) or for quickly processing short phrases. **Mutually exclusive with `--text1`**.
-*   **`--text1 <path_to_file>`**: Specifying the path to the main text file. This is the standard method for processing large volumes of text (books, articles, subtitles).
-*   **`--text2 <path_to_file>`** and **`--text3 <path_to_file>`**: Specifying paths to files with parallel texts (e.g., translations).
+### The Hybrid Mechanism for Sentence Splitting
+This is a critical feature. The utility automatically chooses how to split text into "processing units":
+1.  **Line-by-Line Mode:** If the input text contains at least one newline character (`\n`), each line is treated as a separate, complete unit. This is ideal for subtitles or pre-formatted parallel texts.
+2.  **Sentence Tokenization Mode:** If the input text is a single block without newlines, `spaCy`'s sentence tokenizer is used to grammatically split it into sentences. This is perfect for prose from articles or books.
 
-### File Format Requirements
+This mechanism directly determines what you will see as `SentenceSource` and context on your Anki card.
 
-*   **Format:** Plain text file (`.txt`).
-*   **Encoding:** **UTF-8**. Using another encoding may lead to reading errors.
-*   **Structure for Parallel Texts:** When using `--text2` or `--text3`, it is crucial to ensure **strict line-by-line correspondence**. Line N in `text2.txt` must be the exact translation of line N in `text1.txt`. Violating this rule will lead to incorrect sentence matching on Anki cards.
-
-### The Hybrid Mechanism for Defining "Processing Units"
-
-This is one of the most important features of the utility, directly affecting how context is formed in the final TSV file. The utility automatically chooses one of two ways to split the text into "processing units" (essentially, sentences):
-
-1.  **"Line-by-Line" Mode:**
-    *   **Trigger Condition:** Activates if the input text (from `--text` or `--text1`) contains at least one newline character (`\n`).
-    *   **Logic:** The script treats each line as a separate and complete "processing unit." It does not attempt to further divide lines into sentences.
-    *   **Application:** This mode is primary for working with parallel texts and subtitles, where each line is a self-contained phrase.
-
-2.  **"Sentence Tokenization" Mode:**
-    *   **Trigger Condition:** Activates if the entire input text is a single block without any newline characters.
-    *   **Logic:** The script uses `spaCy`'s built-in sentence tokenizer to grammatically and correctly split the continuous text into individual sentences. Each detected sentence becomes a "processing unit."
-    *   **Application:** This mode is ideal for processing prose—articles, paragraphs from books, etc.
-
-**How this affects Anki cards:** The `SentenceSource` field on the card will contain the "processing unit" where the word was found. The context fields (`SentenceSourceContextLeft` and `SentenceSourceContextRight`) will contain the preceding and succeeding "processing units," respectively. Thus, how your source file was structured (line-by-line or as continuous text) directly determines what you will see as context on your Anki card.
+[Return to Top](#map-of-contents)
 
 ---
 
-## Deep Dive: The Processing Pipeline
+## The Processing Pipeline in Detail
+1.  **Initialization:** The script loads the `spaCy` model, GCS dictionary, user-defined `lemma_override.tsv`, and a word frequency index.
+2.  **Text Ingestion:** Input text is read from a file, argument, environment variable, or stdin.
+3.  **Tokenization & Lemmatization:** The text is broken into words (tokens). Each token undergoes a series of steps: GCS, separable verb handling, lemma correction, and application of user override rules.
+4.  **Collection & Sorting:** Unique lemmas are collected and sorted. Known words (from the frequency index) are listed first (most to least common), followed by unknown words (alphabetically).
+5.  **TSV Generation:** A structured TSV file is created with over 80 columns that match the Anki template.
+6.  **Anki Import:** The runner script passes the TSV file to the `kardenwort-anki-csv-importer`, which creates a new deck in Anki.
 
-The utility's workflow can be broken down into the following stages:
-
-#### Step 1: Initialization and Setup
-
-1.  **Argument Parsing:** Using `argparse`, the script reads all command-line parameters (`--type`, `--language`, file paths, GCS flags, etc.).
-2.  **Loading the NLP Model:** Based on the `--language` parameter, the corresponding "large" `spaCy` model is loaded (`de_core_news_lg` for German or `en_core_web_lg` for English).
-3.  **Loading Auxiliary Data:**
-    *   **GCS Dictionary (`--gcs-dictionary`):** Used to validate the correctness of compound word splitting and to correct lemmas of genitive nouns.
-    *   **Lemma Override Rules (`--lemma-override-file`):** A TSV file (`lemma_override.tsv`) is loaded, allowing the user to manually define lemmatization rules (globally or with context).
-    *   **Lemma Index (`--lemma-index-file`):** A CSV file (e.g., a frequency dictionary) is loaded, which is used to sort the output data so that known words appear in a predictable order.
-
-#### Step 2: Input Processing and Main Loop
-
-1.  **Text Splitting:** The input text is divided into "processing units" according to the hybrid mechanism described above.
-2.  **Token Iteration:** The script iterates through each token (word or punctuation mark) in every processing unit, using `spaCy` metadata (lemma, part of speech, morphology).
-3.  **Filtering:** Tokens that are not words (punctuation, numbers, spaces) are discarded.
-4.  **Lemmatization and Processing:** A complex sequence of actions is performed for each word:
-    a. **Compound Word Splitting (GCS):** If the `--gcs` flag is enabled for German, the script attempts to break down long nouns into their component parts.
-    b. **Standard Lemmatization:** If the word was not split by GCS, its lemma is determined using `spaCy`.
-    c. **Correction and Normalization:**
-        *   **Separable Prefixes (German):** Finds verbs with separable prefixes (e.g., `...fahren sie ... an`) and correctly combines them into a single lemma (`anfahren`).
-        *   **Genitive Case (German):** Corrects lemmas of nouns in the genitive case (e.g., `Hauses` -> `Haus`).
-        *   **Capitalization:** Correctly sets capitalization: nouns are always capitalized, other words are lowercase.
-    d. **Applying Override Rules:** After all automatic transformations, the rules from `lemma_override.tsv` are checked, and if a match is found, the standard lemma is replaced with the user-defined one.
-5.  **Collecting Unique Lemmas:** All resulting lemmas are collected into a dictionary, ensuring that only one card is created for each unique word.
-
-#### Step 3: Sorting
-
-Before writing to the file, the final list of unique lemmas is sorted: new words first, then known words (in the order from `--lemma-index-file`), and finally, alphabetically.
-
-#### Step 4: Generating the Output TSV File
-
-1.  **File Creation:** An output filename is generated.
-2.  **Writing Headers:** If the `--with-fields` flag is specified, the first line with the names of all 80 fields corresponding to the Anki template is written to the file.
-3.  **Writing Data:** A row is created in the TSV file for each sorted lemma.
-4.  **Output to `stdout`:** If the `--pipe` flag is specified or no output file (`--output`) is provided, the result is printed directly to the standard output stream (important for integration with GoldenDict).
+[Return to Top](#map-of-contents)
 
 ---
-
-## Usage Scenarios
-
-You can use Kardenwort in several ways, from simple batch files to direct command-line calls for advanced integration.
-
-### 1. Basic Usage (Using Batch Files)
-
-This is the easiest way to get started.
-
-1.  **Prepare your input files** in the `in/` directory (`text1.txt`, `text2.txt`, etc.).
-2.  **Ensure Anki is running** with AnkiConnect.
-3.  **Run the appropriate `.bat` script**. The filename indicates its function: `t_batch_{language}.{mode}.bat`.
-    *   `t_batch_de.dual.bat`: Creates German cards from `in/text1.txt` and `in/text2.txt`.
-    *   `t_batch_en.single.bat`: Creates English cards from `in/text1.txt` only.
-
-### 2. GoldenDict-ng Integration
-
-Instantly create Anki cards from any word or phrase you look up in GoldenDict. This creates a seamless workflow from discovery to study.
-
-<p align="center">
-  <img src="assets/20250829201257.png" alt="GoldenDict-ng Main Window" width="600">
-</p>
-
-**Setup:**
-
-1.  In GoldenDict-ng, go to `Edit` -> `Dictionaries`.
-2.  Go to the **Programs** tab.
-3.  Click **Add**, and configure a new program:
-    *   **Type**: `Plain Text`
-    *   **Enabled**: ☑️
-    *   **Name**: `Create Anki Card (DE Token)` (or any name you like)
-    *   **Command Line**:
-        ```
-        U:\voothi\20250825231214-spacy-env\Scripts\python.exe U:\voothi\20241223170748-token-extraction\t_starter.py --language de --type token --mode single --text "%GDWORD%"
-        ```
-        **Important:** You **must** replace the paths to `python.exe` and `t_starter.py` with the absolute paths on your system.
-
-4.  Click **OK** to save.
-
-**How to Use:**
-Now, when you look up a word or highlight a sentence in GoldenDict, a new dictionary tab `Create Anki Card (DE Token)` will appear. Clicking on it will run the script in the background and automatically add the new cards to Anki.
-
-### 3. Advanced Usage (Direct Command-Line)
-
-For maximum flexibility, you can call the scripts directly. The main entry point is `t_starter.py`, which handles both processing and importing.
-
-#### Command-Line Examples
-
-*   **Create German token cards from a single text file:**
-    ```bash
-    python t_starter.py --language de --type token --mode single --text "Die Fischer kennen die Austernbanken."
-    ```
-
-*   **Create English sentence cards from parallel files:**
-    ```bash
-    # Ensure in/text1.txt and in/text2.txt are populated
-    python t_starter.py --language en --type sentence --mode dual
-    ```
-
-*   **Create German cards from three files:**
-    ```bash
-    python t_starter.py --language de --type token --mode triple
-    ```
-
----
-
-## Command-Line Arguments (`token_mix_combined.py`)
-
-Below is a detailed list of all available arguments for the core processing script, `token_mix_combined.py`. These can be passed through `t_starter.py`.
-
-### Core Arguments
-
-| Argument     | Description                                                            | Example                    |
-| :----------- | :--------------------------------------------------------------------- | :------------------------- |
-| `--type`     | **(Required)** The type of cards to create.                            | `token` or `sentence`      |
-| `--language` | **(Required)** The source language of the text.                        | `de` or `en`               |
-| `--mode`     | **(Required)** The processing mode based on the number of input files. | `single`, `dual`, `triple` |
-
-### Input & Output
-
-| Argument         | Description                                                                                                 | Example                      |
-| :--------------- | :---------------------------------------------------------------------------------------------------------- | :--------------------------- |
-| `--text`         | Process a string directly instead of a file. For `single` mode only. **Mutually exclusive with `--text1`**. | `--text "This is a test."`   |
-| `--text1`        | Path to the primary source text file.                                                                       | `--text1 "in/source.txt"`    |
-| `--text2`        | Path to the second text file (e.g., translation). For `dual`/`triple` modes.                                | `--text2 "in/target.txt"`    |
-| `--text3`        | Path to the third text file. For `triple` mode only.                                                        | `--text3 "in/extra.txt"`     |
-| `--output`       | The path for the output `.tsv` file.                                                                        | `--output "out/my_deck.tsv"` |
-| `--timestamp`    | Prepend a `YYYYMMDDHHMMSS-` timestamp to the output filename.                                               | `--timestamp`                |
-| `--autoname [N]` | Automatically generate part of the filename from the first `N` words of the text (default is 4).            | `--autoname 3`               |
-| `--pipe`         | Print the final output filename to standard output. Useful for chaining scripts.                            | `--pipe`                     |
-
-### NLP & Lemmatization Control
-
-| Argument                | Description                                                                       | Example                                        |
-| :---------------------- | :-------------------------------------------------------------------------------- | :--------------------------------------------- |
-| `--lemma-override-file` | Path to a TSV file for context-aware lemma overrides (format: `original\tlemma`). | `--lemma-override-file "config/overrides.tsv"` |
-| `--lemma-index-file`    | Path to a lemma index file (legacy functionality).                                | `--lemma-index-file "index.json"`              |
-
-### Card Content & Formatting
-
-| Argument                         | Description                                                                                                                                                                                       | Example                          |
-| :------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :------------------------------- |
-| `--sentence-context-size N`      | Number of preceding and succeeding sentences to include as context.                                                                                                                               | `--sentence-context-size 2`      |
-| `--include-simple-list`          | Include a simple list of all unique words from the source sentence in the `SentenceSourceWordlist` field.                                                                                         | `--include-simple-list`          |
-| `--original-form-in-simple-list` | When used with `--include-simple-list`, populates the `SentenceSourceWordlist` with original (inflected) word forms instead of their base lemmas. **(Status: Declared, but not yet implemented)** | `--original-form-in-simple-list` |
-| `--with-fields`                  | Include the header row with all field names in the output TSV file.                                                                                                                               | `--with-fields`                  |
-| `--with-br`                      | Use `<br>` tags instead of newlines for the `SentenceSourceWordlist`.                                                                                                                             | `--with-br`                      |
-| `--two-column-output-to-file`    | Add the inflected (original) form of a word to the `WordSourceInflectedForm` field.                                                                                                               | `--two-column-output-to-file`    |
-
-### German Compound Splitting (GCS) Options
-
-**Note:** All GCS options require `--gcs` to be enabled and are only effective when using `--type token`. They will be ignored in `sentence` mode.
-
-| Argument                   | Description                                                                                                                   | Example                               |
-| :------------------------- | :---------------------------------------------------------------------------------------------------------------------------- | :------------------------------------ |
-| `--gcs`                    | **Enable** German Compound Splitting.                                                                                         | `--gcs`                               |
-| `--gcs-dictionary`         | Path to the dictionary file used by GCS for validation.                                                                       | `--gcs-dictionary "dicts/german.dic"` |
-| `--gcs-include-compound`   | Include the original compound word in the card list along with its split parts.                                               | `--gcs-include-compound`              |
-| `--gcs-in-wordlist`        | Also add the split components to the `SentenceSourceWordlist` field.                                                          | `--gcs-in-wordlist`                   |
-| `--gcs-combine-noun-modes` | Runs GCS in two modes (splitting on nouns-only and any word type) and merges the results for more comprehensive splitting.    | `--gcs-combine-noun-modes`            |
-| `--gcs-only-nouns-false`   | Allows any word type (verb, adjective, etc.) to be used for GCS splitting. **Ignored if `--gcs-combine-noun-modes` is used**. | `--gcs-only-nouns-false`              |
-| `--gcs-fix-genitive`       | Attempts to correct German genitive noun lemmas (e.g., 'Hauses' -> 'Haus').                                                   | `--gcs-fix-genitive`                  |
-| `--gcs-mask-unknown`       | During GCS splitting, mask word parts not found in the dictionary as 'unknown'.                                               | `--gcs-mask-unknown`                  |
-| `--make-singular`          | Force making compound parts singular during GCS splitting, regardless of the word's part of speech.                           | `--make-singular`                     |
-| `--no-make-singular`       | Prevent making compound parts singular, keeping their original form. **Overrides `--make-singular`**.                         | `--no-make-singular`                  |
-
-### Debugging & Console Output
-These flags are primarily for debugging and direct console output, not for generating the final Anki `.tsv` file.
-
-| Argument              | Description                                                              | Example               |
-| :-------------------- | :----------------------------------------------------------------------- | :-------------------- |
-| `--detailed`          | Print detailed token information (text, lemma, POS tag) to the console.  | `--detailed`          |
-| `--two-column-output` | Print a simple two-column output (original and lemma) to the console.    | `--two-column-output` |
-| `--html`              | Generate and print an HTML table with processing results to the console. | `--html`              |
-
----
-
-## Project Ecosystem: Integration and Automation
-
-The power of `Kardenwort` is fully unlocked through its integration with other tools, creating a seamless and fully automated pipeline from the source text to ready-to-study flashcards.
-
-### The Complete Workflow with Anki
-
-This tight integration is managed by the `t_starter.py` script and involves three key components:
-
-1.  **Kardenwort (This Project)**
-    *   **Role:** The "brain" of the operation. It performs all the heavy lifting of text processing (NLP) and generates a highly structured `.tsv` file.
-
-2.  **Anki CSV Importer (project `20250401192017-anki-csv-importer`)**
-    *   **Role:** The "bridge" to Anki. A separate script that uses the AnkiConnect add-on to programmatically import the `.tsv` file into a specified Anki deck without manual intervention.
-
-3.  **Anki Template (project `20241106211123-anki-template`)**
-    *   **Role:** The "canvas" for the cards. A specially designed Anki note type (`basic-20240218092126`) containing over 80 fields that perfectly match the columns in the `.tsv` file and transform the data into an interactive card.
-
-**The Automated Process:**
-By running a single command (e.g., `t_batch_de.dual.bat`), you trigger a chain reaction: `t_starter.py` calls `token_mix_combined.py` to create the `.tsv` file, and then immediately calls `anki-csv-importer.py` to import that file into Anki using the correct template.
-
-### AI-Powered Enrichment
-
-The rich and structured context generated for each card provides an ideal foundation for further processing with large language models. Using the Anki plugin **IntelliFilter** (ID: `20250212113752-intellifilter`), you can send requests directly from Anki to OpenAI to automatically add translations, synonyms, usage examples, and any other information, significantly enriching your study materials.
-
-## Related Utilities
-
-The generated TSV files are designed to be used with a specific, feature-rich Anki template named `basic-20240218092126`. This template organizes the information into a clean, interactive, and powerful layout for effective learning.
-
--   `20250421115831-gtts-player`
--   `20250212113752-intellifilter`
--   `20250228230803-whisper`
--   `20250311224733-search-py`
--   `deep-translator`
--   `gTTS`
--   `argotranslate`
--   `fabric`
--   `piper-tts`
--   `merge_media`
--   `split_media_by_subtitles`
--   and others.
 
 ## The Anki Card Template
 
-The generated TSV files are designed to be used with a specific, feature-rich Anki template named `basic-20240218092126`. This template organizes the information into a clean, interactive, and powerful layout for effective learning.
+The generated TSV files are designed for our feature-rich Anki template, which organizes the information into a clean and interactive layout.
 
 <p align="center">
-  <img src="assets/20250829204605.png" alt="An example of a generated German vocabulary card using the template" width="800">
+  <img src="https://raw.githubusercontent.com/kardenwort/20250913122858-kardenwort/main/docs/assets/20250829204605.png" alt="An example of a generated German vocabulary card using the template" width="800">
 </p>
 
 **Template Features:**
-
-*   **Interactive Collapsible Sections**: Information is grouped into sections like "Source", "Destination", and "AI". You can click on a header to reveal or hide the content, keeping the card uncluttered.
-*   **Dynamic Fields**: Fields only appear if they contain data. For example, the "Wordlist" section won't show up if it's empty.
-*   **Integrated Audio**: Supports both pre-recorded audio files and automatic text-to-speech (TTS) for words and sentences.
-*   **Context Display**: Shows the sentence in its original context (previous and next sentences) to aid comprehension.
+*   **Interactive Collapsible Sections**: Keep cards uncluttered by hiding and revealing information groups.
+*   **Dynamic Fields**: Fields only appear if they contain data.
+*   **Integrated Audio**: Supports both pre-recorded audio and text-to-speech.
+*   **Context Display**: Shows the word in its original sentence, plus the preceding and succeeding sentences.
 *   **Full Word List**: Displays all unique words (lemmas) found in the source sentence.
 
-## Requirements
+[Return to Top](#map-of-contents)
 
-1.  **Python 3.9**: The scripts are tested with Python 3.9. Using newer versions might cause compatibility issues with dependencies.
-2.  **Anki Desktop**: The Anki application must be installed and running.
-3.  **AnkiConnect Add-on**: You need to install the [AnkiConnect](https://ankiweb.net/shared/info/2055492159) add-on in Anki.
-4.  **Git**: To clone the required repositories.
+---
 
-## Installation
+## Command-Line Arguments Reference
 
-1.  **Clone the repositories**:
-    It is recommended to clone all three projects into the same parent directory.
+Below is a detailed list of all available arguments for the core processing script (`kardenwort.py`).
 
-    ```bash
-    git clone <url-for-this-repo>
-    git clone <url-for-anki-csv-importer-repo>
-    git clone <url-for-anki-template-repo>
-    ```
+### Core Arguments
+| Argument | Description | Example |
+| :--- | :--- | :--- |
+| `--type` | **(Required)** The type of cards to create (`word` or `sentence`). | `--type word` |
+| `--language` | **(Required)** The source language of the text (`de` or `en`). | `--language de` |
+| `--mode` | **(Required)** Processing mode for input files (`single`, `dual`, `triple`). | `--mode single` |
 
-2.  **Import the Anki Template**:
-    Open Anki Desktop and import the note type from the `20241106211123-anki-template` project. This will add the `basic-20240218092126` note type to your collection.
+### Input & Output
+| Argument | Description | Example |
+| :--- | :--- | :--- |
+| `--text` | Process a string directly. **Mutually exclusive with `--text1-file`**. | `--text "This is a test."` |
+| `--text1-file` | Path to the primary source text file. | `--text1-file "source.txt"` |
+| `--text2-file` | Path to the second text file (e.g., translation). | `--text2-file "target.txt"` |
+| `--text3-file` | Path to the third text file. | `--text3-file "extra.txt"` |
+| `--output-file` | Path for the output `.tsv` file. If omitted, prints to standard output. | `--output-file "out/my_deck.tsv"` |
+| `--basename-add-timestamp` | Prepend a `YYYYMMDDHHMMSS-` timestamp to the output filename. | `--basename-add-timestamp` |
+| `--basename-add-first-words` | Appends a slug to the filename, generated from the first `N` words of the text. `N` is an optional integer (default: 4). | `--basename-add-first-words 3` |
+| `--stdout-print-output-basename` | Print the final output filename to standard output. Useful for chaining scripts. | `--stdout-print-output-basename` |
 
-3.  **Set up the Python Virtual Environment**:
-    Navigate to the project directory and create a virtual environment.
+### NLP & Lemmatization Control
+| Argument | Description | Example |
+| :--- | :--- | :--- |
+| `--lemma-override-file` | Path to a TSV file for context-aware lemma overrides. | `--lemma-override-file "data/overrides.tsv"` |
+| `--lemma-index-file` | Path to a word frequency CSV file for sorting. | `--lemma-index-file "data/frequency.csv"` |
 
-    ```bash
-    # Navigate to your environment directory (e.g., 20250825231214-spacy-env)
-    python -m venv venv
-    ```
+### Card Content & Formatting
+| Argument | Description | Example |
+| :--- | :--- | :--- |
+| `--sentence-context-size` | Sets the number of preceding and succeeding sentences (`N`) to include as context. | `--sentence-context-size 2` |
+| `--add-wordlist-col` | Include a simple list of all unique words from the source sentence in the `SentenceSourceWordlist` field. | `--add-wordlist-col` |
+| `--wordlist-use-br` | Use `<br>` tags instead of newlines for the wordlist. | `--wordlist-use-br` |
+| `--add-header` | Include the header row with all field names in the output TSV file. | `--add-header` |
+| `--add-source-word-col` | Add the inflected (original) form of a word to the `WordSourceInflectedForm` field. | `--add-source-word-col` |
 
-4.  **Activate the Environment**:
-    -   On Windows: `.\venv\Scripts\activate`
-    -   On macOS/Linux: `source ./venv/bin/activate`
+### German Compound Splitting (GCS) Options
+| Argument | Description | Example |
+| :--- | :--- | :--- |
+| `--de-gcs` | **Enable** German Compound Splitting. | `--de-gcs` |
+| `--de-dictionary-file` | Path to the dictionary file used by GCS for validation. | `--de-dictionary-file "data/de/german.dic"` |
+| `--de-gcs-preserve-compound-word` | Include the original compound word in the card list along with its split parts. | `--de-gcs-preserve-compound-word` |
+| `--de-gcs-add-parts-to-wordlist` | Also add the split components to the `SentenceSourceWordlist` field. | `--de-gcs-add-parts-to-wordlist` |
+| `--de-gcs-split-mode` | Set splitting mode: `only-nouns` (safe), `any` (aggressive), or `combined`. | `--de-gcs-split-mode combined` |
+| `--de-gcs-pos-tags` | Specify which Part-of-Speech tags to apply splitting to (e.g. `NOUN PROPN` or `!VERB`). | `--de-gcs-pos-tags "NOUN PROPN"` |
+| `--de-fix-genitive` | Attempts to correct German genitive noun lemmas (e.g., 'Hauses' -> 'Haus'). | `--de-fix-genitive` |
 
-5.  **Install Dependencies**:
-    Install the required Python packages.
+### Standard Output (STDOUT) Options
+These flags are for direct console output when `--output-file` is not used.
 
-    ```bash
-    pip install spacy "german-compound-splitter>=2.0.0" requests
-    ```
+| Argument          | Description                                                  | Example                      |
+| :---------------- | :----------------------------------------------------------- | :--------------------------- |
+| `--stdout-format` | Format for console output: `list`, `context`, `tsv`, `html`. | `` `--stdout-format html` `` |
 
-6.  **Download SpaCy Models**:
-    Download the language models for English and German.
+[Return to Top](#map-of-contents)
 
-    ```bash
-    python -m spacy download en_core_web_lg
-    python -m spacy download de_core_news_lg
-    ```
+---
 
 ## Configuration
 
-Before running the scripts, you need to update the hardcoded paths to match your system setup.
+The behavior of the `kardenwort_runner.py` script is controlled by `config.ini`.
 
--   **In all `.bat` files** (e.g., `t_batch_de.dual.bat.txt`):
-    -   `PYTHON_PATH`: Set this to the path of the Python executable inside your virtual environment.
-    -   `WORKSPACE`: Set this to the root directory of the `Kardenwort` project.
--   **In `t_starter.py`**:
-    -   Update the paths for `python_path`, `token_workspace`, and `importer_workspace` if you did not clone the projects into the same parent folder.
--   **In `anki-csv-importer.py` (from the importer project)**:
-    -   The script is configured to get the note type name (`--note`) as an argument, which is correctly set to `"Basic 20240218092126"` in `t_starter.py`.
+1.  Copy `config.ini.template` to `config.ini`.
+2.  Open `config.ini` and edit the paths under the `[environment]` section to match your system's setup.
+    *   `python_executable`: Path to the Python executable inside your virtual environment.
+    *   `kardenwort_workspace`: Path to this project's root folder.
+    *   `importer_workspace`: Path to the `kardenwort-anki-csv-importer` project folder.
 
-## Usage
+Relative paths are supported and are calculated from the location of the `config.ini` file, making the setup portable.
 
-1.  **Prepare your input files**:
-    -   Place your source text in `in/text1.txt`. Each line should correspond to a sentence.
-    -   If using `dual` or `triple` mode, place the corresponding translation(s) in `in/text2.txt` and `in/text3.txt`. The line numbers must match `text1.txt`.
+[Return to Top](#map-of-contents)
 
-2.  **Ensure Anki is running** with the AnkiConnect add-on enabled.
+---
 
-3.  **Run a batch script**:
-    Execute one of the provided `.bat` files to start the process.
+## Important Notes
 
-    -   **To create German vocabulary and sentence cards from two text files:**
-        ```bash
-        t_batch_de.dual.bat
-        ```
+*   **TSV File Persistence:** The generated TSV export files in the `results/` directory are **not** automatically deleted or rotated. You can use them for your own analysis or manually re-import them into Anki at any time.
+*   **Data Privacy:** This utility is designed for offline use. Your text data is processed locally and is not sent to any external servers by this program. However, be aware that if you use Anki's synchronization feature, your card data will be stored on Anki's servers.
 
-The script will run, generate a timestamped `.tsv` file in the `out/` directory, and then automatically call the importer. A new deck named after the generated file will appear in Anki.
+[Return to Top](#map-of-contents)
+
+---
+
+## Development and Testing
+
+The project includes a `tests/` directory to facilitate manual testing and ensure consistent output. This is primarily for developers or users who wish to verify the tool's behavior after making changes.
+
+*   `tests/source_texts/`: This directory contains input text files used for manual testing. They are organized by language (`en/` for English, `de/` for German) and serve as the source material for test runs.
+
+*   `tests/cases/`: This directory stores reference samples (also known as "golden files") of the expected TSV output. To perform a manual test, run the utility with a source text from `tests/source_texts/`. You can then compare the generated output file against the corresponding reference file in this directory to check for any regressions or unexpected changes.
+
+[Return to Top](#map-of-contents)
+
+---
+
+## My Personal Motivation
+
+This project was born from my own struggle and eventual success in learning German. With a background in IT and software development, I approached language learning as an engineering problem. This tool is the result of years of refinement, built to solve the real-world problems I faced. My goal is to make a powerful, simple, and reliable tool that can help others on their own language learning journeys. My native languages are Russian and Ukrainian, and I am passionate about creating tools that can help bridge cultural and linguistic divides.
+
+[Return to Top](#map-of-contents)
+
+---
 
 ## License and Acknowledgements
 
-This project is licensed under the MIT License. See the `LICENSE` file for details.
+This project was created by and is maintained by **Denis Novikov (voothi)**.
 
-This project utilizes code from the `anki-csv-importer` project.
--   **Author**: Gulshan Singh
--   **License**: MIT License
--   A copy of the license is included in the header of the `anki-csv-importer.py` file. We are grateful for this contribution to the open-source community.
+It is licensed under the **MIT License**. See the `LICENSE` file for details.
+
+This project relies on the following excellent open-source libraries:
+*   **spaCy** - Industrial-Strength Natural Language Processing. ([License](https://github.com/explosion/spaCy/blob/master/LICENSE))
+*   **german-compound-splitter** - A library for splitting German compound words. ([License](https://github.com/repodiac/german_compound_splitter/blob/master/LICENSE))
+
+[Return to Top](#map-of-contents)

@@ -73,6 +73,7 @@
 	Zeichensätze	Zeichensatz	
 	Zugangs	Zugang	
 aller		all	
+#zugangs		Zugang	
 Beispiele		Beispiel	
 Betriebs		Betrieb	
 Date	regex:(?i)\w*daten\w*	Daten	
@@ -100,3 +101,18 @@ vieler		viel
 Zugangs		Zugang	
 zusammengesetzte		zusammengesetzt	
 Zusammengesetzte		zusammengesetzt	
+	vorneweg	vorneweg	
+	Soundhardware	Soundhardware	
+	Windows	Windows	
+	Systembefehle	Systembefehl	
+	Binäre	binär	
+	Viren	Virus	
+	muss	müssen	
+	wissenswerte	wissenswert	
+	Projektwebsites	Projektwebsite	
+	einiger	einige	
+	Entwicklungsstufen	Entwicklungsstufe	
+	diversen	divers	
+	Stichwörter	Stichwort	
+	Anhänge	Anhang	
+	Leserinnen	Leserin	

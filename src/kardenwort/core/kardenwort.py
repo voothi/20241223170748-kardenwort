@@ -300,7 +300,7 @@ def get_anki_csv_header():
         "ToggleAlwaysEmptyField", "Note ID", "am-all-morphs", "am-all-morphs-count",
         "am-unknown-morphs", "am-unknown-morphs-count", "am-highlighted", "am-score",
         "am-score-terms", "am-study-morphs", "SentenceDestination2ContextLeft",
-        "SentenceDestination2", "SentenceDestination2ContextRight"
+        "SentenceDestination2", "SentenceDestination2ContextRight", "SentenceSourceIndex"
     ]
 
 def generate_filename_prefix_from_text(text, word_count):
@@ -478,7 +478,7 @@ def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, de_
 
 def process_parallel_text_files(
     source_text_path, lemma_sort_index, language, target_text_path, tertiary_text_path, sentence_context_size,
-    output_file_path, add_source_word_col, add_wordlist_col,
+    output_file_path, add_source_word_col, add_wordlist_col, add_sentence_index_col,
     add_header, wordlist_use_br, stdout_print_output_basename, de_gcs, gcs_automaton, de_gcs_add_parts_to_wordlist, de_dictionary, lemma_override_rules,
     de_gcs_pos_tags, args, **kwargs
 ):
@@ -619,7 +619,7 @@ def process_parallel_text_files(
                 tsv_writer.writerow(get_anki_csv_header())
 
             for word in sorted_words:
-                csv_row = [""] * 80
+                csv_row = [""] * 81
                 sentence_index, source_sentence = lemma_to_sentence_info.get(word, (-1, ""))
                 if sentence_index == -1: continue
                 source_sentence = source_sentence.strip()
@@ -645,6 +645,8 @@ def process_parallel_text_files(
                     wordlist_generation_args = {**kwargs, 'de_gcs': de_gcs, 'gcs_automaton': gcs_automaton, 'de_gcs_add_parts_to_wordlist': de_gcs_add_parts_to_wordlist}
                     lemmas = extract_lemmas_from_sentence(source_sentence, lemma_sort_index, nlp, de_dictionary, lemma_override_rules, de_gcs_pos_tags, args, **wordlist_generation_args)
                     csv_row[11] = "<br>".join(lemmas) if wordlist_use_br else "\n".join(lemmas)
+                if add_sentence_index_col:
+                    csv_row[80] = str(sentence_index + 1).zfill(6)
                 if language == "de":
                     csv_row[58] = "1"; csv_row[65] = "1"
                 elif language == "en":
@@ -654,7 +656,7 @@ def process_parallel_text_files(
 
 def process_single_text(
     source_text, lemma_sort_index, language, sentence_context_size,
-    output_file_path, add_source_word_col, add_wordlist_col,
+    output_file_path, add_source_word_col, add_wordlist_col, add_sentence_index_col,
     add_header, wordlist_use_br, stdout_print_output_basename, de_gcs, gcs_automaton, de_gcs_add_parts_to_wordlist, de_dictionary, lemma_override_rules, 
     de_gcs_pos_tags, args, **kwargs
 ):
@@ -823,7 +825,7 @@ def process_single_text(
             tsv_writer.writerow(get_anki_csv_header())
 
         for word in sorted_words:
-            csv_row = [""] * 80
+            csv_row = [""] * 81
             unit_index, source_sentence_unit = lemma_to_sentence_info.get(word, (-1, ""))
             if unit_index == -1: continue
             
@@ -842,6 +844,8 @@ def process_single_text(
                 wordlist_generation_args = {**kwargs, 'de_gcs': de_gcs, 'gcs_automaton': gcs_automaton, 'de_gcs_add_parts_to_wordlist': de_gcs_add_parts_to_wordlist}
                 lemmas = extract_lemmas_from_sentence(source_sentence, lemma_sort_index, nlp, de_dictionary, lemma_override_rules, de_gcs_pos_tags, args, **wordlist_generation_args)
                 csv_row[11] = "<br>".join(lemmas) if wordlist_use_br else "\n".join(lemmas)
+            if add_sentence_index_col:
+                csv_row[80] = str(unit_index + 1).zfill(6)
             if language == "de":
                 csv_row[58] = "1"; csv_row[65] = "1"
             elif language == "en":
@@ -852,7 +856,7 @@ def process_single_text(
 
 def process_parallel_sentences_to_csv(
     language, lemma_sort_index, source_text_path, target_text_path, tertiary_text_path, sentence_context_size,
-    output_file_path, add_wordlist_col, add_header, wordlist_use_br, stdout_print_output_basename, de_gcs_pos_tags, args, **kwargs
+    output_file_path, add_wordlist_col, add_sentence_index_col, add_header, wordlist_use_br, stdout_print_output_basename, de_gcs_pos_tags, args, **kwargs
 ):
     lemma_override_rules = kwargs.pop('lemma_override_rules', {})
     
@@ -875,7 +879,7 @@ def process_parallel_sentences_to_csv(
             tsv_writer.writerow(get_anki_csv_header())
 
         for i in range(min_length):
-            csv_row = [""] * 80
+            csv_row = [""] * 81
             source_sentence = source_text_lines[i].strip()
             target_sentence = target_text_lines[i].strip()
             context_start_index, context_end_index = max(0, i - sentence_context_size), i + sentence_context_size + 1
@@ -894,6 +898,8 @@ def process_parallel_sentences_to_csv(
                 csv_row[77] = " ".join(line.strip() for line in tertiary_text_lines[context_start_index:i])
                 csv_row[78] = tertiary_text_lines[i].strip()
                 csv_row[79] = " ".join(line.strip() for line in tertiary_text_lines[i + 1:context_end_index])
+            if add_sentence_index_col:
+                csv_row[80] = str(i + 1).zfill(6)
             if language == "de":
                 csv_row[58] = "1"; csv_row[65] = "1"
             elif language == "en":
@@ -931,6 +937,7 @@ def main():
     output_format_group.add_argument("--add-wordlist-col", action="store_true", help="For each entry, add a field containing all unique lemmas from the source sentence.")
     output_format_group.add_argument("--wordlist-use-br", action="store_true", help="Use HTML <br> tags instead of newlines as separators in the wordlist column. Requires --add-wordlist-col.")
     output_format_group.add_argument("--add-header", action="store_true", help="Prepend the output file with the full Anki CSV header.")
+    output_format_group.add_argument("--add-sentence-index-col", action="store_true", help="Add a column with the sentence index number, for sorting.")
     output_format_group.add_argument("--sentence-context-size", type=int, default=1, help="The number of sentences to include before and after the source sentence as context.")
     stdout_group = parser.add_argument_group('Standard Output (STDOUT) Arguments (used only if --output is not specified)')
     output_format_group.add_argument("--stdout-format", choices=['list', 'context', 'tsv', 'html'], default='list', 
@@ -1111,7 +1118,7 @@ def main():
             processed_output_file = process_parallel_text_files(
                 input_text, lemma_index, args.language, args.text2_file, args.text3_file,
                 args.sentence_context_size, final_output_path,
-                args.add_source_word_col, args.add_wordlist_col,
+                args.add_source_word_col, args.add_wordlist_col, args.add_sentence_index_col,
                 args.add_header, args.wordlist_use_br, args.stdout_print_output_basename,
                 args.de_gcs, gcs_automaton, args.de_gcs_add_parts_to_wordlist, de_dictionary, lemma_override_rules,
                 args.de_gcs_pos_tags, args, **processing_options
@@ -1119,7 +1126,7 @@ def main():
         else:
              processed_output_file = process_single_text(
                 input_text, lemma_index, args.language, args.sentence_context_size,
-                final_output_path, args.add_source_word_col, args.add_wordlist_col,
+                final_output_path, args.add_source_word_col, args.add_wordlist_col, args.add_sentence_index_col,
                 args.add_header, args.wordlist_use_br, args.stdout_print_output_basename,
                 args.de_gcs, gcs_automaton, args.de_gcs_add_parts_to_wordlist, de_dictionary, lemma_override_rules,
                 args.de_gcs_pos_tags, args, **processing_options
@@ -1146,7 +1153,7 @@ def main():
         processed_output_file = process_parallel_sentences_to_csv(
             args.language, lemma_index, args.text1_file, args.text2_file, args.text3_file,
             args.sentence_context_size, final_output_path,
-            args.add_wordlist_col, args.add_header, args.wordlist_use_br, args.stdout_print_output_basename,
+            args.add_wordlist_col, args.add_sentence_index_col, args.add_header, args.wordlist_use_br, args.stdout_print_output_basename,
             args.de_gcs_pos_tags, args, **processing_options
         )
 

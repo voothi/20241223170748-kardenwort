@@ -76,6 +76,7 @@ def get_script_args(args, python_path, workspace_path, config):
         "--stdout-print-output-basename",
         "--add-source-word-col",
         "--add-wordlist-col",
+        "--add-sentence-index-col",
         "--wordlist-use-br",
         "--add-header",
         "--sentence-context-size", "2",

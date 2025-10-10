@@ -1,32 +1,50 @@
+	Abnahme	Abnahme	
 	Algorithmen	Algorithmus	
 	Änderungsabfragen	Änderungsabfrage	
+	Anhänge	Anhang	
+	Anwendungsprogrammen	Anwendungsprogramm	
 	Apache-Module	Apache-Modul	
 	Archivdateien	Archivdatei	
 	Audiodaten	Audiodaten	
+	Ausbildungsgänge	Ausbildungsgang	
 	Ausdrücke	Ausdruck	
+	Ausklammern	ausklammern	
+	Ausmultiplizieren	Ausmultiplizieren	
 	Aussageformen	Aussageform	
 	Austernbanken	Austernbanke	
 	Auswahlabfragen	Auswahlabfrage	
 	Bedürfnisse	Bedürfnis	
+	bereitstellen	bereitstellen	
 	besonderer	besondere	
+	Beteiligten	Beteiligten	
 	Bilddaten	Bilddaten	
 	Bilder	Bild	
+	Binäre	binär	
 	BPMN-Diagramme	BPMN-Diagramm	
 	Bytes	Byte	
+	Computersystemen	Computersystem	
 	Daten	Daten	bibliografische Daten
 	Datenbanken	Datenbank	
 	Datenbanktype	Datenbanktyp	
+	Datenmengen	Datenmengen	
 	Dienste	Dienst	
+	diversen	divers	
 	Dolibarr	Dolibarr	
 	Donaudampfschifffahrtsgesellschaftskapitäne	Donaudampfschifffahrtsgesellschaftskapitän	
 	Donaudampfschifffahrtsgesellschaftskapitänes	Donaudampfschifffahrtsgesellschaftskapitän	
 	Donaudampfschifffahrtsgesellschaftskapitäns	Donaudampfschifffahrtsgesellschaftskapitän	
 	Dritte	Dritte	
 	DSL-Dienste	DSL-Dienst	
+	Durcheinander	durcheinander	
 	effizienter	effizient	
 	Einbetten	Einbetten	
+	einiger	einige	
+	einiger	einige	
 	Empfangen	Empfang	
 	Englischen	Englisch	
+	Entwicklungsstände	Entwicklungsstand	
+	Entwicklungsstufen	Entwicklungsstufe	
+	ergeben	ergeben	
 	erster	erste	
 	festlesen	festlesen	
 	Funktionsebenen	Funktionseben	
@@ -40,40 +58,64 @@
 	Ihre	Ihr	
 	Ihrer	Ihr	
 	Internet-Serverdienste	Internet-Serverdienst	
+	IT-Systemkaufleute	IT-Systemkaufmann	
+	Kaufleute	Kaufmann	
 	Klassen	Klasse	
+	lässt	lassen	
+	Leserinnen	Leserin	
 	Materialien	Material	
 	Mathematische	mathematisch		
 	Matrizen	Matrize	
 	Module	Modul	
 	Multimedia-Dateiformate	Multimedia-Dateiformat	
+	muss	müssen	
+	Muss	müssen	
+	Näheres	nah	
 	Netzwerken	Netzwerk	
 	NoSQL-Datenbanken	NoSQL-Datenbank	
 	Objektorientierte	objektorientiert	
 	Pipes	Pipe	
+	Potenzgesetz	Potenzgesetz	
+	Projektwebsites	Projektwebsite	
 	Rechenmaschinen	Rechenmaschine	
 	Schädlinge	Schädling	
+	Schlussfolgerunge	Schlussfolgerung	
+	Schlussfolgerungen	Schlussfolgerung	
+	Schnittstellen	Schnittstelle	
+	Servern	Server	
 	Serviceseiten	Serviceseite	
 	Sie	Sie	regex:(?<!^)Sie
+	Soundhardware	Soundhardware	
 	Sprachgrundlagen	Sprachgrundlage	
 	SQL-Abfragen	SQL-Abfrage	
+	Stichwörter	Stichwort	
 	Stylesheet-Wertangaben	Stylesheet-Wertangabe	
 	Substantive	Substantiv	
 	Substantiven	Substantiv	
+	Summanden	Summanden	
 	Systembefehle	Systembefehl	
+	Teilaussagen	Teilaussage	
+	Telekommunikationstechniken	Telekommunikationstechnik	
 	Textbasierte	textbasiert	
 	Textdaten	Textdaten	
 	Threads	Thread	
 	Übungsaufgaben	Übungsaufgabe	
+	Unbekannten	Unbekannter	
 	Verzeichnisdienste	Verzeichnisdienst	
+	Viren	Virus	
+	vorneweg	vorneweg	
 	Webseiten	Webseite	
 	Webspezifische	webspezifisch	
+	Wesentlichen	wesentlich	
 	Windows	Windows	
+	Windows	Windows	
+	wissenswerte	wissenswert	
 	Würm	Wurm	
 	Würmer	Wurm	
+	Zahnrädern	Zahnrad	
 	Zeichensätze	Zeichensatz	
 	Zugangs	Zugang	
 aller		all	
-#zugangs		Zugang	
 Beispiele		Beispiel	
 Betriebs		Betrieb	
 Date	regex:(?i)\w*daten\w*	Daten	
@@ -101,21 +143,3 @@ vieler		viel
 Zugangs		Zugang	
 zusammengesetzte		zusammengesetzt	
 Zusammengesetzte		zusammengesetzt	
-	vorneweg	vorneweg	
-	Soundhardware	Soundhardware	
-	Windows	Windows	
-	Systembefehle	Systembefehl	
-	Binäre	binär	
-	Viren	Virus	
-	muss	müssen	
-	wissenswerte	wissenswert	
-	Projektwebsites	Projektwebsite	
-	einiger	einige	
-	Entwicklungsstufen	Entwicklungsstufe	
-	diversen	divers	
-	Stichwörter	Stichwort	
-	Anhänge	Anhang	
-	Leserinnen	Leserin	
-	Kaufleute	Kaufmann	
-	Ausbildungsgänge	Ausbildungsgang	
-	lässt	lassen	

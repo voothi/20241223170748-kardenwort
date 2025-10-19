@@ -907,6 +907,34 @@ def process_parallel_sentences_to_csv(
             tsv_writer.writerow(csv_row)
     return output_file_path
 
+def process_lemmas_per_line(
+    source_text_path, output_file_path, lemma_sort_index, 
+    de_dictionary, lemma_override_rules, args
+):
+    try:
+        with open(source_text_path, "r", encoding="utf-8") as f_in:
+            source_lines = f_in.readlines()
+    except IOError as e:
+        print(f"Error reading input file {source_text_path}: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    with open(output_file_path, "w", encoding="utf-8") as f_out:
+        for line in source_lines:
+            line = line.strip()
+            if not line:
+                f_out.write("\n")
+                continue
+            
+            lemmas = extract_lemmas_from_sentence(
+                line, lemma_sort_index, nlp, de_dictionary, 
+                lemma_override_rules, [], args, de_gcs=False
+            )
+            
+            output_line = " ".join(lemmas)
+            f_out.write(output_line + "\n")
+    
+    return output_file_path
+
 def main():
     parser = argparse.ArgumentParser(
         description="Extract and process words or sentences from text.",
@@ -914,7 +942,9 @@ def main():
     )
     
     input_output_group = parser.add_argument_group('Input & Output')
-    input_output_group.add_argument("--type", required=True, choices=["word", "sentence"], help="Specify the processing type: 'word' for word extraction, 'sentence' for parallel sentence processing.")
+    processing_mode_group = parser.add_mutually_exclusive_group(required=True)
+    processing_mode_group.add_argument("--type", choices=["word", "sentence"], help="Specify the processing type: 'word' for word extraction, 'sentence' for parallel sentence processing.")
+    processing_mode_group.add_argument("--lemmas-per-line", action="store_true", help="Process each line of text1-file to output a single line of frequency-sorted lemmas.")
     input_output_group.add_argument("--language", default="de", choices=["de", "en"], help="The language of the text to be processed.")
     input_output_group.add_argument("--text", help="A single string of input text to process. Mutually exclusive with --text1-file.")
     input_output_group.add_argument("--text1-file", help="Path to the primary input text file.")
@@ -1088,8 +1118,19 @@ def main():
         elif args.basename_add_timestamp:
             new_filename = f"{timestamp_id}-{filename}"
             final_output_path = os.path.join(output_directory, new_filename)
+    
+    if args.lemmas_per_line:
+        if not args.text1_file:
+            print("Error: --text1-file is required for --lemmas-per-line mode.", file=sys.stderr); exit(1)
+        if not final_output_path:
+            print("Error: --output-file is required for --lemmas-per-line mode.", file=sys.stderr); exit(1)
+
+        processed_output_file = process_lemmas_per_line(
+            args.text1_file, final_output_path, lemma_index,
+            de_dictionary, lemma_override_rules, args
+        )
             
-    if args.type == "word":
+    elif args.type == "word":
         if args.text and args.text1_file:
             print("Error: --text and --text1-file are mutually exclusive.", file=sys.stderr); exit(1)
 

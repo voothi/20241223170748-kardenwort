@@ -79,7 +79,7 @@ def get_script_args(args, python_path, workspace_path, config):
         "--add-sentence-index-col",
         "--wordlist-use-br",
         "--add-header",
-        "--sentence-context-size", "2",
+        "--sentence-context-size", "4",
     ]
 
     if args.language == "de":

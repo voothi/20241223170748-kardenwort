@@ -40,13 +40,13 @@ set "KARDENWORT_RUNNER_SCRIPT=%CFG_kardenwort_workspace%/%CFG_source_code_dir%/%
 echo Running extraction for English in dual mode...
 
 echo.
-echo Dual word mode...
-call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language en --type word --mode dual
+echo Dual sentence mode...
+call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language en --type sentence --mode dual
 if errorlevel 1 goto :error
 
 echo.
-echo Dual sentence mode...
-call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language en --type sentence --mode dual
+echo Dual word mode...
+call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language en --type word --mode dual
 if errorlevel 1 goto :error
 
 echo.

@@ -40,13 +40,13 @@ set "KARDENWORT_RUNNER_SCRIPT=%CFG_kardenwort_workspace%/%CFG_source_code_dir%/%
 echo Running extraction in different modes...
 
 echo.
-echo Triple word mode with GCS...
-call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language de --type word --mode triple --de-gcs --de-gcs-pos-tags "!VERB"
+echo Triple sentence mode...
+call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language de --type sentence --mode triple
 if errorlevel 1 goto :error
 
 echo.
-echo Triple sentence mode...
-call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language de --type sentence --mode triple
+echo Triple word mode with GCS...
+call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language de --type word --mode triple --de-gcs --de-gcs-pos-tags "!VERB"
 if errorlevel 1 goto :error
 
 echo.

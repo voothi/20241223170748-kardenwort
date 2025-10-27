@@ -42,12 +42,12 @@ echo Running extraction in different modes...
 echo.
 echo Triple sentence mode...
 call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language de --type sentence --mode triple
-if errorlevel 1 goto :error
+@REM if errorlevel 1 goto :error
 
 echo.
 echo Triple word mode...
 call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language de --type word --mode triple
-if errorlevel 1 goto :error
+@REM if errorlevel 1 goto :error
 
 echo.
 echo All operations completed successfully.

@@ -35,18 +35,32 @@ set "KARDENWORT_RUNNER_SCRIPT=%CFG_kardenwort_workspace%/%CFG_source_code_dir%/%
 
 
 :: ============================================================================
-:: 3. Execute the Python Script
+:: 3. Execute the Python Script with Shared Parent Deck Logic
 :: ============================================================================
 echo Running extraction in different modes...
 
 echo.
 echo Triple sentence mode...
-call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language de --type sentence --mode triple
-@REM if errorlevel 1 goto :error
+:: 1. Run the first script. It will generate its own parent/subdeck and print its filename.
+:: The FOR /F loop captures the output of the python command into the %%F variable.
+for /f "delims=" %%F in ('call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language de --type sentence --mode triple --anki-create-subdecks --stdout-print-output-basename') do (
+    set "SENTENCE_FILENAME=%%F"
+)
+
+if not defined SENTENCE_FILENAME (
+    echo ERROR: Failed to get filename from the sentence script run. >&2
+    goto :error
+)
+
+:: 2. Derive the parent deck name from the first script's output filename.
+:: We take the filename and remove the ".sentence.de.tsv" part.
+set "PARENT_DECK_NAME=%SENTENCE_FILENAME:.sentence.de.tsv=%"
+echo Parent Deck Name set to: %PARENT_DECK_NAME%
 
 echo.
 echo Triple word mode...
-call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language de --type word --mode triple
+:: 3. Run the second script, passing the derived parent deck name to it.
+call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language de --type word --mode triple --anki-create-subdecks --anki-parent-deck "%PARENT_DECK_NAME%"
 @REM if errorlevel 1 goto :error
 
 echo.

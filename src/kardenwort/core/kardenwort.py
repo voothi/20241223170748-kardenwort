@@ -615,9 +615,17 @@ def process_parallel_text_files(
     sorted_words = sorted(list(lemma_to_shortest_form.keys()), key=lambda word: (word not in lemma_sort_index, lemma_sort_index.get(word, 0), word.lower()))
     if output_file_path:
         full_deck_name = ""
-        if args.anki_deck_name and output_file_path:
+        if args.anki_create_subdecks:
             sub_deck_name = os.path.splitext(os.path.basename(output_file_path))[0]
-            full_deck_name = f"{args.anki_deck_name}::{sub_deck_name}"
+            if args.anki_parent_deck:
+                parent_deck_name = args.anki_parent_deck
+            else:
+                parent_deck_name = re.sub(r'\.(word|sentence)', '', sub_deck_name)
+            
+            if parent_deck_name != sub_deck_name:
+                full_deck_name = f"{parent_deck_name}::{sub_deck_name}"
+            else:
+                full_deck_name = parent_deck_name
 
         with open(output_file_path, "w", newline="", encoding="utf-8") as tsvfile:
             tsv_writer = csv.writer(tsvfile, delimiter="\t")
@@ -828,9 +836,17 @@ def process_single_text(
         return None
 
     full_deck_name = ""
-    if args.anki_deck_name and output_file_path:
+    if args.anki_create_subdecks and output_file_path:
         sub_deck_name = os.path.splitext(os.path.basename(output_file_path))[0]
-        full_deck_name = f"{args.anki_deck_name}::{sub_deck_name}"
+        if args.anki_parent_deck:
+            parent_deck_name = args.anki_parent_deck
+        else:
+            parent_deck_name = re.sub(r'\.(word|sentence)', '', sub_deck_name)
+
+        if parent_deck_name != sub_deck_name:
+            full_deck_name = f"{parent_deck_name}::{sub_deck_name}"
+        else:
+            full_deck_name = parent_deck_name
 
     with open(output_file_path, "w", newline="", encoding="utf-8") as tsvfile:
         tsv_writer = csv.writer(tsvfile, delimiter="\t")
@@ -889,9 +905,17 @@ def process_parallel_sentences_to_csv(
     min_length = min(lengths)
 
     full_deck_name = ""
-    if args.anki_deck_name and output_file_path:
+    if args.anki_create_subdecks and output_file_path:
         sub_deck_name = os.path.splitext(os.path.basename(output_file_path))[0]
-        full_deck_name = f"{args.anki_deck_name}::{sub_deck_name}"
+        if args.anki_parent_deck:
+            parent_deck_name = args.anki_parent_deck
+        else:
+            parent_deck_name = re.sub(r'\.(word|sentence)', '', sub_deck_name)
+
+        if parent_deck_name != sub_deck_name:
+            full_deck_name = f"{parent_deck_name}::{sub_deck_name}"
+        else:
+            full_deck_name = parent_deck_name
 
     with open(output_file_path, "w", newline="", encoding="utf-8") as output_csv_file:
         tsv_writer = csv.writer(output_csv_file, delimiter="\t")
@@ -991,7 +1015,8 @@ def main():
     output_format_group.add_argument("--add-header", action="store_true", help="Prepend the output file with the full Anki CSV header.")
     output_format_group.add_argument("--add-sentence-index-col", action="store_true", help="Add a column with the sentence index number, for sorting.")
     output_format_group.add_argument("--sentence-context-size", type=int, default=1, help="The number of sentences to include before and after the source sentence as context.")
-    output_format_group.add_argument("--anki-deck-name", help="Specify a parent deck name for Anki. When used, an extra 'Deck' column is added to the output TSV, populated with 'ParentDeckName::OutputFilename'.")
+    output_format_group.add_argument("--anki-create-subdecks", action="store_true", help="Automatically generate a parent deck and sub-decks for Anki based on the output filename.")
+    output_format_group.add_argument("--anki-parent-deck", help="Manually specify the parent deck name, overriding the auto-generated one. Requires --anki-create-subdecks.")
     stdout_group = parser.add_argument_group('Standard Output (STDOUT) Arguments (used only if --output is not specified)')
     output_format_group.add_argument("--stdout-format", choices=['list', 'context', 'tsv', 'html'], default='list', 
                                help="Select the output format for STDOUT if --output-file is not specified.\n"

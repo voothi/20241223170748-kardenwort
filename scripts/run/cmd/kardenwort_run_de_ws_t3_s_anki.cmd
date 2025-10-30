@@ -45,8 +45,11 @@ if not defined SENTENCE_FILENAME (
 )
 
 :: 2. Derive the parent deck name from the first script's output filename.
-:: We take the filename and remove the ".sentence.de.tsv" part.
-set "PARENT_DECK_NAME=%SENTENCE_FILENAME:.sentence.de.tsv=%"
+:: FIX: This is a more robust way to remove only the ".sentence" part.
+set "TEMP_DECK_NAME=%SENTENCE_FILENAME:.tsv=%"
+set "PARENT_DECK_NAME=%TEMP_DECK_NAME:.sentence=%"
+
+
 echo Parent Deck Name for this session is: %PARENT_DECK_NAME%
 
 echo.

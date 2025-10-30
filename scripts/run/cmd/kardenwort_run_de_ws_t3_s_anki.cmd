@@ -33,8 +33,8 @@ echo Running extraction in different modes...
 
 echo.
 echo Triple sentence mode...
-:: 1. Run the first script (sentence). The runner will print the final filename.
-:: The FOR /F loop captures the output of the python command into the %%F variable.
+:: 1. Run the first script (sentence). The runner will now ONLY print the clean filename to stdout.
+:: The FOR /F loop captures this single line of output into the %%F variable.
 for /f "delims=" %%F in ('call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language de --type sentence --mode triple --anki-create-subdecks') do (
     set "SENTENCE_FILENAME=%%F"
 )

@@ -300,7 +300,8 @@ def get_anki_csv_header():
         "ToggleAlwaysEmptyField", "Note ID", "am-all-morphs", "am-all-morphs-count",
         "am-unknown-morphs", "am-unknown-morphs-count", "am-highlighted", "am-score",
         "am-score-terms", "am-study-morphs", "SentenceDestination2ContextLeft",
-        "SentenceDestination2", "SentenceDestination2ContextRight", "SentenceSourceIndex"
+        "SentenceDestination2", "SentenceDestination2ContextRight", "SentenceSourceIndex",
+        "Deck"
     ]
 
 def generate_filename_prefix_from_text(text, word_count):
@@ -613,13 +614,18 @@ def process_parallel_text_files(
 
     sorted_words = sorted(list(lemma_to_shortest_form.keys()), key=lambda word: (word not in lemma_sort_index, lemma_sort_index.get(word, 0), word.lower()))
     if output_file_path:
+        full_deck_name = ""
+        if args.anki_deck_name and output_file_path:
+            sub_deck_name = os.path.splitext(os.path.basename(output_file_path))[0]
+            full_deck_name = f"{args.anki_deck_name}::{sub_deck_name}"
+
         with open(output_file_path, "w", newline="", encoding="utf-8") as tsvfile:
             tsv_writer = csv.writer(tsvfile, delimiter="\t")
             if add_header:
                 tsv_writer.writerow(get_anki_csv_header())
 
             for word in sorted_words:
-                csv_row = [""] * 81
+                csv_row = [""] * 82
                 sentence_index, source_sentence = lemma_to_sentence_info.get(word, (-1, ""))
                 if sentence_index == -1: continue
                 source_sentence = source_sentence.strip()
@@ -651,6 +657,8 @@ def process_parallel_text_files(
                     csv_row[58] = "1"; csv_row[65] = "1"
                 elif language == "en":
                     csv_row[56] = "1"; csv_row[65] = "1"
+                if full_deck_name:
+                    csv_row[81] = full_deck_name
                 tsv_writer.writerow(csv_row)
     return output_file_path
 
@@ -819,13 +827,18 @@ def process_single_text(
                 print(word, file=sys.stdout)
         return None
 
+    full_deck_name = ""
+    if args.anki_deck_name and output_file_path:
+        sub_deck_name = os.path.splitext(os.path.basename(output_file_path))[0]
+        full_deck_name = f"{args.anki_deck_name}::{sub_deck_name}"
+
     with open(output_file_path, "w", newline="", encoding="utf-8") as tsvfile:
         tsv_writer = csv.writer(tsvfile, delimiter="\t")
         if add_header:
             tsv_writer.writerow(get_anki_csv_header())
 
         for word in sorted_words:
-            csv_row = [""] * 81
+            csv_row = [""] * 82
             unit_index, source_sentence_unit = lemma_to_sentence_info.get(word, (-1, ""))
             if unit_index == -1: continue
             
@@ -850,6 +863,8 @@ def process_single_text(
                 csv_row[58] = "1"; csv_row[65] = "1"
             elif language == "en":
                 csv_row[56] = "1"; csv_row[65] = "1"
+            if full_deck_name:
+                csv_row[81] = full_deck_name
             tsv_writer.writerow(csv_row)
 
     return output_file_path
@@ -873,13 +888,18 @@ def process_parallel_sentences_to_csv(
     if tertiary_text_path: lengths.append(len(tertiary_text_lines))
     min_length = min(lengths)
 
+    full_deck_name = ""
+    if args.anki_deck_name and output_file_path:
+        sub_deck_name = os.path.splitext(os.path.basename(output_file_path))[0]
+        full_deck_name = f"{args.anki_deck_name}::{sub_deck_name}"
+
     with open(output_file_path, "w", newline="", encoding="utf-8") as output_csv_file:
         tsv_writer = csv.writer(output_csv_file, delimiter="\t")
         if add_header:
             tsv_writer.writerow(get_anki_csv_header())
 
         for i in range(min_length):
-            csv_row = [""] * 81
+            csv_row = [""] * 82
             source_sentence = source_text_lines[i].strip()
             target_sentence = target_text_lines[i].strip()
             context_start_index, context_end_index = max(0, i - sentence_context_size), i + sentence_context_size + 1
@@ -904,6 +924,8 @@ def process_parallel_sentences_to_csv(
                 csv_row[58] = "1"; csv_row[65] = "1"
             elif language == "en":
                 csv_row[56] = "1"; csv_row[65] = "1"
+            if full_deck_name:
+                csv_row[81] = full_deck_name
             tsv_writer.writerow(csv_row)
     return output_file_path
 
@@ -969,6 +991,7 @@ def main():
     output_format_group.add_argument("--add-header", action="store_true", help="Prepend the output file with the full Anki CSV header.")
     output_format_group.add_argument("--add-sentence-index-col", action="store_true", help="Add a column with the sentence index number, for sorting.")
     output_format_group.add_argument("--sentence-context-size", type=int, default=1, help="The number of sentences to include before and after the source sentence as context.")
+    output_format_group.add_argument("--anki-deck-name", help="Specify a parent deck name for Anki. When used, an extra 'Deck' column is added to the output TSV, populated with 'ParentDeckName::OutputFilename'.")
     stdout_group = parser.add_argument_group('Standard Output (STDOUT) Arguments (used only if --output is not specified)')
     output_format_group.add_argument("--stdout-format", choices=['list', 'context', 'tsv', 'html'], default='list', 
                                help="Select the output format for STDOUT if --output-file is not specified.\n"

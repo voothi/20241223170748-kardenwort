@@ -3,8 +3,6 @@ chcp 65001 > nul
 
 :: ============================================================================
 :: 1. Change to the Project Root Directory
-:: This is the crucial fix. It ensures that all subsequent relative paths
-:: (both in this script and in the Python script) are resolved correctly.
 :: ============================================================================
 set "PROJECT_ROOT=%~dp0..\..\.."
 cd /d "%PROJECT_ROOT%"
@@ -13,18 +11,13 @@ if errorlevel 1 (
     exit /b 1
 )
 
-
 :: ============================================================================
-:: 1. Load Configuration from multiple sections
+:: 2. Load Configuration and Define Paths
 :: ============================================================================
 for /f "delims=" %%a in ('call "%~dp0..\..\_config_loader.cmd" environment') do (set "%%a")
 for /f "delims=" %%a in ('call "%~dp0..\..\_config_loader.cmd" scripts') do (set "%%a")
 for /f "delims=" %%a in ('call "%~dp0..\..\_config_loader.cmd" project_structure') do (set "%%a")
 
-
-:: ============================================================================
-:: 2. Validate Configuration and Define Paths
-:: ============================================================================
 if not defined CFG_python_executable (echo ERROR: python_executable not found in [environment] section. >&2 & exit /b 1)
 if not defined CFG_kardenwort_workspace (echo ERROR: kardenwort_workspace not found in [environment] section. >&2 & exit /b 1)
 if not defined CFG_kardenwort_runner_filename (echo ERROR: kardenwort_runner_filename not found in [scripts] section. >&2 & exit /b 1)
@@ -33,17 +26,16 @@ if not defined CFG_source_code_dir (echo ERROR: source_code_dir not found in [pr
 set "PYTHON_EXE=%CFG_python_executable%"
 set "KARDENWORT_RUNNER_SCRIPT=%CFG_kardenwort_workspace%/%CFG_source_code_dir%/%CFG_kardenwort_runner_filename%"
 
-
 :: ============================================================================
-:: 3. Execute the Python Script with Shared Parent Deck Logic
+:: 3. Execute the Python Scripts with Shared Parent Deck Logic
 :: ============================================================================
 echo Running extraction in different modes...
 
 echo.
 echo Triple sentence mode...
-:: 1. Run the first script. It will generate its own parent/subdeck and print its filename.
+:: 1. Run the first script (sentence). The runner will print the final filename.
 :: The FOR /F loop captures the output of the python command into the %%F variable.
-for /f "delims=" %%F in ('call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language de --type sentence --mode triple --anki-create-subdecks --stdout-print-output-basename') do (
+for /f "delims=" %%F in ('call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language de --type sentence --mode triple --anki-create-subdecks') do (
     set "SENTENCE_FILENAME=%%F"
 )
 
@@ -55,13 +47,13 @@ if not defined SENTENCE_FILENAME (
 :: 2. Derive the parent deck name from the first script's output filename.
 :: We take the filename and remove the ".sentence.de.tsv" part.
 set "PARENT_DECK_NAME=%SENTENCE_FILENAME:.sentence.de.tsv=%"
-echo Parent Deck Name set to: %PARENT_DECK_NAME%
+echo Parent Deck Name for this session is: %PARENT_DECK_NAME%
 
 echo.
 echo Triple word mode...
-:: 3. Run the second script, passing the derived parent deck name to it.
+:: 3. Run the second script (word), passing the derived parent deck name to it.
 call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language de --type word --mode triple --anki-create-subdecks --anki-parent-deck "%PARENT_DECK_NAME%"
-@REM if errorlevel 1 goto :error
+if errorlevel 1 goto :error
 
 echo.
 echo All operations completed successfully.

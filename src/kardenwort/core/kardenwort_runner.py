@@ -4,6 +4,7 @@ import argparse
 import configparser
 import sys
 import os
+import re
 
 def load_config():
     """Reads configuration from config.ini and returns paths and the config object."""
@@ -82,6 +83,11 @@ def get_script_args(args, python_path, workspace_path, config):
         "--sentence-context-size", "4",
     ]
 
+    if args.anki_create_subdecks:
+        base_args.append("--anki-create-subdecks")
+        if args.anki_parent_deck:
+            base_args.extend(["--anki-parent-deck", args.anki_parent_deck])
+
     if args.language == "de":
         de_dictionary_file = config.get('language_resources', 'dictionary_file_de', fallback='german.dic')
         german_enhancement_args = [
@@ -149,43 +155,16 @@ def main():
     parser = argparse.ArgumentParser(
         description="A wrapper script to extract and process words or sentences from text files and import them."
     )
-    parser.add_argument(
-        "--type",
-        type=str,
-        required=True,
-        choices=["word", "sentence"],
-        help="Type of processing: 'word' for word extraction, 'sentence' for parallel sentences.",
-    )
-    parser.add_argument(
-        "--mode",
-        type=str,
-        required=True,
-        choices=["single", "dual", "triple"],
-        help="Processing mode: single (text1), dual (text1 + text2), or triple (text1 + text2 + text3).",
-    )
-    parser.add_argument(
-        "--language",
-        type=str,
-        required=True,
-        choices=["de", "en"],
-        help="Language for processing: German (de) or English (en).",
-    )
-    parser.add_argument(
-        "--text",
-        type=str,
-        help="Directly pass a text string for 'single' mode processing, bypassing the default text1.txt file.",
-    )
-    parser.add_argument(
-        "--de-gcs",
-        action='store_true',
-        help="Enable German Compound Splitting (only effective when --language is 'de').",
-    )
-    parser.add_argument(
-        "--de-gcs-pos-tags",
-        nargs='+',
-        default=['NOUN PROPN ADV ADJ'],
-        help="Specify which Part-of-Speech tags to apply GCS splitting to (e.g., NOUN PROPN or !VERB).",
-    )
+    parser.add_argument("--type", type=str, required=True, choices=["word", "sentence"])
+    parser.add_argument("--mode", type=str, required=True, choices=["single", "dual", "triple"])
+    parser.add_argument("--language", type=str, required=True, choices=["de", "en"])
+    parser.add_argument("--text", type=str)
+    parser.add_argument("--de-gcs", action='store_true')
+    parser.add_argument("--de-gcs-pos-tags", nargs='+')
+    # New arguments to be passed through
+    parser.add_argument("--anki-create-subdecks", action="store_true")
+    parser.add_argument("--anki-parent-deck", type=str)
+
     args = parser.parse_args()
 
     python_path, workspace_path, importer_workspace, config = load_config()
@@ -200,17 +179,39 @@ def main():
         errors='replace'
     )
 
-    output_file = script_process.stdout.readline().strip()
-    if not output_file:
+    output_filename_basename = script_process.stdout.readline().strip()
+    if not output_filename_basename:
         print("ERROR: No output filename was captured from the script.", file=sys.stderr)
         stderr_output, _ = script_process.communicate()
         if stderr_output:
             print("--- stderr from script ---", file=sys.stderr)
             print(stderr_output, file=sys.stderr)
             print("--------------------------", file=sys.stderr)
+        sys.stdout.flush() # Ensure the captured filename (if any) is printed
         return
 
-    print(f"Processing file: {output_file}")
+    # Print the captured filename to stdout so the batch script can capture it
+    print(output_filename_basename)
+    sys.stdout.flush() 
+
+    print(f"Processing file: {output_filename_basename}")
+
+    # --- Anki Importer Logic ---
+    full_deck_name = ""
+    if args.anki_create_subdecks:
+        sub_deck_name = os.path.splitext(output_filename_basename)[0]
+        if args.anki_parent_deck:
+            parent_deck_name = args.anki_parent_deck
+        else:
+            parent_deck_name = re.sub(r'\.(word|sentence)', '', sub_deck_name)
+
+        if parent_deck_name != sub_deck_name:
+            full_deck_name = f"{parent_deck_name}::{sub_deck_name}"
+        else:
+            full_deck_name = parent_deck_name
+    else:
+        # Fallback to old behavior if the flag is not used
+        full_deck_name = os.path.splitext(output_filename_basename)[0]
 
     importer_script = config.get('scripts', 'importer_script_filename', fallback='anki-csv-importer.py')
     note_type = config.get('anki_importer_settings', 'note_type', fallback='Basic')
@@ -219,8 +220,8 @@ def main():
     importer_command = [
         str(python_path),
         str(importer_workspace / importer_script),
-        "--path", str(workspace_path / output_dir_name / output_file),
-        "--deck", output_file,
+        "--path", str(workspace_path / output_dir_name / output_filename_basename),
+        "--deck", full_deck_name,
         "--note", note_type,
     ]
     print(f"Running importer with command:\n{' '.join(map(str, importer_command))}\n")

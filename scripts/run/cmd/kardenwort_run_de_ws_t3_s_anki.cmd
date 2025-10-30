@@ -33,9 +33,8 @@ echo Running extraction in different modes...
 
 echo.
 echo Triple sentence mode...
-:: 1. Run the first script (sentence). The runner will now ONLY print the clean filename to stdout.
-:: The FOR /F loop captures this single line of output into the %%F variable.
-for /f "delims=" %%F in ('call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language de --type sentence --mode triple --anki-create-subdecks') do (
+:: Run the first script, now with the --suspend-cards flag
+for /f "delims=" %%F in ('call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language de --type sentence --mode triple --anki-create-subdecks --suspend-cards') do (
     set "SENTENCE_FILENAME=%%F"
 )
 
@@ -44,8 +43,7 @@ if not defined SENTENCE_FILENAME (
     goto :error
 )
 
-:: 2. Derive the parent deck name from the first script's output filename.
-:: FIX: This is a more robust way to remove only the ".sentence" part.
+:: Derive the parent deck name from the first script's output filename.
 set "TEMP_DECK_NAME=%SENTENCE_FILENAME:.tsv=%"
 set "PARENT_DECK_NAME=%TEMP_DECK_NAME:.sentence=%"
 
@@ -54,8 +52,8 @@ echo Parent Deck Name for this session is: %PARENT_DECK_NAME%
 
 echo.
 echo Triple word mode...
-:: 3. Run the second script (word), passing the derived parent deck name to it.
-call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language de --type word --mode triple --anki-create-subdecks --anki-parent-deck "%PARENT_DECK_NAME%"
+:: Run the second script, passing the parent deck name and the --suspend-cards flag
+call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language de --type word --mode triple --anki-create-subdecks --anki-parent-deck "%PARENT_DECK_NAME%" --suspend-cards
 if errorlevel 1 goto :error
 
 echo.

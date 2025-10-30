@@ -1,4 +1,3 @@
-# src/kardenwort/core/kardenwort_runner.py
 import subprocess
 from pathlib import Path
 import argparse
@@ -173,7 +172,7 @@ def main():
     """
     if "--get-python-path" in sys.argv:
         python_path, _, _, _ = load_config()
-        print(python_path) # This is the ONLY thing that should print to stdout in this case
+        print(python_path)
         sys.exit(0)
 
     parser = argparse.ArgumentParser(
@@ -187,28 +186,27 @@ def main():
     parser.add_argument("--de-gcs-pos-tags", nargs='+', help="Specify POS tags for GCS (e.g., 'NOUN PROPN' or '!VERB').")
     parser.add_argument("--anki-create-subdecks", action="store_true", help="Automatically generate a parent deck and sub-decks for Anki based on the output filename.")
     parser.add_argument("--anki-parent-deck", type=str, help="Specify the parent deck name, used by subsequent calls in a batch process to ensure a shared parent deck.")
+    # NEW: Add the suspend argument to the runner
+    parser.add_argument("--suspend-cards", action="store_true", help="Suspend all newly imported/updated cards in Anki.")
     
     args = parser.parse_args()
 
     python_path, workspace_path, importer_workspace, config = load_config()
     script_args = get_script_args(args, python_path, workspace_path, config)
 
-    # FIX: Print debug info to stderr so it doesn't interfere with stdout capture
     print_debug(f"Running extraction script with command:\n{' '.join(map(str, script_args))}\n")
     
     script_process = subprocess.Popen(
         script_args,
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE, # Capture stderr as well to show it if something goes wrong
+        stderr=subprocess.PIPE,
         text=True,
         encoding='utf-8',
         errors='replace'
     )
 
-    # Read ALL stdout and stderr from the child process
     stdout_output, stderr_output = script_process.communicate()
     
-    # The filename should be the first line of the stdout
     output_lines = stdout_output.strip().splitlines()
     if not output_lines:
         print_debug("ERROR: No output filename was captured from the script.")
@@ -249,13 +247,15 @@ def main():
         "--deck", full_deck_name,
         "--note", note_type,
     ]
+    
+    # NEW: Conditionally add the --suspend flag to the importer command
+    if args.suspend_cards:
+        importer_command.append("--suspend")
+
     print_debug(f"Running importer with command:\n{' '.join(map(str, importer_command))}\n")
     
-    # Run the importer and let its output go to the console directly
     importer_process = subprocess.run(importer_command, check=True)
 
-    # FIX: Print the clean filename to stdout AT THE VERY END.
-    # This is the only thing the batch script will capture.
     print(output_filename_basename)
 
 if __name__ == "__main__":

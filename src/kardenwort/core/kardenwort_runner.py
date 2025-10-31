@@ -270,7 +270,16 @@ def main():
 
     print_debug(f"Running importer with command:\n{' '.join(map(str, importer_command))}\n")
     
-    importer_process = subprocess.run(importer_command, check=True)
+    try:
+        subprocess.run(importer_command, check=True, capture_output=True, text=True, encoding='utf-8')
+    except subprocess.CalledProcessError as e:
+        print_debug(f"ERROR: Anki importer failed with exit code {e.returncode}.")
+        print_debug("--- stdout from anki-csv-importer.py ---")
+        print_debug(e.stdout)
+        print_debug("--- stderr from anki-csv-importer.py ---")
+        print_debug(e.stderr)
+        print_debug("------------------------------------------")
+        sys.exit(1)
 
     print(output_filename_basename)
 

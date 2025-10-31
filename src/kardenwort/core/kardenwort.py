@@ -490,40 +490,28 @@ def process_parallel_text_files(
     de_gcs_preserve_compound_word = kwargs.get('de_gcs_preserve_compound_word', False)
     de_gcs_skip_merge_fractions = kwargs.get('de_gcs_skip_merge_fractions', False)
 
-    source_text_lines = []
+    source_text_lines_all = []
     if "\n" in source_text_path or not os.path.exists(source_text_path):
-        source_text_lines = source_text_path.splitlines()
+        source_text_lines_all = source_text_path.splitlines()
     else:
-        with open(source_text_path, "r", encoding="utf-8") as f1: source_text_lines = [line.rstrip("\n") for line in f1]
+        with open(source_text_path, "r", encoding="utf-8") as f1: source_text_lines_all = [line.rstrip("\n") for line in f1]
 
-    target_text_lines_all = []
+    target_content_lines = []
     if target_text_path:
-        with open(target_text_path, "r", encoding="utf-8") as f2: target_text_lines_all = [line.rstrip("\n") for line in f2]
+        with open(target_text_path, "r", encoding="utf-8") as f2:
+            target_content_lines = [line.rstrip("\n") for line in f2 if line.strip() and not line.strip().startswith('#')]
 
-    tertiary_text_lines_all = []
+    tertiary_content_lines = []
     if tertiary_text_path:
-        with open(tertiary_text_path, "r", encoding="utf-8") as f3: tertiary_text_lines_all = [line.rstrip("\n") for line in f3]
-    
-    content_lines_indices = { 'source': [], 'target': [], 'tertiary': [] }
-    if args.anki_markdown_decks:
-        content_line_counter = 0
-        for i, line in enumerate(source_text_lines):
-            stripped_line = line.strip()
-            if stripped_line and not stripped_line.startswith('#'):
-                content_lines_indices['source'].append(i)
-                if content_line_counter < len(target_text_lines_all):
-                    content_lines_indices['target'].append(content_line_counter)
-                if content_line_counter < len(tertiary_text_lines_all):
-                    content_lines_indices['tertiary'].append(content_line_counter)
-                content_line_counter += 1
-    else:
-        content_lines_indices['source'] = list(range(len(source_text_lines)))
-        content_lines_indices['target'] = list(range(len(target_text_lines_all)))
-        content_lines_indices['tertiary'] = list(range(len(tertiary_text_lines_all)))
+        with open(tertiary_text_path, "r", encoding="utf-8") as f3:
+            tertiary_content_lines = [line.rstrip("\n") for line in f3 if line.strip() and not line.strip().startswith('#')]
+
+    source_content_lines = [line for line in source_text_lines_all if line.strip() and not line.strip().startswith('#')]
 
     lemma_to_shortest_form, lemma_to_sentence_info = {}, {}
-
     deck_stack = []
+    header_counter = 1
+
     if args.anki_markdown_decks:
         root_deck_prefix = ""
         if args.anki_create_subdecks:
@@ -536,7 +524,7 @@ def process_parallel_text_files(
             deck_stack.append(root_deck_prefix)
 
     content_line_idx = -1
-    for i, source_line in enumerate(source_text_lines):
+    for source_line in source_text_lines_all:
         source_line = source_line.strip()
         if not source_line: continue
 
@@ -551,7 +539,8 @@ def process_parallel_text_files(
                 while len(deck_stack) >= actual_level:
                     deck_stack.pop()
                 if sanitized_title:
-                    deck_stack.append(sanitized_title)
+                    deck_stack.append(f"{header_counter:03d}-{sanitized_title}")
+                    header_counter += 1
                 continue
         
         content_line_idx += 1
@@ -692,22 +681,21 @@ def process_parallel_text_files(
                 sentence_index, source_sentence, deck_name = lemma_to_sentence_info.get(word, (-1, "", ""))
                 if sentence_index == -1: continue
 
-                content_source_lines = [source_text_lines[i] for i in content_lines_indices['source']]
-                content_target_lines = [target_text_lines_all[i] for i in content_lines_indices['target']]
-                content_tertiary_lines = [tertiary_text_lines_all[i] for i in content_lines_indices['tertiary']]
-
                 context_start_index, context_end_index = max(0, sentence_index - sentence_context_size), sentence_index + sentence_context_size + 1
-                csv_row[5] = " ".join(line.strip() for line in content_source_lines[context_start_index:sentence_index])
+                
+                csv_row[5] = " ".join(line.strip() for line in source_content_lines[context_start_index:sentence_index])
                 csv_row[6] = source_sentence.strip()
-                csv_row[7] = " ".join(line.strip() for line in content_source_lines[sentence_index + 1:context_end_index])
+                csv_row[7] = " ".join(line.strip() for line in source_content_lines[sentence_index + 1:context_end_index])
+                
                 if target_text_path:
-                    csv_row[8] = " ".join(line.strip() for line in content_target_lines[context_start_index:sentence_index])
-                    csv_row[9] = content_target_lines[sentence_index].strip() if sentence_index < len(content_target_lines) else ""
-                    csv_row[10] = " ".join(line.strip() for line in content_target_lines[sentence_index + 1:context_end_index])
+                    csv_row[8] = " ".join(line.strip() for line in target_content_lines[context_start_index:sentence_index])
+                    csv_row[9] = target_content_lines[sentence_index].strip() if sentence_index < len(target_content_lines) else ""
+                    csv_row[10] = " ".join(line.strip() for line in target_content_lines[sentence_index + 1:context_end_index])
+                
                 if tertiary_text_path:
-                    csv_row[77] = " ".join(line.strip() for line in content_tertiary_lines[context_start_index:sentence_index])
-                    csv_row[78] = content_tertiary_lines[sentence_index].strip() if sentence_index < len(content_tertiary_lines) else ""
-                    csv_row[79] = " ".join(line.strip() for line in content_tertiary_lines[sentence_index + 1:context_end_index])
+                    csv_row[77] = " ".join(line.strip() for line in tertiary_content_lines[context_start_index:sentence_index])
+                    csv_row[78] = tertiary_content_lines[sentence_index].strip() if sentence_index < len(tertiary_content_lines) else ""
+                    csv_row[79] = " ".join(line.strip() for line in tertiary_content_lines[sentence_index + 1:context_end_index])
                 
                 csv_row[0] = word
                 csv_row[1] = word
@@ -750,7 +738,8 @@ def process_single_text(
     source_lines = source_text.splitlines() if is_multiline_from_file else []
 
     text_units = []
-    deck_map = {} # Maps unit_index to deck_name
+    deck_map = {}
+    header_counter = 1
 
     if args.anki_markdown_decks and is_multiline_from_file:
         deck_stack = []
@@ -776,7 +765,8 @@ def process_single_text(
                 while len(deck_stack) >= actual_level:
                     deck_stack.pop()
                 if sanitized_title:
-                    deck_stack.append(sanitized_title)
+                    deck_stack.append(f"{header_counter:03d}-{sanitized_title}")
+                    header_counter += 1
             else:
                 deck_map[len(text_units)] = "::".join(deck_stack)
                 text_units.append(line)
@@ -786,8 +776,6 @@ def process_single_text(
         else:
             doc = nlp(source_text)
             text_units = [sent.text for sent in doc.sents]
-    
-    is_processing_by_line = True
 
     lemma_to_shortest_form, lemma_to_sentence_info = {}, {}
     for unit_index, unit_text in enumerate(text_units):
@@ -906,8 +894,6 @@ def process_single_text(
     sorted_words = sorted(list(lemma_to_shortest_form.keys()), key=lambda word: (word not in lemma_sort_index, lemma_sort_index.get(word, 0), word.lower()))
     
     if not output_file_path:
-        # STDOUT logic remains mostly unchanged, as it doesn't handle decks
-        # ... (code omitted for brevity, no changes needed here) ...
         return None
 
     full_deck_name = ""
@@ -971,13 +957,21 @@ def process_parallel_sentences_to_csv(
     lemma_override_rules = kwargs.pop('lemma_override_rules', {})
     
     try:
-        with open(source_text_path, "r", encoding="utf-8") as f: source_text_lines = [line.rstrip("\n") for line in f]
-        with open(target_text_path, "r", encoding="utf-8") as f: target_text_lines = [line.rstrip("\n") for line in f]
-        tertiary_text_lines = []
+        with open(source_text_path, "r", encoding="utf-8") as f: source_text_lines_all = [line.rstrip("\n") for line in f]
+        
+        target_content_lines = []
+        if target_text_path:
+            with open(target_text_path, "r", encoding="utf-8") as f:
+                target_content_lines = [line.rstrip("\n") for line in f if line.strip() and not line.strip().startswith('#')]
+        
+        tertiary_content_lines = []
         if tertiary_text_path:
-            with open(tertiary_text_path, "r", encoding="utf-8") as f: tertiary_text_lines = [line.rstrip("\n") for line in f]
+            with open(tertiary_text_path, "r", encoding="utf-8") as f:
+                tertiary_content_lines = [line.rstrip("\n") for line in f if line.strip() and not line.strip().startswith('#')]
     except IOError as e:
         print(f"Error reading files: {e}", file=sys.stderr); sys.exit(1)
+
+    source_content_lines = [line for line in source_text_lines_all if line.strip() and not line.strip().startswith('#')]
 
     full_deck_name = ""
     if args.anki_create_subdecks and not args.anki_markdown_decks:
@@ -998,6 +992,7 @@ def process_parallel_sentences_to_csv(
             tsv_writer.writerow(get_anki_csv_header())
 
         deck_stack = []
+        header_counter = 1
         if args.anki_markdown_decks:
             root_deck_prefix = ""
             if args.anki_create_subdecks:
@@ -1010,8 +1005,8 @@ def process_parallel_sentences_to_csv(
                 deck_stack.append(root_deck_prefix)
 
         content_line_idx = -1
-        for i in range(len(source_text_lines)):
-            source_line = source_text_lines[i].strip()
+        for source_line in source_text_lines_all:
+            source_line = source_line.strip()
             if not source_line: continue
 
             if args.anki_markdown_decks:
@@ -1025,36 +1020,39 @@ def process_parallel_sentences_to_csv(
                     while len(deck_stack) >= actual_level:
                         deck_stack.pop()
                     if sanitized_title:
-                        deck_stack.append(sanitized_title)
+                        deck_stack.append(f"{header_counter:03d}-{sanitized_title}")
+                        header_counter += 1
                     continue
 
             content_line_idx += 1
-            if content_line_idx >= len(target_text_lines): break
+            if content_line_idx >= len(target_content_lines): break
 
             csv_row = [""] * 82
             source_sentence = source_line
-            target_sentence = target_text_lines[content_line_idx].strip()
-
-            content_source_lines = [line for line in source_text_lines if line.strip() and not line.strip().startswith('#')]
+            target_sentence = target_content_lines[content_line_idx].strip()
             
             context_start_index = max(0, content_line_idx - sentence_context_size)
             context_end_index = content_line_idx + sentence_context_size + 1
 
             csv_row[0] = source_sentence
-            csv_row[5] = " ".join(line.strip() for line in content_source_lines[context_start_index:content_line_idx])
+            csv_row[5] = " ".join(line.strip() for line in source_content_lines[context_start_index:content_line_idx])
             csv_row[6] = source_sentence
-            csv_row[7] = " ".join(line.strip() for line in content_source_lines[content_line_idx + 1:context_end_index])
-            csv_row[8] = " ".join(line.strip() for line in target_text_lines[context_start_index:content_line_idx])
+            csv_row[7] = " ".join(line.strip() for line in source_content_lines[content_line_idx + 1:context_end_index])
+            
+            csv_row[8] = " ".join(line.strip() for line in target_content_lines[context_start_index:content_line_idx])
             csv_row[9] = target_sentence
-            csv_row[10] = " ".join(line.strip() for line in target_text_lines[content_line_idx + 1:context_end_index])
+            csv_row[10] = " ".join(line.strip() for line in target_content_lines[content_line_idx + 1:context_end_index])
+            
             if add_wordlist_col:
                 lemmas = extract_lemmas_from_sentence(source_sentence, lemma_sort_index, nlp, de_dictionary, lemma_override_rules, de_gcs_pos_tags, args, **kwargs)
                 csv_row[11] = "<br>".join(lemmas) if wordlist_use_br else "\n".join(lemmas)
             csv_row[12] = source_sentence
-            if tertiary_text_path and content_line_idx < len(tertiary_text_lines):
-                csv_row[77] = " ".join(line.strip() for line in tertiary_text_lines[context_start_index:content_line_idx])
-                csv_row[78] = tertiary_text_lines[content_line_idx].strip()
-                csv_row[79] = " ".join(line.strip() for line in tertiary_text_lines[content_line_idx + 1:context_end_index])
+            
+            if tertiary_text_path and content_line_idx < len(tertiary_content_lines):
+                csv_row[77] = " ".join(line.strip() for line in tertiary_content_lines[context_start_index:content_line_idx])
+                csv_row[78] = tertiary_content_lines[content_line_idx].strip()
+                csv_row[79] = " ".join(line.strip() for line in tertiary_content_lines[content_line_idx + 1:context_end_index])
+            
             if add_sentence_index_col:
                 csv_row[80] = str(content_line_idx + 1).zfill(6)
             if language == "de":

@@ -2,7 +2,7 @@ import sys
 import spacy
 import csv
 import argparse
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 import re
 from contextlib import redirect_stdout
@@ -511,6 +511,7 @@ def process_parallel_text_files(
     lemma_to_shortest_form, lemma_to_sentence_info = {}, {}
     deck_stack = []
     header_counter = 1
+    base_timestamp = datetime.now()
 
     if args.anki_markdown_decks:
         root_deck_prefix = ""
@@ -539,7 +540,9 @@ def process_parallel_text_files(
                 while len(deck_stack) >= actual_level:
                     deck_stack.pop()
                 if sanitized_title:
-                    deck_stack.append(f"{header_counter:03d}-{sanitized_title}")
+                    current_timestamp_obj = base_timestamp + timedelta(seconds=header_counter)
+                    timestamp_prefix = current_timestamp_obj.strftime('%Y%m%d%H%M%S')
+                    deck_stack.append(f"{timestamp_prefix}-{sanitized_title}")
                     header_counter += 1
                 continue
         
@@ -740,6 +743,7 @@ def process_single_text(
     text_units = []
     deck_map = {}
     header_counter = 1
+    base_timestamp = datetime.now()
 
     if args.anki_markdown_decks and is_multiline_from_file:
         deck_stack = []
@@ -765,7 +769,9 @@ def process_single_text(
                 while len(deck_stack) >= actual_level:
                     deck_stack.pop()
                 if sanitized_title:
-                    deck_stack.append(f"{header_counter:03d}-{sanitized_title}")
+                    current_timestamp_obj = base_timestamp + timedelta(seconds=header_counter)
+                    timestamp_prefix = current_timestamp_obj.strftime('%Y%m%d%H%M%S')
+                    deck_stack.append(f"{timestamp_prefix}-{sanitized_title}")
                     header_counter += 1
             else:
                 deck_map[len(text_units)] = "::".join(deck_stack)
@@ -993,6 +999,8 @@ def process_parallel_sentences_to_csv(
 
         deck_stack = []
         header_counter = 1
+        base_timestamp = datetime.now()
+
         if args.anki_markdown_decks:
             root_deck_prefix = ""
             if args.anki_create_subdecks:
@@ -1020,7 +1028,9 @@ def process_parallel_sentences_to_csv(
                     while len(deck_stack) >= actual_level:
                         deck_stack.pop()
                     if sanitized_title:
-                        deck_stack.append(f"{header_counter:03d}-{sanitized_title}")
+                        current_timestamp_obj = base_timestamp + timedelta(seconds=header_counter)
+                        timestamp_prefix = current_timestamp_obj.strftime('%Y%m%d%H%M%S')
+                        deck_stack.append(f"{timestamp_prefix}-{sanitized_title}")
                         header_counter += 1
                     continue
 

@@ -31,10 +31,11 @@ set "KARDENWORT_RUNNER_SCRIPT=%CFG_kardenwort_workspace%/%CFG_source_code_dir%/%
 :: ============================================================================
 echo Running extraction in different modes...
 
+set "EXTRA_DECK_ARGS=--anki-create-subdecks --anki-markdown-decks --anki-sentence-subdecks"
+
 echo.
 echo Triple sentence mode...
-:: Run the first script, now with the --suspend-cards flag
-for /f "delims=" %%F in ('call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language de --type sentence --mode triple --anki-create-subdecks --anki-markdown-decks --suspend-cards') do (
+for /f "delims=" %%F in ('call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language de --type sentence --mode triple %EXTRA_DECK_ARGS% --suspend-cards') do (
     set "SENTENCE_FILENAME=%%F"
 )
 
@@ -43,17 +44,14 @@ if not defined SENTENCE_FILENAME (
     goto :error
 )
 
-:: Derive the parent deck name from the first script's output filename.
 set "TEMP_DECK_NAME=%SENTENCE_FILENAME:.tsv=%"
 set "PARENT_DECK_NAME=%TEMP_DECK_NAME:.sentence=%"
-
 
 echo Parent Deck Name for this session is: %PARENT_DECK_NAME%
 
 echo.
 echo Triple word mode...
-:: Run the second script, passing the parent deck name and the --suspend-cards flag
-call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language de --type word --mode triple --anki-create-subdecks --anki-markdown-decks --anki-parent-deck "%PARENT_DECK_NAME%" --suspend-cards
+call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language de --type word --mode triple %EXTRA_DECK_ARGS% --anki-parent-deck "%PARENT_DECK_NAME%" --suspend-cards
 if errorlevel 1 goto :error
 
 echo.

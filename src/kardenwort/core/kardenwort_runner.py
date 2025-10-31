@@ -111,6 +111,9 @@ def get_script_args(args, python_path, workspace_path, config):
 
     if args.anki_markdown_decks:
         base_args.append("--anki-markdown-decks")
+    
+    if args.anki_sentence_subdecks:
+        base_args.append("--anki-sentence-subdecks")
 
     if args.language == "de":
         de_dictionary_file = config.get('language_resources', 'dictionary_file_de', fallback='german.dic')
@@ -189,6 +192,7 @@ def main():
     parser.add_argument("--de-gcs-pos-tags", nargs='+', help="Specify POS tags for GCS (e.g., 'NOUN PROPN' or '!VERB').")
     parser.add_argument("--anki-create-subdecks", action="store_true", help="Automatically generate a parent deck and sub-decks for Anki based on the output filename.")
     parser.add_argument("--anki-markdown-decks", action="store_true", help="Parse Markdown headers in source text to create a hierarchical deck structure in Anki.")
+    parser.add_argument("--anki-sentence-subdecks", action="store_true", help="Create a final subdeck level for each sentence.")
     parser.add_argument("--anki-parent-deck", type=str, help="Specify the parent deck name, used by subsequent calls in a batch process to ensure a shared parent deck.")
     parser.add_argument("--suspend-cards", action="store_true", help="Suspend all newly imported/updated cards in Anki.")
     

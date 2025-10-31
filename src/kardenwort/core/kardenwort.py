@@ -569,6 +569,13 @@ def process_parallel_text_files(
         final_deck = base_deck
         if args.anki_markdown_decks and active_header_line_index in branch_header_lines:
             final_deck = f"{base_deck}::{deck_stack[-1]}"
+        
+        if args.anki_sentence_subdecks:
+            sentence_prefix = str(content_line_idx + 1).zfill(6)
+            sentence_slug = generate_filename_prefix_from_text(source_sentence, 4)
+            if sentence_slug:
+                sentence_deck_name = f"{sentence_prefix}-{sentence_slug}"
+                final_deck = f"{final_deck}::{sentence_deck_name}"
 
         doc = nlp(source_sentence)
         separable_verb_map = find_separable_verb_particle_pairs(doc)
@@ -799,6 +806,14 @@ def process_single_text(
                 final_deck = base_deck
                 if active_header_line_index in branch_header_lines:
                     final_deck = f"{base_deck}::{deck_stack[-1]}"
+                
+                if args.anki_sentence_subdecks:
+                    sentence_prefix = str(len(text_units) + 1).zfill(6)
+                    sentence_slug = generate_filename_prefix_from_text(line, 4)
+                    if sentence_slug:
+                        sentence_deck_name = f"{sentence_prefix}-{sentence_slug}"
+                        final_deck = f"{final_deck}::{sentence_deck_name}"
+
                 deck_map[len(text_units)] = final_deck
                 text_units.append(line)
     else:
@@ -1100,6 +1115,14 @@ def process_parallel_sentences_to_csv(
                 final_deck = base_deck
                 if active_header_line_index in branch_header_lines:
                     final_deck = f"{base_deck}::{deck_stack[-1]}"
+                
+                if args.anki_sentence_subdecks:
+                    sentence_prefix = str(content_line_idx + 1).zfill(6)
+                    sentence_slug = generate_filename_prefix_from_text(source_sentence, 4)
+                    if sentence_slug:
+                        sentence_deck_name = f"{sentence_prefix}-{sentence_slug}"
+                        final_deck = f"{final_deck}::{sentence_deck_name}"
+                
                 csv_row[81] = final_deck
             elif full_deck_name:
                 csv_row[81] = full_deck_name
@@ -1171,6 +1194,7 @@ def main():
     output_format_group.add_argument("--sentence-context-size", type=int, default=1, help="The number of sentences to include before and after the source sentence as context.")
     output_format_group.add_argument("--anki-create-subdecks", action="store_true", help="Automatically generate a parent deck and sub-decks for Anki based on the output filename.")
     output_format_group.add_argument("--anki-markdown-decks", action="store_true", help="Parse Markdown headers in source text to create a hierarchical deck structure in Anki.")
+    output_format_group.add_argument("--anki-sentence-subdecks", action="store_true", help="Create a final subdeck level for each sentence. Requires --anki-markdown-decks.")
     output_format_group.add_argument("--anki-parent-deck", help="Manually specify the parent deck name, overriding the auto-generated one. Requires --anki-create-subdecks.")
     stdout_group = parser.add_argument_group('Standard Output (STDOUT) Arguments (used only if --output is not specified)')
     output_format_group.add_argument("--stdout-format", choices=['list', 'context', 'tsv', 'html'], default='list', 

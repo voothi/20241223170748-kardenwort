@@ -514,14 +514,14 @@ def process_parallel_text_files(
     target_content_lines = []
     if target_text_path:
         with open(target_text_path, "r", encoding="utf-8") as f2:
-            target_content_lines = [line.rstrip("\n") for line in f2 if line.strip() and not line.strip().startswith('#')]
+            target_content_lines = [line.rstrip("\n") for line in f2 if line.strip()]
 
     tertiary_content_lines = []
     if tertiary_text_path:
         with open(tertiary_text_path, "r", encoding="utf-8") as f3:
-            tertiary_content_lines = [line.rstrip("\n") for line in f3 if line.strip() and not line.strip().startswith('#')]
+            tertiary_content_lines = [line.rstrip("\n") for line in f3 if line.strip()]
 
-    source_content_lines = [line for line in source_text_lines_all if line.strip() and not line.strip().startswith('#')]
+    source_content_lines = [line for line in source_text_lines_all if line.strip()]
 
     lemma_to_shortest_form, lemma_to_sentence_info = {}, {}
     deck_stack = []
@@ -560,7 +560,7 @@ def process_parallel_text_files(
                 if sanitized_title:
                     deck_stack.append(f"{100000 + header_counter}-{sanitized_title}")
                     header_counter += 1
-                continue
+                source_line = title
         
         content_line_idx += 1
         source_sentence = source_line
@@ -801,21 +801,22 @@ def process_single_text(
                 if sanitized_title:
                     deck_stack.append(f"{100000 + header_counter}-{sanitized_title}")
                     header_counter += 1
-            else:
-                base_deck = "::".join(deck_stack)
-                final_deck = base_deck
-                if active_header_line_index in branch_header_lines:
-                    final_deck = f"{base_deck}::{deck_stack[-1]}"
-                
-                if args.anki_sentence_subdecks:
-                    sentence_prefix = str(len(text_units) + 1).zfill(6)
-                    sentence_slug = generate_filename_prefix_from_text(line, 4)
-                    if sentence_slug:
-                        sentence_deck_name = f"{sentence_prefix}-{sentence_slug}"
-                        final_deck = f"{final_deck}::{sentence_deck_name}"
+                line = title
+            
+            base_deck = "::".join(deck_stack)
+            final_deck = base_deck
+            if active_header_line_index in branch_header_lines:
+                final_deck = f"{base_deck}::{deck_stack[-1]}"
+            
+            if args.anki_sentence_subdecks:
+                sentence_prefix = str(len(text_units) + 1).zfill(6)
+                sentence_slug = generate_filename_prefix_from_text(line, 4)
+                if sentence_slug:
+                    sentence_deck_name = f"{sentence_prefix}-{sentence_slug}"
+                    final_deck = f"{final_deck}::{sentence_deck_name}"
 
-                deck_map[len(text_units)] = final_deck
-                text_units.append(line)
+            deck_map[len(text_units)] = final_deck
+            text_units.append(line)
     else:
         if is_multiline_from_file:
             text_units = [line for line in source_lines if line.strip()]
@@ -1008,16 +1009,16 @@ def process_parallel_sentences_to_csv(
         target_content_lines = []
         if target_text_path:
             with open(target_text_path, "r", encoding="utf-8") as f:
-                target_content_lines = [line.rstrip("\n") for line in f if line.strip() and not line.strip().startswith('#')]
+                target_content_lines = [line.rstrip("\n") for line in f if line.strip()]
         
         tertiary_content_lines = []
         if tertiary_text_path:
             with open(tertiary_text_path, "r", encoding="utf-8") as f:
-                tertiary_content_lines = [line.rstrip("\n") for line in f if line.strip() and not line.strip().startswith('#')]
+                tertiary_content_lines = [line.rstrip("\n") for line in f if line.strip()]
     except IOError as e:
         print(f"Error reading files: {e}", file=sys.stderr); sys.exit(1)
 
-    source_content_lines = [line for line in source_text_lines_all if line.strip() and not line.strip().startswith('#')]
+    source_content_lines = [line for line in source_text_lines_all if line.strip()]
 
     full_deck_name = ""
     if args.anki_create_subdecks and not args.anki_markdown_decks:
@@ -1072,7 +1073,7 @@ def process_parallel_sentences_to_csv(
                     if sanitized_title:
                         deck_stack.append(f"{100000 + header_counter}-{sanitized_title}")
                         header_counter += 1
-                    continue
+                    source_line = title
 
             content_line_idx += 1
             if content_line_idx >= len(target_content_lines): break

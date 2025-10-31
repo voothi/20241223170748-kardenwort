@@ -210,6 +210,14 @@ def main():
 
     stdout_output, stderr_output = script_process.communicate()
     
+    if script_process.returncode != 0:
+        print_debug(f"ERROR: The extraction script failed with exit code {script_process.returncode}.")
+        if stderr_output:
+            print_debug("--- stderr from kardenwort.py ---")
+            print_debug(stderr_output)
+            print_debug("---------------------------------")
+        sys.exit(1)
+
     output_lines = stdout_output.strip().splitlines()
     if not output_lines:
         print_debug("ERROR: No output filename was captured from the script.")
@@ -223,22 +231,6 @@ def main():
 
     print_debug(f"Processing file: {output_filename_basename}")
 
-    # --- Anki Importer Logic ---
-    full_deck_name = ""
-    if args.anki_create_subdecks and not args.anki_markdown_decks:
-        sub_deck_name = os.path.splitext(output_filename_basename)[0]
-        if args.anki_parent_deck:
-            parent_deck_name = args.anki_parent_deck
-        else:
-            parent_deck_name = re.sub(r'\.(word|sentence)', '', sub_deck_name)
-
-        if parent_deck_name != sub_deck_name:
-            full_deck_name = f"{parent_deck_name}::{sub_deck_name}"
-        else:
-            full_deck_name = parent_deck_name
-    elif not args.anki_markdown_decks:
-        full_deck_name = os.path.splitext(output_filename_basename)[0]
-
     importer_script = config.get('scripts', 'importer_script_filename', fallback='anki-csv-importer.py')
     note_type = config.get('anki_importer_settings', 'note_type', fallback='Basic')
     output_dir_name = config.get('project_structure', 'generated_results_dir', fallback='results')
@@ -250,9 +242,25 @@ def main():
         "--note", note_type,
     ]
     
-    if full_deck_name:
-        importer_command.extend(["--deck", full_deck_name])
-    
+    single_deck_name_for_importer = ""
+    if not args.anki_markdown_decks:
+        if args.anki_create_subdecks:
+            sub_deck_name = os.path.splitext(output_filename_basename)[0]
+            if args.anki_parent_deck:
+                parent_deck_name = args.anki_parent_deck
+            else:
+                parent_deck_name = re.sub(r'\.(word|sentence)', '', sub_deck_name)
+
+            if parent_deck_name != sub_deck_name:
+                single_deck_name_for_importer = f"{parent_deck_name}::{sub_deck_name}"
+            else:
+                single_deck_name_for_importer = parent_deck_name
+        else:
+            single_deck_name_for_importer = os.path.splitext(output_filename_basename)[0]
+
+    if single_deck_name_for_importer:
+        importer_command.extend(["--deck", single_deck_name_for_importer])
+
     if args.suspend_cards:
         importer_command.append("--suspend")
 

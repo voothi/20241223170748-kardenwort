@@ -109,8 +109,8 @@ def get_script_args(args, python_path, workspace_path, config):
         if args.anki_parent_deck:
             base_args.extend(["--anki-parent-deck", args.anki_parent_deck])
 
-    if args.anki_markdown_subdecks:
-        base_args.append("--anki-markdown-subdecks")
+    if args.anki_markdown_decks:
+        base_args.append("--anki-markdown-decks")
 
     if args.language == "de":
         de_dictionary_file = config.get('language_resources', 'dictionary_file_de', fallback='german.dic')
@@ -188,7 +188,7 @@ def main():
     parser.add_argument("--de-gcs", action='store_true', help="Enable German Compound Splitting (only effective when --language is 'de').")
     parser.add_argument("--de-gcs-pos-tags", nargs='+', help="Specify POS tags for GCS (e.g., 'NOUN PROPN' or '!VERB').")
     parser.add_argument("--anki-create-subdecks", action="store_true", help="Automatically generate a parent deck and sub-decks for Anki based on the output filename.")
-    parser.add_argument("--anki-markdown-subdecks", action="store_true", help="Create hierarchical sub-decks based on Markdown headers in the source text file.")
+    parser.add_argument("--anki-markdown-decks", action="store_true", help="Parse Markdown headers in source text to create a hierarchical deck structure in Anki.")
     parser.add_argument("--anki-parent-deck", type=str, help="Specify the parent deck name, used by subsequent calls in a batch process to ensure a shared parent deck.")
     parser.add_argument("--suspend-cards", action="store_true", help="Suspend all newly imported/updated cards in Anki.")
     
@@ -223,12 +223,9 @@ def main():
 
     print_debug(f"Processing file: {output_filename_basename}")
 
-    importer_script = config.get('scripts', 'importer_script_filename', fallback='anki-csv-importer.py')
-    note_type = config.get('anki_importer_settings', 'note_type', fallback='Basic')
-    output_dir_name = config.get('project_structure', 'generated_results_dir', fallback='results')
-
-    base_deck_name = ""
-    if args.anki_create_subdecks:
+    # --- Anki Importer Logic ---
+    full_deck_name = ""
+    if args.anki_create_subdecks and not args.anki_markdown_decks:
         sub_deck_name = os.path.splitext(output_filename_basename)[0]
         if args.anki_parent_deck:
             parent_deck_name = args.anki_parent_deck
@@ -236,25 +233,28 @@ def main():
             parent_deck_name = re.sub(r'\.(word|sentence)', '', sub_deck_name)
 
         if parent_deck_name != sub_deck_name:
-            base_deck_name = f"{parent_deck_name}::{sub_deck_name}"
+            full_deck_name = f"{parent_deck_name}::{sub_deck_name}"
         else:
-            base_deck_name = parent_deck_name
-    else:
-        base_deck_name = os.path.splitext(output_filename_basename)[0]
-    
+            full_deck_name = parent_deck_name
+    elif not args.anki_markdown_decks:
+        full_deck_name = os.path.splitext(output_filename_basename)[0]
+
+    importer_script = config.get('scripts', 'importer_script_filename', fallback='anki-csv-importer.py')
+    note_type = config.get('anki_importer_settings', 'note_type', fallback='Basic')
+    output_dir_name = config.get('project_structure', 'generated_results_dir', fallback='results')
+
     importer_command = [
         str(python_path),
         str(importer_workspace / importer_script),
         "--path", str(workspace_path / output_dir_name / output_filename_basename),
-        "--deck", base_deck_name,
         "--note", note_type,
     ]
     
+    if full_deck_name:
+        importer_command.extend(["--deck", full_deck_name])
+    
     if args.suspend_cards:
         importer_command.append("--suspend")
-
-    if args.anki_markdown_subdecks:
-        importer_command.extend(["--deck-from-field", "Deck"])
 
     print_debug(f"Running importer with command:\n{' '.join(map(str, importer_command))}\n")
     

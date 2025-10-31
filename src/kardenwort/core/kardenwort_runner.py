@@ -227,36 +227,34 @@ def main():
     note_type = config.get('anki_importer_settings', 'note_type', fallback='Basic')
     output_dir_name = config.get('project_structure', 'generated_results_dir', fallback='results')
 
+    base_deck_name = ""
+    if args.anki_create_subdecks:
+        sub_deck_name = os.path.splitext(output_filename_basename)[0]
+        if args.anki_parent_deck:
+            parent_deck_name = args.anki_parent_deck
+        else:
+            parent_deck_name = re.sub(r'\.(word|sentence)', '', sub_deck_name)
+
+        if parent_deck_name != sub_deck_name:
+            base_deck_name = f"{parent_deck_name}::{sub_deck_name}"
+        else:
+            base_deck_name = parent_deck_name
+    else:
+        base_deck_name = os.path.splitext(output_filename_basename)[0]
+    
     importer_command = [
         str(python_path),
         str(importer_workspace / importer_script),
         "--path", str(workspace_path / output_dir_name / output_filename_basename),
+        "--deck", base_deck_name,
         "--note", note_type,
     ]
     
     if args.suspend_cards:
         importer_command.append("--suspend")
-    
-    if not args.anki_markdown_subdecks:
-        full_deck_name = ""
-        if args.anki_create_subdecks:
-            sub_deck_name = os.path.splitext(output_filename_basename)[0]
-            if args.anki_parent_deck:
-                parent_deck_name = args.anki_parent_deck
-            else:
-                parent_deck_name = re.sub(r'\.(word|sentence)', '', sub_deck_name)
 
-            if parent_deck_name != sub_deck_name:
-                full_deck_name = f"{parent_deck_name}::{sub_deck_name}"
-            else:
-                full_deck_name = parent_deck_name
-        else:
-            full_deck_name = os.path.splitext(output_filename_basename)[0]
-        importer_command.extend(["--deck", full_deck_name])
-    else:
-        importer_command.append("--deck-from-field")
-        importer_command.append("Deck")
-
+    if args.anki_markdown_subdecks:
+        importer_command.extend(["--deck-from-field", "Deck"])
 
     print_debug(f"Running importer with command:\n{' '.join(map(str, importer_command))}\n")
     

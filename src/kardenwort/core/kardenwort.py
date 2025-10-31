@@ -359,6 +359,21 @@ def deduplicate_lemmas(candidate_lemmas):
             
     return final_lemmas
 
+def parse_markdown_for_branch_headers(all_lines):
+    branch_header_indices = set()
+    last_header_level = 0
+    last_header_index = -1
+    for i, line in enumerate(all_lines):
+        line = line.strip()
+        if line.startswith('#'):
+            match = re.match(r'^(#+)', line)
+            current_level = len(match.group(1))
+            if current_level > last_header_level and last_header_index != -1:
+                branch_header_indices.add(last_header_index)
+            last_header_level = current_level
+            last_header_index = i
+    return branch_header_indices
+
 def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, de_dictionary, lemma_override_rules, de_gcs_pos_tags, args, **kwargs):
     de_gcs = kwargs.get('de_gcs', False)
     gcs_automaton = kwargs.get('gcs_automaton', None)
@@ -511,8 +526,10 @@ def process_parallel_text_files(
     lemma_to_shortest_form, lemma_to_sentence_info = {}, {}
     deck_stack = []
     header_counter = 1
-
+    
+    branch_header_lines = set()
     if args.anki_markdown_decks:
+        branch_header_lines = parse_markdown_for_branch_headers(source_text_lines_all)
         root_deck_prefix = ""
         if args.anki_create_subdecks:
             if args.anki_parent_deck:
@@ -524,13 +541,15 @@ def process_parallel_text_files(
             deck_stack.append(root_deck_prefix)
 
     content_line_idx = -1
-    for source_line in source_text_lines_all:
+    active_header_line_index = -1
+    for line_index, source_line in enumerate(source_text_lines_all):
         source_line = source_line.strip()
         if not source_line: continue
 
         if args.anki_markdown_decks:
             header_match = re.match(r'^(#+)\s+(.*)', source_line)
             if header_match:
+                active_header_line_index = line_index
                 level = len(header_match.group(1))
                 title = header_match.group(2).strip()
                 sanitized_title = generate_filename_prefix_from_text(title, 5)
@@ -545,7 +564,11 @@ def process_parallel_text_files(
         
         content_line_idx += 1
         source_sentence = source_line
-        current_deck = "::".join(deck_stack)
+        
+        base_deck = "::".join(deck_stack)
+        final_deck = base_deck
+        if args.anki_markdown_decks and active_header_line_index in branch_header_lines:
+            final_deck = f"{base_deck}::{deck_stack[-1]}"
 
         doc = nlp(source_sentence)
         separable_verb_map = find_separable_verb_particle_pairs(doc)
@@ -651,10 +674,10 @@ def process_parallel_text_files(
                     if lemma:
                         if lemma not in lemma_to_shortest_form:
                             lemma_to_shortest_form[lemma] = source_word_form
-                            lemma_to_sentence_info[lemma] = (content_line_idx, source_sentence, current_deck)
+                            lemma_to_sentence_info[lemma] = (content_line_idx, source_sentence, final_deck)
                         elif len(source_word_form) < len(lemma_to_shortest_form[lemma]):
                              lemma_to_shortest_form[lemma] = source_word_form
-                             lemma_to_sentence_info[lemma] = (content_line_idx, source_sentence, current_deck)
+                             lemma_to_sentence_info[lemma] = (content_line_idx, source_sentence, final_deck)
 
     sorted_words = sorted(list(lemma_to_shortest_form.keys()), key=lambda word: (word not in lemma_sort_index, lemma_sort_index.get(word, 0), word.lower()))
     if output_file_path:
@@ -740,8 +763,11 @@ def process_single_text(
     text_units = []
     deck_map = {}
     header_counter = 1
+    branch_header_lines = set()
+    active_header_line_index = -1
 
     if args.anki_markdown_decks and is_multiline_from_file:
+        branch_header_lines = parse_markdown_for_branch_headers(source_lines)
         deck_stack = []
         root_deck_prefix = ""
         if args.anki_create_subdecks:
@@ -753,11 +779,12 @@ def process_single_text(
         if root_deck_prefix:
             deck_stack.append(root_deck_prefix)
 
-        for line in source_lines:
+        for line_index, line in enumerate(source_lines):
             line = line.strip()
             if not line: continue
             header_match = re.match(r'^(#+)\s+(.*)', line)
             if header_match:
+                active_header_line_index = line_index
                 level = len(header_match.group(1))
                 title = header_match.group(2).strip()
                 sanitized_title = generate_filename_prefix_from_text(title, 5)
@@ -768,7 +795,11 @@ def process_single_text(
                     deck_stack.append(f"{header_counter:04d}-{sanitized_title}")
                     header_counter += 1
             else:
-                deck_map[len(text_units)] = "::".join(deck_stack)
+                base_deck = "::".join(deck_stack)
+                final_deck = base_deck
+                if active_header_line_index in branch_header_lines:
+                    final_deck = f"{base_deck}::{deck_stack[-1]}"
+                deck_map[len(text_units)] = final_deck
                 text_units.append(line)
     else:
         if is_multiline_from_file:
@@ -993,7 +1024,9 @@ def process_parallel_sentences_to_csv(
 
         deck_stack = []
         header_counter = 1
+        branch_header_lines = set()
         if args.anki_markdown_decks:
+            branch_header_lines = parse_markdown_for_branch_headers(source_text_lines_all)
             root_deck_prefix = ""
             if args.anki_create_subdecks:
                 if args.anki_parent_deck:
@@ -1005,13 +1038,15 @@ def process_parallel_sentences_to_csv(
                 deck_stack.append(root_deck_prefix)
 
         content_line_idx = -1
-        for source_line in source_text_lines_all:
+        active_header_line_index = -1
+        for line_index, source_line in enumerate(source_text_lines_all):
             source_line = source_line.strip()
             if not source_line: continue
 
             if args.anki_markdown_decks:
                 header_match = re.match(r'^(#+)\s+(.*)', source_line)
                 if header_match:
+                    active_header_line_index = line_index
                     level = len(header_match.group(1))
                     title = header_match.group(2).strip()
                     sanitized_title = generate_filename_prefix_from_text(title, 5)
@@ -1061,7 +1096,11 @@ def process_parallel_sentences_to_csv(
                 csv_row[56] = "1"; csv_row[65] = "1"
             
             if args.anki_markdown_decks:
-                csv_row[81] = "::".join(deck_stack)
+                base_deck = "::".join(deck_stack)
+                final_deck = base_deck
+                if active_header_line_index in branch_header_lines:
+                    final_deck = f"{base_deck}::{deck_stack[-1]}"
+                csv_row[81] = final_deck
             elif full_deck_name:
                 csv_row[81] = full_deck_name
                 

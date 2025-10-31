@@ -477,6 +477,30 @@ def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, de_
 
     return sorted(list(final_lemmas), key=lambda x: (x not in lemma_sort_index, lemma_sort_index.get(x, 0), x.lower()))
 
+def parse_text_with_markdown_decks(source_lines):
+    deck_path = []
+    content_map = {}
+    for i, line in enumerate(source_lines):
+        stripped_line = line.strip()
+        if not stripped_line:
+            continue
+
+        header_match = re.match(r'^(#+)\s+(.*)', stripped_line)
+        if header_match:
+            level = len(header_match.group(1))
+            title = header_match.group(2).strip()
+            title = re.sub(r'[\\/:\*\?"<>\|]', '_', title)
+
+            if level > len(deck_path):
+                deck_path.append(title)
+            else:
+                deck_path = deck_path[:level - 1]
+                deck_path.append(title)
+        else:
+            current_deck_name = "::".join(deck_path)
+            content_map[i] = (line, current_deck_name)
+    return content_map
+
 def process_parallel_text_files(
     source_text_path, lemma_sort_index, language, target_text_path, tertiary_text_path, sentence_context_size,
     output_file_path, add_source_word_col, add_wordlist_col, add_sentence_index_col,
@@ -502,8 +526,19 @@ def process_parallel_text_files(
     if tertiary_text_path:
         with open(tertiary_text_path, "r", encoding="utf-8") as f3: tertiary_text_lines = [line.rstrip("\n") for line in f3]
 
+    content_map = {}
+    if args.anki_markdown_subdecks:
+        content_map = parse_text_with_markdown_decks(source_text_lines)
+
     lemma_to_shortest_form, lemma_to_sentence_info = {}, {}
-    for i, source_sentence in enumerate(source_text_lines):
+    for i, original_source_sentence in enumerate(source_text_lines):
+        source_sentence = original_source_sentence
+        markdown_deck_part = ""
+        if args.anki_markdown_subdecks:
+            if i not in content_map:
+                continue
+            source_sentence, markdown_deck_part = content_map[i]
+        
         doc = nlp(source_sentence)
         separable_verb_map = find_separable_verb_particle_pairs(doc)
         processed_particle_indices = {p.i for p in separable_verb_map.values()}
@@ -608,13 +643,13 @@ def process_parallel_text_files(
                     if lemma:
                         if lemma not in lemma_to_shortest_form:
                             lemma_to_shortest_form[lemma] = source_word_form
-                            lemma_to_sentence_info[lemma] = (i, source_sentence)
+                            lemma_to_sentence_info[lemma] = (i, source_sentence, markdown_deck_part)
                         elif len(source_word_form) < len(lemma_to_shortest_form[lemma]):
                              lemma_to_shortest_form[lemma] = source_word_form
 
     sorted_words = sorted(list(lemma_to_shortest_form.keys()), key=lambda word: (word not in lemma_sort_index, lemma_sort_index.get(word, 0), word.lower()))
     if output_file_path:
-        full_deck_name = ""
+        base_deck_name = ""
         if args.anki_create_subdecks:
             sub_deck_name = os.path.splitext(os.path.basename(output_file_path))[0]
             if args.anki_parent_deck:
@@ -623,9 +658,9 @@ def process_parallel_text_files(
                 parent_deck_name = re.sub(r'\.(word|sentence)', '', sub_deck_name)
             
             if parent_deck_name != sub_deck_name:
-                full_deck_name = f"{parent_deck_name}::{sub_deck_name}"
+                base_deck_name = f"{parent_deck_name}::{sub_deck_name}"
             else:
-                full_deck_name = parent_deck_name
+                base_deck_name = parent_deck_name
 
         with open(output_file_path, "w", newline="", encoding="utf-8") as tsvfile:
             tsv_writer = csv.writer(tsvfile, delimiter="\t")
@@ -634,7 +669,7 @@ def process_parallel_text_files(
 
             for word in sorted_words:
                 csv_row = [""] * 82
-                sentence_index, source_sentence = lemma_to_sentence_info.get(word, (-1, ""))
+                sentence_index, source_sentence, markdown_deck_part = lemma_to_sentence_info.get(word, (-1, "", ""))
                 if sentence_index == -1: continue
                 source_sentence = source_sentence.strip()
                 target_sentence = target_text_lines[sentence_index].strip() if target_text_path and sentence_index < len(target_text_lines) else ""
@@ -665,8 +700,16 @@ def process_parallel_text_files(
                     csv_row[58] = "1"; csv_row[65] = "1"
                 elif language == "en":
                     csv_row[56] = "1"; csv_row[65] = "1"
+                
+                full_deck_name = base_deck_name
+                if args.anki_markdown_subdecks and markdown_deck_part:
+                    if full_deck_name:
+                        full_deck_name = f"{full_deck_name}::{markdown_deck_part}"
+                    else:
+                        full_deck_name = markdown_deck_part
                 if full_deck_name:
                     csv_row[81] = full_deck_name
+
                 tsv_writer.writerow(csv_row)
     return output_file_path
 
@@ -683,8 +726,16 @@ def process_single_text(
     de_gcs_preserve_compound_word = kwargs.get('de_gcs_preserve_compound_word', False)
     de_gcs_skip_merge_fractions = kwargs.get('de_gcs_skip_merge_fractions', False)
 
+    content_map = {}
+    original_text_lines = []
+    
     if '\n' in source_text.strip():
-        text_units = source_text.splitlines()
+        original_text_lines = source_text.splitlines()
+        if args.anki_markdown_subdecks:
+            content_map = parse_text_with_markdown_decks(original_text_lines)
+            text_units = [item[0] for item in content_map.values()]
+        else:
+            text_units = original_text_lines
         is_processing_by_line = True
     else:
         doc = nlp(source_text)
@@ -695,6 +746,17 @@ def process_single_text(
 
     for unit_index, text_unit in enumerate(text_units):
         unit_text = text_unit if is_processing_by_line else text_unit.text
+        
+        markdown_deck_part = ""
+        if args.anki_markdown_subdecks and is_processing_by_line:
+            # Find the original index and deck from content_map
+            original_index = -1
+            for idx, (line_content, _) in content_map.items():
+                if line_content == text_unit: # This is a simplification; might fail with duplicate lines
+                    original_index = idx
+                    markdown_deck_part = content_map[original_index][1]
+                    break
+        
         unit_doc = nlp(unit_text)
 
         separable_verb_map = find_separable_verb_particle_pairs(unit_doc)
@@ -800,7 +862,7 @@ def process_single_text(
                     if lemma:
                         if lemma not in lemma_to_shortest_form:
                             lemma_to_shortest_form[lemma] = source_word_form
-                            lemma_to_sentence_info[lemma] = (unit_index, text_unit)
+                            lemma_to_sentence_info[lemma] = (unit_index, text_unit, markdown_deck_part)
                         elif len(source_word_form) < len(lemma_to_shortest_form[lemma]):
                              lemma_to_shortest_form[lemma] = source_word_form
 
@@ -819,7 +881,7 @@ def process_single_text(
                 print(f"{word}\t{lemma_to_shortest_form.get(word, '')}", file=sys.stdout)
         elif args.stdout_format == 'context':
              for word in sorted_words:
-                unit_index, source_sentence_unit = lemma_to_sentence_info[word]
+                unit_index, source_sentence_unit, _ = lemma_to_sentence_info[word]
                 source_sentence = get_unit_text(source_sentence_unit)
                 context_start_index = max(0, unit_index - sentence_context_size)
                 context_end_index = min(len(text_units), unit_index + sentence_context_size + 1)
@@ -835,7 +897,7 @@ def process_single_text(
                 print(word, file=sys.stdout)
         return None
 
-    full_deck_name = ""
+    base_deck_name = ""
     if args.anki_create_subdecks and output_file_path:
         sub_deck_name = os.path.splitext(os.path.basename(output_file_path))[0]
         if args.anki_parent_deck:
@@ -844,9 +906,9 @@ def process_single_text(
             parent_deck_name = re.sub(r'\.(word|sentence)', '', sub_deck_name)
 
         if parent_deck_name != sub_deck_name:
-            full_deck_name = f"{parent_deck_name}::{sub_deck_name}"
+            base_deck_name = f"{parent_deck_name}::{sub_deck_name}"
         else:
-            full_deck_name = parent_deck_name
+            base_deck_name = parent_deck_name
 
     with open(output_file_path, "w", newline="", encoding="utf-8") as tsvfile:
         tsv_writer = csv.writer(tsvfile, delimiter="\t")
@@ -855,7 +917,7 @@ def process_single_text(
 
         for word in sorted_words:
             csv_row = [""] * 82
-            unit_index, source_sentence_unit = lemma_to_sentence_info.get(word, (-1, ""))
+            unit_index, source_sentence_unit, markdown_deck_part = lemma_to_sentence_info.get(word, (-1, "", ""))
             if unit_index == -1: continue
             
             source_sentence = get_unit_text(source_sentence_unit).strip()
@@ -879,8 +941,16 @@ def process_single_text(
                 csv_row[58] = "1"; csv_row[65] = "1"
             elif language == "en":
                 csv_row[56] = "1"; csv_row[65] = "1"
+            
+            full_deck_name = base_deck_name
+            if args.anki_markdown_subdecks and markdown_deck_part:
+                if full_deck_name:
+                    full_deck_name = f"{full_deck_name}::{markdown_deck_part}"
+                else:
+                    full_deck_name = markdown_deck_part
             if full_deck_name:
                 csv_row[81] = full_deck_name
+                
             tsv_writer.writerow(csv_row)
 
     return output_file_path
@@ -904,7 +974,11 @@ def process_parallel_sentences_to_csv(
     if tertiary_text_path: lengths.append(len(tertiary_text_lines))
     min_length = min(lengths)
 
-    full_deck_name = ""
+    content_map = {}
+    if args.anki_markdown_subdecks:
+        content_map = parse_text_with_markdown_decks(source_text_lines)
+
+    base_deck_name = ""
     if args.anki_create_subdecks and output_file_path:
         sub_deck_name = os.path.splitext(os.path.basename(output_file_path))[0]
         if args.anki_parent_deck:
@@ -913,9 +987,9 @@ def process_parallel_sentences_to_csv(
             parent_deck_name = re.sub(r'\.(word|sentence)', '', sub_deck_name)
 
         if parent_deck_name != sub_deck_name:
-            full_deck_name = f"{parent_deck_name}::{sub_deck_name}"
+            base_deck_name = f"{parent_deck_name}::{sub_deck_name}"
         else:
-            full_deck_name = parent_deck_name
+            base_deck_name = parent_deck_name
 
     with open(output_file_path, "w", newline="", encoding="utf-8") as output_csv_file:
         tsv_writer = csv.writer(output_csv_file, delimiter="\t")
@@ -923,8 +997,17 @@ def process_parallel_sentences_to_csv(
             tsv_writer.writerow(get_anki_csv_header())
 
         for i in range(min_length):
+            markdown_deck_part = ""
+            if args.anki_markdown_subdecks:
+                if i not in content_map:
+                    continue
+                source_sentence, markdown_deck_part = content_map[i]
+            else:
+                source_sentence = source_text_lines[i].strip()
+            
+            if not source_sentence.strip(): continue
+
             csv_row = [""] * 82
-            source_sentence = source_text_lines[i].strip()
             target_sentence = target_text_lines[i].strip()
             context_start_index, context_end_index = max(0, i - sentence_context_size), i + sentence_context_size + 1
             csv_row[0] = source_sentence
@@ -948,8 +1031,16 @@ def process_parallel_sentences_to_csv(
                 csv_row[58] = "1"; csv_row[65] = "1"
             elif language == "en":
                 csv_row[56] = "1"; csv_row[65] = "1"
+            
+            full_deck_name = base_deck_name
+            if args.anki_markdown_subdecks and markdown_deck_part:
+                if full_deck_name:
+                    full_deck_name = f"{full_deck_name}::{markdown_deck_part}"
+                else:
+                    full_deck_name = markdown_deck_part
             if full_deck_name:
                 csv_row[81] = full_deck_name
+
             tsv_writer.writerow(csv_row)
     return output_file_path
 
@@ -1016,6 +1107,7 @@ def main():
     output_format_group.add_argument("--add-sentence-index-col", action="store_true", help="Add a column with the sentence index number, for sorting.")
     output_format_group.add_argument("--sentence-context-size", type=int, default=1, help="The number of sentences to include before and after the source sentence as context.")
     output_format_group.add_argument("--anki-create-subdecks", action="store_true", help="Automatically generate a parent deck and sub-decks for Anki based on the output filename.")
+    output_format_group.add_argument("--anki-markdown-subdecks", action="store_true", help="Create hierarchical sub-decks based on Markdown headers (#, ##, etc.) in the source text file.")
     output_format_group.add_argument("--anki-parent-deck", help="Manually specify the parent deck name, overriding the auto-generated one. Requires --anki-create-subdecks.")
     stdout_group = parser.add_argument_group('Standard Output (STDOUT) Arguments (used only if --output is not specified)')
     output_format_group.add_argument("--stdout-format", choices=['list', 'context', 'tsv', 'html'], default='list', 

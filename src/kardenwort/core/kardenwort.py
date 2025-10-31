@@ -558,7 +558,7 @@ def process_parallel_text_files(
                 while len(deck_stack) >= actual_level:
                     deck_stack.pop()
                 if sanitized_title:
-                    deck_stack.append(f"{header_counter:06d}-{sanitized_title}")
+                    deck_stack.append(f"{100000 + header_counter}-{sanitized_title}")
                     header_counter += 1
                 continue
         
@@ -799,7 +799,7 @@ def process_single_text(
                 while len(deck_stack) >= actual_level:
                     deck_stack.pop()
                 if sanitized_title:
-                    deck_stack.append(f"{header_counter:06d}-{sanitized_title}")
+                    deck_stack.append(f"{100000 + header_counter}-{sanitized_title}")
                     header_counter += 1
             else:
                 base_deck = "::".join(deck_stack)
@@ -1070,7 +1070,7 @@ def process_parallel_sentences_to_csv(
                     while len(deck_stack) >= actual_level:
                         deck_stack.pop()
                     if sanitized_title:
-                        deck_stack.append(f"{header_counter:06d}-{sanitized_title}")
+                        deck_stack.append(f"{100000 + header_counter}-{sanitized_title}")
                         header_counter += 1
                     continue
 

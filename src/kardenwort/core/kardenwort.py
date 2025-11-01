@@ -280,30 +280,90 @@ def read_text_from_file(file_path):
 
 def get_anki_csv_header():
     return [
-        "Quotation", "WordSource", "WordSourceInflectedForm", "WordDestination", "WordSourceContext",
-        "SentenceSourceContextLeft", "SentenceSource", "SentenceSourceContextRight",
-        "SentenceDestinationContextLeft", "SentenceDestination", "SentenceDestinationContextRight",
-        "SentenceSourceWordlist", "SentenceSourceCloze", "SentenceSourceRewriteAISentenceSource",
-        "SentenceSourceRewriteAISentenceDestination", "WordSourceMorphologyAI", "Note", "WordRussian",
-        "WordUkrainian", "WordEnglish", "WordGerman", "WordSourceMorphemeFirst",
-        "WordSourceMorphemeFirstDefinition", "WordSourceMorphemeSecond", "WordSourceMorphemeSecondDefinition",
-        "WordSourceMorphemeThird", "WordSourceMorphemeThirdDefinition", "WordSourceMorphemeFourth",
-        "WordSourceMorphemeFourthDefinition", "WordSourceMorphemeFifth", "WordSourceMorphemeFifthDefinition",
-        "WordSourceIPA", "WordSourceSynonymAI", "WordSourceDefinitionAISentenceSource",
-        "WordSourceDefinitionAISentenceDestination", "WordSourceDefinitionFirst",
-        "WordSourceDefinitionFirstClipping", "WordSourceDefinitionSecond", "WordDestinationDefinitionFirst",
-        "WordDestinationDefinitionSecond", "WordSourceAudio", "SentenceSourceIPA", "SentenceSourceAudio",
-        "Image", "WordSourceCloze", "WordSourceContextAI", "TextSource", "TextDestination",
-        "TextSourceURL", "SentenceEnglish", "SentenceGerman", "SentenceUkrainian", "SentenceRussian",
-        "Source", "SourceURL", "SeparatorAudio", "Source-en-GB", "Source-en-US", "Source-de-DE",
-        "Source-uk-UA", "Source-ru-RU", "Destination-en-GB", "Destination-en-US",
-        "Destination-de-DE", "Destination-uk-UA", "Destination-ru-RU", "Overlapping",
-        "ToggleAlwaysEmptyField", "Note ID", "am-all-morphs", "am-all-morphs-count",
-        "am-unknown-morphs", "am-unknown-morphs-count", "am-highlighted", "am-score",
-        "am-score-terms", "am-study-morphs", "SentenceDestination2ContextLeft",
-        "SentenceDestination2", "SentenceDestination2ContextRight", "SentenceSourceIndex",
+        "Quotation",                                    # 1
+        "WordSource",                                   # 2
+        "WordSourceInflectedForm",                      # 3
+        "WordDestination",                              # 4
+        "WordSourceContext",                            # 5
+        "SentenceSourceContextLeft",                    # 6
+        "SentenceSource",                               # 7
+        "SentenceSourceContextRight",                   # 8
+        "SentenceDestinationContextLeft",               # 9
+        "SentenceDestination",                          # 10
+        "SentenceDestinationContextRight",              # 11
+        "SentenceDestination2ContextLeft",              # 12
+        "SentenceDestination2",                         # 13
+        "SentenceDestination2ContextRight",             # 14
+        "SentenceSourceWordlist",                       # 15
+        "SentenceSourceCloze",                          # 16
+        "SentenceSourceRewriteAISentenceSource",
+        "SentenceSourceRewriteAISentenceDestination",
+        "WordSourceMorphologyAI",
+        "Note",
+        "WordRussian",
+        "WordUkrainian",
+        "WordEnglish",
+        "WordGerman",
+        "WordSourceMorphemeFirst",
+        "WordSourceMorphemeFirstDefinition",
+        "WordSourceMorphemeSecond",
+        "WordSourceMorphemeSecondDefinition",
+        "WordSourceMorphemeThird",
+        "WordSourceMorphemeThirdDefinition",
+        "WordSourceMorphemeFourth",
+        "WordSourceMorphemeFourthDefinition",
+        "WordSourceMorphemeFifth",
+        "WordSourceMorphemeFifthDefinition",
+        "WordSourceIPA",
+        "WordSourceSynonymAI",
+        "WordSourceDefinitionAISentenceSource",
+        "WordSourceDefinitionAISentenceDestination",
+        "WordSourceDefinitionFirst",
+        "WordSourceDefinitionFirstClipping",
+        "WordSourceDefinitionSecond",
+        "WordDestinationDefinitionFirst",
+        "WordDestinationDefinitionSecond",
+        "WordSourceAudio",
+        "SentenceSourceIPA",
+        "SentenceSourceAudio",
+        "Image",
+        "WordSourceCloze",
+        "WordSourceContextAI",
+        "TextSource",
+        "TextDestination",
+        "TextSourceURL",
+        "SentenceEnglish",
+        "SentenceGerman",
+        "SentenceUkrainian",
+        "SentenceRussian",
+        "Source",
+        "SourceURL",
+        "SeparatorAudio",
+        "Source-en-GB",
+        "Source-en-US",
+        "Source-de-DE",
+        "Source-uk-UA",
+        "Source-ru-RU",
+        "Destination-en-GB",
+        "Destination-en-US",
+        "Destination-de-DE",
+        "Destination-uk-UA",
+        "Destination-ru-RU",
+        "Overlapping",
+        "ToggleAlwaysEmptyField",
+        "Note ID",
+        "am-all-morphs",
+        "am-all-morphs-count",
+        "am-unknown-morphs",
+        "am-unknown-morphs-count",
+        "am-highlighted",
+        "am-score",
+        "am-score-terms",
+        "am-study-morphs",
+        "SentenceSourceIndex",
         "Deck"
     ]
+
 
 def generate_filename_prefix_from_text(text, word_count):
     if not text:
@@ -729,27 +789,27 @@ def process_parallel_text_files(
                     csv_row[10] = " ".join(line.strip() for line in target_content_lines[sentence_index + 1:context_end_index])
                 
                 if tertiary_text_path:
-                    csv_row[77] = " ".join(line.strip() for line in tertiary_content_lines[context_start_index:sentence_index])
-                    csv_row[78] = tertiary_content_lines[sentence_index].strip() if sentence_index < len(tertiary_content_lines) else ""
-                    csv_row[79] = " ".join(line.strip() for line in tertiary_content_lines[sentence_index + 1:context_end_index])
+                    csv_row[11] = " ".join(line.strip() for line in tertiary_content_lines[context_start_index:sentence_index])
+                    csv_row[12] = tertiary_content_lines[sentence_index].strip() if sentence_index < len(tertiary_content_lines) else ""
+                    csv_row[13] = " ".join(line.strip() for line in tertiary_content_lines[sentence_index + 1:context_end_index])
                 
                 csv_row[0] = word
                 csv_row[1] = word
                 if add_source_word_col:
                     csv_row[2] = lemma_to_shortest_form.get(word, '')
-                csv_row[12] = source_sentence
+                csv_row[15] = source_sentence 
                 if add_wordlist_col:
                     if source_sentence not in sentence_lemmas_cache:
                         wordlist_generation_args = {**kwargs, 'de_gcs': de_gcs, 'gcs_automaton': gcs_automaton, 'de_gcs_add_parts_to_wordlist': de_gcs_add_parts_to_wordlist}
                         lemmas = extract_lemmas_from_sentence(source_sentence, lemma_sort_index, nlp, de_dictionary, lemma_override_rules, de_gcs_pos_tags, args, **wordlist_generation_args)
                         sentence_lemmas_cache[source_sentence] = lemmas
-                    csv_row[11] = "<br>".join(sentence_lemmas_cache[source_sentence]) if wordlist_use_br else "\n".join(sentence_lemmas_cache[source_sentence])
+                    csv_row[14] = "<br>".join(sentence_lemmas_cache[source_sentence]) if wordlist_use_br else "\n".join(sentence_lemmas_cache[source_sentence])
                 if add_sentence_index_col:
                     csv_row[80] = str(sentence_index + 1).zfill(6)
                 if language == "de":
-                    csv_row[58] = "1"; csv_row[65] = "1"
+                    csv_row[61] = "1"; csv_row[66] = "1"
                 elif language == "en":
-                    csv_row[56] = "1"; csv_row[65] = "1"
+                    csv_row[59] = "1"; csv_row[65] = "1"
 
                 if args.anki_markdown_decks:
                     csv_row[81] = deck_name
@@ -1019,19 +1079,19 @@ def process_single_text(
             csv_row[1] = word
             if add_source_word_col:
                 csv_row[2] = lemma_to_shortest_form.get(word, '')
-            csv_row[12] = source_sentence
+            csv_row[15] = source_sentence
             if add_wordlist_col:
                 if source_sentence not in sentence_lemmas_cache:
                     wordlist_generation_args = {**kwargs, 'de_gcs': de_gcs, 'gcs_automaton': gcs_automaton, 'de_gcs_add_parts_to_wordlist': de_gcs_add_parts_to_wordlist}
                     lemmas = extract_lemmas_from_sentence(source_sentence, lemma_sort_index, nlp, de_dictionary, lemma_override_rules, de_gcs_pos_tags, args, **wordlist_generation_args)
                     sentence_lemmas_cache[source_sentence] = lemmas
-                csv_row[11] = "<br>".join(sentence_lemmas_cache[source_sentence]) if wordlist_use_br else "\n".join(sentence_lemmas_cache[source_sentence])
+                csv_row[14] = "<br>".join(sentence_lemmas_cache[source_sentence]) if wordlist_use_br else "\n".join(sentence_lemmas_cache[source_sentence])
             if add_sentence_index_col:
                 csv_row[80] = str(unit_index + 1).zfill(6)
             if language == "de":
-                csv_row[58] = "1"; csv_row[65] = "1"
+                csv_row[61] = "1"; csv_row[66] = "1"
             elif language == "en":
-                csv_row[56] = "1"; csv_row[65] = "1"
+                csv_row[59] = "1"; csv_row[65] = "1"
 
             if args.anki_markdown_decks:
                 csv_row[81] = deck_name
@@ -1141,20 +1201,20 @@ def process_parallel_sentences_to_csv(
             
             if add_wordlist_col:
                 lemmas = extract_lemmas_from_sentence(source_sentence, lemma_sort_index, nlp, de_dictionary, lemma_override_rules, de_gcs_pos_tags, args, **kwargs)
-                csv_row[11] = "<br>".join(lemmas) if wordlist_use_br else "\n".join(lemmas)
-            csv_row[12] = source_sentence
+                csv_row[14] = "<br>".join(lemmas) if wordlist_use_br else "\n".join(lemmas)
+            csv_row[15] = source_sentence
             
             if tertiary_text_path and content_line_idx < len(tertiary_content_lines):
-                csv_row[77] = " ".join(line.strip() for line in tertiary_content_lines[context_start_index:content_line_idx])
-                csv_row[78] = tertiary_content_lines[content_line_idx].strip()
-                csv_row[79] = " ".join(line.strip() for line in tertiary_content_lines[content_line_idx + 1:context_end_index])
+                csv_row[11] = " ".join(line.strip() for line in tertiary_content_lines[context_start_index:content_line_idx])
+                csv_row[12] = tertiary_content_lines[content_line_idx].strip()
+                csv_row[13] = " ".join(line.strip() for line in tertiary_content_lines[content_line_idx + 1:context_end_index])
             
             if add_sentence_index_col:
                 csv_row[80] = str(content_line_idx + 1).zfill(6)
             if language == "de":
-                csv_row[58] = "1"; csv_row[65] = "1"
+                csv_row[61] = "1"; csv_row[66] = "1"
             elif language == "en":
-                csv_row[56] = "1"; csv_row[65] = "1"
+                csv_row[59] = "1"; csv_row[65] = "1"
             
             if args.anki_markdown_decks:
                 base_deck = "::".join(deck_stack)

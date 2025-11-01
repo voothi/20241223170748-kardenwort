@@ -1,3 +1,4 @@
+# src/kardenwort/core/kardenwort.py
 import sys
 import spacy
 import csv
@@ -954,6 +955,35 @@ def process_single_text(
     sentence_lemmas_cache = {}
 
     if not output_file_path:
+        if args.stdout_format == 'html':
+            print("<table>", file=sys.stdout)
+            for word in sorted_words:
+                source_word = lemma_to_shortest_form.get(word, '')
+                print(f"<tr><td>{word}</td><td>{source_word}</td></tr>", file=sys.stdout)
+            print("</table>", file=sys.stdout)
+        elif args.stdout_format == 'tsv':
+            for word in sorted_words:
+                source_word = lemma_to_shortest_form.get(word, '')
+                print(f"{word}\t{source_word}", file=sys.stdout)
+        elif args.stdout_format == 'context':
+             for word in sorted_words:
+                unit_index, source_sentence, _ = lemma_to_sentence_info.get(word, (-1, "", ""))
+                if unit_index == -1: continue
+                
+                context_start_index = max(0, unit_index - args.sentence_context_size)
+                context_end_index = min(len(text_units), unit_index + args.sentence_context_size + 1)
+                
+                source_context_left = " ".join(u.strip() for u in text_units[context_start_index:unit_index])
+                source_context_right = " ".join(u.strip() for u in text_units[unit_index + 1:context_end_index])
+                
+                print(word, file=sys.stdout)
+                if source_context_left: print(source_context_left, file=sys.stdout)
+                print(source_sentence.strip(), file=sys.stdout)
+                if source_context_right: print(source_context_right, file=sys.stdout)
+                print(file=sys.stdout)
+        else:
+            for word in sorted_words:
+                print(word, file=sys.stdout)
         return None
 
     full_deck_name = ""

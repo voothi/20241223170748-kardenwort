@@ -44,6 +44,7 @@ Programs.
 --language "en"
 --text "%GDWORD%"
 --mode "single"
+--suspend
 ---
 
 ## De
@@ -80,6 +81,7 @@ Programs.
 --language "de"
 --text "%GDWORD%"
 --mode "single"
+--suspend
 ```
 
 ---
@@ -124,6 +126,7 @@ Programs.
 --de-gcs
 --de-gcs-pos-tags "NOUN PROPN ADV ADJ"
 --mode "single"
+--suspend
 ---
 
 #### - [v] | Html | De kW L
@@ -166,6 +169,7 @@ Programs.
 --de-gcs
 --de-gcs-pos-tags "!VERB"
 --mode "single"
+--suspend
 ```
 
 #### 

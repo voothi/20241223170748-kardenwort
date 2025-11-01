@@ -505,6 +505,7 @@ def process_parallel_text_files(
     de_gcs_preserve_compound_word = kwargs.get('de_gcs_preserve_compound_word', False)
     de_gcs_skip_merge_fractions = kwargs.get('de_gcs_skip_merge_fractions', False)
     sentence_lemmas_cache = {}
+    doc_cache = {}
 
     source_text_lines_all = []
     if "\n" in source_text_path or not os.path.exists(source_text_path):
@@ -578,7 +579,10 @@ def process_parallel_text_files(
                 sentence_deck_name = f"{sentence_prefix}-{sentence_slug}"
                 final_deck = f"{final_deck}::{sentence_deck_name}"
 
-        doc = nlp(source_sentence)
+        if source_sentence not in doc_cache:
+            doc_cache[source_sentence] = nlp(source_sentence)
+        doc = doc_cache[source_sentence]
+        
         separable_verb_map = find_separable_verb_particle_pairs(doc)
         processed_particle_indices = {p.i for p in separable_verb_map.values()}
 
@@ -828,8 +832,12 @@ def process_single_text(
             text_units = [sent.text for sent in doc.sents]
 
     lemma_to_shortest_form, lemma_to_sentence_info = {}, {}
+    doc_cache = {}
+
     for unit_index, unit_text in enumerate(text_units):
-        unit_doc = nlp(unit_text)
+        if unit_text not in doc_cache:
+            doc_cache[unit_text] = nlp(unit_text)
+        unit_doc = doc_cache[unit_text]
 
         current_deck = deck_map.get(unit_index, "")
 

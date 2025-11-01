@@ -35,7 +35,7 @@ set "EXTRA_DECK_ARGS=--anki-create-subdecks --anki-markdown-decks --anki-sentenc
 
 echo.
 echo Triple sentence mode...
-for /f "delims=" %%F in ('call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language de --type sentence --mode triple %EXTRA_DECK_ARGS% --suspend-cards') do (
+for /f "delims=" %%F in ('cmd /c "call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language de --type sentence --mode triple %EXTRA_DECK_ARGS% --suspend-cards"') do (
     set "SENTENCE_FILENAME=%%F"
 )
 

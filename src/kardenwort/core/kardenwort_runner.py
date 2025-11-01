@@ -206,29 +206,20 @@ def main():
     script_process = subprocess.Popen(
         script_args,
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        stderr=None,
         text=True,
         encoding='utf-8',
         errors='replace'
     )
-
-    stdout_output, stderr_output = script_process.communicate()
+    stdout_output, _ = script_process.communicate()
     
     if script_process.returncode != 0:
         print_debug(f"ERROR: The extraction script failed with exit code {script_process.returncode}.")
-        if stderr_output:
-            print_debug("--- stderr from kardenwort.py ---")
-            print_debug(stderr_output)
-            print_debug("---------------------------------")
         sys.exit(1)
 
     output_lines = stdout_output.strip().splitlines()
     if not output_lines:
         print_debug("ERROR: No output filename was captured from the script.")
-        if stderr_output:
-            print_debug("--- stderr from kardenwort.py ---")
-            print_debug(stderr_output)
-            print_debug("---------------------------------")
         sys.exit(1)
         
     output_filename_basename = output_lines[0].strip()
@@ -271,14 +262,9 @@ def main():
     print_debug(f"Running importer with command:\n{' '.join(map(str, importer_command))}\n")
     
     try:
-        subprocess.run(importer_command, check=True, capture_output=True, text=True, encoding='utf-8')
+        subprocess.run(importer_command, check=True, text=True, encoding='utf-8')
     except subprocess.CalledProcessError as e:
         print_debug(f"ERROR: Anki importer failed with exit code {e.returncode}.")
-        print_debug("--- stdout from anki-csv-importer.py ---")
-        print_debug(e.stdout)
-        print_debug("--- stderr from anki-csv-importer.py ---")
-        print_debug(e.stderr)
-        print_debug("------------------------------------------")
         sys.exit(1)
 
     print(output_filename_basename)

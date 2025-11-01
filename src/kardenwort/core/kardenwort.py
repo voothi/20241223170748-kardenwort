@@ -504,6 +504,7 @@ def process_parallel_text_files(
     de_gcs_mask_unknown_parts = kwargs.get('de_gcs_mask_unknown_parts', False)
     de_gcs_preserve_compound_word = kwargs.get('de_gcs_preserve_compound_word', False)
     de_gcs_skip_merge_fractions = kwargs.get('de_gcs_skip_merge_fractions', False)
+    sentence_lemmas_cache = {}
 
     source_text_lines_all = []
     if "\n" in source_text_path or not os.path.exists(source_text_path):
@@ -733,9 +734,11 @@ def process_parallel_text_files(
                     csv_row[2] = lemma_to_shortest_form.get(word, '')
                 csv_row[12] = source_sentence
                 if add_wordlist_col:
-                    wordlist_generation_args = {**kwargs, 'de_gcs': de_gcs, 'gcs_automaton': gcs_automaton, 'de_gcs_add_parts_to_wordlist': de_gcs_add_parts_to_wordlist}
-                    lemmas = extract_lemmas_from_sentence(source_sentence, lemma_sort_index, nlp, de_dictionary, lemma_override_rules, de_gcs_pos_tags, args, **wordlist_generation_args)
-                    csv_row[11] = "<br>".join(lemmas) if wordlist_use_br else "\n".join(lemmas)
+                    if source_sentence not in sentence_lemmas_cache:
+                        wordlist_generation_args = {**kwargs, 'de_gcs': de_gcs, 'gcs_automaton': gcs_automaton, 'de_gcs_add_parts_to_wordlist': de_gcs_add_parts_to_wordlist}
+                        lemmas = extract_lemmas_from_sentence(source_sentence, lemma_sort_index, nlp, de_dictionary, lemma_override_rules, de_gcs_pos_tags, args, **wordlist_generation_args)
+                        sentence_lemmas_cache[source_sentence] = lemmas
+                    csv_row[11] = "<br>".join(sentence_lemmas_cache[source_sentence]) if wordlist_use_br else "\n".join(sentence_lemmas_cache[source_sentence])
                 if add_sentence_index_col:
                     csv_row[80] = str(sentence_index + 1).zfill(6)
                 if language == "de":
@@ -940,6 +943,8 @@ def process_single_text(
 
     sorted_words = sorted(list(lemma_to_shortest_form.keys()), key=lambda word: (word not in lemma_sort_index, lemma_sort_index.get(word, 0), word.lower()))
     
+    sentence_lemmas_cache = {}
+
     if not output_file_path:
         return None
 
@@ -978,9 +983,11 @@ def process_single_text(
                 csv_row[2] = lemma_to_shortest_form.get(word, '')
             csv_row[12] = source_sentence
             if add_wordlist_col:
-                wordlist_generation_args = {**kwargs, 'de_gcs': de_gcs, 'gcs_automaton': gcs_automaton, 'de_gcs_add_parts_to_wordlist': de_gcs_add_parts_to_wordlist}
-                lemmas = extract_lemmas_from_sentence(source_sentence, lemma_sort_index, nlp, de_dictionary, lemma_override_rules, de_gcs_pos_tags, args, **wordlist_generation_args)
-                csv_row[11] = "<br>".join(lemmas) if wordlist_use_br else "\n".join(lemmas)
+                if source_sentence not in sentence_lemmas_cache:
+                    wordlist_generation_args = {**kwargs, 'de_gcs': de_gcs, 'gcs_automaton': gcs_automaton, 'de_gcs_add_parts_to_wordlist': de_gcs_add_parts_to_wordlist}
+                    lemmas = extract_lemmas_from_sentence(source_sentence, lemma_sort_index, nlp, de_dictionary, lemma_override_rules, de_gcs_pos_tags, args, **wordlist_generation_args)
+                    sentence_lemmas_cache[source_sentence] = lemmas
+                csv_row[11] = "<br>".join(sentence_lemmas_cache[source_sentence]) if wordlist_use_br else "\n".join(sentence_lemmas_cache[source_sentence])
             if add_sentence_index_col:
                 csv_row[80] = str(unit_index + 1).zfill(6)
             if language == "de":

@@ -6,7 +6,7 @@
 
 > *Kontext. Kern. Karte.* (Context. Core. Card.)
 
-[![Version](https://img.shields.io/badge/version-v2.0.0-blue)](https://github.com/kardenwort/20250913122858-kardenwort)
+[![Version](https://img.shields.io/badge/version-v1.24.8-blue)](https://github.com/kardenwort/20250913122858-kardenwort)
 
 **Kardenwort** is an intelligent command-line utility designed to accelerate language learning by deconstructing text and automatically creating context-rich flashcards for **Anki**. It serves as a powerful offline companion to your study materials, transforming any text—books, articles, or AI-generated content—into a structured vocabulary list ready for efficient learning.
 

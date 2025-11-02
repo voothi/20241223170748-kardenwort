@@ -807,9 +807,9 @@ def process_parallel_text_files(
                 if add_sentence_index_col:
                     csv_row[80] = str(sentence_index + 1).zfill(6)
                 if language == "de":
-                    csv_row[61] = "1"; csv_row[66] = "1"
+                    csv_row[61] = "1"; csv_row[68] = "1"
                 elif language == "en":
-                    csv_row[59] = "1"; csv_row[65] = "1"
+                    csv_row[59] = "1"; csv_row[68] = "1"
 
                 if args.anki_markdown_decks:
                     csv_row[81] = deck_name
@@ -1089,9 +1089,9 @@ def process_single_text(
             if add_sentence_index_col:
                 csv_row[80] = str(unit_index + 1).zfill(6)
             if language == "de":
-                csv_row[61] = "1"; csv_row[66] = "1"
+                csv_row[61] = "1"; csv_row[68] = "1"
             elif language == "en":
-                csv_row[59] = "1"; csv_row[65] = "1"
+                csv_row[59] = "1"; csv_row[68] = "1"
 
             if args.anki_markdown_decks:
                 csv_row[81] = deck_name
@@ -1212,9 +1212,9 @@ def process_parallel_sentences_to_csv(
             if add_sentence_index_col:
                 csv_row[80] = str(content_line_idx + 1).zfill(6)
             if language == "de":
-                csv_row[61] = "1"; csv_row[66] = "1"
+                csv_row[61] = "1"; csv_row[68] = "1"
             elif language == "en":
-                csv_row[59] = "1"; csv_row[65] = "1"
+                csv_row[59] = "1"; csv_row[68] = "1"
             
             if args.anki_markdown_decks:
                 base_deck = "::".join(deck_stack)

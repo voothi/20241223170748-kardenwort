@@ -612,7 +612,7 @@ def _write_deck_metadata(args, output_file_path, source_text_content):
         print(f"Warning: Could not write metadata file to {metadata_path}: {e}", file=sys.stderr)
 
 def process_parallel_text_files(
-    source_text_path, lemma_sort_index, language, target_text_path, tertiary_text_path, sentence_context_size,
+    source_text_content, lemma_sort_index, language, target_text_path, tertiary_text_path, sentence_context_size,
     output_file_path, add_source_word_col, add_wordlist_col, add_sentence_index_col,
     add_header, wordlist_use_br, stdout_print_output_basename, de_gcs, gcs_automaton, de_gcs_add_parts_to_wordlist, de_dictionary, lemma_override_rules,
     de_gcs_pos_tags, args, **kwargs
@@ -626,14 +626,7 @@ def process_parallel_text_files(
     sentence_lemmas_cache = {}
     doc_cache = {}
 
-    source_text_content = ""
-    source_text_lines_all = []
-    if "\n" in source_text_path or not os.path.exists(source_text_path):
-        source_text_content = source_text_path
-        source_text_lines_all = source_text_content.splitlines()
-    else:
-        source_text_content = read_text_from_file(source_text_path)
-        source_text_lines_all = [line.rstrip("\n") for line in source_text_content.splitlines()]
+    source_text_lines_all = [line.rstrip("\n") for line in source_text_content.splitlines()]
 
     target_content_lines = []
     if target_text_path:
@@ -1105,8 +1098,8 @@ def process_single_text(
                 unit_index, source_sentence, _ = lemma_to_sentence_info.get(word, (-1, "", ""))
                 if unit_index == -1: continue
                 
-                context_start_index = max(0, unit_index - args.sentence_context_size)
-                context_end_index = min(len(text_units), unit_index + args.sentence_context_size + 1)
+                context_start_index = max(0, unit_index - sentence_context_size)
+                context_end_index = min(len(text_units), unit_index + sentence_context_size + 1)
                 
                 source_context_left = " ".join(u.strip() for u in text_units[context_start_index:unit_index])
                 source_context_right = " ".join(u.strip() for u in text_units[unit_index + 1:context_end_index])

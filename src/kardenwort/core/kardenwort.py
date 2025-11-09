@@ -1,4 +1,3 @@
-# src/kardenwort/core/kardenwort.py
 import sys
 import spacy
 import csv
@@ -8,6 +7,7 @@ import os
 import re
 from contextlib import redirect_stdout
 import io
+import json
 
 try:
     from german_compound_splitter import comp_split
@@ -17,18 +17,18 @@ except ImportError:
 
 TTS_FIELD_INDICES = {
     'source': {
-        'en': 59,  # Source-en-GB
-        'us': 60,  # Source-en-US
-        'de': 61,  # Source-de-DE
-        'uk': 62,  # Source-uk-UA
-        'ru': 63,  # Source-ru-RU
+        'en': 59,
+        'us': 60,
+        'de': 61,
+        'uk': 62,
+        'ru': 63,
     },
     'destination': {
-        'en': 64,  # Destination-en-GB
-        'us': 65,  # Destination-en-US
-        'de': 66,  # Destination-de-DE
-        'uk': 67,  # Destination-uk-UA
-        'ru': 68,  # Destination-ru-RU
+        'en': 64,
+        'us': 65,
+        'de': 66,
+        'uk': 67,
+        'ru': 68,
     }
 }
 
@@ -570,6 +570,47 @@ def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, de_
 
     return sorted(list(final_lemmas), key=lambda x: (x not in lemma_sort_index, lemma_sort_index.get(x, 0), x.lower()))
 
+def _write_deck_metadata(args, output_file_path, source_text_content):
+    if not args.anki_deck_content or 'source' not in args.anki_deck_content:
+        return
+
+    parent_deck_name = ""
+    root_deck_prefix = ""
+
+    if args.anki_markdown_decks:
+        if args.anki_create_subdecks:
+            if args.anki_parent_deck:
+                root_deck_prefix = args.anki_parent_deck
+            elif output_file_path:
+                base_name = os.path.splitext(os.path.basename(output_file_path))[0]
+                root_deck_prefix = re.sub(r'\.(word|sentence)', '', base_name)
+        parent_deck_name = root_deck_prefix
+    else:
+        if args.anki_create_subdecks:
+            sub_deck_name = os.path.splitext(os.path.basename(output_file_path))[0]
+            if args.anki_parent_deck:
+                parent_deck_name = args.anki_parent_deck
+            else:
+                parent_deck_name = re.sub(r'\.(word|sentence)', '', sub_deck_name)
+        else:
+            parent_deck_name = os.path.splitext(os.path.basename(output_file_path))[0]
+
+    if not parent_deck_name:
+        return
+
+    metadata = {
+        "deck_descriptions": {
+            parent_deck_name: source_text_content
+        }
+    }
+    
+    metadata_path = os.path.splitext(output_file_path)[0] + '.json'
+    try:
+        with open(metadata_path, 'w', encoding='utf-8') as f:
+            json.dump(metadata, f, ensure_ascii=False, indent=2)
+    except IOError as e:
+        print(f"Warning: Could not write metadata file to {metadata_path}: {e}", file=sys.stderr)
+
 def process_parallel_text_files(
     source_text_path, lemma_sort_index, language, target_text_path, tertiary_text_path, sentence_context_size,
     output_file_path, add_source_word_col, add_wordlist_col, add_sentence_index_col,
@@ -585,11 +626,14 @@ def process_parallel_text_files(
     sentence_lemmas_cache = {}
     doc_cache = {}
 
+    source_text_content = ""
     source_text_lines_all = []
     if "\n" in source_text_path or not os.path.exists(source_text_path):
-        source_text_lines_all = source_text_path.splitlines()
+        source_text_content = source_text_path
+        source_text_lines_all = source_text_content.splitlines()
     else:
-        with open(source_text_path, "r", encoding="utf-8") as f1: source_text_lines_all = [line.rstrip("\n") for line in f1]
+        source_text_content = read_text_from_file(source_text_path)
+        source_text_lines_all = [line.rstrip("\n") for line in source_text_content.splitlines()]
 
     target_content_lines = []
     if target_text_path:
@@ -845,6 +889,9 @@ def process_parallel_text_files(
                     csv_row[81] = full_deck_name
 
                 tsv_writer.writerow(csv_row)
+        
+        _write_deck_metadata(args, output_file_path, source_text_content)
+
     return output_file_path
 
 def process_single_text(
@@ -1139,6 +1186,7 @@ def process_single_text(
 
             tsv_writer.writerow(csv_row)
 
+    _write_deck_metadata(args, output_file_path, source_text)
     return output_file_path
 
 def process_parallel_sentences_to_csv(
@@ -1147,9 +1195,12 @@ def process_parallel_sentences_to_csv(
 ):
     lemma_override_rules = kwargs.pop('lemma_override_rules', {})
     
+    source_text_content = ""
+    source_text_lines_all = []
     try:
-        with open(source_text_path, "r", encoding="utf-8") as f: source_text_lines_all = [line.rstrip("\n") for line in f]
-        
+        source_text_content = read_text_from_file(source_text_path)
+        source_text_lines_all = [line.rstrip("\n") for line in source_text_content.splitlines()]
+
         target_content_lines = []
         if target_text_path:
             with open(target_text_path, "r", encoding="utf-8") as f:
@@ -1284,6 +1335,8 @@ def process_parallel_sentences_to_csv(
                 csv_row[81] = full_deck_name
                 
             tsv_writer.writerow(csv_row)
+            
+    _write_deck_metadata(args, output_file_path, source_text_content)
     return output_file_path
 
 def process_lemmas_per_line(
@@ -1353,6 +1406,7 @@ def main():
     output_format_group.add_argument("--anki-markdown-decks", action="store_true", help="Parse Markdown headers in source text to create a hierarchical deck structure in Anki.")
     output_format_group.add_argument("--anki-sentence-subdecks", action="store_true", help="Create a final subdeck level for each sentence. Requires --anki-markdown-decks.")
     output_format_group.add_argument("--anki-parent-deck", help="Manually specify the parent deck name, overriding the auto-generated one. Requires --anki-create-subdecks.")
+    output_format_group.add_argument("--anki-deck-content", nargs='+', choices=['source', 'translations', 'subdecks'], help="Adds content to the Anki deck description. 'source': adds the full source text.")
     stdout_group = parser.add_argument_group('Standard Output (STDOUT) Arguments (used only if --output is not specified)')
     output_format_group.add_argument("--stdout-format", choices=['list', 'context', 'tsv', 'html'], default='list', 
                                help="Select the output format for STDOUT if --output-file is not specified.\n"

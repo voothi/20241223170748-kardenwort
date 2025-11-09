@@ -36,7 +36,7 @@ set "FIRST_RUN_ARGS=--anki-deck-content source"
 
 echo.
 echo Triple sentence mode...
-for /f "delims=" %%F in ('call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language de --type sentence --mode triple --tts-destination-lang ru %EXTRA_DECK_ARGS% --suspend-cards') do (
+for /f "delims=" %%F in ('call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language de --type sentence --mode triple --tts-destination-lang ru %EXTRA_DECK_ARGS% %FIRST_RUN_ARGS% --suspend-cards') do (
     set "SENTENCE_FILENAME=%%F"
 )
 

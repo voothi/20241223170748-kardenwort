@@ -35,7 +35,7 @@ set "EXTRA_DECK_ARGS=--anki-create-subdecks --anki-markdown-decks --anki-sentenc
 
 echo.
 echo Triple sentence mode...
-for /f "delims=" %%F in ('call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language de --type sentence --mode triple %EXTRA_DECK_ARGS% --suspend-cards') do (
+for /f "delims=" %%F in ('call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language de --type sentence --mode triple --tts-destination-lang ru %EXTRA_DECK_ARGS% --suspend-cards') do (
     set "SENTENCE_FILENAME=%%F"
 )
 
@@ -51,7 +51,7 @@ echo Parent Deck Name for this session is: %PARENT_DECK_NAME%
 
 echo.
 echo Triple word mode...
-call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language de --type word --mode triple %EXTRA_DECK_ARGS% --anki-parent-deck "%PARENT_DECK_NAME%" --suspend-cards
+call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language de --type word --mode triple --tts-destination-lang ru %EXTRA_DECK_ARGS% --anki-parent-deck "%PARENT_DECK_NAME%" --suspend-cards
 if errorlevel 1 goto :error
 
 echo.

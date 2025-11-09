@@ -1,4 +1,3 @@
-// scripts/run/cmd/kardenwort_run_de_ws_t3_s_anki_v2.cmd
 @echo off
 chcp 65001 > nul
 

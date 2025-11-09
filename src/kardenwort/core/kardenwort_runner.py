@@ -104,6 +104,9 @@ def get_script_args(args, python_path, workspace_path, config):
         "--sentence-context-size", "4",
     ]
 
+    if args.tts_destination_lang:
+        base_args.extend(["--tts-destination-lang", args.tts_destination_lang])
+
     if args.anki_create_subdecks:
         base_args.append("--anki-create-subdecks")
         if args.anki_parent_deck:
@@ -187,6 +190,7 @@ def main():
     parser.add_argument("--type", type=str, required=True, choices=["word", "sentence"], help="Type of processing: 'word' for word extraction, 'sentence' for parallel sentences.")
     parser.add_argument("--mode", type=str, required=True, choices=["single", "dual", "triple"], help="Processing mode: single (text1), dual (text1 + text2), or triple (text1 + text2 + text3).")
     parser.add_argument("--language", type=str, required=True, choices=["de", "en"], help="Language for processing: German (de) or English (en).")
+    parser.add_argument("--tts-destination-lang", type=str, help="Specify the destination language for TTS field activation (e.g., 'ru', 'en').")
     parser.add_argument("--text", type=str, help="Directly pass a text string for 'single' mode processing, bypassing the default text1.txt file.")
     parser.add_argument("--de-gcs", action='store_true', help="Enable German Compound Splitting (only effective when --language is 'de').")
     parser.add_argument("--de-gcs-pos-tags", nargs='+', help="Specify POS tags for GCS (e.g., 'NOUN PROPN' or '!VERB').")

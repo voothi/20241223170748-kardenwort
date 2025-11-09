@@ -15,6 +15,23 @@ try:
 except ImportError:
     GCS_AVAILABLE = False
 
+TTS_FIELD_INDICES = {
+    'source': {
+        'en': 59,  # Source-en-GB
+        'us': 60,  # Source-en-US
+        'de': 61,  # Source-de-DE
+        'uk': 62,  # Source-uk-UA
+        'ru': 63,  # Source-ru-RU
+    },
+    'destination': {
+        'en': 64,  # Destination-en-GB
+        'us': 65,  # Destination-en-US
+        'de': 66,  # Destination-de-DE
+        'uk': 67,  # Destination-uk-UA
+        'ru': 68,  # Destination-ru-RU
+    }
+}
+
 def _format_gcs_component_case(component):
     if not component or len(component) < 2:
         return component
@@ -806,10 +823,21 @@ def process_parallel_text_files(
                     csv_row[14] = "<br>".join(sentence_lemmas_cache[source_sentence]) if wordlist_use_br else "\n".join(sentence_lemmas_cache[source_sentence])
                 if add_sentence_index_col:
                     csv_row[80] = str(sentence_index + 1).zfill(6)
-                if language == "de":
-                    csv_row[61] = "1"; csv_row[68] = "1"
-                elif language == "en":
-                    csv_row[59] = "1"; csv_row[68] = "1"
+                
+                source_lang_code = args.language
+                dest_lang_code = args.tts_destination_lang
+
+                source_index = TTS_FIELD_INDICES['source'].get(source_lang_code)
+                if source_index is not None:
+                    csv_row[source_index] = "1"
+                else:
+                    print(f"Warning: No source TTS field index found for language '{source_lang_code}'", file=sys.stderr)
+
+                dest_index = TTS_FIELD_INDICES['destination'].get(dest_lang_code)
+                if dest_index is not None:
+                    csv_row[dest_index] = "1"
+                else:
+                    print(f"Warning: No destination TTS field index found for language '{dest_lang_code}'", file=sys.stderr)
 
                 if args.anki_markdown_decks:
                     csv_row[81] = deck_name
@@ -1088,10 +1116,21 @@ def process_single_text(
                 csv_row[14] = "<br>".join(sentence_lemmas_cache[source_sentence]) if wordlist_use_br else "\n".join(sentence_lemmas_cache[source_sentence])
             if add_sentence_index_col:
                 csv_row[80] = str(unit_index + 1).zfill(6)
-            if language == "de":
-                csv_row[61] = "1"; csv_row[68] = "1"
-            elif language == "en":
-                csv_row[59] = "1"; csv_row[68] = "1"
+            
+            source_lang_code = args.language
+            dest_lang_code = args.tts_destination_lang
+
+            source_index = TTS_FIELD_INDICES['source'].get(source_lang_code)
+            if source_index is not None:
+                csv_row[source_index] = "1"
+            else:
+                print(f"Warning: No source TTS field index found for language '{source_lang_code}'", file=sys.stderr)
+
+            dest_index = TTS_FIELD_INDICES['destination'].get(dest_lang_code)
+            if dest_index is not None:
+                csv_row[dest_index] = "1"
+            else:
+                print(f"Warning: No destination TTS field index found for language '{dest_lang_code}'", file=sys.stderr)
 
             if args.anki_markdown_decks:
                 csv_row[81] = deck_name
@@ -1211,10 +1250,21 @@ def process_parallel_sentences_to_csv(
             
             if add_sentence_index_col:
                 csv_row[80] = str(content_line_idx + 1).zfill(6)
-            if language == "de":
-                csv_row[61] = "1"; csv_row[68] = "1"
-            elif language == "en":
-                csv_row[59] = "1"; csv_row[68] = "1"
+
+            source_lang_code = args.language
+            dest_lang_code = args.tts_destination_lang
+
+            source_index = TTS_FIELD_INDICES['source'].get(source_lang_code)
+            if source_index is not None:
+                csv_row[source_index] = "1"
+            else:
+                print(f"Warning: No source TTS field index found for language '{source_lang_code}'", file=sys.stderr)
+
+            dest_index = TTS_FIELD_INDICES['destination'].get(dest_lang_code)
+            if dest_index is not None:
+                csv_row[dest_index] = "1"
+            else:
+                print(f"Warning: No destination TTS field index found for language '{dest_lang_code}'", file=sys.stderr)
             
             if args.anki_markdown_decks:
                 base_deck = "::".join(deck_stack)
@@ -1275,6 +1325,7 @@ def main():
     processing_mode_group.add_argument("--type", choices=["word", "sentence"], help="Specify the processing type: 'word' for word extraction, 'sentence' for parallel sentence processing.")
     processing_mode_group.add_argument("--lemmas-per-line", action="store_true", help="Process each line of text1-file to output a single line of frequency-sorted lemmas.")
     input_output_group.add_argument("--language", default="de", choices=["de", "en"], help="The language of the text to be processed.")
+    input_output_group.add_argument("--tts-destination-lang", default="ru", help="The destination language for TTS field activation (e.g., 'ru', 'en').")
     input_output_group.add_argument("--text", help="A single string of input text to process. Mutually exclusive with --text1-file.")
     input_output_group.add_argument("--text1-file", help="Path to the primary input text file.")
     input_output_group.add_argument("--text2-file", help="Path to a parallel (translated) text file.")

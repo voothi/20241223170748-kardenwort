@@ -7,18 +7,9 @@ import os
 import re
 
 def print_debug(message):
-    """Helper function to print messages to stderr."""
     print(message, file=sys.stderr)
 
 def load_config():
-    """
-    Reads configuration from config.ini located in the project root.
-    It resolves all necessary paths and returns them along with the config object.
-    Exits with an error if the config file or required keys are not found.
-
-    Returns:
-        tuple: A tuple containing (python_path, workspace_path, importer_workspace, config_object).
-    """
     config_path = Path(__file__).resolve().parent.parent.parent.parent / 'config.ini'
     if not config_path.exists():
         print_debug(f"ERROR: Configuration file not found at {config_path}")
@@ -60,19 +51,6 @@ def load_config():
 
 
 def get_script_args(args, python_path, workspace_path, config):
-    """
-    Builds the list of command-line arguments for the main kardenwort.py script
-    based on the runner's arguments and settings from the config object.
-
-    Args:
-        args (argparse.Namespace): The parsed arguments for this runner script.
-        python_path (Path): The path to the Python executable.
-        workspace_path (Path): The path to the Kardenwort workspace.
-        config (configparser.ConfigParser): The loaded configuration object.
-
-    Returns:
-        list: A list of strings representing the full command to execute.
-    """
     src_path = workspace_path / config.get('project_structure', 'source_code_dir', fallback='src/kardenwort/core')
     data_path = workspace_path / config.get('project_structure', 'data_dir', fallback='data')
     input_path = workspace_path / config.get('project_structure', 'source_texts_dir', fallback='source_texts')
@@ -117,6 +95,9 @@ def get_script_args(args, python_path, workspace_path, config):
     
     if args.anki_sentence_subdecks:
         base_args.append("--anki-sentence-subdecks")
+    
+    if args.anki_deck_content:
+        base_args.extend(["--anki-deck-content"] + args.anki_deck_content)
 
     if args.language == "de":
         de_dictionary_file = config.get('language_resources', 'dictionary_file_de', fallback='german.dic')
@@ -175,10 +156,6 @@ def get_script_args(args, python_path, workspace_path, config):
 
 
 def main():
-    """
-    Main execution function. Parses arguments, runs the main processing script,
-    captures its output, and then runs the Anki importer script.
-    """
     if "--get-python-path" in sys.argv:
         python_path, _, _, _ = load_config()
         print(python_path)
@@ -199,7 +176,8 @@ def main():
     parser.add_argument("--anki-sentence-subdecks", action="store_true", help="Create a final subdeck level for each sentence.")
     parser.add_argument("--anki-parent-deck", type=str, help="Specify the parent deck name, used by subsequent calls in a batch process to ensure a shared parent deck.")
     parser.add_argument("--suspend-cards", action="store_true", help="Suspend all newly imported/updated cards in Anki.")
-    
+    parser.add_argument("--anki-deck-content", nargs='+', choices=['source', 'translations', 'subdecks'], help="Adds content to the Anki deck description. 'source': adds the full source text.")
+
     args = parser.parse_args()
 
     python_path, workspace_path, importer_workspace, config = load_config()
@@ -262,6 +240,11 @@ def main():
 
     if args.suspend_cards:
         importer_command.append("--suspend")
+    
+    output_base_path = workspace_path / output_dir_name / output_filename_basename
+    metadata_path = output_base_path.with_suffix('.json')
+    if metadata_path.exists():
+        importer_command.extend(["--deck-metadata-file", str(metadata_path)])
 
     print_debug(f"Running importer with command:\n{' '.join(map(str, importer_command))}\n")
     

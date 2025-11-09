@@ -1,3 +1,4 @@
+// scripts/run/cmd/kardenwort_run_de_ws_t3_s_anki_v2.cmd
 @echo off
 chcp 65001 > nul
 
@@ -31,7 +32,7 @@ set "KARDENWORT_RUNNER_SCRIPT=%CFG_kardenwort_workspace%/%CFG_source_code_dir%/%
 :: ============================================================================
 echo Running extraction in different modes...
 
-set "EXTRA_DECK_ARGS=--anki-create-subdecks --anki-markdown-decks --anki-sentence-subdecks"
+set "EXTRA_DECK_ARGS=--anki-create-subdecks --anki-markdown-decks --anki-sentence-subdecks --anki-deck-content source"
 
 echo.
 echo Triple sentence mode...

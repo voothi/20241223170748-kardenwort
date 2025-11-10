@@ -1,6 +1,9 @@
 @echo off
 chcp 65001 > nul
 
+:: ============================================================================
+:: 1. Change to the Project Root Directory
+:: ============================================================================
 set "PROJECT_ROOT=%~dp0..\..\.."
 cd /d "%PROJECT_ROOT%"
 if errorlevel 1 (
@@ -8,6 +11,9 @@ if errorlevel 1 (
     exit /b 1
 )
 
+:: ============================================================================
+:: 2. Load Configuration and Define Paths
+:: ============================================================================
 for /f "delims=" %%a in ('call "%~dp0..\..\_config_loader.cmd" environment') do (set "%%a")
 for /f "delims=" %%a in ('call "%~dp0..\..\_config_loader.cmd" scripts') do (set "%%a")
 for /f "delims=" %%a in ('call "%~dp0..\..\_config_loader.cmd" project_structure') do (set "%%a")
@@ -20,13 +26,17 @@ if not defined CFG_source_code_dir (echo ERROR: source_code_dir not found in [pr
 set "PYTHON_EXE=%CFG_python_executable%"
 set "KARDENWORT_RUNNER_SCRIPT=%CFG_kardenwort_workspace%/%CFG_source_code_dir%/%CFG_kardenwort_runner_filename%"
 
-echo Running extraction for English in triple mode...
+:: ============================================================================
+:: 3. Execute the Python Scripts with Shared Parent Deck Logic
+:: ============================================================================
+echo Running extraction in different modes...
 
-set "EXTRA_DECK_ARGS=--anki-create-subdecks --anki-markdown-decks --anki-sentence-subdecks"
+set "EXTRA_DECK_ARGS=--tts-destination-lang ru --anki-create-subdecks --anki-markdown-decks --anki-sentence-subdecks --suspend-cards"
+set "FIRST_RUN_ARGS=--anki-deck-content parent-source parent-translations subdeck-source subdeck-translations"
 
 echo.
 echo Triple sentence mode...
-for /f "delims=" %%F in ('call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language en --type sentence --mode triple %EXTRA_DECK_ARGS% --suspend-cards') do (
+for /f "delims=" %%F in ('call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language en --type sentence --mode triple %EXTRA_DECK_ARGS% %FIRST_RUN_ARGS%') do (
     set "SENTENCE_FILENAME=%%F"
 )
 
@@ -42,7 +52,7 @@ echo Parent Deck Name for this session is: %PARENT_DECK_NAME%
 
 echo.
 echo Triple word mode...
-call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language en --type word --mode triple %EXTRA_DECK_ARGS% --anki-parent-deck "%PARENT_DECK_NAME%" --suspend-cards
+call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language en --type word --mode triple %EXTRA_DECK_ARGS% --anki-parent-deck "%PARENT_DECK_NAME%"
 if errorlevel 1 goto :error
 
 echo.

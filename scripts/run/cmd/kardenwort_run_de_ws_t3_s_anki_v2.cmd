@@ -32,7 +32,7 @@ set "KARDENWORT_RUNNER_SCRIPT=%CFG_kardenwort_workspace%/%CFG_source_code_dir%/%
 echo Running extraction in different modes...
 
 set "EXTRA_DECK_ARGS=--anki-create-subdecks --anki-markdown-decks --anki-sentence-subdecks"
-set "FIRST_RUN_ARGS=--anki-deck-content source"
+set "FIRST_RUN_ARGS=--anki-deck-content source translations"
 
 echo.
 echo Triple sentence mode...

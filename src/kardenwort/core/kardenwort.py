@@ -598,10 +598,10 @@ def _write_deck_metadata(args, output_file_path, source_text_content, target_tex
     
     if parent_deck_name:
         description_parts = []
-        if 'source' in args.anki_deck_content and source_text_content:
+        if 'parent-source' in args.anki_deck_content and source_text_content:
             description_parts.append(source_text_content.strip())
 
-        if 'translations' in args.anki_deck_content:
+        if 'parent-translations' in args.anki_deck_content:
             if target_text_content:
                 description_parts.append(target_text_content.strip())
             if tertiary_text_content:
@@ -610,10 +610,24 @@ def _write_deck_metadata(args, output_file_path, source_text_content, target_tex
         if description_parts:
             deck_descriptions[parent_deck_name] = "\n\n---\n\n".join(description_parts)
 
-    if 'subdecks' in args.anki_deck_content and subdeck_content_map:
-        for deck_name, content_lines in subdeck_content_map.items():
-            if deck_name and content_lines:
-                deck_descriptions[deck_name] = "\n".join(content_lines)
+    if subdeck_content_map and ('subdeck-source' in args.anki_deck_content or 'subdeck-translations' in args.anki_deck_content):
+        for deck_name, content_data in subdeck_content_map.items():
+            if not deck_name: continue
+            
+            subdeck_description_parts = []
+            if 'subdeck-source' in args.anki_deck_content:
+                source_part = "\n".join(content_data.get('source_lines', []))
+                if source_part: subdeck_description_parts.append(source_part)
+
+            if 'subdeck-translations' in args.anki_deck_content:
+                translation1_part = "\n".join(content_data.get('translation1_lines', []))
+                if translation1_part: subdeck_description_parts.append(translation1_part)
+                
+                translation2_part = "\n".join(content_data.get('translation2_lines', []))
+                if translation2_part: subdeck_description_parts.append(translation2_part)
+
+            if subdeck_description_parts:
+                deck_descriptions[deck_name] = "\n\n---\n\n".join(subdeck_description_parts)
 
     if not deck_descriptions:
         return
@@ -644,17 +658,19 @@ def process_parallel_text_files(
 
     source_text_lines_all = [line.rstrip("\n") for line in source_text_content.splitlines()]
 
-    target_content_lines = []
+    target_content_lines_all = []
     if target_text_path:
         with open(target_text_path, "r", encoding="utf-8") as f2:
-            target_content_lines = [line.rstrip("\n") for line in f2 if line.strip()]
-
-    tertiary_content_lines = []
+            target_content_lines_all = [line.rstrip("\n") for line in f2]
+    
+    tertiary_content_lines_all = []
     if tertiary_text_path:
         with open(tertiary_text_path, "r", encoding="utf-8") as f3:
-            tertiary_content_lines = [line.rstrip("\n") for line in f3 if line.strip()]
+            tertiary_content_lines_all = [line.rstrip("\n") for line in f3]
 
     source_content_lines = [line for line in source_text_lines_all if line.strip()]
+    target_content_lines = [line for line in target_content_lines_all if line.strip()]
+    tertiary_content_lines = [line for line in tertiary_content_lines_all if line.strip()]
 
     lemma_to_shortest_form, lemma_to_sentence_info = {}, {}
     subdeck_content_map = {}
@@ -705,10 +721,14 @@ def process_parallel_text_files(
         if args.anki_markdown_decks and active_header_line_index in branch_header_lines:
             final_deck = f"{base_deck}::{deck_stack[-1]}"
         
-        if 'subdecks' in (args.anki_deck_content or []) and final_deck:
+        if args.anki_deck_content and final_deck:
             if final_deck not in subdeck_content_map:
-                subdeck_content_map[final_deck] = []
-            subdeck_content_map[final_deck].append(source_line_raw)
+                subdeck_content_map[final_deck] = {'source_lines': [], 'translation1_lines': [], 'translation2_lines': []}
+            subdeck_content_map[final_deck]['source_lines'].append(source_line_raw)
+            if line_index < len(target_content_lines_all):
+                subdeck_content_map[final_deck]['translation1_lines'].append(target_content_lines_all[line_index])
+            if line_index < len(tertiary_content_lines_all):
+                subdeck_content_map[final_deck]['translation2_lines'].append(tertiary_content_lines_all[line_index])
 
         if args.anki_sentence_subdecks:
             sentence_prefix = str(content_line_idx + 1).zfill(6)
@@ -979,10 +999,10 @@ def process_single_text(
             if active_header_line_index in branch_header_lines:
                 final_deck = f"{base_deck}::{deck_stack[-1]}"
 
-            if 'subdecks' in (args.anki_deck_content or []) and final_deck:
+            if args.anki_deck_content and final_deck:
                 if final_deck not in subdeck_content_map:
-                    subdeck_content_map[final_deck] = []
-                subdeck_content_map[final_deck].append(line_raw)
+                    subdeck_content_map[final_deck] = {'source_lines': []}
+                subdeck_content_map[final_deck]['source_lines'].append(line_raw)
 
             if args.anki_sentence_subdecks:
                 sentence_prefix = str(len(text_units) + 1).zfill(6)
@@ -1234,19 +1254,21 @@ def process_parallel_sentences_to_csv(
         source_text_content = read_text_from_file(source_text_path)
         source_text_lines_all = [line.rstrip("\n") for line in source_text_content.splitlines()]
 
-        target_content_lines = []
+        target_content_lines_all = []
         if target_text_path:
             with open(target_text_path, "r", encoding="utf-8") as f:
-                target_content_lines = [line.rstrip("\n") for line in f if line.strip()]
+                target_content_lines_all = [line.rstrip("\n") for line in f]
         
-        tertiary_content_lines = []
+        tertiary_content_lines_all = []
         if tertiary_text_path:
             with open(tertiary_text_path, "r", encoding="utf-8") as f:
-                tertiary_content_lines = [line.rstrip("\n") for line in f if line.strip()]
+                tertiary_content_lines_all = [line.rstrip("\n") for line in f]
     except IOError as e:
         print(f"Error reading files: {e}", file=sys.stderr); sys.exit(1)
 
     source_content_lines = [line for line in source_text_lines_all if line.strip()]
+    target_content_lines = [line for line in target_content_lines_all if line.strip()]
+    tertiary_content_lines = [line for line in tertiary_content_lines_all if line.strip()]
 
     full_deck_name = ""
     if args.anki_create_subdecks and not args.anki_markdown_decks:
@@ -1309,10 +1331,14 @@ def process_parallel_sentences_to_csv(
             if active_header_line_index in branch_header_lines:
                 final_deck_for_content = f"{base_deck}::{deck_stack[-1]}"
 
-            if 'subdecks' in (args.anki_deck_content or []) and final_deck_for_content:
+            if args.anki_deck_content and final_deck_for_content:
                 if final_deck_for_content not in subdeck_content_map:
-                    subdeck_content_map[final_deck_for_content] = []
-                subdeck_content_map[final_deck_for_content].append(source_line_raw)
+                    subdeck_content_map[final_deck_for_content] = {'source_lines': [], 'translation1_lines': [], 'translation2_lines': []}
+                subdeck_content_map[final_deck_for_content]['source_lines'].append(source_line_raw)
+                if line_index < len(target_content_lines_all):
+                    subdeck_content_map[final_deck_for_content]['translation1_lines'].append(target_content_lines_all[line_index])
+                if line_index < len(tertiary_content_lines_all):
+                    subdeck_content_map[final_deck_for_content]['translation2_lines'].append(tertiary_content_lines_all[line_index])
 
             content_line_idx += 1
             if content_line_idx >= len(target_content_lines): break
@@ -1459,7 +1485,7 @@ def main():
     output_format_group.add_argument("--anki-markdown-decks", action="store_true", help="Parse Markdown headers in source text to create a hierarchical deck structure in Anki.")
     output_format_group.add_argument("--anki-sentence-subdecks", action="store_true", help="Create a final subdeck level for each sentence. Requires --anki-markdown-decks.")
     output_format_group.add_argument("--anki-parent-deck", help="Manually specify the parent deck name, overriding the auto-generated one. Requires --anki-create-subdecks.")
-    output_format_group.add_argument("--anki-deck-content", nargs='+', choices=['source', 'translations', 'subdecks'], help="Adds content to the Anki deck description. 'source': adds the full source text.")
+    output_format_group.add_argument("--anki-deck-content", nargs='+', choices=['parent-source', 'parent-translations', 'subdeck-source', 'subdeck-translations'], help="Adds content to the Anki deck description. 'parent-source': adds full source text to parent deck. 'subdeck-source': adds relevant source text part to each subdeck.")
     stdout_group = parser.add_argument_group('Standard Output (STDOUT) Arguments (used only if --output is not specified)')
     output_format_group.add_argument("--stdout-format", choices=['list', 'context', 'tsv', 'html'], default='list', 
                                help="Select the output format for STDOUT if --output-file is not specified.\n"

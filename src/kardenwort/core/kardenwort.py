@@ -570,10 +570,11 @@ def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, de_
 
     return sorted(list(final_lemmas), key=lambda x: (x not in lemma_sort_index, lemma_sort_index.get(x, 0), x.lower()))
 
-def _write_deck_metadata(args, output_file_path, source_text_content, target_text_content=None, tertiary_text_content=None):
+def _write_deck_metadata(args, output_file_path, source_text_content, target_text_content=None, tertiary_text_content=None, subdeck_content_map=None):
     if not args.anki_deck_content:
         return
 
+    deck_descriptions = {}
     parent_deck_name = ""
     root_deck_prefix = ""
 
@@ -594,30 +595,30 @@ def _write_deck_metadata(args, output_file_path, source_text_content, target_tex
                 parent_deck_name = re.sub(r'\.(word|sentence)', '', sub_deck_name)
         else:
             parent_deck_name = os.path.splitext(os.path.basename(output_file_path))[0]
+    
+    if parent_deck_name:
+        description_parts = []
+        if 'source' in args.anki_deck_content and source_text_content:
+            description_parts.append(source_text_content.strip())
 
-    if not parent_deck_name:
-        return
-
-    description_parts = []
-    if 'source' in args.anki_deck_content and source_text_content:
-        description_parts.append(source_text_content.strip())
-
-    if 'translations' in args.anki_deck_content:
-        if target_text_content:
-            description_parts.append(target_text_content.strip())
-        if tertiary_text_content:
-            description_parts.append(tertiary_text_content.strip())
-            
-    if not description_parts:
-        return
+        if 'translations' in args.anki_deck_content:
+            if target_text_content:
+                description_parts.append(target_text_content.strip())
+            if tertiary_text_content:
+                description_parts.append(tertiary_text_content.strip())
         
-    final_description = "\n\n---\n\n".join(description_parts)
+        if description_parts:
+            deck_descriptions[parent_deck_name] = "\n\n---\n\n".join(description_parts)
 
-    metadata = {
-        "deck_descriptions": {
-            parent_deck_name: final_description
-        }
-    }
+    if 'subdecks' in args.anki_deck_content and subdeck_content_map:
+        for deck_name, content_lines in subdeck_content_map.items():
+            if deck_name and content_lines:
+                deck_descriptions[deck_name] = "\n".join(content_lines)
+
+    if not deck_descriptions:
+        return
+
+    metadata = {"deck_descriptions": deck_descriptions}
     
     metadata_path = os.path.splitext(output_file_path)[0] + '.json'
     try:
@@ -656,6 +657,7 @@ def process_parallel_text_files(
     source_content_lines = [line for line in source_text_lines_all if line.strip()]
 
     lemma_to_shortest_form, lemma_to_sentence_info = {}, {}
+    subdeck_content_map = {}
     deck_stack = []
     header_counter = 1
     
@@ -674,10 +676,11 @@ def process_parallel_text_files(
 
     content_line_idx = -1
     active_header_line_index = -1
-    for line_index, source_line in enumerate(source_text_lines_all):
-        source_line = source_line.strip()
+    for line_index, source_line_raw in enumerate(source_text_lines_all):
+        source_line = source_line_raw.strip()
         if not source_line: continue
 
+        header_match = None
         if args.anki_markdown_decks:
             header_match = re.match(r'^(#+)\s+(.*)', source_line)
             if header_match:
@@ -702,6 +705,11 @@ def process_parallel_text_files(
         if args.anki_markdown_decks and active_header_line_index in branch_header_lines:
             final_deck = f"{base_deck}::{deck_stack[-1]}"
         
+        if 'subdecks' in (args.anki_deck_content or []) and final_deck:
+            if final_deck not in subdeck_content_map:
+                subdeck_content_map[final_deck] = []
+            subdeck_content_map[final_deck].append(source_line_raw)
+
         if args.anki_sentence_subdecks:
             sentence_prefix = str(content_line_idx + 1).zfill(6)
             sentence_slug = generate_filename_prefix_from_text(source_sentence, 4)
@@ -908,7 +916,7 @@ def process_parallel_text_files(
             with open(tertiary_text_path, "r", encoding="utf-8") as f:
                 tertiary_text_content = f.read()
         
-        _write_deck_metadata(args, output_file_path, source_text_content, target_text_content, tertiary_text_content)
+        _write_deck_metadata(args, output_file_path, source_text_content, target_text_content, tertiary_text_content, subdeck_content_map)
 
     return output_file_path
 
@@ -930,6 +938,7 @@ def process_single_text(
 
     text_units = []
     deck_map = {}
+    subdeck_content_map = {}
     header_counter = 1
     branch_header_lines = set()
     active_header_line_index = -1
@@ -947,9 +956,10 @@ def process_single_text(
         if root_deck_prefix:
             deck_stack.append(root_deck_prefix)
 
-        for line_index, line in enumerate(source_lines):
-            line = line.strip()
+        for line_index, line_raw in enumerate(source_lines):
+            line = line_raw.strip()
             if not line: continue
+            
             header_match = re.match(r'^(#+)\s+(.*)', line)
             if header_match:
                 active_header_line_index = line_index
@@ -968,7 +978,12 @@ def process_single_text(
             final_deck = base_deck
             if active_header_line_index in branch_header_lines:
                 final_deck = f"{base_deck}::{deck_stack[-1]}"
-            
+
+            if 'subdecks' in (args.anki_deck_content or []) and final_deck:
+                if final_deck not in subdeck_content_map:
+                    subdeck_content_map[final_deck] = []
+                subdeck_content_map[final_deck].append(line_raw)
+
             if args.anki_sentence_subdecks:
                 sentence_prefix = str(len(text_units) + 1).zfill(6)
                 sentence_slug = generate_filename_prefix_from_text(line, 4)
@@ -1204,7 +1219,7 @@ def process_single_text(
 
             tsv_writer.writerow(csv_row)
 
-    _write_deck_metadata(args, output_file_path, source_text)
+    _write_deck_metadata(args, output_file_path, source_text, subdeck_content_map=subdeck_content_map)
     return output_file_path
 
 def process_parallel_sentences_to_csv(
@@ -1252,6 +1267,7 @@ def process_parallel_sentences_to_csv(
             tsv_writer.writerow(get_anki_csv_header())
 
         deck_stack = []
+        subdeck_content_map = {}
         header_counter = 1
         branch_header_lines = set()
         if args.anki_markdown_decks:
@@ -1268,8 +1284,8 @@ def process_parallel_sentences_to_csv(
 
         content_line_idx = -1
         active_header_line_index = -1
-        for line_index, source_line in enumerate(source_text_lines_all):
-            source_line = source_line.strip()
+        for line_index, source_line_raw in enumerate(source_text_lines_all):
+            source_line = source_line_raw.strip()
             if not source_line: continue
 
             if args.anki_markdown_decks:
@@ -1287,6 +1303,16 @@ def process_parallel_sentences_to_csv(
                         deck_stack.append(f"{100000 + header_counter}-{sanitized_title}")
                         header_counter += 1
                     source_line = title
+            
+            base_deck = "::".join(deck_stack)
+            final_deck_for_content = base_deck
+            if active_header_line_index in branch_header_lines:
+                final_deck_for_content = f"{base_deck}::{deck_stack[-1]}"
+
+            if 'subdecks' in (args.anki_deck_content or []) and final_deck_for_content:
+                if final_deck_for_content not in subdeck_content_map:
+                    subdeck_content_map[final_deck_for_content] = []
+                subdeck_content_map[final_deck_for_content].append(source_line_raw)
 
             content_line_idx += 1
             if content_line_idx >= len(target_content_lines): break
@@ -1336,19 +1362,18 @@ def process_parallel_sentences_to_csv(
                 print(f"Warning: No destination TTS field index found for language '{dest_lang_code}'", file=sys.stderr)
             
             if args.anki_markdown_decks:
-                base_deck = "::".join(deck_stack)
-                final_deck = base_deck
+                final_deck_for_card = "::".join(deck_stack)
                 if active_header_line_index in branch_header_lines:
-                    final_deck = f"{base_deck}::{deck_stack[-1]}"
+                    final_deck_for_card = f"{final_deck_for_card}::{deck_stack[-1]}"
                 
                 if args.anki_sentence_subdecks:
                     sentence_prefix = str(content_line_idx + 1).zfill(6)
                     sentence_slug = generate_filename_prefix_from_text(source_sentence, 4)
                     if sentence_slug:
                         sentence_deck_name = f"{sentence_prefix}-{sentence_slug}"
-                        final_deck = f"{final_deck}::{sentence_deck_name}"
+                        final_deck_for_card = f"{final_deck_for_card}::{sentence_deck_name}"
                 
-                csv_row[81] = final_deck
+                csv_row[81] = final_deck_for_card
             elif full_deck_name:
                 csv_row[81] = full_deck_name
                 
@@ -1364,7 +1389,7 @@ def process_parallel_sentences_to_csv(
         with open(tertiary_text_path, "r", encoding="utf-8") as f:
             tertiary_text_content = f.read()
 
-    _write_deck_metadata(args, output_file_path, source_text_content, target_text_content, tertiary_text_content)
+    _write_deck_metadata(args, output_file_path, source_text_content, target_text_content, tertiary_text_content, subdeck_content_map)
     return output_file_path
 
 def process_lemmas_per_line(

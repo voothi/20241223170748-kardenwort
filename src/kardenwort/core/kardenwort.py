@@ -570,8 +570,8 @@ def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, de_
 
     return sorted(list(final_lemmas), key=lambda x: (x not in lemma_sort_index, lemma_sort_index.get(x, 0), x.lower()))
 
-def _write_deck_metadata(args, output_file_path, source_text_content):
-    if not args.anki_deck_content or 'source' not in args.anki_deck_content:
+def _write_deck_metadata(args, output_file_path, source_text_content, target_text_content=None, tertiary_text_content=None):
+    if not args.anki_deck_content:
         return
 
     parent_deck_name = ""
@@ -598,9 +598,24 @@ def _write_deck_metadata(args, output_file_path, source_text_content):
     if not parent_deck_name:
         return
 
+    description_parts = []
+    if 'source' in args.anki_deck_content and source_text_content:
+        description_parts.append(source_text_content.strip())
+
+    if 'translations' in args.anki_deck_content:
+        if target_text_content:
+            description_parts.append(target_text_content.strip())
+        if tertiary_text_content:
+            description_parts.append(tertiary_text_content.strip())
+            
+    if not description_parts:
+        return
+        
+    final_description = "\n\n---\n\n".join(description_parts)
+
     metadata = {
         "deck_descriptions": {
-            parent_deck_name: source_text_content
+            parent_deck_name: final_description
         }
     }
     
@@ -883,7 +898,17 @@ def process_parallel_text_files(
 
                 tsv_writer.writerow(csv_row)
         
-        _write_deck_metadata(args, output_file_path, source_text_content)
+        target_text_content = None
+        if target_text_path and os.path.exists(target_text_path):
+            with open(target_text_path, "r", encoding="utf-8") as f:
+                target_text_content = f.read()
+
+        tertiary_text_content = None
+        if tertiary_text_path and os.path.exists(tertiary_text_path):
+            with open(tertiary_text_path, "r", encoding="utf-8") as f:
+                tertiary_text_content = f.read()
+        
+        _write_deck_metadata(args, output_file_path, source_text_content, target_text_content, tertiary_text_content)
 
     return output_file_path
 
@@ -1329,7 +1354,17 @@ def process_parallel_sentences_to_csv(
                 
             tsv_writer.writerow(csv_row)
             
-    _write_deck_metadata(args, output_file_path, source_text_content)
+    target_text_content = None
+    if target_text_path and os.path.exists(target_text_path):
+        with open(target_text_path, "r", encoding="utf-8") as f:
+            target_text_content = f.read()
+
+    tertiary_text_content = None
+    if tertiary_text_path and os.path.exists(tertiary_text_path):
+        with open(tertiary_text_path, "r", encoding="utf-8") as f:
+            tertiary_text_content = f.read()
+
+    _write_deck_metadata(args, output_file_path, source_text_content, target_text_content, tertiary_text_content)
     return output_file_path
 
 def process_lemmas_per_line(

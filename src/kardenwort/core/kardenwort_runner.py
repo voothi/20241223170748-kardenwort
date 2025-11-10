@@ -176,7 +176,7 @@ def main():
     parser.add_argument("--anki-sentence-subdecks", action="store_true", help="Create a final subdeck level for each sentence.")
     parser.add_argument("--anki-parent-deck", type=str, help="Specify the parent deck name, used by subsequent calls in a batch process to ensure a shared parent deck.")
     parser.add_argument("--suspend-cards", action="store_true", help="Suspend all newly imported/updated cards in Anki.")
-    parser.add_argument("--anki-deck-content", nargs='+', choices=['source', 'translations', 'subdecks'], help="Adds content to the Anki deck description. 'source': adds the full source text.")
+    parser.add_argument("--anki-deck-content", nargs='+', choices=['parent-source', 'parent-translations', 'subdeck-source', 'subdeck-translations'], help="Adds content to the Anki deck description.")
 
     args = parser.parse_args()
 

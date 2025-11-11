@@ -99,6 +99,9 @@ def get_script_args(args, python_path, workspace_path, config):
     if args.anki_deck_content:
         base_args.extend(["--anki-deck-content"] + args.anki_deck_content)
 
+    if args.strip_headers is not None:
+        base_args.extend(["--strip-headers"] + args.strip_headers)
+
     if args.language == "de":
         de_dictionary_file = config.get('language_resources', 'dictionary_file_de', fallback='german.dic')
         german_enhancement_args = [
@@ -177,6 +180,7 @@ def main():
     parser.add_argument("--anki-parent-deck", type=str, help="Specify the parent deck name, used by subsequent calls in a batch process to ensure a shared parent deck.")
     parser.add_argument("--suspend-cards", action="store_true", help="Suspend all newly imported/updated cards in Anki.")
     parser.add_argument("--anki-deck-content", nargs='+', choices=['parent-source', 'parent-translations', 'subdeck-source', 'subdeck-translations'], help="Adds content to the Anki deck description.")
+    parser.add_argument("--strip-headers", nargs='*', choices=['all', 'source', 'translations'], help="Strip Markdown headers (#) from text fields in the final output. No arguments implies 'all'.")
 
     args = parser.parse_args()
 

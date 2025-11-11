@@ -32,6 +32,11 @@ TTS_FIELD_INDICES = {
     }
 }
 
+def _strip_markdown_header(line):
+    """Removes Markdown header prefixes (#, ##, etc.) from a line."""
+    match = re.match(r'^(#+)\s+(.*)', line.strip())
+    return match.group(2).strip() if match else line
+
 def _format_gcs_component_case(component):
     if not component or len(component) < 2:
         return component
@@ -668,9 +673,21 @@ def process_parallel_text_files(
         with open(tertiary_text_path, "r", encoding="utf-8") as f3:
             tertiary_content_lines_all = [line.rstrip("\n") for line in f3]
 
-    source_content_lines = [line for line in source_text_lines_all if line.strip()]
-    target_content_lines = [line for line in target_content_lines_all if line.strip()]
-    tertiary_content_lines = [line for line in tertiary_content_lines_all if line.strip()]
+    strip_config = {'source': False, 'translations': False}
+    if args.strip_headers is not None:
+        targets = args.strip_headers if args.strip_headers else ['all']
+        if 'all' in targets or 'source' in targets:
+            strip_config['source'] = True
+        if 'all' in targets or 'translations' in targets:
+            strip_config['translations'] = True
+
+    display_source_lines_all = [_strip_markdown_header(line) for line in source_text_lines_all] if strip_config['source'] else source_text_lines_all
+    display_target_lines_all = [_strip_markdown_header(line) for line in target_content_lines_all] if strip_config['translations'] else target_content_lines_all
+    display_tertiary_lines_all = [_strip_markdown_header(line) for line in tertiary_content_lines_all] if strip_config['translations'] else tertiary_content_lines_all
+    
+    display_source_content_lines = [line for line in display_source_lines_all if line.strip()]
+    display_target_content_lines = [line for line in display_target_lines_all if line.strip()]
+    display_tertiary_content_lines = [line for line in display_tertiary_lines_all if line.strip()]
 
     lemma_to_shortest_form, lemma_to_sentence_info = {}, {}
     subdeck_content_map = {}
@@ -693,12 +710,12 @@ def process_parallel_text_files(
     content_line_idx = -1
     active_header_line_index = -1
     for line_index, source_line_raw in enumerate(source_text_lines_all):
-        source_line = source_line_raw.strip()
-        if not source_line: continue
+        source_line_for_analysis = source_line_raw.strip()
+        if not source_line_for_analysis: continue
 
         header_match = None
         if args.anki_markdown_decks:
-            header_match = re.match(r'^(#+)\s+(.*)', source_line)
+            header_match = re.match(r'^(#+)\s+(.*)', source_line_for_analysis)
             if header_match:
                 active_header_line_index = line_index
                 level = len(header_match.group(1))
@@ -711,10 +728,10 @@ def process_parallel_text_files(
                 if sanitized_title:
                     deck_stack.append(f"{100000 + header_counter}-{sanitized_title}")
                     header_counter += 1
-                source_line = title
+                source_line_for_analysis = title
         
         content_line_idx += 1
-        source_sentence = source_line
+        source_sentence = source_line_for_analysis
         
         base_deck = "::".join(deck_stack)
         final_deck = base_deck
@@ -871,36 +888,38 @@ def process_parallel_text_files(
 
             for word in sorted_words:
                 csv_row = [""] * 82
-                sentence_index, source_sentence, deck_name = lemma_to_sentence_info.get(word, (-1, "", ""))
+                sentence_index, source_sentence_for_lemmas, deck_name = lemma_to_sentence_info.get(word, (-1, "", ""))
                 if sentence_index == -1: continue
 
                 context_start_index, context_end_index = max(0, sentence_index - sentence_context_size), sentence_index + sentence_context_size + 1
                 
-                csv_row[5] = " ".join(line.strip() for line in source_content_lines[context_start_index:sentence_index])
-                csv_row[6] = source_sentence.strip()
-                csv_row[7] = " ".join(line.strip() for line in source_content_lines[sentence_index + 1:context_end_index])
+                csv_row[5] = " ".join(line.strip() for line in display_source_content_lines[context_start_index:sentence_index])
+                csv_row[6] = display_source_content_lines[sentence_index].strip() if sentence_index < len(display_source_content_lines) else ""
+                csv_row[7] = " ".join(line.strip() for line in display_source_content_lines[sentence_index + 1:context_end_index])
                 
                 if target_text_path:
-                    csv_row[8] = " ".join(line.strip() for line in target_content_lines[context_start_index:sentence_index])
-                    csv_row[9] = target_content_lines[sentence_index].strip() if sentence_index < len(target_content_lines) else ""
-                    csv_row[10] = " ".join(line.strip() for line in target_content_lines[sentence_index + 1:context_end_index])
+                    csv_row[8] = " ".join(line.strip() for line in display_target_content_lines[context_start_index:sentence_index])
+                    csv_row[9] = display_target_content_lines[sentence_index].strip() if sentence_index < len(display_target_content_lines) else ""
+                    csv_row[10] = " ".join(line.strip() for line in display_target_content_lines[sentence_index + 1:context_end_index])
                 
                 if tertiary_text_path:
-                    csv_row[11] = " ".join(line.strip() for line in tertiary_content_lines[context_start_index:sentence_index])
-                    csv_row[12] = tertiary_content_lines[sentence_index].strip() if sentence_index < len(tertiary_content_lines) else ""
-                    csv_row[13] = " ".join(line.strip() for line in tertiary_content_lines[sentence_index + 1:context_end_index])
+                    csv_row[11] = " ".join(line.strip() for line in display_tertiary_content_lines[context_start_index:sentence_index])
+                    csv_row[12] = display_tertiary_content_lines[sentence_index].strip() if sentence_index < len(display_tertiary_content_lines) else ""
+                    csv_row[13] = " ".join(line.strip() for line in display_tertiary_content_lines[sentence_index + 1:context_end_index])
                 
                 csv_row[0] = word
                 csv_row[1] = word
                 if add_source_word_col:
                     csv_row[2] = lemma_to_shortest_form.get(word, '')
-                csv_row[15] = source_sentence 
+
+                source_sentence_for_tsv = display_source_content_lines[sentence_index].strip() if sentence_index < len(display_source_content_lines) else ""
+                csv_row[15] = source_sentence_for_tsv 
                 if add_wordlist_col:
-                    if source_sentence not in sentence_lemmas_cache:
+                    if source_sentence_for_lemmas not in sentence_lemmas_cache:
                         wordlist_generation_args = {**kwargs, 'de_gcs': de_gcs, 'gcs_automaton': gcs_automaton, 'de_gcs_add_parts_to_wordlist': de_gcs_add_parts_to_wordlist}
-                        lemmas = extract_lemmas_from_sentence(source_sentence, lemma_sort_index, nlp, de_dictionary, lemma_override_rules, de_gcs_pos_tags, args, **wordlist_generation_args)
-                        sentence_lemmas_cache[source_sentence] = lemmas
-                    csv_row[14] = "<br>".join(sentence_lemmas_cache[source_sentence]) if wordlist_use_br else "\n".join(sentence_lemmas_cache[source_sentence])
+                        lemmas = extract_lemmas_from_sentence(source_sentence_for_lemmas, lemma_sort_index, nlp, de_dictionary, lemma_override_rules, de_gcs_pos_tags, args, **wordlist_generation_args)
+                        sentence_lemmas_cache[source_sentence_for_lemmas] = lemmas
+                    csv_row[14] = "<br>".join(sentence_lemmas_cache[source_sentence_for_lemmas]) if wordlist_use_br else "\n".join(sentence_lemmas_cache[source_sentence_for_lemmas])
                 if add_sentence_index_col:
                     csv_row[80] = str(sentence_index + 1).zfill(6)
                 
@@ -1015,10 +1034,18 @@ def process_single_text(
             text_units.append(line)
     else:
         if is_multiline_from_file:
-            text_units = [line for line in source_lines if line.strip()]
+            text_units = [line.strip() for line in source_lines if line.strip()]
         else:
             doc = nlp(source_text)
             text_units = [sent.text for sent in doc.sents]
+
+    strip_config = {'source': False, 'translations': False}
+    if args.strip_headers is not None:
+        targets = args.strip_headers if args.strip_headers else ['all']
+        if 'all' in targets or 'source' in targets:
+            strip_config['source'] = True
+
+    display_text_units = [_strip_markdown_header(unit) for unit in text_units] if strip_config['source'] else text_units
 
     lemma_to_shortest_form, lemma_to_sentence_info = {}, {}
     doc_cache = {}
@@ -1155,18 +1182,19 @@ def process_single_text(
                 print(f"{word}\t{source_word}", file=sys.stdout)
         elif args.stdout_format == 'context':
              for word in sorted_words:
-                unit_index, source_sentence, _ = lemma_to_sentence_info.get(word, (-1, "", ""))
+                unit_index, _, _ = lemma_to_sentence_info.get(word, (-1, "", ""))
                 if unit_index == -1: continue
                 
+                source_sentence = display_text_units[unit_index].strip()
                 context_start_index = max(0, unit_index - sentence_context_size)
-                context_end_index = min(len(text_units), unit_index + sentence_context_size + 1)
+                context_end_index = min(len(display_text_units), unit_index + sentence_context_size + 1)
                 
-                source_context_left = " ".join(u.strip() for u in text_units[context_start_index:unit_index])
-                source_context_right = " ".join(u.strip() for u in text_units[unit_index + 1:context_end_index])
+                source_context_left = " ".join(u.strip() for u in display_text_units[context_start_index:unit_index])
+                source_context_right = " ".join(u.strip() for u in display_text_units[unit_index + 1:context_end_index])
                 
                 print(word, file=sys.stdout)
                 if source_context_left: print(source_context_left, file=sys.stdout)
-                print(source_sentence.strip(), file=sys.stdout)
+                print(source_sentence, file=sys.stdout)
                 if source_context_right: print(source_context_right, file=sys.stdout)
                 print(file=sys.stdout)
         else:
@@ -1194,26 +1222,26 @@ def process_single_text(
 
         for word in sorted_words:
             csv_row = [""] * 82
-            unit_index, source_sentence, deck_name = lemma_to_sentence_info.get(word, (-1, "", ""))
+            unit_index, source_sentence_for_lemmas, deck_name = lemma_to_sentence_info.get(word, (-1, "", ""))
             if unit_index == -1: continue
             
-            source_sentence = source_sentence.strip()
+            source_sentence_for_tsv = display_text_units[unit_index].strip()
             context_start_index = max(0, unit_index - sentence_context_size)
-            context_end_index = min(len(text_units), unit_index + sentence_context_size + 1)
-            csv_row[5] = " ".join(u.strip() for u in text_units[context_start_index:unit_index])
-            csv_row[6] = source_sentence
-            csv_row[7] = " ".join(u.strip() for u in text_units[unit_index + 1:context_end_index])
+            context_end_index = min(len(display_text_units), unit_index + sentence_context_size + 1)
+            csv_row[5] = " ".join(u.strip() for u in display_text_units[context_start_index:unit_index])
+            csv_row[6] = source_sentence_for_tsv
+            csv_row[7] = " ".join(u.strip() for u in display_text_units[unit_index + 1:context_end_index])
             csv_row[0] = word
             csv_row[1] = word
             if add_source_word_col:
                 csv_row[2] = lemma_to_shortest_form.get(word, '')
-            csv_row[15] = source_sentence
+            csv_row[15] = source_sentence_for_tsv
             if add_wordlist_col:
-                if source_sentence not in sentence_lemmas_cache:
+                if source_sentence_for_lemmas not in sentence_lemmas_cache:
                     wordlist_generation_args = {**kwargs, 'de_gcs': de_gcs, 'gcs_automaton': gcs_automaton, 'de_gcs_add_parts_to_wordlist': de_gcs_add_parts_to_wordlist}
-                    lemmas = extract_lemmas_from_sentence(source_sentence, lemma_sort_index, nlp, de_dictionary, lemma_override_rules, de_gcs_pos_tags, args, **wordlist_generation_args)
-                    sentence_lemmas_cache[source_sentence] = lemmas
-                csv_row[14] = "<br>".join(sentence_lemmas_cache[source_sentence]) if wordlist_use_br else "\n".join(sentence_lemmas_cache[source_sentence])
+                    lemmas = extract_lemmas_from_sentence(source_sentence_for_lemmas, lemma_sort_index, nlp, de_dictionary, lemma_override_rules, de_gcs_pos_tags, args, **wordlist_generation_args)
+                    sentence_lemmas_cache[source_sentence_for_lemmas] = lemmas
+                csv_row[14] = "<br>".join(sentence_lemmas_cache[source_sentence_for_lemmas]) if wordlist_use_br else "\n".join(sentence_lemmas_cache[source_sentence_for_lemmas])
             if add_sentence_index_col:
                 csv_row[80] = str(unit_index + 1).zfill(6)
             
@@ -1266,9 +1294,21 @@ def process_parallel_sentences_to_csv(
     except IOError as e:
         print(f"Error reading files: {e}", file=sys.stderr); sys.exit(1)
 
-    source_content_lines = [line for line in source_text_lines_all if line.strip()]
-    target_content_lines = [line for line in target_content_lines_all if line.strip()]
-    tertiary_content_lines = [line for line in tertiary_content_lines_all if line.strip()]
+    strip_config = {'source': False, 'translations': False}
+    if args.strip_headers is not None:
+        targets = args.strip_headers if args.strip_headers else ['all']
+        if 'all' in targets or 'source' in targets:
+            strip_config['source'] = True
+        if 'all' in targets or 'translations' in targets:
+            strip_config['translations'] = True
+
+    display_source_lines_all = [_strip_markdown_header(line) for line in source_text_lines_all] if strip_config['source'] else source_text_lines_all
+    display_target_lines_all = [_strip_markdown_header(line) for line in target_content_lines_all] if strip_config['translations'] else target_content_lines_all
+    display_tertiary_lines_all = [_strip_markdown_header(line) for line in tertiary_content_lines_all] if strip_config['translations'] else tertiary_content_lines_all
+    
+    display_source_content_lines = [line for line in display_source_lines_all if line.strip()]
+    display_target_content_lines = [line for line in display_target_lines_all if line.strip()]
+    display_tertiary_content_lines = [line for line in display_tertiary_lines_all if line.strip()]
 
     full_deck_name = ""
     if args.anki_create_subdecks and not args.anki_markdown_decks:
@@ -1307,11 +1347,11 @@ def process_parallel_sentences_to_csv(
         content_line_idx = -1
         active_header_line_index = -1
         for line_index, source_line_raw in enumerate(source_text_lines_all):
-            source_line = source_line_raw.strip()
-            if not source_line: continue
+            source_line_for_analysis = source_line_raw.strip()
+            if not source_line_for_analysis: continue
 
             if args.anki_markdown_decks:
-                header_match = re.match(r'^(#+)\s+(.*)', source_line)
+                header_match = re.match(r'^(#+)\s+(.*)', source_line_for_analysis)
                 if header_match:
                     active_header_line_index = line_index
                     level = len(header_match.group(1))
@@ -1324,7 +1364,7 @@ def process_parallel_sentences_to_csv(
                     if sanitized_title:
                         deck_stack.append(f"{100000 + header_counter}-{sanitized_title}")
                         header_counter += 1
-                    source_line = title
+                    source_line_for_analysis = title
             
             base_deck = "::".join(deck_stack)
             final_deck_for_content = base_deck
@@ -1341,33 +1381,33 @@ def process_parallel_sentences_to_csv(
                     subdeck_content_map[final_deck_for_content]['translation2_lines'].append(tertiary_content_lines_all[line_index])
 
             content_line_idx += 1
-            if content_line_idx >= len(target_content_lines): break
+            if content_line_idx >= len(display_target_content_lines): break
 
             csv_row = [""] * 82
-            source_sentence = source_line
-            target_sentence = target_content_lines[content_line_idx].strip()
+            source_sentence = display_source_content_lines[content_line_idx].strip()
+            target_sentence = display_target_content_lines[content_line_idx].strip()
             
             context_start_index = max(0, content_line_idx - sentence_context_size)
             context_end_index = content_line_idx + sentence_context_size + 1
 
             csv_row[0] = source_sentence
-            csv_row[5] = " ".join(line.strip() for line in source_content_lines[context_start_index:content_line_idx])
+            csv_row[5] = " ".join(line.strip() for line in display_source_content_lines[context_start_index:content_line_idx])
             csv_row[6] = source_sentence
-            csv_row[7] = " ".join(line.strip() for line in source_content_lines[content_line_idx + 1:context_end_index])
+            csv_row[7] = " ".join(line.strip() for line in display_source_content_lines[content_line_idx + 1:context_end_index])
             
-            csv_row[8] = " ".join(line.strip() for line in target_content_lines[context_start_index:content_line_idx])
+            csv_row[8] = " ".join(line.strip() for line in display_target_content_lines[context_start_index:content_line_idx])
             csv_row[9] = target_sentence
-            csv_row[10] = " ".join(line.strip() for line in target_content_lines[content_line_idx + 1:context_end_index])
+            csv_row[10] = " ".join(line.strip() for line in display_target_content_lines[content_line_idx + 1:context_end_index])
             
             if add_wordlist_col:
-                lemmas = extract_lemmas_from_sentence(source_sentence, lemma_sort_index, nlp, de_dictionary, lemma_override_rules, de_gcs_pos_tags, args, **kwargs)
+                lemmas = extract_lemmas_from_sentence(source_line_for_analysis, lemma_sort_index, nlp, de_dictionary, lemma_override_rules, de_gcs_pos_tags, args, **kwargs)
                 csv_row[14] = "<br>".join(lemmas) if wordlist_use_br else "\n".join(lemmas)
             csv_row[15] = source_sentence
             
-            if tertiary_text_path and content_line_idx < len(tertiary_content_lines):
-                csv_row[11] = " ".join(line.strip() for line in tertiary_content_lines[context_start_index:content_line_idx])
-                csv_row[12] = tertiary_content_lines[content_line_idx].strip()
-                csv_row[13] = " ".join(line.strip() for line in tertiary_content_lines[content_line_idx + 1:context_end_index])
+            if tertiary_text_path and content_line_idx < len(display_tertiary_content_lines):
+                csv_row[11] = " ".join(line.strip() for line in display_tertiary_content_lines[context_start_index:content_line_idx])
+                csv_row[12] = display_tertiary_content_lines[content_line_idx].strip()
+                csv_row[13] = " ".join(line.strip() for line in display_tertiary_content_lines[content_line_idx + 1:context_end_index])
             
             if add_sentence_index_col:
                 csv_row[80] = str(content_line_idx + 1).zfill(6)
@@ -1486,6 +1526,12 @@ def main():
     output_format_group.add_argument("--anki-sentence-subdecks", action="store_true", help="Create a final subdeck level for each sentence. Requires --anki-markdown-decks.")
     output_format_group.add_argument("--anki-parent-deck", help="Manually specify the parent deck name, overriding the auto-generated one. Requires --anki-create-subdecks.")
     output_format_group.add_argument("--anki-deck-content", nargs='+', choices=['parent-source', 'parent-translations', 'subdeck-source', 'subdeck-translations'], help="Adds content to the Anki deck description. 'parent-source': adds full source text to parent deck. 'subdeck-source': adds relevant source text part to each subdeck.")
+    output_format_group.add_argument(
+        "--strip-headers",
+        nargs='*',
+        choices=['all', 'source', 'translations'],
+        help="Strip Markdown headers (#) from text fields in the final TSV output. 'all': strip from source and translations. 'source': only from source. 'translations': only from translations. If the flag is present without arguments, it defaults to 'all'."
+    )
     stdout_group = parser.add_argument_group('Standard Output (STDOUT) Arguments (used only if --output is not specified)')
     output_format_group.add_argument("--stdout-format", choices=['list', 'context', 'tsv', 'html'], default='list', 
                                help="Select the output format for STDOUT if --output-file is not specified.\n"

@@ -710,10 +710,10 @@ def process_parallel_text_files(
     content_line_idx = -1
     active_header_line_index = -1
     for line_index, source_line_raw in enumerate(source_text_lines_all):
-        source_line_for_analysis = source_line_raw.strip()
-        if not source_line_for_analysis: continue
+        if not source_line_raw.strip(): continue
 
-        header_match = None
+        source_line_for_analysis = source_line_raw.strip()
+
         if args.anki_markdown_decks:
             header_match = re.match(r'^(#+)\s+(.*)', source_line_for_analysis)
             if header_match:
@@ -1347,8 +1347,9 @@ def process_parallel_sentences_to_csv(
         content_line_idx = -1
         active_header_line_index = -1
         for line_index, source_line_raw in enumerate(source_text_lines_all):
+            if not source_line_raw.strip(): continue
+
             source_line_for_analysis = source_line_raw.strip()
-            if not source_line_for_analysis: continue
 
             if args.anki_markdown_decks:
                 header_match = re.match(r'^(#+)\s+(.*)', source_line_for_analysis)

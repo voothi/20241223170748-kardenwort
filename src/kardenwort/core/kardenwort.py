@@ -710,7 +710,7 @@ def process_parallel_text_files(
         if root_deck_prefix:
             deck_stack.append(root_deck_prefix)
 
-    text_has_headers = any(line.strip().startswith('#') for line in source_text_lines_all)
+    text_has_headers = any(re.match(r'^(#+)\s+', line.strip()) for line in source_text_lines_all)
     content_line_idx = -1
     active_header_line_index = -1
     first_header_encountered = False
@@ -1016,7 +1016,7 @@ def process_single_text(
         if root_deck_prefix:
             deck_stack.append(root_deck_prefix)
 
-        text_has_headers = any(line.strip().startswith('#') for line in source_lines)
+        text_has_headers = any(re.match(r'^(#+)\s+', line.strip()) for line in source_lines)
         first_header_encountered = False
         placeholder_deck_created = False
 
@@ -1380,7 +1380,7 @@ def process_parallel_sentences_to_csv(
             if root_deck_prefix:
                 deck_stack.append(root_deck_prefix)
 
-        text_has_headers = any(line.strip().startswith('#') for line in source_text_lines_all)
+        text_has_headers = any(re.match(r'^(#+)\s+', line.strip()) for line in source_text_lines_all)
         content_line_idx = -1
         active_header_line_index = -1
         first_header_encountered = False

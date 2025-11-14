@@ -82,6 +82,9 @@ def get_script_args(args, python_path, workspace_path, config):
         "--sentence-context-size", "4",
     ]
 
+    if args.no_lemma_deduplication:
+        base_args.append("--no-lemma-deduplication")
+
     if args.tts_destination_lang:
         base_args.extend(["--tts-destination-lang", args.tts_destination_lang])
 
@@ -172,6 +175,7 @@ def main():
     parser.add_argument("--language", type=str, required=True, choices=["de", "en"], help="Language for processing: German (de) or English (en).")
     parser.add_argument("--tts-destination-lang", type=str, help="Specify the destination language for TTS field activation (e.g., 'ru', 'en').")
     parser.add_argument("--text", type=str, help="Directly pass a text string for 'single' mode processing, bypassing the default text1.txt file.")
+    parser.add_argument("--no-lemma-deduplication", action="store_true", help="Disable global lemma deduplication, creating an entry for each time a lemma appears in a different sentence.")
     parser.add_argument("--de-gcs", action='store_true', help="Enable German Compound Splitting (only effective when --language is 'de').")
     parser.add_argument("--de-gcs-pos-tags", nargs='+', help="Specify POS tags for GCS (e.g., 'NOUN PROPN' or '!VERB').")
     parser.add_argument("--anki-create-subdecks", action="store_true", help="Automatically generate a parent deck and sub-decks for Anki based on the output filename.")

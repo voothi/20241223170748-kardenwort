@@ -710,6 +710,7 @@ def process_parallel_text_files(
         if root_deck_prefix:
             deck_stack.append(root_deck_prefix)
 
+    text_has_headers = any(line.strip().startswith('#') for line in source_text_lines_all)
     content_line_idx = -1
     active_header_line_index = -1
     first_header_encountered = False
@@ -736,7 +737,7 @@ def process_parallel_text_files(
                     deck_stack.append(f"{100000 + header_counter}-{sanitized_title}")
                     header_counter += 1
                 source_line_for_analysis = title
-            elif not first_header_encountered and not placeholder_deck_created:
+            elif not first_header_encountered and not placeholder_deck_created and text_has_headers:
                 title = source_line_for_analysis
                 sanitized_title = generate_filename_prefix_from_text(title, 5)
 
@@ -1015,6 +1016,7 @@ def process_single_text(
         if root_deck_prefix:
             deck_stack.append(root_deck_prefix)
 
+        text_has_headers = any(line.strip().startswith('#') for line in source_lines)
         first_header_encountered = False
         placeholder_deck_created = False
 
@@ -1036,7 +1038,7 @@ def process_single_text(
                     deck_stack.append(f"{100000 + header_counter}-{sanitized_title}")
                     header_counter += 1
                 line = title
-            elif not first_header_encountered and not placeholder_deck_created:
+            elif not first_header_encountered and not placeholder_deck_created and text_has_headers:
                 title = line
                 sanitized_title = generate_filename_prefix_from_text(title, 5)
                 actual_level = 1 + (1 if root_deck_prefix else 0)
@@ -1378,6 +1380,7 @@ def process_parallel_sentences_to_csv(
             if root_deck_prefix:
                 deck_stack.append(root_deck_prefix)
 
+        text_has_headers = any(line.strip().startswith('#') for line in source_text_lines_all)
         content_line_idx = -1
         active_header_line_index = -1
         first_header_encountered = False
@@ -1404,7 +1407,7 @@ def process_parallel_sentences_to_csv(
                         deck_stack.append(f"{100000 + header_counter}-{sanitized_title}")
                         header_counter += 1
                     source_line_for_analysis = title
-                elif not first_header_encountered and not placeholder_deck_created:
+                elif not first_header_encountered and not placeholder_deck_created and text_has_headers:
                     title = source_line_for_analysis
                     sanitized_title = generate_filename_prefix_from_text(title, 5)
 

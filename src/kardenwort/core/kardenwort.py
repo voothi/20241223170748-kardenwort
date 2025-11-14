@@ -692,7 +692,10 @@ def process_parallel_text_files(
     display_target_content_lines = [line for line in display_target_lines_all if line.strip()]
     display_tertiary_content_lines = [line for line in display_tertiary_lines_all if line.strip()]
 
-    lemma_to_shortest_form, lemma_to_sentence_info = {}, {}
+    lemma_to_shortest_form = {} if not args.no_lemma_deduplication else None
+    lemma_to_sentence_info = {} if not args.no_lemma_deduplication else None
+    final_word_list = [] if args.no_lemma_deduplication else None
+
     subdeck_content_map = {}
     deck_stack = []
     header_counter = 1
@@ -717,6 +720,7 @@ def process_parallel_text_files(
     placeholder_deck_created = False
 
     for line_index, source_line_raw in enumerate(source_text_lines_all):
+        lemmas_this_sentence = {} if args.no_lemma_deduplication else None
         if not source_line_raw.strip(): continue
 
         source_line_for_analysis = source_line_raw.strip()
@@ -880,14 +884,32 @@ def process_parallel_text_files(
 
                 for lemma in deduplicated_lemmas:
                     if lemma:
-                        if lemma not in lemma_to_shortest_form:
-                            lemma_to_shortest_form[lemma] = source_word_form
-                            lemma_to_sentence_info[lemma] = (content_line_idx, source_sentence, final_deck)
-                        elif len(source_word_form) < len(lemma_to_shortest_form[lemma]):
-                             lemma_to_shortest_form[lemma] = source_word_form
-                             lemma_to_sentence_info[lemma] = (content_line_idx, source_sentence, final_deck)
+                        if not args.no_lemma_deduplication:
+                            if lemma not in lemma_to_shortest_form:
+                                lemma_to_shortest_form[lemma] = source_word_form
+                                lemma_to_sentence_info[lemma] = (content_line_idx, source_sentence, final_deck)
+                            elif len(source_word_form) < len(lemma_to_shortest_form[lemma]):
+                                 lemma_to_shortest_form[lemma] = source_word_form
+                                 lemma_to_sentence_info[lemma] = (content_line_idx, source_sentence, final_deck)
+                        else:
+                            if lemma not in lemmas_this_sentence or len(source_word_form) < len(lemmas_this_sentence[lemma]['source_word']):
+                                lemmas_this_sentence[lemma] = {
+                                    'source_word': source_word_form,
+                                    'sentence_index': content_line_idx,
+                                    'source_sentence': source_sentence,
+                                    'deck_name': final_deck
+                                }
+        
+        if args.no_lemma_deduplication and lemmas_this_sentence:
+            for lemma, data in lemmas_this_sentence.items():
+                final_word_list.append({'lemma': lemma, **data})
 
-    sorted_words = sorted(list(lemma_to_shortest_form.keys()), key=lambda word: (word not in lemma_sort_index, lemma_sort_index.get(word, 0), word.lower()))
+    sorted_items = []
+    if not args.no_lemma_deduplication:
+        sorted_items = sorted(list(lemma_to_shortest_form.keys()), key=lambda word: (word not in lemma_sort_index, lemma_sort_index.get(word, 0), word.lower()))
+    else:
+        sorted_items = sorted(final_word_list, key=lambda x: (x['lemma'] not in lemma_sort_index, lemma_sort_index.get(x['lemma'], 0), x['lemma'].lower()))
+
     if output_file_path:
         full_deck_name = ""
         if args.anki_create_subdecks and not args.anki_markdown_decks:
@@ -907,10 +929,26 @@ def process_parallel_text_files(
             if add_header:
                 tsv_writer.writerow(get_anki_csv_header())
 
-            for word in sorted_words:
+            for item in sorted_items:
                 csv_row = [""] * 82
-                sentence_index, source_sentence_for_lemmas, deck_name = lemma_to_sentence_info.get(word, (-1, "", ""))
-                if sentence_index == -1: continue
+                
+                word = ""
+                sentence_index = -1
+                source_sentence_for_lemmas = ""
+                deck_name = ""
+                source_word_col_val = ""
+
+                if not args.no_lemma_deduplication:
+                    word = item
+                    sentence_index, source_sentence_for_lemmas, deck_name = lemma_to_sentence_info.get(word, (-1, "", ""))
+                    if sentence_index == -1: continue
+                    source_word_col_val = lemma_to_shortest_form.get(word, '')
+                else:
+                    word = item['lemma']
+                    sentence_index = item['sentence_index']
+                    source_sentence_for_lemmas = item['source_sentence']
+                    deck_name = item['deck_name']
+                    source_word_col_val = item['source_word']
 
                 context_start_index, context_end_index = max(0, sentence_index - sentence_context_size), sentence_index + sentence_context_size + 1
                 
@@ -931,7 +969,7 @@ def process_parallel_text_files(
                 csv_row[0] = word
                 csv_row[1] = word
                 if add_source_word_col:
-                    csv_row[2] = lemma_to_shortest_form.get(word, '')
+                    csv_row[2] = source_word_col_val
 
                 source_sentence_for_tsv = display_source_content_lines[sentence_index].strip() if sentence_index < len(display_source_content_lines) else ""
                 csv_row[15] = source_sentence_for_tsv 
@@ -1083,10 +1121,13 @@ def process_single_text(
 
     display_text_units = [_strip_markdown_header(unit) for unit in text_units] if strip_config['source'] else text_units
 
-    lemma_to_shortest_form, lemma_to_sentence_info = {}, {}
+    lemma_to_shortest_form = {} if not args.no_lemma_deduplication else None
+    lemma_to_sentence_info = {} if not args.no_lemma_deduplication else None
+    final_word_list = [] if args.no_lemma_deduplication else None
     doc_cache = {}
 
     for unit_index, unit_text in enumerate(text_units):
+        lemmas_this_sentence = {} if args.no_lemma_deduplication else None
         if unit_text not in doc_cache:
             doc_cache[unit_text] = nlp(unit_text)
         unit_doc = doc_cache[unit_text]
@@ -1194,31 +1235,58 @@ def process_single_text(
 
                 for lemma in deduplicated_lemmas:
                     if lemma:
-                        if lemma not in lemma_to_shortest_form:
-                            lemma_to_shortest_form[lemma] = source_word_form
-                            lemma_to_sentence_info[lemma] = (unit_index, unit_text, current_deck)
-                        elif len(source_word_form) < len(lemma_to_shortest_form[lemma]):
-                             lemma_to_shortest_form[lemma] = source_word_form
-                             lemma_to_sentence_info[lemma] = (unit_index, unit_text, current_deck)
+                        if not args.no_lemma_deduplication:
+                            if lemma not in lemma_to_shortest_form:
+                                lemma_to_shortest_form[lemma] = source_word_form
+                                lemma_to_sentence_info[lemma] = (unit_index, unit_text, current_deck)
+                            elif len(source_word_form) < len(lemma_to_shortest_form[lemma]):
+                                 lemma_to_shortest_form[lemma] = source_word_form
+                                 lemma_to_sentence_info[lemma] = (unit_index, unit_text, current_deck)
+                        else:
+                            if lemma not in lemmas_this_sentence or len(source_word_form) < len(lemmas_this_sentence[lemma]['source_word']):
+                                lemmas_this_sentence[lemma] = {
+                                    'source_word': source_word_form,
+                                    'sentence_index': unit_index,
+                                    'source_sentence': unit_text,
+                                    'deck_name': current_deck
+                                }
 
-    sorted_words = sorted(list(lemma_to_shortest_form.keys()), key=lambda word: (word not in lemma_sort_index, lemma_sort_index.get(word, 0), word.lower()))
+        if args.no_lemma_deduplication and lemmas_this_sentence:
+            for lemma, data in lemmas_this_sentence.items():
+                final_word_list.append({'lemma': lemma, **data})
+
+    sorted_items = []
+    if not args.no_lemma_deduplication:
+        sorted_items = sorted(list(lemma_to_shortest_form.keys()), key=lambda word: (word not in lemma_sort_index, lemma_sort_index.get(word, 0), word.lower()))
+    else:
+        sorted_items = sorted(final_word_list, key=lambda x: (x['lemma'] not in lemma_sort_index, lemma_sort_index.get(x['lemma'], 0), x['lemma'].lower()))
     
     sentence_lemmas_cache = {}
 
     if not output_file_path:
         if args.stdout_format == 'html':
             print("<table>", file=sys.stdout)
-            for word in sorted_words:
-                source_word = lemma_to_shortest_form.get(word, '')
+            for item in sorted_items:
+                word = item if not args.no_lemma_deduplication else item['lemma']
+                source_word = lemma_to_shortest_form.get(word, '') if not args.no_lemma_deduplication else item['source_word']
                 print(f"<tr><td>{word}</td><td>{source_word}</td></tr>", file=sys.stdout)
             print("</table>", file=sys.stdout)
         elif args.stdout_format == 'tsv':
-            for word in sorted_words:
-                source_word = lemma_to_shortest_form.get(word, '')
+            for item in sorted_items:
+                word = item if not args.no_lemma_deduplication else item['lemma']
+                source_word = lemma_to_shortest_form.get(word, '') if not args.no_lemma_deduplication else item['source_word']
                 print(f"{word}\t{source_word}", file=sys.stdout)
         elif args.stdout_format == 'context':
-             for word in sorted_words:
-                unit_index, _, _ = lemma_to_sentence_info.get(word, (-1, "", ""))
+             for item in sorted_items:
+                word = ""
+                unit_index = -1
+                if not args.no_lemma_deduplication:
+                    word = item
+                    unit_index, _, _ = lemma_to_sentence_info.get(word, (-1, "", ""))
+                else:
+                    word = item['lemma']
+                    unit_index = item['sentence_index']
+
                 if unit_index == -1: continue
                 
                 source_sentence = display_text_units[unit_index].strip()
@@ -1234,7 +1302,8 @@ def process_single_text(
                 if source_context_right: print(source_context_right, file=sys.stdout)
                 print(file=sys.stdout)
         else:
-            for word in sorted_words:
+            for item in sorted_items:
+                word = item if not args.no_lemma_deduplication else item['lemma']
                 print(word, file=sys.stdout)
         return None
 
@@ -1256,11 +1325,27 @@ def process_single_text(
         if add_header:
             tsv_writer.writerow(get_anki_csv_header())
 
-        for word in sorted_words:
+        for item in sorted_items:
             csv_row = [""] * 82
-            unit_index, source_sentence_for_lemmas, deck_name = lemma_to_sentence_info.get(word, (-1, "", ""))
-            if unit_index == -1: continue
             
+            word = ""
+            unit_index = -1
+            source_sentence_for_lemmas = ""
+            deck_name = ""
+            source_word_col_val = ""
+
+            if not args.no_lemma_deduplication:
+                word = item
+                unit_index, source_sentence_for_lemmas, deck_name = lemma_to_sentence_info.get(word, (-1, "", ""))
+                if unit_index == -1: continue
+                source_word_col_val = lemma_to_shortest_form.get(word, '')
+            else:
+                word = item['lemma']
+                unit_index = item['sentence_index']
+                source_sentence_for_lemmas = item['source_sentence']
+                deck_name = item['deck_name']
+                source_word_col_val = item['source_word']
+
             source_sentence_for_tsv = display_text_units[unit_index].strip()
             context_start_index = max(0, unit_index - sentence_context_size)
             context_end_index = min(len(display_text_units), unit_index + sentence_context_size + 1)
@@ -1270,7 +1355,7 @@ def process_single_text(
             csv_row[0] = word
             csv_row[1] = word
             if add_source_word_col:
-                csv_row[2] = lemma_to_shortest_form.get(word, '')
+                csv_row[2] = source_word_col_val
             csv_row[15] = source_sentence_for_tsv
             if add_wordlist_col:
                 if source_sentence_for_lemmas not in sentence_lemmas_cache:
@@ -1597,6 +1682,7 @@ def main():
 
     lemmatization_group = parser.add_argument_group('Lemmatization Control')
     lemmatization_group.add_argument("--force-proper-noun-capitalization", action="store_true", help="Force capitalization of proper noun lemmas (PROPN).")
+    lemmatization_group.add_argument("--no-lemma-deduplication", action="store_true", help="Disable global deduplication of lemmas. This ensures that if a word appears in multiple sentences, it will have a separate entry for each sentence.")
     de_group = parser.add_argument_group('German Language Specific Arguments')
     de_group.add_argument("--de-fix-genitive", action="store_true", help="[German] Corrects genitive noun lemmas (e.g., 'Hauses' -> 'Haus') by checking against the dictionary.")
     de_group.add_argument("--de-force-noun-capitalization", action="store_true", help="[German only] Force capitalization of all noun lemmas (NOUN, PROPN) as per German orthography rules. Overrides --force-proper-noun-capitalization for German.")

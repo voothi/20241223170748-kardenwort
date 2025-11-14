@@ -618,7 +618,10 @@ def _write_deck_metadata(args, output_file_path, source_text_content, target_tex
     if subdeck_content_map and ('subdeck-source' in args.anki_deck_content or 'subdeck-translations' in args.anki_deck_content):
         for deck_name, content_data in subdeck_content_map.items():
             if not deck_name: continue
-            
+
+            if deck_name == parent_deck_name and parent_deck_name in deck_descriptions:
+                            continue
+
             subdeck_description_parts = []
             if 'subdeck-source' in args.anki_deck_content:
                 source_part = "\n".join(content_data.get('source_lines', []))

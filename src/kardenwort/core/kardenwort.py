@@ -712,14 +712,18 @@ def process_parallel_text_files(
 
     content_line_idx = -1
     active_header_line_index = -1
+    first_header_encountered = False
+    placeholder_deck_created = False
+
     for line_index, source_line_raw in enumerate(source_text_lines_all):
         if not source_line_raw.strip(): continue
 
         source_line_for_analysis = source_line_raw.strip()
-
+        
         if args.anki_markdown_decks:
             header_match = re.match(r'^(#+)\s+(.*)', source_line_for_analysis)
             if header_match:
+                first_header_encountered = True
                 active_header_line_index = line_index
                 level = len(header_match.group(1))
                 title = header_match.group(2).strip()
@@ -732,6 +736,19 @@ def process_parallel_text_files(
                     deck_stack.append(f"{100000 + header_counter}-{sanitized_title}")
                     header_counter += 1
                 source_line_for_analysis = title
+            elif not first_header_encountered and not placeholder_deck_created:
+                title = source_line_for_analysis
+                sanitized_title = generate_filename_prefix_from_text(title, 5)
+
+                actual_level = 1 + (1 if root_deck_prefix else 0)
+                while len(deck_stack) >= actual_level:
+                    deck_stack.pop()
+                
+                if sanitized_title:
+                    deck_stack.append(f"{100000 + header_counter}-{sanitized_title}")
+                    header_counter += 1
+                
+                placeholder_deck_created = True
         
         content_line_idx += 1
         source_sentence = source_line_for_analysis
@@ -998,12 +1015,16 @@ def process_single_text(
         if root_deck_prefix:
             deck_stack.append(root_deck_prefix)
 
+        first_header_encountered = False
+        placeholder_deck_created = False
+
         for line_index, line_raw in enumerate(source_lines):
             line = line_raw.strip()
             if not line: continue
             
             header_match = re.match(r'^(#+)\s+(.*)', line)
             if header_match:
+                first_header_encountered = True
                 active_header_line_index = line_index
                 level = len(header_match.group(1))
                 title = header_match.group(2).strip()
@@ -1015,7 +1036,17 @@ def process_single_text(
                     deck_stack.append(f"{100000 + header_counter}-{sanitized_title}")
                     header_counter += 1
                 line = title
-            
+            elif not first_header_encountered and not placeholder_deck_created:
+                title = line
+                sanitized_title = generate_filename_prefix_from_text(title, 5)
+                actual_level = 1 + (1 if root_deck_prefix else 0)
+                while len(deck_stack) >= actual_level:
+                    deck_stack.pop()
+                if sanitized_title:
+                    deck_stack.append(f"{100000 + header_counter}-{sanitized_title}")
+                    header_counter += 1
+                placeholder_deck_created = True
+
             base_deck = "::".join(deck_stack)
             final_deck = base_deck
             if active_header_line_index in branch_header_lines:
@@ -1349,14 +1380,18 @@ def process_parallel_sentences_to_csv(
 
         content_line_idx = -1
         active_header_line_index = -1
+        first_header_encountered = False
+        placeholder_deck_created = False
+
         for line_index, source_line_raw in enumerate(source_text_lines_all):
             if not source_line_raw.strip(): continue
 
             source_line_for_analysis = source_line_raw.strip()
-
+            
             if args.anki_markdown_decks:
                 header_match = re.match(r'^(#+)\s+(.*)', source_line_for_analysis)
                 if header_match:
+                    first_header_encountered = True
                     active_header_line_index = line_index
                     level = len(header_match.group(1))
                     title = header_match.group(2).strip()
@@ -1369,7 +1404,20 @@ def process_parallel_sentences_to_csv(
                         deck_stack.append(f"{100000 + header_counter}-{sanitized_title}")
                         header_counter += 1
                     source_line_for_analysis = title
-            
+                elif not first_header_encountered and not placeholder_deck_created:
+                    title = source_line_for_analysis
+                    sanitized_title = generate_filename_prefix_from_text(title, 5)
+
+                    actual_level = 1 + (1 if root_deck_prefix else 0)
+                    while len(deck_stack) >= actual_level:
+                        deck_stack.pop()
+                    
+                    if sanitized_title:
+                        deck_stack.append(f"{100000 + header_counter}-{sanitized_title}")
+                        header_counter += 1
+                    
+                    placeholder_deck_created = True
+
             base_deck = "::".join(deck_stack)
             final_deck_for_content = base_deck
             if active_header_line_index in branch_header_lines:

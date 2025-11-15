@@ -1550,11 +1550,11 @@ def process_parallel_sentences_to_csv(
                     subdeck_content_map[final_deck_for_content]['translation2_lines'].append(tertiary_content_lines_all[line_index])
 
             content_line_idx += 1
-            if content_line_idx >= len(display_target_content_lines): break
+            if content_line_idx >= len(display_source_content_lines): break
 
             csv_row = [""] * 82
             source_sentence = display_source_content_lines[content_line_idx].strip()
-            target_sentence = display_target_content_lines[content_line_idx].strip()
+            target_sentence = display_target_content_lines[content_line_idx].strip() if content_line_idx < len(display_target_content_lines) else ""
             
             context_start_index = max(0, content_line_idx - sentence_context_size)
             context_end_index = content_line_idx + sentence_context_size + 1
@@ -1776,7 +1776,6 @@ def main():
     args = parser.parse_args()
     
     if args.multi_text:
-        # This flag modifies the behavior of --text or stdin input.
         if args.text1_file:
             print("Warning: --multi-text is ignored when --text1-file is provided.", file=sys.stderr)
         else:
@@ -1787,23 +1786,23 @@ def main():
                 input_text_combined = sys.stdin.read()
 
             if input_text_combined:
-                # Split text by '---' with optional whitespace, handling GoldenDict's line stripping.
                 parts = re.split(r'\s*---\s*', input_text_combined.strip())
-                
-                text_blocks = parts[:3]  # Use up to 3 parts
+                text_blocks = parts[:3]
                 file_arg_names = ['text1_file', 'text2_file', 'text3_file']
 
-                for i, text_content in enumerate(text_blocks):
-                    # Create a temporary file to hold this part of the text.
+                # --- FIX IS HERE ---
+                # Ensure up to 3 temp files are created, even if input has fewer than 3 parts.
+                # This is critical for --type sentence to not fail its checks.
+                for i, arg_name in enumerate(file_arg_names):
+                    text_content = text_blocks[i] if i < len(text_blocks) else ""
+                    
                     fd, path = tempfile.mkstemp(suffix='.txt', text=True)
                     with os.fdopen(fd, 'w', encoding='utf-8') as tmp:
                         tmp.write(text_content)
                     
-                    # Set the corresponding file argument (e.g., args.text1_file) to the temp file path.
-                    setattr(args, file_arg_names[i], path)
+                    setattr(args, arg_name, path)
                     TEMP_FILES_TO_CLEANUP.append(path)
-
-                # Nullify args.text to ensure the main logic uses the new textN_file args.
+                
                 args.text = None
             else:
                 print("Warning: --multi-text was specified but no input received from --text or stdin.", file=sys.stderr)
@@ -1861,31 +1860,47 @@ def main():
     processed_output_file = None
     final_output_path = args.output_file
     
+    source_text_for_filename = ""
+    if args.text:
+        source_text_for_filename = args.text
+    elif args.text1_file:
+        try:
+            with open(args.text1_file, 'r', encoding='utf-8') as f:
+                source_text_for_filename = f.read(1024)
+        except Exception as e:
+            print(f"Warning: Could not read {args.text1_file} for autonaming: {e}", file=sys.stderr)
+
     if args.output_file and (args.basename_add_timestamp or args.basename_add_first_words is not None):
         timestamp_id = datetime.now().strftime('%Y%m%d%H%M%S')
         output_directory, filename = os.path.dirname(args.output_file) or '.', os.path.basename(args.output_file)
 
+        filename_prefix = ""
         if args.basename_add_first_words is not None:
-            text_for_filename_prefix = ""
-            if args.text:
-                text_for_filename_prefix = args.text
-            elif args.text1_file:
-                try:
-                    with open(args.text1_file, 'r', encoding='utf-8') as f:
-                        text_for_filename_prefix = f.read(1024)
-                except Exception as e:
-                    print(f"Warning: Could not read {args.text1_file} for autonaming: {e}", file=sys.stderr)
-            filename_prefix = generate_filename_prefix_from_text(text_for_filename_prefix, args.basename_add_first_words)
-            if filename_prefix:
-                extension_dot_position = filename.find('.')
-                file_extension = filename[extension_dot_position:] if extension_dot_position != -1 else ""
-                new_filename = f"{timestamp_id}-{filename_prefix}{file_extension}"
+             filename_prefix = generate_filename_prefix_from_text(source_text_for_filename, args.basename_add_first_words)
+        
+        new_filename_parts = []
+        if args.basename_add_timestamp:
+            new_filename_parts.append(timestamp_id)
+        if filename_prefix:
+            new_filename_parts.append(filename_prefix)
+        
+        # If no other parts, fall back to original filename to avoid losing it
+        if not new_filename_parts:
+             final_output_path = args.output_file
+        else:
+            base_part = "-".join(new_filename_parts)
+            extension_dot_position = filename.find('.')
+            file_extension = filename[extension_dot_position:] if extension_dot_position != -1 else ""
+            
+            # Avoid double timestamping if original name already had one
+            if args.basename_add_timestamp and re.match(r'^\d{14}-', filename):
+                filename = re.sub(r'^\d{14}-', '', filename)
+
+            # Avoid double prefixing
+            if filename_prefix and filename.startswith(filename_prefix):
+                 final_output_path = os.path.join(output_directory, f"{timestamp_id}-{filename}")
             else:
-                 new_filename = f"{timestamp_id}-{filename}"
-            final_output_path = os.path.join(output_directory, new_filename)
-        elif args.basename_add_timestamp:
-            new_filename = f"{timestamp_id}-{filename}"
-            final_output_path = os.path.join(output_directory, new_filename)
+                 final_output_path = os.path.join(output_directory, f"{base_part}{file_extension if not filename_prefix else ''}")
     
     if args.lemmas_per_line:
         if not args.text1_file:
@@ -1899,9 +1914,6 @@ def main():
         )
             
     elif args.type == "word":
-        if args.text and args.text1_file:
-            print("Error: --text and --text1-file are mutually exclusive.", file=sys.stderr); exit(1)
-
         input_text = ""
         if args.text:
             input_text = args.text
@@ -1912,8 +1924,9 @@ def main():
         elif not sys.stdin.isatty():
             input_text = sys.stdin.read()
 
-        if not input_text:
+        if not input_text and not args.text2_file:
             print("Error: No input provided. Use --text, --text1-file, environment variable, or pipe data via stdin.", file=sys.stderr); exit(1)
+
         processing_options = {
             'de_gcs_only_nouns': (args.de_gcs_split_mode == 'only-nouns'),
             'de_gcs_combine_noun_modes': (args.de_gcs_split_mode == 'combined'),
@@ -1922,9 +1935,13 @@ def main():
             'de_gcs_preserve_compound_word': args.de_gcs_preserve_compound_word,
             'de_gcs_skip_merge_fractions': args.de_gcs_skip_merge_fractions,
         }
-
+        
+        # Use parallel processing if text2_file is present
         if args.text2_file:
-            processed_output_file = process_parallel_text_files(
+             if not input_text:
+                input_text = read_text_from_file(args.text1_file)
+
+             processed_output_file = process_parallel_text_files(
                 input_text, lemma_index, args.language, args.text2_file, args.text3_file,
                 args.sentence_context_size, final_output_path,
                 args.add_source_word_col, args.add_wordlist_col, args.add_sentence_index_col,
@@ -1933,6 +1950,8 @@ def main():
                 args.de_gcs_pos_tags, args, **processing_options
             )
         else:
+             if not input_text:
+                 print("Error: No input provided for single text processing.", file=sys.stderr); exit(1)
              processed_output_file = process_single_text(
                 input_text, lemma_index, args.language, args.sentence_context_size,
                 final_output_path, args.add_source_word_col, args.add_wordlist_col, args.add_sentence_index_col,
@@ -1944,6 +1963,8 @@ def main():
     elif args.type == "sentence":
         if any([args.de_gcs, args.de_gcs_mask_unknown_parts]):
             print("Warning: GCS-related flags are only applicable for --type word and will be ignored.", file=sys.stderr)
+        
+        # This check is now robust thanks to the multi-text fix which ensures these files always exist (even if empty)
         if not args.text1_file or not args.text2_file:
             print("Error: --text1-file and --text2-file must be specified for sentence mode.", file=sys.stderr); exit(1)
         

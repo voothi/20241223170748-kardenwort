@@ -403,7 +403,6 @@ def get_anki_csv_header():
         "Deck"
     ]
 
-
 def generate_filename_prefix_from_text(text, word_count):
     if not text:
         return ""

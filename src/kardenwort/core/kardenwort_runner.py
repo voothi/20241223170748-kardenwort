@@ -267,7 +267,8 @@ def main():
     parser = argparse.ArgumentParser(
         description="A wrapper script to extract and process words or sentences from text files and import them into Anki."
     )
-    parser.add_argument("--play-sound-on-completion", action="store_true", help="Play a system beep sound upon successful completion.")
+    parser.add_argument("--play-sound-on-completion", action="store_true", help="Play a system sound upon successful completion.")
+    parser.add_argument("--completion-sound", type=str, choices=["ok", "exclamation", "question", "hand"], default="exclamation", help="Specify which system sound to play. Requires --play-sound-on-completion.")
     parser.add_argument("--show-success-message", action="store_true", help="Display a user-friendly success message on stdout. Useful for interactive tools like GoldenDict.")
     parser.add_argument("--type", type=str, choices=["word", "sentence"], help="Type of processing: 'word' for word extraction, 'sentence' for parallel sentences. Not required for 'mixed-triple' mode.")
     parser.add_argument("--mode", type=str, required=True, choices=["single", "dual", "triple", "mixed-triple"], help="Processing mode: single, dual, triple, or mixed-triple (runs sentence and word modes sequentially).")
@@ -353,11 +354,19 @@ def main():
     if args.play_sound_on_completion:
         try:
             if sys.platform == "win32":
-                winsound.MessageBeep(winsound.MB_OK)
+                sound_map = {
+                    "ok": "SystemAsterisk",
+                    "exclamation": "SystemExclamation",
+                    "question": "SystemQuestion",
+                    "hand": "SystemHand"
+                }
+                sound_alias = sound_map.get(args.completion_sound)
+                winsound.PlaySound(sound_alias, winsound.SND_ALIAS)
             else:
                 print('\a', file=sys.stderr, flush=True)
         except Exception as e:
             print_debug(f"Warning: Could not play completion sound. Error: {e}")
+
 
 if __name__ == "__main__":
     main()

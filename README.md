@@ -470,6 +470,19 @@ Relative paths are supported and are calculated from the location of the `config
 
 ## Development and Testing
 
+If you need the latest updates, want to access intermediate versions, or wish to explore the development history and feature branches, please refer to our dedicated development repositories where active development takes place.
+
+Every two weeks, the code is cleanly transferred from these development repos to the main public repositories. A new stable build is then created and tagged with a common version number across all related projects.
+
+**Development Repositories:**
+*   Kardenwort (Core Engine): [https://github.com/voothi/20241223170748-kardenwort](https://github.com/voothi/20241223170748-kardenwort)
+*   Anki CSV Importer: [https://github.com/voothi/20250401192017-kardenwort-anki-csv-importer](https://github.com/voothi/20250401192017-kardenwort-anki-csv-importer)
+*   Anki Templates: [https://github.com/voothi/20241106211123-kardenwort-anki-templates](https://github.com/voothi/20241106211123-kardenwort-anki-templates)
+*   AnkiConnect Fork: [https://github.com/voothi/20251110002755-kardenwort-ankiconnect](https://github.com/voothi/20251110002755-kardenwort-ankiconnect)
+
+**Related Repositories in Development:**
+*   AutoHotkey Scripts: [https://github.com/voothi/20240411110510-autohotkey](https://github.com/voothi/20240411110510-autohotkey)
+
 The project includes a `tests/` directory to facilitate manual testing and ensure consistent output. This is primarily for developers or users who wish to verify the tool's behavior after making changes.
 
 *   `tests/source_texts/`: This directory contains input text files used for manual testing. They are organized by language (`en/` for English, `de/` for German) and serve as the source material for test runs.

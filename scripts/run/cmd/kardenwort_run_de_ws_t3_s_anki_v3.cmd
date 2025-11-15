@@ -41,8 +41,8 @@ call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" ^
     --anki-create-subdecks ^
     --anki-markdown-decks ^
     --anki-sentence-subdecks ^
-    --suspend-cards ^
     --anki-deck-content parent-source parent-translations subdeck-source subdeck-translations ^
+    --suspend-cards ^
     --show-success-message ^
     --play-sound-on-completion
 

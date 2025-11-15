@@ -6,7 +6,7 @@
 
 > *Kontext. Kern. Karte.* (Context. Core. Card.)
 
-[![Version](https://img.shields.io/badge/version-v1.28.8-blue)](https://github.com/kardenwort/20250913122858-kardenwort)  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Version](https://img.shields.io/badge/version-v1.44.2-blue)](https://github.com/kardenwort/20250913122858-kardenwort)  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 **Kardenwort** is an intelligent command-line utility designed to accelerate language learning by deconstructing text and automatically creating context-rich flashcards for **Anki**. It serves as a powerful offline companion to your study materials, transforming any text—books, articles, or AI-generated content—into a structured vocabulary list ready for efficient learning.
 
@@ -29,6 +29,7 @@ This tool is not just a word collector; it's an intelligent pipeline powered by 
   - [Core Functionality: The Two Main Modes](#core-functionality-the-two-main-modes)
   - [Understanding Input Processing](#understanding-input-processing)
     - [The Hybrid Mechanism for Sentence Splitting](#the-hybrid-mechanism-for-sentence-splitting)
+    - [Multi-Text Input from a Single Source](#multi-text-input-from-a-single-source)
   - [The Processing Pipeline in Detail](#the-processing-pipeline-in-detail)
   - [The Anki Card Template](#the-anki-card-template)
   - [Command-Line Arguments Reference](#command-line-arguments-reference)
@@ -38,6 +39,7 @@ This tool is not just a word collector; it's an intelligent pipeline powered by 
     - [Card Content \& Formatting](#card-content--formatting)
     - [NLP \& Lemmatization Control](#nlp--lemmatization-control)
     - [German Compound Splitting (GCS) Options](#german-compound-splitting-gcs-options)
+    - [Runner-Specific \& UX Options](#runner-specific--ux-options)
     - [Standard Output (STDOUT) Options](#standard-output-stdout-options)
   - [Configuration](#configuration)
   - [Important Notes](#important-notes)
@@ -79,8 +81,9 @@ Running a single command triggers the entire chain, making deck creation effortl
 *   **Advanced German Deconstruction:** Employs `german-compound-splitter` (GCS) to break down long German compound words into their components.
 *   **User-Trainable:** Fine-tune the lemmatization for your specific texts using a simple `lemma_override.tsv` file. Corrections are saved forever and automatically reapplied.
 *   **Rich Context:** Each word card includes the original sentence and surrounding context.
-*   **Dual Card Types:** Generates both vocabulary cards (`word` type) and full sentence cards (`sentence` type).
+*   **Dual Card Types:** Generates both vocabulary cards (`word` type) and full sentence cards (`sentence` type) in a single run with `mixed-triple` mode.
 *   **Hierarchical Deck Creation**: Automatically build nested Anki decks from Markdown headers (`#`, `##`) in your source text.
+*   **Automatic Deck Descriptions**: Populates Anki deck descriptions with the full source text and translations, providing valuable context directly within the deck browser.
 *   **Granular Deck Control**: Generate sentence-level subdecks for highly organized study sets.
 *   **Multi-Language Support:** Currently supports **English (en)** and **German (de)**.
 *   **Direct Anki Integration:** Automatically imports generated cards into Anki via a runner script.
@@ -116,11 +119,12 @@ While many text-processing tools for language learners exist (e.g., LWT, Lute, L
 │       └── lemma_override_en.tsv
 ├── docs/
 │   ├── assets/
-│   │   ├── 20250829201257.png
 │   │   └── ...
 │   └── kardenwort-goldendict-config.txt
 ├── results/
-│   └── 20250913171939-morgen-faehrt-der-neue.triple.word.de.tsv
+│   └── 20251115160000-morgen-faehrt-der-neue.triple.sentence.de.json
+│   └── 20251115160000-morgen-faehrt-der-neue.triple.sentence.de.tsv
+│   └── 20251115160030-morgen-faehrt-der-neue.triple.word.de.tsv
 ├── source_texts/
 │   ├── text1.txt
 │   ├── text2.txt
@@ -155,6 +159,13 @@ Follow these steps to get the entire Kardenwort ecosystem up and running.
     > **Important for Windows Users:** Versions of Python higher than 3.9 (e.g., 3.10+) may require a C++ compiler (like Visual Studio Build Tools) to install dependencies such as `spaCy`. To avoid these compilation issues, we recommend installing **Python 3.9** directly from the **Microsoft Store**, which provides a hassle-free setup.
 *   **Anki Desktop**: Must be installed and running.
 *   **AnkiConnect Add-on**: Install the [AnkiConnect](https://ankiweb.net/shared/info/2055492159) add-on in Anki.
+    > ⚠️ **Important Dependency for Deck Descriptions**
+    > The new feature for adding automatic descriptions to Anki decks (`--anki-deck-content`) **requires a specific, modified version of AnkiConnect**.
+    >
+    > Please download and install it from this repository:
+    > **[https://github.com/voothi/20251110002755-anki-ankiconnect](https://github.com/voothi/20251110002755-anki-ankiconnect)**
+    >
+    > If you use the standard AnkiConnect add-on, all other features will work correctly, but deck descriptions will not be updated.
 
 **Setup Steps:**
 
@@ -205,13 +216,13 @@ Follow these steps to get the entire Kardenwort ecosystem up and running.
 
 5.  **Run a Test:**
     *   Add some German text to `source_texts/text1.txt`.
-    *   Ensure Anki is running.
-    *   From the root of the `20250913122858-kardenwort` project, execute the runner script. **Important:** Your virtual environment (`kardenwort-env`) must be active.
+    *   Ensure Anki is running with the **modified** AnkiConnect add-on.
+    *   From the root of the `20250913122858-kardenwort` project, execute the runner script. **Important:** Your virtual environment must be active.
     ```bash
     # This creates vocabulary (word) cards from a single German text file
     python src/kardenwort/core/kardenwort_runner.py --type word --mode single --language de
     ```
-    If successful, a new deck will appear in Anki. Your setup is complete
+    If successful, a new deck will appear in Anki. Your setup is complete.
 
 ---
 
@@ -234,15 +245,13 @@ python src/kardenwort/core/kardenwort_runner.py --type sentence --mode dual --la
 # Process a single string of text directly, suspend new cards
 python src/kardenwort/core/kardenwort_runner.py --type word --mode single --language de --text "Das ist ein Test." --suspend-cards
 
-# Create a hierarchical deck from a markdown file, with word and sentence cards.
-# First, process sentences and capture the parent deck name
-PARENT_DECK_NAME=$(python src/kardenwort/core/kardenwort_runner.py --type sentence --mode single --language de --anki-markdown-decks --anki-create-subdecks)
-# Then, process words and add them to the same parent deck structure
-python src/kardenwort/core/kardenwort_runner.py --type word --mode single --language de --anki-markdown-decks --anki-create-subdecks --anki-parent-deck "$PARENT_DECK_NAME"
+# NEW: Process a markdown file in a single pass, creating both sentence and word cards in a
+# shared hierarchical deck, and add the source text to the parent deck's description.
+python src/kardenwort/core/kardenwort_runner.py --mode mixed-triple --language de --anki-markdown-decks --anki-deck-content parent-source --suspend-cards
 ```
 
 ### Using Pre-configured Windows CMD Scripts
-For Windows users, we provide a collection of ready-to-use batch scripts (`.cmd`) that cover all common processing scenarios. You can find them in the `scripts/run/cmd/` directory (e.g., `kardenwort_run_de_w_t_l_anki.cmd`).
+For Windows users, we provide a collection of ready-to-use batch scripts (`.cmd`) that cover all common processing scenarios. You can find them in the `scripts/run/cmd/` directory (e.g., `kardenwort_run_de_ws_t3_s_anki_v3.cmd`).
 
 These scripts offer a convenient way to run the tool without typing out all the arguments. However, they come with a significant limitation.
 
@@ -252,7 +261,7 @@ These scripts offer a convenient way to run the tool without typing out all the 
 >
 > This restriction applies when text is passed directly via the `--text` argument or from standard input (stdin), which is a common method for integration with tools like GoldenDict.
 >
-> To process **multi-line text** in GoldenDict, you must bypass these convenient `.cmd` scripts. The correct approach is to configure GoldenDict to call the `kardenwort.py` or `kardenwort_runner.py` script directly. You can find the correct commands for this in the provided configuration file: **`docs/kardenwort-goldendict-config.txt`**.
+> To process **multi-line text** in GoldenDict, you must bypass these convenient `.cmd` scripts. The correct approach is to configure GoldenDict to call the `kardenwort_runner.py` script directly, utilizing the `--multi-text` flag. You can find the correct commands for this in the provided configuration file: **`docs/kardenwort-goldendict-config.txt`**.
 
 ### GoldenDict-ng Integration
 Create vocabulary lists or Anki cards instantly from any word or phrase you look up in GoldenDict. This is a powerful workflow for on-the-fly analysis.
@@ -279,14 +288,14 @@ The utility's primary goal is to extract material from text to create two types 
 
 1.  **`--type word` (Vocabulary Cards):**
     *   **Goal:** To create cards for studying individual words.
-    *   **Mechanism:** The script analyzes the entire input text, extracts all unique words, reduces them to their base form (lemma), and creates a separate row for each unique lemma. Each row contains the lemma, its original inflected form, the sentence in which it first appeared, and surrounding context.
-    *   **Specialty:** This mode includes advanced logic like German compound splitting (GCS) and handling of separable verbs, making it exceptionally powerful for German.
+    *   **Mechanism:** The script analyzes the entire input text, extracts unique words based on the chosen deduplication scope, reduces them to their base form (lemma), and creates a separate row for each unique lemma.
+    *   **Specialty:** This mode includes advanced logic like German compound splitting (GCS) and handling of separable verbs.
 
 2.  **`--type sentence` (Sentence Cards):**
     *   **Goal:** To create cards with full sentences for studying phrases and grammar in context.
-    *   **Mechanism:** The script processes input files line-by-line. For each line from the first file (`text1.txt`), one record is created. If parallel texts are provided (`text2.txt`, `text3.txt`), the corresponding lines are added to the same record.
+    *   **Mechanism:** The script processes input files line-by-line. For each content line from the first file, one record is created. If parallel texts are provided, the corresponding lines are added to the same record.
 
-The result of the script's execution is a **TSV (Tab-Separated Values) file**, which is ready for direct import into Anki or can be opened in any spreadsheet application (e.g., MS Excel, LibreOffice Calc) for analysis.
+The result of the script's execution is a **TSV file** and an optional companion **JSON metadata file** (for deck descriptions), ready for import into Anki.
 
 [Return to Top](#map-of-contents)
 
@@ -306,6 +315,14 @@ This is a critical feature. The utility automatically chooses how to split text 
 
 This mechanism directly determines what you will see as `SentenceSource` and context on your Anki card.
 
+### Multi-Text Input from a Single Source
+Using the `--multi-text` flag, you can provide up to three parallel texts (source, translation 1, translation 2) from a single source like `--text` or standard input. Simply separate the texts with `---`. This is especially useful for integration with tools like GoldenDict.
+
+```bash
+# Example with multi-text
+echo "Source text. --- First translation. --- Second translation." | python ... --multi-text
+```
+
 [Return to Top](#map-of-contents)
 
 ---
@@ -314,9 +331,9 @@ This mechanism directly determines what you will see as `SentenceSource` and con
 1.  **Initialization:** The script loads the `spaCy` model, GCS dictionary, user-defined `lemma_override.tsv`, and a word frequency index.
 2.  **Text Ingestion:** Input text is read from a file, argument, environment variable, or stdin.
 3.  **Tokenization & Lemmatization:** The text is broken into words (tokens). Each token undergoes a series of steps: GCS, separable verb handling, lemma correction, and application of user override rules.
-4.  **Collection & Sorting:** Unique lemmas are collected and sorted. Known words (from the frequency index) are listed first (most to least common), followed by unknown words (alphabetically).
-5.  **TSV Generation:** A structured TSV file is created with 82 columns that match the Anki template, potentially including dynamic deck paths.
-6.  **Anki Import:** The runner script passes the TSV file to the `kardenwort-anki-csv-importer`, which creates a new deck in Anki.
+4.  **Collection & Sorting:** Unique lemmas are collected based on the deduplication scope and sorted. Known words (from the frequency index) are listed first, followed by unknown words.
+5.  **TSV & JSON Generation:** A structured TSV file is created. If `--anki-deck-content` is used, a companion `.json` file containing deck descriptions is also generated.
+6.  **Anki Import:** The runner script passes the TSV and JSON files to the `kardenwort-anki-csv-importer`, which creates/updates decks and cards in Anki.
 
 [Return to Top](#map-of-contents)
 
@@ -332,7 +349,7 @@ The generated TSV files are designed for our feature-rich Anki template, which o
 
 **Template Features:**
 *   **Interactive Collapsible Sections**: Keep cards uncluttered by hiding and revealing information groups.
-*   **Dynamic Fields**: Fields only appear if they contain data. The 82-column TSV format includes special fields like `SentenceSourceIndex` for chronological sorting and `Deck` for dynamic, hierarchical deck assignment directly from your source text.
+*   **Dynamic Fields**: Fields only appear if they contain data. The 82-column TSV format includes special fields like `SentenceSourceIndex` for chronological sorting and `Deck` for dynamic, hierarchical deck assignment.
 *   **Integrated Audio**: Supports both pre-recorded audio and text-to-speech.
 *   **Context Display**: Shows the word in its original sentence, plus the preceding and succeeding sentences.
 *   **Full Word List**: Displays all unique words (lemmas) found in the source sentence.
@@ -348,47 +365,53 @@ Below is a detailed list of all available arguments for the core processing scri
 ### Core Arguments
 | Argument | Description | Example |
 | :--- | :--- | :--- |
-| `--type` | The type of cards to create (`word` or `sentence`). **Mutually exclusive with `--lemmas-per-line`**. | `--type word` |
-| `--lemmas-per-line` | A special mode that processes each line of a file and outputs a corresponding line of sorted lemmas. **Mutually exclusive with `--type`**. | `--lemmas-per-line` |
+| `--type` | The type of cards to create (`word` or `sentence`). Not needed for `mixed-triple` mode. | `--type word` |
+| `--lemmas-per-line` | A special mode that outputs one line of sorted lemmas per input line. **Mutually exclusive with `--type`**. | `--lemmas-per-line` |
 | `--language` | The source language of the text (`de` or `en`). | `--language de` |
-| `--mode` | (Runner only) Processing mode for input files (`single`, `dual`, `triple`). | `--mode single` |
+| `--mode` | (Runner only) Processing mode (`single`, `dual`, `triple`, `mixed-triple`). `mixed-triple` runs sentence and word modes sequentially for a shared deck. | `--mode mixed-triple` |
 
 ### Input & Output
 | Argument | Description | Example |
 | :--- | :--- | :--- |
 | `--text` | Process a string directly. **Mutually exclusive with `--text1-file`**. | `--text "This is a test."` |
+| `--multi-text` | Parse `--text` or `stdin` as up to three texts separated by `---`. | `--multi-text` |
 | `--text1-file` | Path to the primary source text file. | `--text1-file "source.txt"` |
 | `--text2-file` | Path to the second text file (e.g., translation). | `--text2-file "target.txt"` |
 | `--text3-file` | Path to the third text file. | `--text3-file "extra.txt"` |
 | `--output-file` | Path for the output `.tsv` file. If omitted, prints to standard output. | `--output-file "out/my_deck.tsv"` |
 | `--basename-add-timestamp` | Prepend a `YYYYMMDDHHMMSS-` timestamp to the output filename. | `--basename-add-timestamp` |
-| `--basename-add-first-words` | Appends a slug to the filename, generated from the first `N` words of the text. `N` is an optional integer (default: 4). | `--basename-add-first-words 3` |
-| `--stdout-print-output-basename` | Print the final output filename to standard output. Useful for chaining scripts. | `--stdout-print-output-basename` |
+| `--basename-add-first-words` | Appends a slug to the filename from the first `N` words (default: 4). | `--basename-add-first-words 3` |
+| `--stdout-print-output-basename` | Print the final output filename to standard output. | `--stdout-print-output-basename` |
 
 ### Anki Deck Control & Import Options
 | Argument | Description | Example |
 | :--- | :--- | :--- |
-| `--anki-create-subdecks` | Automatically generates a parent deck based on the filename, with a subdeck for each processing mode (e.g., `My-Text::My-Text.word.de`). | `--anki-create-subdecks` |
-| `--anki-markdown-decks` | Parses Markdown headers (`#`, `##`, etc.) in the source text to create a hierarchical deck structure in Anki. | `--anki-markdown-decks` |
-| `--anki-sentence-subdecks` | Creates an additional, final subdeck level for each individual sentence. Requires `--anki-markdown-decks`. | `--anki-sentence-subdecks` |
-| `--anki-parent-deck` | Specifies a parent deck name. Subsequent calls in a batch process can use this to ensure all cards go into the same top-level deck structure. | `--anki-parent-deck "My-Shared-Deck"` |
-| `--suspend-cards` | Suspends all newly imported or updated cards in Anki, preventing them from appearing in reviews immediately. | `--suspend-cards` |
+| `--anki-create-subdecks` | Generates a parent deck with a subdeck for each mode (e.g., `My-Text::My-Text.word.de`). | `--anki-create-subdecks` |
+| `--anki-markdown-decks` | Parses Markdown headers in the source text to create a hierarchical deck structure. | `--anki-markdown-decks` |
+| `--anki-sentence-subdecks` | Creates a final subdeck level for each sentence. Requires `--anki-markdown-decks`. | `--anki-sentence-subdecks` |
+| `--anki-parent-deck` | Manually specifies a parent deck name for shared deck creation. | `--anki-parent-deck "My-Book"` |
+| `--anki-deck-content` | Populates Anki deck descriptions. Choices: `parent-source`, `parent-translations`, `subdeck-source`, `subdeck-translations`. | `--anki-deck-content parent-source` |
+| `--strip-headers` | Strip Markdown headers from text fields in the final output. Choices: `all`, `source`, `translations`. Default is `all` if no argument is given. | `--strip-headers source` |
+| `--suspend-cards` | Suspends all newly imported or updated cards in Anki. | `--suspend-cards` |
 
 ### Card Content & Formatting
 | Argument | Description | Example |
 | :--- | :--- | :--- |
-| `--sentence-context-size` | Sets the number of preceding and succeeding sentences (`N`) to include as context. The script default is `1`, but the runner uses `4`. | `--sentence-context-size 2` |
-| `--add-wordlist-col` | Include a simple list of all unique words from the source sentence in the `SentenceSourceWordlist` field. | `--add-wordlist-col` |
+| `--sentence-context-size` | Sets the number of preceding and succeeding sentences (`N`) to include as context. Runner default is `4`. | `--sentence-context-size 2` |
+| `--tts-destination-lang` | The destination language for TTS field activation (e.g., 'ru', 'en'). | `--tts-destination-lang ru` |
+| `--add-wordlist-col` | Include a list of all unique words from the source sentence in the `SentenceSourceWordlist` field. | `--add-wordlist-col` |
 | `--wordlist-use-br` | Use `<br>` tags instead of newlines for the wordlist. | `--wordlist-use-br` |
-| `--add-header` | Include the header row with all field names in the output TSV file. | `--add-header` |
-| `--add-source-word-col` | Add the inflected (original) form of a word to the `WordSourceInflectedForm` field. | `--add-source-word-col` |
-| `--add-sentence-index-col` | Add a column with the zero-padded, 1-based sentence index, useful for sorting cards chronologically. | `--add-sentence-index-col` |
+| `--add-header` | Include the header row in the output TSV file. | `--add-header` |
+| `--add-source-word-col` | Add the original inflected form of a word to the `WordSourceInflectedForm` field. | `--add-source-word-col` |
+| `--add-sentence-index-col` | Add a column with the sentence index for chronological sorting. | `--add-sentence-index-col` |
 
 ### NLP & Lemmatization Control
 | Argument | Description | Example |
 | :--- | :--- | :--- |
 | `--lemma-override-file` | Path to a TSV file for context-aware lemma overrides. | `--lemma-override-file "data/overrides.tsv"` |
 | `--lemma-index-file` | Path to a word frequency CSV file for sorting. | `--lemma-index-file "data/frequency.csv"` |
+| `--deduplication-scope` | Sets the scope for lemma deduplication. `global`: unique lemmas across the entire text. `sentence`: unique per sentence. `none`: no deduplication. | `--deduplication-scope sentence` |
+| `--prefer-shortest-form` | With `global` deduplication, prefer the shortest word form of a lemma instead of the first one encountered. | `--prefer-shortest-form` |
 | `--force-proper-noun-capitalization` | Force capitalization of proper noun lemmas (PROPN). | `--force-proper-noun-capitalization` |
 
 ### German Compound Splitting (GCS) Options
@@ -402,6 +425,12 @@ Below is a detailed list of all available arguments for the core processing scri
 | `--de-gcs-pos-tags` | Specify which Part-of-Speech tags to apply splitting to (e.g. `NOUN PROPN` or `!VERB`). | `--de-gcs-pos-tags "NOUN PROPN"` |
 | `--de-fix-genitive` | Attempts to correct German genitive noun lemmas (e.g., 'Hauses' -> 'Haus'). | `--de-fix-genitive` |
 | `--de-force-noun-capitalization` | Force capitalization of all German noun lemmas (NOUN, PROPN). | `--de-force-noun-capitalization` |
+
+### Runner-Specific & UX Options
+| Argument | Description | Example |
+| :--- | :--- | :--- |
+| `--show-success-message` | Display a user-friendly success message on standard output upon completion. | `--show-success-message` |
+| `--play-sound-on-completion` | Play a system beep sound upon successful completion of the entire process. | `--play-sound-on-completion` |
 
 ### Standard Output (STDOUT) Options
 These flags are for direct console output when `--output-file` is not used.

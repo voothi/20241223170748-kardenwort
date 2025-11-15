@@ -897,9 +897,14 @@ def process_parallel_text_files(
                     }
 
                     if args.deduplication_scope == 'global':
-                        if lemma not in lemma_data['lemmas'] or len(source_word_form) < len(lemma_data['lemmas'][lemma]):
+                        is_new = lemma not in lemma_data['lemmas']
+                        if is_new:
                             lemma_data['lemmas'][lemma] = source_word_form
                             lemma_data['info'][lemma] = (content_line_idx, source_sentence, final_deck)
+                        elif args.prefer_shortest_form and len(source_word_form) < len(lemma_data['lemmas'][lemma]):
+                            lemma_data['lemmas'][lemma] = source_word_form
+                            lemma_data['info'][lemma] = (content_line_idx, source_sentence, final_deck)
+
                     elif args.deduplication_scope == 'sentence':
                         if lemma not in lemmas_in_sentence or len(source_word_form) < len(lemmas_in_sentence[lemma]['source_word']):
                             lemmas_in_sentence[lemma] = data_entry
@@ -1250,9 +1255,14 @@ def process_single_text(
                     }
 
                     if args.deduplication_scope == 'global':
-                        if lemma not in lemma_data['lemmas'] or len(source_word_form) < len(lemma_data['lemmas'][lemma]):
+                        is_new = lemma not in lemma_data['lemmas']
+                        if is_new:
                             lemma_data['lemmas'][lemma] = source_word_form
                             lemma_data['info'][lemma] = (unit_index, unit_text, current_deck)
+                        elif args.prefer_shortest_form and len(source_word_form) < len(lemma_data['lemmas'][lemma]):
+                            lemma_data['lemmas'][lemma] = source_word_form
+                            lemma_data['info'][lemma] = (unit_index, unit_text, current_deck)
+                            
                     elif args.deduplication_scope == 'sentence':
                         if lemma not in lemmas_in_sentence or len(source_word_form) < len(lemmas_in_sentence[lemma]['source_word']):
                             lemmas_in_sentence[lemma] = data_entry
@@ -1685,6 +1695,7 @@ def main():
     lemmatization_group = parser.add_argument_group('Lemmatization Control')
     lemmatization_group.add_argument("--force-proper-noun-capitalization", action="store_true", help="Force capitalization of proper noun lemmas (PROPN).")
     lemmatization_group.add_argument("--deduplication-scope", choices=['global', 'sentence', 'none'], default='global', help="Set the scope for lemma deduplication. 'global': unique lemmas across the entire text. 'sentence': unique lemmas within each sentence. 'none': no deduplication, one entry per word occurrence.")
+    lemmatization_group.add_argument("--prefer-shortest-form", action="store_true", help="When deduplicating globally, prefer the shortest word form of a lemma, even if it appears later in the text. Default is to keep the first occurrence.")
     de_group = parser.add_argument_group('German Language Specific Arguments')
     de_group.add_argument("--de-fix-genitive", action="store_true", help="[German] Corrects genitive noun lemmas (e.g., 'Hauses' -> 'Haus') by checking against the dictionary.")
     de_group.add_argument("--de-force-noun-capitalization", action="store_true", help="[German only] Force capitalization of all noun lemmas (NOUN, PROPN) as per German orthography rules. Overrides --force-proper-noun-capitalization for German.")

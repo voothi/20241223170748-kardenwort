@@ -131,9 +131,13 @@ def get_script_args(args, python_path, workspace_path, config):
             base_args.extend(gcs_args)
 
     output_suffix = "sentence" if args.type == "sentence" else "word"
+    
+    # Use a consistent mode in the filename for mixed-triple runs
+    mode_for_filename = "triple" if args.mode == "mixed-triple" else args.mode
+    
     output_template = config.get('output_format', 'output_template', fallback='result.{mode}.{suffix}.{language}.tsv')
     output_filename = output_template.format(
-        mode=args.mode,
+        mode=mode_for_filename,
         suffix=output_suffix,
         language=args.language
     )
@@ -143,7 +147,10 @@ def get_script_args(args, python_path, workspace_path, config):
     text2_filename = config.get('input_files', 'text2_file', fallback='text2.txt')
     text3_filename = config.get('input_files', 'text3_file', fallback='text3.txt')
 
-    if args.mode == "single":
+    # For input files, mixed-triple behaves just like triple mode
+    mode_for_input_files = "triple" if args.mode == "mixed-triple" else args.mode
+
+    if mode_for_input_files == "single":
         input_text_from_env = os.environ.get('KARDENWORT_INPUT_TEXT')
         if input_text_from_env:
             mode_args.extend(["--text", input_text_from_env])
@@ -151,10 +158,10 @@ def get_script_args(args, python_path, workspace_path, config):
             mode_args.extend(["--text", args.text])
         else:
             mode_args.extend(["--text1-file", str(input_path / text1_filename)])
-    elif args.mode == "dual":
+    elif mode_for_input_files == "dual":
         mode_args.extend(["--text1-file", str(input_path / text1_filename)])
         mode_args.extend(["--text2-file", str(input_path / text2_filename)])
-    elif args.mode == "triple":
+    elif mode_for_input_files == "triple":
         mode_args.extend(["--text1-file", str(input_path / text1_filename)])
         mode_args.extend(["--text2-file", str(input_path / text2_filename)])
         mode_args.extend(["--text3-file", str(input_path / text3_filename)])
@@ -164,39 +171,8 @@ def get_script_args(args, python_path, workspace_path, config):
     mode_args.extend(["--output-file", str(output_path / output_filename)])
     return base_args + mode_args
 
-
-def main():
-    if "--get-python-path" in sys.argv:
-        python_path, _, _, _ = load_config()
-        print(python_path)
-        sys.exit(0)
-
-    parser = argparse.ArgumentParser(
-        description="A wrapper script to extract and process words or sentences from text files and import them into Anki."
-    )
-    parser.add_argument("--type", type=str, required=True, choices=["word", "sentence"], help="Type of processing: 'word' for word extraction, 'sentence' for parallel sentences.")
-    parser.add_argument("--mode", type=str, required=True, choices=["single", "dual", "triple"], help="Processing mode: single (text1), dual (text1 + text2), or triple (text1 + text2 + text3).")
-    parser.add_argument("--language", type=str, required=True, choices=["de", "en"], help="Language for processing: German (de) or English (en).")
-    parser.add_argument("--deduplication-scope", type=str, choices=['global', 'sentence', 'none'], default='global', help="Set the scope for lemma deduplication.")
-    parser.add_argument("--tts-destination-lang", type=str, help="Specify the destination language for TTS field activation (e.g., 'ru', 'en').")
-    parser.add_argument("--text", type=str, help="Directly pass a text string for 'single' mode processing, bypassing the default text1.txt file.")
-    parser.add_argument("--multi-text", action="store_true", help="Enable multi-text parsing from a single text input source using '---' as a separator.")
-    parser.add_argument("--prefer-shortest-form", action="store_true", help="When deduplicating globally, prefer the shortest word form of a lemma, even if it appears later in the text. Default is to keep the first occurrence.")
-    parser.add_argument("--de-gcs", action='store_true', help="Enable German Compound Splitting (only effective when --language is 'de').")
-    parser.add_argument("--de-gcs-pos-tags", nargs='+', help="Specify POS tags for GCS (e.g., 'NOUN PROPN' or '!VERB').")
-    parser.add_argument("--anki-create-subdecks", action="store_true", help="Automatically generate a parent deck and sub-decks for Anki based on the output filename.")
-    parser.add_argument("--anki-markdown-decks", action="store_true", help="Parse Markdown headers in source text to create a hierarchical deck structure in Anki.")
-    parser.add_argument("--anki-sentence-subdecks", action="store_true", help="Create a final subdeck level for each sentence.")
-    parser.add_argument("--anki-parent-deck", type=str, help="Specify the parent deck name, used by subsequent calls in a batch process to ensure a shared parent deck.")
-    parser.add_argument("--suspend-cards", action="store_true", help="Suspend all newly imported/updated cards in Anki.")
-    parser.add_argument("--anki-deck-content", nargs='+', choices=['parent-source', 'parent-translations', 'subdeck-source', 'subdeck-translations'], help="Adds content to the Anki deck description.")
-    parser.add_argument("--strip-headers", nargs='*', choices=['all', 'source', 'translations'], help="Strip Markdown headers (#) from text fields in the final output. No arguments implies 'all'.")
-
-    args = parser.parse_args()
-
-    python_path, workspace_path, importer_workspace, config = load_config()
-    script_args = get_script_args(args, python_path, workspace_path, config)
-
+def run_extraction_script(script_args):
+    """Executes the kardenwort.py script and returns the output filename."""
     print_debug(f"Running extraction script with command:\n{' '.join(map(str, script_args))}\n")
     
     script_process = subprocess.Popen(
@@ -211,16 +187,18 @@ def main():
     
     if script_process.returncode != 0:
         print_debug(f"ERROR: The extraction script failed with exit code {script_process.returncode}.")
-        sys.exit(1)
+        return None
 
     output_lines = stdout_output.strip().splitlines()
     if not output_lines:
         print_debug("ERROR: No output filename was captured from the script.")
-        sys.exit(1)
+        return None
         
-    output_filename_basename = output_lines[0].strip()
+    return output_lines[0].strip()
 
-    print_debug(f"Processing file: {output_filename_basename}")
+def run_importer_script(output_filename_basename, args, python_path, workspace_path, importer_workspace, config):
+    """Executes the anki-csv-importer.py script for a given file."""
+    print_debug(f"Processing file for import: {output_filename_basename}")
 
     importer_script = config.get('scripts', 'importer_script_filename', fallback='anki-csv-importer.py')
     note_type = config.get('anki_importer_settings', 'note_type', fallback='Basic')
@@ -268,7 +246,92 @@ def main():
         print_debug(f"ERROR: Anki importer failed with exit code {e.returncode}.")
         sys.exit(1)
 
-    print(output_filename_basename)
+def main():
+    if "--get-python-path" in sys.argv:
+        python_path, _, _, _ = load_config()
+        print(python_path)
+        sys.exit(0)
+
+    parser = argparse.ArgumentParser(
+        description="A wrapper script to extract and process words or sentences from text files and import them into Anki."
+    )
+    parser.add_argument("--type", type=str, choices=["word", "sentence"], help="Type of processing: 'word' for word extraction, 'sentence' for parallel sentences. Not required for 'mixed-triple' mode.")
+    parser.add_argument("--mode", type=str, required=True, choices=["single", "dual", "triple", "mixed-triple"], help="Processing mode: single, dual, triple, or mixed-triple (runs sentence and word modes sequentially).")
+    parser.add_argument("--language", type=str, required=True, choices=["de", "en"], help="Language for processing: German (de) or English (en).")
+    parser.add_argument("--deduplication-scope", type=str, choices=['global', 'sentence', 'none'], default='global', help="Set the scope for lemma deduplication.")
+    parser.add_argument("--tts-destination-lang", type=str, help="Specify the destination language for TTS field activation (e.g., 'ru', 'en').")
+    parser.add_argument("--text", type=str, help="Directly pass a text string for 'single' mode processing, bypassing the default text1.txt file.")
+    parser.add_argument("--multi-text", action="store_true", help="Enable multi-text parsing from a single text input source using '---' as a separator.")
+    parser.add_argument("--prefer-shortest-form", action="store_true", help="When deduplicating globally, prefer the shortest word form of a lemma, even if it appears later in the text. Default is to keep the first occurrence.")
+    parser.add_argument("--de-gcs", action='store_true', help="Enable German Compound Splitting (only effective when --language is 'de').")
+    parser.add_argument("--de-gcs-pos-tags", nargs='+', help="Specify POS tags for GCS (e.g., 'NOUN PROPN' or '!VERB').")
+    parser.add_argument("--anki-create-subdecks", action="store_true", help="Automatically generate a parent deck and sub-decks for Anki based on the output filename.")
+    parser.add_argument("--anki-markdown-decks", action="store_true", help="Parse Markdown headers in source text to create a hierarchical deck structure in Anki.")
+    parser.add_argument("--anki-sentence-subdecks", action="store_true", help="Create a final subdeck level for each sentence.")
+    parser.add_argument("--anki-parent-deck", type=str, help="Specify the parent deck name, used by subsequent calls in a batch process to ensure a shared parent deck.")
+    parser.add_argument("--suspend-cards", action="store_true", help="Suspend all newly imported/updated cards in Anki.")
+    parser.add_argument("--anki-deck-content", nargs='+', choices=['parent-source', 'parent-translations', 'subdeck-source', 'subdeck-translations'], help="Adds content to the Anki deck description.")
+    parser.add_argument("--strip-headers", nargs='*', choices=['all', 'source', 'translations'], help="Strip Markdown headers (#) from text fields in the final output. No arguments implies 'all'.")
+
+    args = parser.parse_args()
+    
+    # Validate arguments
+    if args.mode != 'mixed-triple' and not args.type:
+        parser.error('--type is required for modes single, dual, and triple.')
+    if args.mode == 'mixed-triple' and args.type:
+        print_debug("Warning: --type is ignored when --mode is mixed-triple.")
+
+    python_path, workspace_path, importer_workspace, config = load_config()
+
+    if args.mode == "mixed-triple":
+        # --- SENTENCE RUN ---
+        print_debug("--- Running mixed-triple mode: SENTENCE pass ---")
+        args.type = "sentence"
+        sentence_script_args = get_script_args(args, python_path, workspace_path, config)
+        
+        sentence_filename_basename = run_extraction_script(sentence_script_args)
+        if not sentence_filename_basename:
+            sys.exit(1)
+
+        # --- DETERMINE PARENT DECK ---
+        # e.g., "20251115103000-nachrichten-fur-deutschlernende-vom.triple.sentence.de.tsv" -> "20251115103000-nachrichten-fur-deutschlernende-vom.triple.de"
+        temp_deck_name = os.path.splitext(sentence_filename_basename)[0] # remove .tsv
+        parent_deck_name = re.sub(r'\.sentence$', '', temp_deck_name) # remove .sentence
+        print_debug(f"Parent Deck Name for this session is: {parent_deck_name}")
+        args.anki_parent_deck = parent_deck_name # Set for the word run
+
+        # --- WORD RUN ---
+        print_debug("\n--- Running mixed-triple mode: WORD pass ---")
+        args.type = "word"
+        # No longer need deck content args for the word run, it's handled by the sentence run's metadata
+        args.anki_deck_content = None 
+        word_script_args = get_script_args(args, python_path, workspace_path, config)
+        
+        word_filename_basename = run_extraction_script(word_script_args)
+        if not word_filename_basename:
+            sys.exit(1)
+
+        # --- IMPORTER RUNS ---
+        print_debug(f"\n--- Importing SENTENCE file: {sentence_filename_basename} ---")
+        run_importer_script(sentence_filename_basename, args, python_path, workspace_path, importer_workspace, config)
+
+        print_debug(f"\n--- Importing WORD file: {word_filename_basename} ---")
+        run_importer_script(word_filename_basename, args, python_path, workspace_path, importer_workspace, config)
+
+        print_debug("\nAll operations for mixed-triple mode completed successfully.")
+
+    else: # Logic for single, dual, triple modes
+        script_args = get_script_args(args, python_path, workspace_path, config)
+        output_filename_basename = run_extraction_script(script_args)
+        
+        if not output_filename_basename:
+            sys.exit(1)
+        
+        run_importer_script(output_filename_basename, args, python_path, workspace_path, importer_workspace, config)
+        
+        # Print the single filename for other scripts to capture, if needed
+        print(output_filename_basename)
+
 
 if __name__ == "__main__":
     main()

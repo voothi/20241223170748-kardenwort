@@ -132,7 +132,6 @@ def get_script_args(args, python_path, workspace_path, config):
 
     output_suffix = "sentence" if args.type == "sentence" else "word"
     
-    # Use a consistent mode in the filename for mixed-triple runs
     mode_for_filename = "triple" if args.mode == "mixed-triple" else args.mode
     
     output_template = config.get('output_format', 'output_template', fallback='result.{mode}.{suffix}.{language}.tsv')
@@ -146,7 +145,7 @@ def get_script_args(args, python_path, workspace_path, config):
     text1_filename = config.get('input_files', 'text1_file', fallback='text1.txt')
     text2_filename = config.get('input_files', 'text2_file', fallback='text2.txt')
     text3_filename = config.get('input_files', 'text3_file', fallback='text3.txt')
-
+    
     input_text_arg = None
     if args.text:
         input_text_arg = args.text
@@ -180,20 +179,28 @@ def run_extraction_script(script_args):
     script_process = subprocess.Popen(
         script_args,
         stdout=subprocess.PIPE,
-        stderr=None,
+        stderr=subprocess.PIPE, # Capture stderr for better error reporting
         text=True,
         encoding='utf-8',
         errors='replace'
     )
-    stdout_output, _ = script_process.communicate()
+    stdout_output, stderr_output = script_process.communicate()
     
     if script_process.returncode != 0:
         print_debug(f"ERROR: The extraction script failed with exit code {script_process.returncode}.")
+        if stderr_output:
+            print_debug("--- Stderr from kardenwort.py ---")
+            print_debug(stderr_output)
+            print_debug("---------------------------------")
         return None
 
     output_lines = stdout_output.strip().splitlines()
     if not output_lines:
         print_debug("ERROR: No output filename was captured from the script.")
+        if stderr_output:
+            print_debug("--- Stderr from kardenwort.py ---")
+            print_debug(stderr_output)
+            print_debug("---------------------------------")
         return None
         
     return output_lines[0].strip()
@@ -277,7 +284,6 @@ def main():
 
     args = parser.parse_args()
     
-    # Validate arguments
     if args.mode != 'mixed-triple' and not args.type:
         parser.error('--type is required for modes single, dual, and triple.')
     if args.mode == 'mixed-triple' and args.type:
@@ -295,11 +301,13 @@ def main():
         if not sentence_filename_basename:
             sys.exit(1)
 
-        temp_deck_name = os.path.splitext(sentence_filename_basename)[0] # remove .tsv
+        # --- DETERMINE PARENT DECK ---
+        temp_deck_name = os.path.splitext(sentence_filename_basename)[0]
         parent_deck_name = temp_deck_name.replace('.sentence', '')
         print_debug(f"Parent Deck Name for this session is: {parent_deck_name}")
-        args.anki_parent_deck = parent_deck_name # Set for the word run
+        args.anki_parent_deck = parent_deck_name
 
+        # --- WORD RUN ---
         print_debug("\n--- Running mixed-triple mode: WORD pass ---")
         args.type = "word"
         original_deck_content = args.anki_deck_content
@@ -310,6 +318,7 @@ def main():
         if not word_filename_basename:
             sys.exit(1)
 
+        # --- IMPORTER RUNS ---
         args.anki_deck_content = original_deck_content
         args.anki_parent_deck = None 
         print_debug(f"\n--- Importing SENTENCE file: {sentence_filename_basename} ---")

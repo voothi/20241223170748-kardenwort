@@ -27,32 +27,23 @@ set "PYTHON_EXE=%CFG_python_executable%"
 set "KARDENWORT_RUNNER_SCRIPT=%CFG_kardenwort_workspace%/%CFG_source_code_dir%/%CFG_kardenwort_runner_filename%"
 
 :: ============================================================================
-:: 3. Execute the Python Scripts with Shared Parent Deck Logic
+:: 3. Execute the Python Script in Mixed Mode
 :: ============================================================================
-echo Running extraction in different modes...
+echo Running extraction in mixed-triple mode (sentence + word)...
 
-set "EXTRA_DECK_ARGS=--tts-destination-lang ru --deduplication-scope global --anki-create-subdecks --anki-markdown-decks --anki-sentence-subdecks --suspend-cards"
-set "FIRST_RUN_ARGS=--anki-deck-content parent-source parent-translations subdeck-source subdeck-translations"
+:: This single command now handles both sentence and word processing,
+:: creating a shared parent deck automatically thanks to the --mode mixed-triple.
+call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" ^
+    --language de ^
+    --mode mixed-triple ^
+    --tts-destination-lang ru ^
+    --deduplication-scope global ^
+    --anki-create-subdecks ^
+    --anki-markdown-decks ^
+    --anki-sentence-subdecks ^
+    --suspend-cards ^
+    --anki-deck-content parent-source parent-translations subdeck-source subdeck-translations
 
-echo.
-echo Triple sentence mode...
-for /f "delims=" %%F in ('call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language de --type sentence --mode triple %EXTRA_DECK_ARGS% %FIRST_RUN_ARGS%') do (
-    set "SENTENCE_FILENAME=%%F"
-)
-
-if not defined SENTENCE_FILENAME (
-    echo ERROR: Failed to get filename from the sentence script run. >&2
-    goto :error
-)
-
-set "TEMP_DECK_NAME=%SENTENCE_FILENAME:.tsv=%"
-set "PARENT_DECK_NAME=%TEMP_DECK_NAME:.sentence=%"
-
-echo Parent Deck Name for this session is: %PARENT_DECK_NAME%
-
-echo.
-echo Triple word mode...
-call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" --language de --type word --mode triple %EXTRA_DECK_ARGS% --anki-parent-deck "%PARENT_DECK_NAME%"
 if errorlevel 1 goto :error
 
 echo.

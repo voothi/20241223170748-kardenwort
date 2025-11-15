@@ -31,7 +31,7 @@ set "KARDENWORT_RUNNER_SCRIPT=%CFG_kardenwort_workspace%/%CFG_source_code_dir%/%
 :: ============================================================================
 echo Running extraction in different modes...
 
-set "EXTRA_DECK_ARGS=--tts-destination-lang ru --no-lemma-deduplication --anki-create-subdecks --anki-markdown-decks --anki-sentence-subdecks --suspend-cards"
+set "EXTRA_DECK_ARGS=--tts-destination-lang ru --deduplication-scope global --anki-create-subdecks --anki-markdown-decks --anki-sentence-subdecks --suspend-cards"
 set "FIRST_RUN_ARGS=--anki-deck-content parent-source parent-translations subdeck-source subdeck-translations"
 
 echo.

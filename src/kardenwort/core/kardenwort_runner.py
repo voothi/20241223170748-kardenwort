@@ -264,6 +264,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="A wrapper script to extract and process words or sentences from text files and import them into Anki."
     )
+    parser.add_argument("--play-sound-on-completion", action="store_true", help="Play a system beep sound upon successful completion.")
     parser.add_argument("--show-success-message", action="store_true", help="Display a user-friendly success message on stdout. Useful for interactive tools like GoldenDict.")
     parser.add_argument("--type", type=str, choices=["word", "sentence"], help="Type of processing: 'word' for word extraction, 'sentence' for parallel sentences. Not required for 'mixed-triple' mode.")
     parser.add_argument("--mode", type=str, required=True, choices=["single", "dual", "triple", "mixed-triple"], help="Processing mode: single, dual, triple, or mixed-triple (runs sentence and word modes sequentially).")
@@ -346,6 +347,8 @@ def main():
         
         print(output_filename_basename)
 
+    if args.play_sound_on_completion:
+        print('\a', file=sys.stderr, flush=True)
 
 if __name__ == "__main__":
     main()

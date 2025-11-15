@@ -619,14 +619,23 @@ def _write_deck_metadata(args, output_file_path, source_text_content, target_tex
     
     if parent_deck_name:
         description_parts = []
+        
+        # --- FIX START ---
+        # 1. Normalize line endings to prevent double-spacing issues in Anki's description view.
+        # 2. Add more robust checks to ensure empty/whitespace-only translation blocks are not added.
+        
         if 'parent-source' in args.anki_deck_content and source_text_content:
-            description_parts.append(source_text_content.strip())
+            normalized_source = source_text_content.replace('\r\n', '\n')
+            description_parts.append(normalized_source.strip())
 
         if 'parent-translations' in args.anki_deck_content:
-            if target_text_content:
-                description_parts.append(target_text_content.strip())
-            if tertiary_text_content:
-                description_parts.append(tertiary_text_content.strip())
+            if target_text_content and target_text_content.strip():
+                normalized_target = target_text_content.replace('\r\n', '\n')
+                description_parts.append(normalized_target.strip())
+            if tertiary_text_content and tertiary_text_content.strip():
+                normalized_tertiary = tertiary_text_content.replace('\r\n', '\n')
+                description_parts.append(normalized_tertiary.strip())
+        # --- FIX END ---
         
         if description_parts:
             deck_descriptions[parent_deck_name] = "\n\n---\n\n".join(description_parts)

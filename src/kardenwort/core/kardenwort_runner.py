@@ -264,6 +264,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="A wrapper script to extract and process words or sentences from text files and import them into Anki."
     )
+    parser.add_argument("--show-success-message", action="store_true", help="Display a user-friendly success message on stdout. Useful for interactive tools like GoldenDict.")
     parser.add_argument("--type", type=str, choices=["word", "sentence"], help="Type of processing: 'word' for word extraction, 'sentence' for parallel sentences. Not required for 'mixed-triple' mode.")
     parser.add_argument("--mode", type=str, required=True, choices=["single", "dual", "triple", "mixed-triple"], help="Processing mode: single, dual, triple, or mixed-triple (runs sentence and word modes sequentially).")
     parser.add_argument("--language", type=str, required=True, choices=["de", "en"], help="Language for processing: German (de) or English (en).")
@@ -296,7 +297,6 @@ def main():
     python_path, workspace_path, importer_workspace, config = load_config()
 
     if args.mode == "mixed-triple":
-        # --- SENTENCE RUN ---
         print_debug("--- Running mixed-triple mode: SENTENCE pass ---")
         args.type = "sentence"
         sentence_script_args = get_script_args(args, python_path, workspace_path, config)
@@ -305,13 +305,11 @@ def main():
         if not sentence_filename_basename:
             sys.exit(1)
 
-        # --- DETERMINE PARENT DECK ---
         temp_deck_name = os.path.splitext(sentence_filename_basename)[0]
         parent_deck_name = temp_deck_name.replace('.sentence', '')
         print_debug(f"Parent Deck Name for this session is: {parent_deck_name}")
         args.anki_parent_deck = parent_deck_name
 
-        # --- WORD RUN ---
         print_debug("\n--- Running mixed-triple mode: WORD pass ---")
         args.type = "word"
         original_deck_content = args.anki_deck_content
@@ -322,7 +320,6 @@ def main():
         if not word_filename_basename:
             sys.exit(1)
 
-        # --- IMPORTER RUNS ---
         args.anki_deck_content = original_deck_content
         args.anki_parent_deck = None 
         print_debug(f"\n--- Importing SENTENCE file: {sentence_filename_basename} ---")
@@ -333,6 +330,9 @@ def main():
         run_importer_script(word_filename_basename, args, python_path, workspace_path, importer_workspace, config)
 
         print_debug("\nAll operations for mixed-triple mode completed successfully.")
+        
+        if args.show_success_message:
+            success_message = f"Completed successfully!\n\nCards have been imported into the deck:\n{parent_deck_name}"
 
     else: # Logic for single, dual, triple modes
         script_args = get_script_args(args, python_path, workspace_path, config)

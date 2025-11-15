@@ -6,6 +6,9 @@ import sys
 import os
 import re
 
+if sys.platform == "win32":
+    import winsound
+
 def print_debug(message):
     print(message, file=sys.stderr)
 
@@ -348,7 +351,13 @@ def main():
         print(output_filename_basename)
 
     if args.play_sound_on_completion:
-        print('\a', file=sys.stderr, flush=True)
+        try:
+            if sys.platform == "win32":
+                winsound.MessageBeep(winsound.MB_OK)
+            else:
+                print('\a', file=sys.stderr, flush=True)
+        except Exception as e:
+            print_debug(f"Warning: Could not play completion sound. Error: {e}")
 
 if __name__ == "__main__":
     main()

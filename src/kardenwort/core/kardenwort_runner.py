@@ -179,7 +179,7 @@ def run_extraction_script(script_args):
     script_process = subprocess.Popen(
         script_args,
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE, # Capture stderr for better error reporting
+        stderr=subprocess.PIPE,
         text=True,
         encoding='utf-8',
         errors='replace'
@@ -288,6 +288,10 @@ def main():
         parser.error('--type is required for modes single, dual, and triple.')
     if args.mode == 'mixed-triple' and args.type:
         print_debug("Warning: --type is ignored when --mode is mixed-triple.")
+
+    if args.mode == 'mixed-triple' and args.text and not args.multi_text:
+        print_debug("Info: Automatically enabling --multi-text for mixed-triple mode with --text input.")
+        args.multi_text = True
 
     python_path, workspace_path, importer_workspace, config = load_config()
 

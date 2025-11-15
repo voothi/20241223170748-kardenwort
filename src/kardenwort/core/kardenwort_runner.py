@@ -294,9 +294,12 @@ def main():
             sys.exit(1)
 
         # --- DETERMINE PARENT DECK ---
-        # e.g., "20251115103000-nachrichten-fur-deutschlernende-vom.triple.sentence.de.tsv" -> "20251115103000-nachrichten-fur-deutschlernende-vom.triple.de"
         temp_deck_name = os.path.splitext(sentence_filename_basename)[0] # remove .tsv
-        parent_deck_name = re.sub(r'\.sentence$', '', temp_deck_name) # remove .sentence
+        # --- FIX IS HERE ---
+        # The original re.sub was incorrect because it only matched .sentence at the very end of the string.
+        # .replace() is more robust for this task.
+        parent_deck_name = temp_deck_name.replace('.sentence', '')
+        
         print_debug(f"Parent Deck Name for this session is: {parent_deck_name}")
         args.anki_parent_deck = parent_deck_name # Set for the word run
 
@@ -304,6 +307,7 @@ def main():
         print_debug("\n--- Running mixed-triple mode: WORD pass ---")
         args.type = "word"
         # No longer need deck content args for the word run, it's handled by the sentence run's metadata
+        original_deck_content = args.anki_deck_content
         args.anki_deck_content = None 
         word_script_args = get_script_args(args, python_path, workspace_path, config)
         
@@ -312,9 +316,14 @@ def main():
             sys.exit(1)
 
         # --- IMPORTER RUNS ---
+        # Restore original args for the first importer run to ensure metadata is processed correctly
+        args.anki_deck_content = original_deck_content
+        args.anki_parent_deck = None # Unset parent deck for the first importer call to avoid logic conflicts
         print_debug(f"\n--- Importing SENTENCE file: {sentence_filename_basename} ---")
         run_importer_script(sentence_filename_basename, args, python_path, workspace_path, importer_workspace, config)
 
+        # Set parent deck for the second importer run
+        args.anki_parent_deck = parent_deck_name
         print_debug(f"\n--- Importing WORD file: {word_filename_basename} ---")
         run_importer_script(word_filename_basename, args, python_path, workspace_path, importer_workspace, config)
 

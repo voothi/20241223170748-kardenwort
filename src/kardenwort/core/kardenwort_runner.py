@@ -333,6 +333,7 @@ def main():
         
         if args.show_success_message:
             success_message = f"Completed successfully!\n\nCards have been imported into the deck:\n{parent_deck_name}"
+            print(success_message)
 
     else: # Logic for single, dual, triple modes
         script_args = get_script_args(args, python_path, workspace_path, config)

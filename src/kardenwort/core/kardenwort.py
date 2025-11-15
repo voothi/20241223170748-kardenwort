@@ -8,12 +8,29 @@ import re
 from contextlib import redirect_stdout
 import io
 import json
+import tempfile
+import atexit
 
 try:
     from german_compound_splitter import comp_split
     GCS_AVAILABLE = True
 except ImportError:
     GCS_AVAILABLE = False
+
+# List to hold the paths of temporary files to be cleaned up on exit.
+TEMP_FILES_TO_CLEANUP = []
+
+def _cleanup_temp_files():
+    """Remove any temporary files created during execution."""
+    for f_path in TEMP_FILES_TO_CLEANUP:
+        try:
+            os.remove(f_path)
+        except OSError:
+            pass  # Ignore errors if the file doesn't exist
+
+# Register the cleanup function to be called upon script exit.
+atexit.register(_cleanup_temp_files)
+
 
 TTS_FIELD_INDICES = {
     'source': {
@@ -1655,6 +1672,7 @@ def main():
     input_output_group.add_argument("--text2-file", help="Path to a parallel (translated) text file.")
     input_output_group.add_argument("--text3-file", help="Path to a third parallel text file.")
     input_output_group.add_argument("--output-file", help="Path to the output file. If not provided, results are printed to standard output.")
+    input_output_group.add_argument("--multi-text", action="store_true", help="Parse input from --text or stdin as up to three texts separated by '---'.")
 
     data_files_group = parser.add_argument_group('Data Files')
     data_files_group.add_argument("--lemma-index-file", default="", help="Path to a CSV file with lemmas, used for frequency-based sorting of the output.")
@@ -1756,6 +1774,39 @@ def main():
     gcs_group.add_argument("--de-gcs-skip-merge-fractions", action="store_true", help="[GCS] Disable merging of components, outputting raw parts from dissection.")
 
     args = parser.parse_args()
+    
+    if args.multi_text:
+        # This flag modifies the behavior of --text or stdin input.
+        if args.text1_file:
+            print("Warning: --multi-text is ignored when --text1-file is provided.", file=sys.stderr)
+        else:
+            input_text_combined = ""
+            if args.text:
+                input_text_combined = args.text
+            elif not sys.stdin.isatty():
+                input_text_combined = sys.stdin.read()
+
+            if input_text_combined:
+                # Split text by '---' with optional whitespace, handling GoldenDict's line stripping.
+                parts = re.split(r'\s*---\s*', input_text_combined.strip())
+                
+                text_blocks = parts[:3]  # Use up to 3 parts
+                file_arg_names = ['text1_file', 'text2_file', 'text3_file']
+
+                for i, text_content in enumerate(text_blocks):
+                    # Create a temporary file to hold this part of the text.
+                    fd, path = tempfile.mkstemp(suffix='.txt', text=True)
+                    with os.fdopen(fd, 'w', encoding='utf-8') as tmp:
+                        tmp.write(text_content)
+                    
+                    # Set the corresponding file argument (e.g., args.text1_file) to the temp file path.
+                    setattr(args, file_arg_names[i], path)
+                    TEMP_FILES_TO_CLEANUP.append(path)
+
+                # Nullify args.text to ensure the main logic uses the new textN_file args.
+                args.text = None
+            else:
+                print("Warning: --multi-text was specified but no input received from --text or stdin.", file=sys.stderr)
 
     ALL_POS_TAGS = {'ADJ', 'ADP', 'ADV', 'AUX', 'CCONJ', 'DET', 'INTJ', 'NOUN', 
                     'NUM', 'PART', 'PRON', 'PROPN', 'PUNCT', 'SCONJ', 'SYM', 'VERB', 'X'}

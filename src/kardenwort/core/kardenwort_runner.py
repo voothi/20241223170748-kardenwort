@@ -147,26 +147,28 @@ def get_script_args(args, python_path, workspace_path, config):
     text2_filename = config.get('input_files', 'text2_file', fallback='text2.txt')
     text3_filename = config.get('input_files', 'text3_file', fallback='text3.txt')
 
-    # For input files, mixed-triple behaves just like triple mode
-    mode_for_input_files = "triple" if args.mode == "mixed-triple" else args.mode
+    input_text_arg = None
+    if args.text:
+        input_text_arg = args.text
+    elif os.environ.get('KARDENWORT_INPUT_TEXT'):
+        input_text_arg = os.environ.get('KARDENWORT_INPUT_TEXT')
 
-    if mode_for_input_files == "single":
-        input_text_from_env = os.environ.get('KARDENWORT_INPUT_TEXT')
-        if input_text_from_env:
-            mode_args.extend(["--text", input_text_from_env])
-        elif args.text:
-            mode_args.extend(["--text", args.text])
-        else:
-            mode_args.extend(["--text1-file", str(input_path / text1_filename)])
-    elif mode_for_input_files == "dual":
-        mode_args.extend(["--text1-file", str(input_path / text1_filename)])
-        mode_args.extend(["--text2-file", str(input_path / text2_filename)])
-    elif mode_for_input_files == "triple":
-        mode_args.extend(["--text1-file", str(input_path / text1_filename)])
-        mode_args.extend(["--text2-file", str(input_path / text2_filename)])
-        mode_args.extend(["--text3-file", str(input_path / text3_filename)])
+    if input_text_arg:
+        mode_args.extend(["--text", input_text_arg])
     else:
-        raise ValueError(f"Unknown mode: {args.mode}")
+        mode_for_input_files = "triple" if args.mode == "mixed-triple" else args.mode
+
+        if mode_for_input_files == "single":
+             mode_args.extend(["--text1-file", str(input_path / text1_filename)])
+        elif mode_for_input_files == "dual":
+            mode_args.extend(["--text1-file", str(input_path / text1_filename)])
+            mode_args.extend(["--text2-file", str(input_path / text2_filename)])
+        elif mode_for_input_files == "triple":
+            mode_args.extend(["--text1-file", str(input_path / text1_filename)])
+            mode_args.extend(["--text2-file", str(input_path / text2_filename)])
+            mode_args.extend(["--text3-file", str(input_path / text3_filename)])
+        else:
+            raise ValueError(f"Unknown mode: {args.mode}")
 
     mode_args.extend(["--output-file", str(output_path / output_filename)])
     return base_args + mode_args
@@ -293,20 +295,13 @@ def main():
         if not sentence_filename_basename:
             sys.exit(1)
 
-        # --- DETERMINE PARENT DECK ---
         temp_deck_name = os.path.splitext(sentence_filename_basename)[0] # remove .tsv
-        # --- FIX IS HERE ---
-        # The original re.sub was incorrect because it only matched .sentence at the very end of the string.
-        # .replace() is more robust for this task.
         parent_deck_name = temp_deck_name.replace('.sentence', '')
-        
         print_debug(f"Parent Deck Name for this session is: {parent_deck_name}")
         args.anki_parent_deck = parent_deck_name # Set for the word run
 
-        # --- WORD RUN ---
         print_debug("\n--- Running mixed-triple mode: WORD pass ---")
         args.type = "word"
-        # No longer need deck content args for the word run, it's handled by the sentence run's metadata
         original_deck_content = args.anki_deck_content
         args.anki_deck_content = None 
         word_script_args = get_script_args(args, python_path, workspace_path, config)
@@ -315,14 +310,11 @@ def main():
         if not word_filename_basename:
             sys.exit(1)
 
-        # --- IMPORTER RUNS ---
-        # Restore original args for the first importer run to ensure metadata is processed correctly
         args.anki_deck_content = original_deck_content
-        args.anki_parent_deck = None # Unset parent deck for the first importer call to avoid logic conflicts
+        args.anki_parent_deck = None 
         print_debug(f"\n--- Importing SENTENCE file: {sentence_filename_basename} ---")
         run_importer_script(sentence_filename_basename, args, python_path, workspace_path, importer_workspace, config)
 
-        # Set parent deck for the second importer run
         args.anki_parent_deck = parent_deck_name
         print_debug(f"\n--- Importing WORD file: {word_filename_basename} ---")
         run_importer_script(word_filename_basename, args, python_path, workspace_path, importer_workspace, config)
@@ -338,7 +330,6 @@ def main():
         
         run_importer_script(output_filename_basename, args, python_path, workspace_path, importer_workspace, config)
         
-        # Print the single filename for other scripts to capture, if needed
         print(output_filename_basename)
 
 

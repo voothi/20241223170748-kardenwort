@@ -1775,6 +1775,9 @@ def main():
 
     args = parser.parse_args()
     
+    # ============================================================================
+    # --- START OF THE CRITICAL FIX ---
+    # ============================================================================
     if args.multi_text:
         if args.text1_file:
             print("Warning: --multi-text is ignored when --text1-file is provided.", file=sys.stderr)
@@ -1790,22 +1793,30 @@ def main():
                 text_blocks = parts[:3]
                 file_arg_names = ['text1_file', 'text2_file', 'text3_file']
 
-                # --- FIX IS HERE ---
-                # Ensure up to 3 temp files are created, even if input has fewer than 3 parts.
-                # This is critical for --type sentence to not fail its checks.
+                # This loop now robustly handles cases with 1, 2, or 3 text blocks.
+                # It iterates exactly 3 times, ensuring text1_file, text2_file, and text3_file
+                # are ALWAYS assigned a valid (even if empty) temp file path.
+                # This satisfies the '--type sentence' validation check later on.
                 for i, arg_name in enumerate(file_arg_names):
+                    # Get text if it exists, otherwise use an empty string
                     text_content = text_blocks[i] if i < len(text_blocks) else ""
                     
+                    # Create a temporary file for the content (or lack thereof)
                     fd, path = tempfile.mkstemp(suffix='.txt', text=True)
                     with os.fdopen(fd, 'w', encoding='utf-8') as tmp:
                         tmp.write(text_content)
                     
+                    # Dynamically set the argument (e.g., args.text1_file = 'path/to/temp.txt')
                     setattr(args, arg_name, path)
                     TEMP_FILES_TO_CLEANUP.append(path)
                 
+                # Nullify args.text so the main logic uses the new temp file paths
                 args.text = None
             else:
                 print("Warning: --multi-text was specified but no input received from --text or stdin.", file=sys.stderr)
+    # ============================================================================
+    # --- END OF THE CRITICAL FIX ---
+    # ============================================================================
 
     ALL_POS_TAGS = {'ADJ', 'ADP', 'ADV', 'AUX', 'CCONJ', 'DET', 'INTJ', 'NOUN', 
                     'NUM', 'PART', 'PRON', 'PROPN', 'PUNCT', 'SCONJ', 'SYM', 'VERB', 'X'}
@@ -1861,46 +1872,33 @@ def main():
     final_output_path = args.output_file
     
     source_text_for_filename = ""
-    if args.text:
-        source_text_for_filename = args.text
-    elif args.text1_file:
+    # We must now check text1_file first, as args.text is nullified by the multi-text logic
+    if args.text1_file:
         try:
             with open(args.text1_file, 'r', encoding='utf-8') as f:
                 source_text_for_filename = f.read(1024)
         except Exception as e:
             print(f"Warning: Could not read {args.text1_file} for autonaming: {e}", file=sys.stderr)
+    elif args.text:
+         source_text_for_filename = args.text
+
 
     if args.output_file and (args.basename_add_timestamp or args.basename_add_first_words is not None):
         timestamp_id = datetime.now().strftime('%Y%m%d%H%M%S')
         output_directory, filename = os.path.dirname(args.output_file) or '.', os.path.basename(args.output_file)
 
-        filename_prefix = ""
         if args.basename_add_first_words is not None:
-             filename_prefix = generate_filename_prefix_from_text(source_text_for_filename, args.basename_add_first_words)
-        
-        new_filename_parts = []
-        if args.basename_add_timestamp:
-            new_filename_parts.append(timestamp_id)
-        if filename_prefix:
-            new_filename_parts.append(filename_prefix)
-        
-        # If no other parts, fall back to original filename to avoid losing it
-        if not new_filename_parts:
-             final_output_path = args.output_file
-        else:
-            base_part = "-".join(new_filename_parts)
-            extension_dot_position = filename.find('.')
-            file_extension = filename[extension_dot_position:] if extension_dot_position != -1 else ""
-            
-            # Avoid double timestamping if original name already had one
-            if args.basename_add_timestamp and re.match(r'^\d{14}-', filename):
-                filename = re.sub(r'^\d{14}-', '', filename)
-
-            # Avoid double prefixing
-            if filename_prefix and filename.startswith(filename_prefix):
-                 final_output_path = os.path.join(output_directory, f"{timestamp_id}-{filename}")
+            filename_prefix = generate_filename_prefix_from_text(source_text_for_filename, args.basename_add_first_words)
+            if filename_prefix:
+                extension_dot_position = filename.find('.')
+                file_extension = filename[extension_dot_position:] if extension_dot_position != -1 else ""
+                new_filename = f"{timestamp_id}-{filename_prefix}{file_extension}"
             else:
-                 final_output_path = os.path.join(output_directory, f"{base_part}{file_extension if not filename_prefix else ''}")
+                 new_filename = f"{timestamp_id}-{filename}"
+            final_output_path = os.path.join(output_directory, new_filename)
+        elif args.basename_add_timestamp:
+            new_filename = f"{timestamp_id}-{filename}"
+            final_output_path = os.path.join(output_directory, new_filename)
     
     if args.lemmas_per_line:
         if not args.text1_file:
@@ -1915,10 +1913,11 @@ def main():
             
     elif args.type == "word":
         input_text = ""
-        if args.text:
-            input_text = args.text
-        elif args.text1_file:
+        # The multi-text logic above now handles converting --text to --text1-file
+        if args.text1_file:
             input_text = read_text_from_file(args.text1_file)
+        elif args.text:
+            input_text = args.text
         elif 'KARDENWORT_INPUT_TEXT' in os.environ:
             input_text = os.environ['KARDENWORT_INPUT_TEXT']
         elif not sys.stdin.isatty():
@@ -1936,7 +1935,6 @@ def main():
             'de_gcs_skip_merge_fractions': args.de_gcs_skip_merge_fractions,
         }
         
-        # Use parallel processing if text2_file is present
         if args.text2_file:
              if not input_text:
                 input_text = read_text_from_file(args.text1_file)
@@ -1964,7 +1962,6 @@ def main():
         if any([args.de_gcs, args.de_gcs_mask_unknown_parts]):
             print("Warning: GCS-related flags are only applicable for --type word and will be ignored.", file=sys.stderr)
         
-        # This check is now robust thanks to the multi-text fix which ensures these files always exist (even if empty)
         if not args.text1_file or not args.text2_file:
             print("Error: --text1-file and --text2-file must be specified for sentence mode.", file=sys.stderr); exit(1)
         

@@ -59,15 +59,6 @@ def _format_gcs_component_case(component):
         return component
     return component[0] + component[1:].lower()
 
-def _find_first_header_level(all_lines):
-    """Finds the level of the first Markdown header in the text."""
-    for line in all_lines:
-        line = line.strip()
-        match = re.match(r'^(#+)\s+', line)
-        if match:
-            return len(match.group(1))
-    return None
-
 def load_dictionary(file_path):
     dictionary = set()
     try:
@@ -475,12 +466,11 @@ def parse_markdown_for_branch_headers(all_lines):
         line = line.strip()
         if line.startswith('#'):
             match = re.match(r'^(#+)', line)
-            if match:
-                current_level = len(match.group(1))
-                if current_level > last_header_level and last_header_index != -1:
-                    branch_header_indices.add(last_header_index)
-                last_header_level = current_level
-                last_header_index = i
+            current_level = len(match.group(1))
+            if current_level > last_header_level and last_header_index != -1:
+                branch_header_indices.add(last_header_index)
+            last_header_level = current_level
+            last_header_index = i
     return branch_header_indices
 
 def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, de_dictionary, lemma_override_rules, de_gcs_pos_tags, args, **kwargs):
@@ -746,7 +736,6 @@ def process_parallel_text_files(
             deck_stack.append(root_deck_prefix)
 
     text_has_headers = any(re.match(r'^(#+)\s+', line.strip()) for line in source_text_lines_all)
-    first_header_level = _find_first_header_level(source_text_lines_all) if text_has_headers else None
     content_line_idx = -1
     active_header_line_index = -1
     first_header_encountered = False
@@ -761,6 +750,9 @@ def process_parallel_text_files(
         if args.anki_markdown_decks:
             header_match = re.match(r'^(#+)\s+(.*)', source_line_for_analysis)
             if header_match:
+                if placeholder_deck_created:
+                    deck_stack.pop()
+                    placeholder_deck_created = False
                 first_header_encountered = True
                 active_header_line_index = line_index
                 level = len(header_match.group(1))
@@ -775,11 +767,10 @@ def process_parallel_text_files(
                     header_counter += 1
                 source_line_for_analysis = title
             elif not first_header_encountered and not placeholder_deck_created and text_has_headers:
-                level_for_placeholder = first_header_level
                 title = source_line_for_analysis
                 sanitized_title = generate_filename_prefix_from_text(title, 5)
 
-                actual_level = level_for_placeholder + (1 if root_deck_prefix else 0)
+                actual_level = 1 + (1 if root_deck_prefix else 0)
                 while len(deck_stack) >= actual_level:
                     deck_stack.pop()
                 
@@ -1093,7 +1084,6 @@ def process_single_text(
             deck_stack.append(root_deck_prefix)
 
         text_has_headers = any(re.match(r'^(#+)\s+', line.strip()) for line in source_lines)
-        first_header_level = _find_first_header_level(source_lines) if text_has_headers else None
         first_header_encountered = False
         placeholder_deck_created = False
 
@@ -1103,6 +1093,9 @@ def process_single_text(
             
             header_match = re.match(r'^(#+)\s+(.*)', line)
             if header_match:
+                if placeholder_deck_created:
+                    deck_stack.pop()
+                    placeholder_deck_created = False
                 first_header_encountered = True
                 active_header_line_index = line_index
                 level = len(header_match.group(1))
@@ -1116,14 +1109,11 @@ def process_single_text(
                     header_counter += 1
                 line = title
             elif not first_header_encountered and not placeholder_deck_created and text_has_headers:
-                level_for_placeholder = first_header_level
                 title = line
                 sanitized_title = generate_filename_prefix_from_text(title, 5)
-
-                actual_level = level_for_placeholder + (1 if root_deck_prefix else 0)
+                actual_level = 1 + (1 if root_deck_prefix else 0)
                 while len(deck_stack) >= actual_level:
                     deck_stack.pop()
-
                 if sanitized_title:
                     deck_stack.append(f"{100000 + header_counter}-{sanitized_title}")
                     header_counter += 1
@@ -1514,7 +1504,6 @@ def process_parallel_sentences_to_csv(
                 deck_stack.append(root_deck_prefix)
 
         text_has_headers = any(re.match(r'^(#+)\s+', line.strip()) for line in source_text_lines_all)
-        first_header_level = _find_first_header_level(source_text_lines_all) if text_has_headers else None
         content_line_idx = -1
         active_header_line_index = -1
         first_header_encountered = False
@@ -1528,6 +1517,9 @@ def process_parallel_sentences_to_csv(
             if args.anki_markdown_decks:
                 header_match = re.match(r'^(#+)\s+(.*)', source_line_for_analysis)
                 if header_match:
+                    if placeholder_deck_created:
+                        deck_stack.pop()
+                        placeholder_deck_created = False
                     first_header_encountered = True
                     active_header_line_index = line_index
                     level = len(header_match.group(1))
@@ -1542,11 +1534,10 @@ def process_parallel_sentences_to_csv(
                         header_counter += 1
                     source_line_for_analysis = title
                 elif not first_header_encountered and not placeholder_deck_created and text_has_headers:
-                    level_for_placeholder = first_header_level
                     title = source_line_for_analysis
                     sanitized_title = generate_filename_prefix_from_text(title, 5)
 
-                    actual_level = level_for_placeholder + (1 if root_deck_prefix else 0)
+                    actual_level = 1 + (1 if root_deck_prefix else 0)
                     while len(deck_stack) >= actual_level:
                         deck_stack.pop()
                     

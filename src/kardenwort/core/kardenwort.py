@@ -720,6 +720,7 @@ def process_parallel_text_files(
 
     subdeck_content_map = {}
     deck_stack = []
+    level_stack = []
     header_counter = 1
     
     branch_header_lines = set()
@@ -734,6 +735,7 @@ def process_parallel_text_files(
                 root_deck_prefix = re.sub(r'\.(word|sentence)', '', base_name)
         if root_deck_prefix:
             deck_stack.append(root_deck_prefix)
+            level_stack.append(0)
 
     text_has_headers = any(re.match(r'^(#+)\s+', line.strip()) for line in source_text_lines_all)
     content_line_idx = -1
@@ -756,17 +758,20 @@ def process_parallel_text_files(
                 title = header_match.group(2).strip()
                 sanitized_title = generate_filename_prefix_from_text(title, 5)
 
-                base_offset = 1 if root_deck_prefix else 0
-                while len(deck_stack) - base_offset >= level:
+                while level_stack and level_stack[-1] >= level:
+                    level_stack.pop()
                     deck_stack.pop()
+                
                 if sanitized_title:
                     deck_stack.append(f"{100000 + header_counter}-{sanitized_title}")
+                    level_stack.append(level)
                     header_counter += 1
                 source_line_for_analysis = title
             elif not first_header_encountered and not placeholder_deck_created and text_has_headers:
-                level = 2 
-                base_offset = 1 if root_deck_prefix else 0
-                while len(deck_stack) - base_offset >= level:
+                level = 2
+                
+                while level_stack and level_stack[-1] >= level:
+                    level_stack.pop()
                     deck_stack.pop()
 
                 title = source_line_for_analysis
@@ -774,6 +779,7 @@ def process_parallel_text_files(
                 
                 if sanitized_title:
                     deck_stack.append(f"{100000 + header_counter}-{sanitized_title}")
+                    level_stack.append(level)
                     header_counter += 1
                 
                 placeholder_deck_created = True
@@ -1071,6 +1077,7 @@ def process_single_text(
     if args.anki_markdown_decks and is_multiline_from_file:
         branch_header_lines = parse_markdown_for_branch_headers(source_lines)
         deck_stack = []
+        level_stack = []
         root_deck_prefix = ""
         if args.anki_create_subdecks:
             if args.anki_parent_deck:
@@ -1080,6 +1087,7 @@ def process_single_text(
                 root_deck_prefix = re.sub(r'\.(word|sentence)', '', base_name)
         if root_deck_prefix:
             deck_stack.append(root_deck_prefix)
+            level_stack.append(0)
 
         text_has_headers = any(re.match(r'^(#+)\s+', line.strip()) for line in source_lines)
         first_header_encountered = False
@@ -1096,18 +1104,21 @@ def process_single_text(
                 level = len(header_match.group(1))
                 title = header_match.group(2).strip()
                 sanitized_title = generate_filename_prefix_from_text(title, 5)
-                base_offset = 1 if root_deck_prefix else 0
-                while len(deck_stack) - base_offset >= level:
+
+                while level_stack and level_stack[-1] >= level:
+                    level_stack.pop()
                     deck_stack.pop()
 
                 if sanitized_title:
                     deck_stack.append(f"{100000 + header_counter}-{sanitized_title}")
+                    level_stack.append(level)
                     header_counter += 1
                 line = title
             elif not first_header_encountered and not placeholder_deck_created and text_has_headers:
-                level = 2 
-                base_offset = 1 if root_deck_prefix else 0
-                while len(deck_stack) - base_offset >= level:
+                level = 2
+                
+                while level_stack and level_stack[-1] >= level:
+                    level_stack.pop()
                     deck_stack.pop()
 
                 title = line
@@ -1115,6 +1126,7 @@ def process_single_text(
 
                 if sanitized_title:
                     deck_stack.append(f"{100000 + header_counter}-{sanitized_title}")
+                    level_stack.append(level)
                     header_counter += 1
                 placeholder_deck_created = True
 
@@ -1487,6 +1499,7 @@ def process_parallel_sentences_to_csv(
             tsv_writer.writerow(get_anki_csv_header())
 
         deck_stack = []
+        level_stack = []
         subdeck_content_map = {}
         header_counter = 1
         branch_header_lines = set()
@@ -1501,6 +1514,7 @@ def process_parallel_sentences_to_csv(
                     root_deck_prefix = re.sub(r'\.(word|sentence)', '', base_name)
             if root_deck_prefix:
                 deck_stack.append(root_deck_prefix)
+                level_stack.append(0)
 
         text_has_headers = any(re.match(r'^(#+)\s+', line.strip()) for line in source_text_lines_all)
         content_line_idx = -1
@@ -1522,18 +1536,20 @@ def process_parallel_sentences_to_csv(
                     title = header_match.group(2).strip()
                     sanitized_title = generate_filename_prefix_from_text(title, 5)
 
-                    base_offset = 1 if root_deck_prefix else 0
-                    while len(deck_stack) - base_offset >= level:
+                    while level_stack and level_stack[-1] >= level:
+                        level_stack.pop()
                         deck_stack.pop()
 
                     if sanitized_title:
                         deck_stack.append(f"{100000 + header_counter}-{sanitized_title}")
+                        level_stack.append(level)
                         header_counter += 1
                     source_line_for_analysis = title
                 elif not first_header_encountered and not placeholder_deck_created and text_has_headers:
-                    level = 2 
-                    base_offset = 1 if root_deck_prefix else 0
-                    while len(deck_stack) - base_offset >= level:
+                    level = 2
+                    
+                    while level_stack and level_stack[-1] >= level:
+                        level_stack.pop()
                         deck_stack.pop()
 
                     title = source_line_for_analysis
@@ -1541,6 +1557,7 @@ def process_parallel_sentences_to_csv(
                     
                     if sanitized_title:
                         deck_stack.append(f"{100000 + header_counter}-{sanitized_title}")
+                        level_stack.append(level)
                         header_counter += 1
                     
                     placeholder_deck_created = True

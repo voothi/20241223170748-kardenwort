@@ -462,27 +462,25 @@ def parse_markdown_for_branch_headers(all_lines):
     """
     Identifies headers that act as containers for content lines.
     A header is considered a "branch" if there are any non-header content lines
-    between it and the next header.
+    between it and the next header. It uses a strict regex to define a header.
     """
     branch_header_indices = set()
-    # Find the line numbers of all headers first
-    header_indices = [i for i, line in enumerate(all_lines) if line.strip().startswith('#')]
+    # Use a strict regex to ensure we only match valid Markdown headers (e.g., "# Title", not "#title")
+    header_pattern = re.compile(r'^(#+)\s+')
+    
+    header_indices = [i for i, line in enumerate(all_lines) if header_pattern.match(line.strip())]
 
     if not header_indices:
         return branch_header_indices
 
-    # Iterate through the found headers
     for i, current_header_index in enumerate(header_indices):
-        # Determine the scope of this header's content (from just after it to just before the next header)
         next_header_index = header_indices[i + 1] if i + 1 < len(header_indices) else len(all_lines)
 
-        # Check if there's any actual content in this header's scope
         has_content = any(
-            line.strip() and not line.strip().startswith('#')
+            line.strip() and not header_pattern.match(line.strip())
             for line in all_lines[current_header_index + 1 : next_header_index]
         )
 
-        # If it has content, mark it as a branch header
         if has_content:
             branch_header_indices.add(current_header_index)
 

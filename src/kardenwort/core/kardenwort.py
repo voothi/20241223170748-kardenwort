@@ -227,7 +227,7 @@ def get_overridden_lemma_for_compound_part(initial_lemma, part, original_word, o
 
     for source_word_regex, override_rule in override_rules.get('priority2_regex', []):
         try:
-            if re.fullmatch(source_word_regex, part):
+            if re.fullmatch(source_word_regex, original_word):
                 matched_lemma_from_regex2 = find_matching_override_in_context([override_rule], context_sentence)
                 if matched_lemma_from_regex2 is not None:
                     return matched_lemma_from_regex2
@@ -738,6 +738,15 @@ def process_parallel_text_files(
             level_stack.append(0)
 
     text_has_headers = any(re.match(r'^(#+)\s+', line.strip()) for line in source_text_lines_all)
+    
+    first_real_header_level = 2 
+    if text_has_headers:
+        for line in source_text_lines_all:
+            match = re.match(r'^(#+)', line.strip())
+            if match:
+                first_real_header_level = len(match.group(1))
+                break
+
     content_line_idx = -1
     active_header_line_index = -1
     first_header_encountered = False
@@ -768,7 +777,7 @@ def process_parallel_text_files(
                     header_counter += 1
                 source_line_for_analysis = title
             elif not first_header_encountered and not placeholder_deck_created and text_has_headers:
-                level = 2
+                level = first_real_header_level
                 
                 while level_stack and level_stack[-1] >= level:
                     level_stack.pop()
@@ -1090,6 +1099,15 @@ def process_single_text(
             level_stack.append(0)
 
         text_has_headers = any(re.match(r'^(#+)\s+', line.strip()) for line in source_lines)
+        
+        first_real_header_level = 2 
+        if text_has_headers:
+            for line in source_lines:
+                match = re.match(r'^(#+)', line.strip())
+                if match:
+                    first_real_header_level = len(match.group(1))
+                    break
+
         first_header_encountered = False
         placeholder_deck_created = False
 
@@ -1115,7 +1133,7 @@ def process_single_text(
                     header_counter += 1
                 line = title
             elif not first_header_encountered and not placeholder_deck_created and text_has_headers:
-                level = 2
+                level = first_real_header_level
                 
                 while level_stack and level_stack[-1] >= level:
                     level_stack.pop()
@@ -1517,6 +1535,15 @@ def process_parallel_sentences_to_csv(
                 level_stack.append(0)
 
         text_has_headers = any(re.match(r'^(#+)\s+', line.strip()) for line in source_text_lines_all)
+        
+        first_real_header_level = 2 
+        if text_has_headers:
+            for line in source_text_lines_all:
+                match = re.match(r'^(#+)', line.strip())
+                if match:
+                    first_real_header_level = len(match.group(1))
+                    break
+        
         content_line_idx = -1
         active_header_line_index = -1
         first_header_encountered = False
@@ -1546,7 +1573,7 @@ def process_parallel_sentences_to_csv(
                         header_counter += 1
                     source_line_for_analysis = title
                 elif not first_header_encountered and not placeholder_deck_created and text_has_headers:
-                    level = 2
+                    level = first_real_header_level
                     
                     while level_stack and level_stack[-1] >= level:
                         level_stack.pop()

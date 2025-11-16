@@ -40,12 +40,18 @@ Programs.
 ```
 "U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
 "U:/voothi/20241223170748-kardenwort/src/kardenwort/core/kardenwort_runner.py"
---type "word"
 --language "en"
+--mode "mixed-triple"
 --text "%GDWORD%"
---mode "single"
 --tts-destination-lang "ru"
+--deduplication-scope global
+--anki-create-subdecks
+--anki-markdown-decks
+--anki-sentence-subdecks
+--anki-deck-content parent-source parent-translations subdeck-source subdeck-translations
 --suspend-cards
+--show-success-message
+--play-sound-on-completion
 ---
 
 ## De

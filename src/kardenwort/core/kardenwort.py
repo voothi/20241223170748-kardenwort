@@ -459,18 +459,33 @@ def deduplicate_lemmas(candidate_lemmas):
     return final_lemmas
 
 def parse_markdown_for_branch_headers(all_lines):
+    """
+    Identifies headers that act as containers for content lines.
+    A header is considered a "branch" if there are any non-header content lines
+    between it and the next header.
+    """
     branch_header_indices = set()
-    last_header_level = 0
-    last_header_index = -1
-    for i, line in enumerate(all_lines):
-        line = line.strip()
-        if line.startswith('#'):
-            match = re.match(r'^(#+)', line)
-            current_level = len(match.group(1))
-            if current_level > last_header_level and last_header_index != -1:
-                branch_header_indices.add(last_header_index)
-            last_header_level = current_level
-            last_header_index = i
+    # Find the line numbers of all headers first
+    header_indices = [i for i, line in enumerate(all_lines) if line.strip().startswith('#')]
+
+    if not header_indices:
+        return branch_header_indices
+
+    # Iterate through the found headers
+    for i, current_header_index in enumerate(header_indices):
+        # Determine the scope of this header's content (from just after it to just before the next header)
+        next_header_index = header_indices[i + 1] if i + 1 < len(header_indices) else len(all_lines)
+
+        # Check if there's any actual content in this header's scope
+        has_content = any(
+            line.strip() and not line.strip().startswith('#')
+            for line in all_lines[current_header_index + 1 : next_header_index]
+        )
+
+        # If it has content, mark it as a branch header
+        if has_content:
+            branch_header_indices.add(current_header_index)
+
     return branch_header_indices
 
 def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, de_dictionary, lemma_override_rules, de_gcs_pos_tags, args, **kwargs):

@@ -750,29 +750,27 @@ def process_parallel_text_files(
         if args.anki_markdown_decks:
             header_match = re.match(r'^(#+)\s+(.*)', source_line_for_analysis)
             if header_match:
-                if placeholder_deck_created:
-                    deck_stack.pop()
-                    placeholder_deck_created = False
                 first_header_encountered = True
                 active_header_line_index = line_index
                 level = len(header_match.group(1))
                 title = header_match.group(2).strip()
                 sanitized_title = generate_filename_prefix_from_text(title, 5)
 
-                actual_level = level + (1 if root_deck_prefix else 0)
-                while len(deck_stack) >= actual_level:
+                base_offset = 1 if root_deck_prefix else 0
+                while len(deck_stack) - base_offset >= level:
                     deck_stack.pop()
                 if sanitized_title:
                     deck_stack.append(f"{100000 + header_counter}-{sanitized_title}")
                     header_counter += 1
                 source_line_for_analysis = title
             elif not first_header_encountered and not placeholder_deck_created and text_has_headers:
+                level = 2 
+                base_offset = 1 if root_deck_prefix else 0
+                while len(deck_stack) - base_offset >= level:
+                    deck_stack.pop()
+
                 title = source_line_for_analysis
                 sanitized_title = generate_filename_prefix_from_text(title, 5)
-
-                actual_level = 1 + (1 if root_deck_prefix else 0)
-                while len(deck_stack) >= actual_level:
-                    deck_stack.pop()
                 
                 if sanitized_title:
                     deck_stack.append(f"{100000 + header_counter}-{sanitized_title}")
@@ -1093,27 +1091,28 @@ def process_single_text(
             
             header_match = re.match(r'^(#+)\s+(.*)', line)
             if header_match:
-                if placeholder_deck_created:
-                    deck_stack.pop()
-                    placeholder_deck_created = False
                 first_header_encountered = True
                 active_header_line_index = line_index
                 level = len(header_match.group(1))
                 title = header_match.group(2).strip()
                 sanitized_title = generate_filename_prefix_from_text(title, 5)
-                actual_level = level + (1 if root_deck_prefix else 0)
-                while len(deck_stack) >= actual_level:
+                base_offset = 1 if root_deck_prefix else 0
+                while len(deck_stack) - base_offset >= level:
                     deck_stack.pop()
+
                 if sanitized_title:
                     deck_stack.append(f"{100000 + header_counter}-{sanitized_title}")
                     header_counter += 1
                 line = title
             elif not first_header_encountered and not placeholder_deck_created and text_has_headers:
+                level = 2 
+                base_offset = 1 if root_deck_prefix else 0
+                while len(deck_stack) - base_offset >= level:
+                    deck_stack.pop()
+
                 title = line
                 sanitized_title = generate_filename_prefix_from_text(title, 5)
-                actual_level = 1 + (1 if root_deck_prefix else 0)
-                while len(deck_stack) >= actual_level:
-                    deck_stack.pop()
+
                 if sanitized_title:
                     deck_stack.append(f"{100000 + header_counter}-{sanitized_title}")
                     header_counter += 1
@@ -1517,29 +1516,28 @@ def process_parallel_sentences_to_csv(
             if args.anki_markdown_decks:
                 header_match = re.match(r'^(#+)\s+(.*)', source_line_for_analysis)
                 if header_match:
-                    if placeholder_deck_created:
-                        deck_stack.pop()
-                        placeholder_deck_created = False
                     first_header_encountered = True
                     active_header_line_index = line_index
                     level = len(header_match.group(1))
                     title = header_match.group(2).strip()
                     sanitized_title = generate_filename_prefix_from_text(title, 5)
 
-                    actual_level = level + (1 if root_deck_prefix else 0)
-                    while len(deck_stack) >= actual_level:
+                    base_offset = 1 if root_deck_prefix else 0
+                    while len(deck_stack) - base_offset >= level:
                         deck_stack.pop()
+
                     if sanitized_title:
                         deck_stack.append(f"{100000 + header_counter}-{sanitized_title}")
                         header_counter += 1
                     source_line_for_analysis = title
                 elif not first_header_encountered and not placeholder_deck_created and text_has_headers:
+                    level = 2 
+                    base_offset = 1 if root_deck_prefix else 0
+                    while len(deck_stack) - base_offset >= level:
+                        deck_stack.pop()
+
                     title = source_line_for_analysis
                     sanitized_title = generate_filename_prefix_from_text(title, 5)
-
-                    actual_level = 1 + (1 if root_deck_prefix else 0)
-                    while len(deck_stack) >= actual_level:
-                        deck_stack.pop()
                     
                     if sanitized_title:
                         deck_stack.append(f"{100000 + header_counter}-{sanitized_title}")

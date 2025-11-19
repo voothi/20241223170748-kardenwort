@@ -44,6 +44,8 @@ This tool is not just a word collector; it's an intelligent pipeline powered by 
   - [Configuration](#configuration)
   - [Important Notes](#important-notes)
   - [Development and Testing](#development-and-testing)
+  - [Our Ecosystem](#our-ecosystem)
+  - [Development Repositories](#development-repositories)
   - [My Personal Motivation](#my-personal-motivation)
   - [License and Acknowledgements](#license-and-acknowledgements)
 
@@ -474,20 +476,27 @@ If you need the latest updates, want to access intermediate versions, or wish to
 
 Every two weeks, the code is cleanly transferred from these development repos to the main public repositories. A new stable build is then created and tagged with a common version number across all related projects.
 
-**Development Repositories:**
-*   Kardenwort (Core Engine): [https://github.com/voothi/20241223170748-kardenwort](https://github.com/voothi/20241223170748-kardenwort)
-*   Anki CSV Importer: [https://github.com/voothi/20250401192017-kardenwort-anki-csv-importer](https://github.com/voothi/20250401192017-kardenwort-anki-csv-importer)
-*   Anki Templates: [https://github.com/voothi/20241106211123-kardenwort-anki-templates](https://github.com/voothi/20241106211123-kardenwort-anki-templates)
-*   AnkiConnect Fork: [https://github.com/voothi/20251110002755-kardenwort-ankiconnect](https://github.com/voothi/20251110002755-kardenwort-ankiconnect)
+## Our Ecosystem
 
-**Related Repositories in Development:**
-*   AutoHotkey Scripts: [https://github.com/voothi/20240411110510-autohotkey](https://github.com/voothi/20240411110510-autohotkey)
+Kardenwort is a suite of integrated tools designed to work together seamlessly:
 
-The project includes a `tests/` directory to facilitate manual testing and ensure consistent output. This is primarily for developers or users who wish to verify the tool's behavior after making changes.
+*   **Kardenwort (Core Engine):** [**20250913122858-kardenwort**](https://github.com/kardenwort/20250913122858-kardenwort)
+    *   The core intelligent engine for text processing and vocabulary extraction.
+*   **Anki CSV Importer:** [**20250913123240-kardenwort-anki-csv-importer**](https://github.com/kardenwort/20250913123240-kardenwort-anki-csv-importer)
+    *   The bridge that automatically imports the generated vocabulary files into Anki.
+*   **Anki Templates:** [**20250913123501-kardenwort-anki-templates**](https://github.com/kardenwort/20250913123501-kardenwort-anki-templates)
+    *   The powerful and feature-rich Anki card template that brings your vocabulary to life.
+*   **AnkiConnect Fork:** [**20251110002755-kardenwort-ankiconnect**](https://github.com/voothi/20251110002755-kardenwort-ankiconnect)
+    *   This is a custom build of the official AnkiConnect add-on, extended with a new API action to enable deeper integration with external tools, specifically the Kardenwort language learning ecosystem.
 
-*   `tests/source_texts/`: This directory contains input text files used for manual testing. They are organized by language (`en/` for English, `de/` for German) and serve as the source material for test runs.
+## Development Repositories
 
-*   `tests/cases/`: This directory stores reference samples (also known as "golden files") of the expected TSV output. To perform a manual test, run the utility with a source text from `tests/source_texts/`. You can then compare the generated output file against the corresponding reference file in this directory to check for any regressions or unexpected changes.
+For those who want the latest features, bug fixes, or wish to explore the development history, we maintain a set of active development repositories. Code is periodically merged from these repos into the stable public ones listed above.
+
+*   **Kardenwort (Core Engine):** [**20241223170748-kardenwort**](https://github.com/voothi/20241223170748-kardenwort)
+*   **Anki CSV Importer:** [**20250401192017-kardenwort-anki-csv-importer**](https://github.com/voothi/20250401192017-kardenwort-anki-csv-importer)
+*   **Anki Templates:** [**20241106211123-kardenwort-anki-templates**](https://github.com/voothi/20241106211123-kardenwort-anki-templates)
+*   **AnkiConnect Fork:** [**20251110002755-kardenwort-ankiconnect**](https://github.com/voothi/20251110002755-kardenwort-ankiconnect)
 
 [Return to Top](#map-of-contents)
 

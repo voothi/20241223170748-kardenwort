@@ -47,6 +47,7 @@ This tool is not just a word collector; it's an intelligent pipeline powered by 
   - [Our Ecosystem](#our-ecosystem)
   - [Development Repositories](#development-repositories)
   - [My Personal Motivation](#my-personal-motivation)
+  - [Kardenwort Ecosystem](#kardenwort-ecosystem)
   - [License and Acknowledgements](#license-and-acknowledgements)
 
 ---
@@ -507,6 +508,14 @@ For those who want the latest features, bug fixes, or wish to explore the develo
 This project was born from my own struggle and eventual success in learning German. With a background in IT and software development, I approached language learning as an engineering problem. This tool is the result of years of refinement, built to solve the real-world problems I faced. My goal is to make a powerful, simple, and reliable tool that can help others on their own language learning journeys. My native languages are Russian and Ukrainian, and I am passionate about creating tools that can help bridge cultural and linguistic divides.
 
 [Return to Top](#map-of-contents)
+
+---
+
+## Kardenwort Ecosystem
+
+This project is part of the **[Kardenwort](https://github.com/kardenwort)** environment, designed to create a focused and efficient learning ecosystem.
+
+[Back to Top](#table-of-contents)
 
 ---
 

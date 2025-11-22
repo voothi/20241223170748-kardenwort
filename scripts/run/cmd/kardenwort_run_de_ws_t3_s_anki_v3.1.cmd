@@ -37,7 +37,7 @@ call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" ^
     --language de ^
     --mode mixed-triple ^
     --tts-destination-lang ru ^
-    --deduplication-scope none ^
+    --deduplication-scope sentence ^
     --anki-create-subdecks ^
     --anki-markdown-decks ^
     --anki-sentence-subdecks ^

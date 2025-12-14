@@ -1,0 +1,10 @@
+# Specify files or folders to ignore during indexing. Use commas to separate entries. Glob patterns like *.log，my-security/ are supported.
+data/
+results/
+shortcuts/
+.history/
+.kiro/
+a/
+bundle_for_prompt/
+source_texts/
+

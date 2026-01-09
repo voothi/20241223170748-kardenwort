@@ -1008,7 +1008,7 @@ def process_parallel_text_files(
                     csv_row[12] = display_tertiary_content_lines[sentence_index].strip() if sentence_index < len(display_tertiary_content_lines) else ""
                     csv_row[13] = " ".join(line.strip() for line in display_tertiary_content_lines[sentence_index + 1:context_end_index])
                 
-                csv_row[0] = word
+                csv_row[0] = source_word_col_val
                 csv_row[1] = word
                 if add_source_word_col:
                     csv_row[2] = source_word_col_val
@@ -1419,7 +1419,7 @@ def process_single_text(
             csv_row[5] = " ".join(u.strip() for u in display_text_units[context_start_index:unit_index])
             csv_row[6] = source_sentence_for_tsv
             csv_row[7] = " ".join(u.strip() for u in display_text_units[unit_index + 1:context_end_index])
-            csv_row[0] = word
+            csv_row[0] = source_word_col_val
             csv_row[1] = word
             if add_source_word_col:
                 csv_row[2] = source_word_col_val

@@ -106,6 +106,7 @@ While many text-processing tools for language learners exist
 [Smart Book](https://smart-book.net/),
 [ReadEra](https://readera.org/),
 [Yomitan (Yomichan)](https://github.com/yomidevs/yomitan),
+[Local Audio Server for Yomichan](https://github.com/yomidevs/local-audio-yomichan),
 [GoldenDict-ng](https://github.com/xiaoyifang/goldendict-ng)
 ) Kardenwort offers a unique combination of capabilities:
 

@@ -95,11 +95,18 @@ While many text-processing tools for language learners exist
 [VocabSieve](https://github.com/FreeLanguageTools/vocabsieve),
 [AnkiMorphs](https://github.com/mortii/anki-morphs),
 [FrequencyMan](https://github.com/Rct567/FrequencyMan),
+[Watch Foreign Language Movies with Anki (movies2anki)](https://github.com/kelciour/movies2anki),
 [Vocab Tracker](https://vocabtracker.com/),
 [Language Reactor](https://www.languagereactor.com/),
 [asbplayer](https://github.com/killergerbah/asbplayer),
+[Yet Another Language Learning Media Player (yallmp)](https://yallmp.com/),
+[subs2srs](https://subs2srs.sourceforge.net/),
+[Dualsub](https://www.dualsub.xyz/),
+[YouTube™ Dual Subtitles](https://dual-subtitles.com/),
 [Smart Book](https://smart-book.net/),
-[ReadEra](https://readera.org/)
+[ReadEra](https://readera.org/),
+[Yomitan (Yomichan)](https://github.com/yomidevs/yomitan),
+[GoldenDict-ng](https://github.com/xiaoyifang/goldendict-ng)
 ) Kardenwort offers a unique combination of capabilities:
 
 *   **Superior German Language Processing:** No other tool provides this level of German vocabulary deconstruction. Kardenwort correctly parses compound nouns, finds verbs with separable prefixes, and handles capitalization properly—a common pain point in other systems.

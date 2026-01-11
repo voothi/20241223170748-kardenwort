@@ -81,7 +81,26 @@ Our core principles are:
 
 ## Key Advantages and Differences from Alternatives
 
-While many text-processing tools for language learners exist (e.g., LWT, Lute, LingQ, VocabSieve, Readlang), Kardenwort offers a unique combination of capabilities:
+While many text-processing tools for language learners exist 
+(e.g.,
+[LingQ](https://www.lingq.com/),
+[Readlang](https://readlang.com/),
+[LanguageCrush](https://languagecrush.com/)
+[Lute](https://github.com/LuteOrg),
+[LWT](https://github.com/HugoFara/lwt),
+[FLTR](https://sourceforge.net/projects/foreign-language-text-reader/)
+[alexandria-reader](https://github.com/alexandria-reader),
+[Lemmatize](https://lemmatize.com/),
+[LinguaCafe](https://github.com/simjanos-dev/LinguaCafe),
+[VocabSieve](https://github.com/FreeLanguageTools/vocabsieve),
+[AnkiMorphs](https://github.com/mortii/anki-morphs),
+[FrequencyMan](https://github.com/Rct567/FrequencyMan),
+[Vocab Tracker](https://vocabtracker.com/),
+[Language Reactor](https://www.languagereactor.com/),
+[asbplayer](https://github.com/killergerbah/asbplayer),
+[Smart Book](https://smart-book.net/),
+[ReadEra](https://readera.org/)
+) Kardenwort offers a unique combination of capabilities:
 
 *   **Superior German Language Processing:** No other tool provides this level of German vocabulary deconstruction. Kardenwort correctly parses compound nouns, finds verbs with separable prefixes, and handles capitalization properly—a common pain point in other systems.
 *   **Complete Freedom After Export:** Unlike integrated readers where a flashcard is tied to the source text, our output is a fully autonomous TSV file. You have complete control to edit any field in Anki on any device, truly freeing your data.
@@ -332,74 +351,74 @@ The generated TSV files are designed for our feature-rich Anki template, which o
 Below is a detailed list of all available arguments for the core processing script (`kardenwort.py`) and its runner (`kardenwort_runner.py`).
 
 ### Core Arguments
-| Argument | Description | Example |
-| :--- | :--- | :--- |
-| `--type` | The type of cards to create (`word` or `sentence`). Not needed for `mixed-triple` mode. | `--type word` |
-| `--lemmas-per-line` | A special mode that outputs one line of sorted lemmas per input line. **Mutually exclusive with `--type`**. | `--lemmas-per-line` |
-| `--language` | The source language of the text (`de` or `en`). | `--language de` |
-| `--mode` | (Runner only) Processing mode (`single`, `dual`, `triple`, `mixed-triple`). `mixed-triple` runs sentence and word modes sequentially for a shared deck. | `--mode mixed-triple` |
+| Argument            | Description                                                                                                                                             | Example               |
+| :------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------ | :-------------------- |
+| `--type`            | The type of cards to create (`word` or `sentence`). Not needed for `mixed-triple` mode.                                                                 | `--type word`         |
+| `--lemmas-per-line` | A special mode that outputs one line of sorted lemmas per input line. **Mutually exclusive with `--type`**.                                             | `--lemmas-per-line`   |
+| `--language`        | The source language of the text (`de` or `en`).                                                                                                         | `--language de`       |
+| `--mode`            | (Runner only) Processing mode (`single`, `dual`, `triple`, `mixed-triple`). `mixed-triple` runs sentence and word modes sequentially for a shared deck. | `--mode mixed-triple` |
 
 ### Input & Output
-| Argument | Description | Example |
-| :--- | :--- | :--- |
-| `--text` | Process a string directly. **Mutually exclusive with `--text1-file`**. | `--text "This is a test."` |
-| `--multi-text` | Parse `--text` or `stdin` as up to three texts separated by `---`. | `--multi-text` |
-| `--text1-file` | Path to the primary source text file. | `--text1-file "source.txt"` |
-| `--text2-file` | Path to the second text file (e.g., translation). | `--text2-file "target.txt"` |
-| `--text3-file` | Path to the third text file. | `--text3-file "extra.txt"` |
-| `--output-file` | Path for the output `.tsv` file. If omitted, prints to standard output. | `--output-file "out/my_deck.tsv"` |
-| `--basename-add-timestamp` | Prepend a `YYYYMMDDHHMMSS-` timestamp to the output filename. | `--basename-add-timestamp` |
-| `--basename-add-first-words` | Appends a slug to the filename from the first `N` words (default: 4). | `--basename-add-first-words 3` |
-| `--stdout-print-output-basename` | Print the final output filename to standard output. | `--stdout-print-output-basename` |
+| Argument                         | Description                                                             | Example                           |
+| :------------------------------- | :---------------------------------------------------------------------- | :-------------------------------- |
+| `--text`                         | Process a string directly. **Mutually exclusive with `--text1-file`**.  | `--text "This is a test."`        |
+| `--multi-text`                   | Parse `--text` or `stdin` as up to three texts separated by `---`.      | `--multi-text`                    |
+| `--text1-file`                   | Path to the primary source text file.                                   | `--text1-file "source.txt"`       |
+| `--text2-file`                   | Path to the second text file (e.g., translation).                       | `--text2-file "target.txt"`       |
+| `--text3-file`                   | Path to the third text file.                                            | `--text3-file "extra.txt"`        |
+| `--output-file`                  | Path for the output `.tsv` file. If omitted, prints to standard output. | `--output-file "out/my_deck.tsv"` |
+| `--basename-add-timestamp`       | Prepend a `YYYYMMDDHHMMSS-` timestamp to the output filename.           | `--basename-add-timestamp`        |
+| `--basename-add-first-words`     | Appends a slug to the filename from the first `N` words (default: 4).   | `--basename-add-first-words 3`    |
+| `--stdout-print-output-basename` | Print the final output filename to standard output.                     | `--stdout-print-output-basename`  |
 
 ### Anki Deck Control & Import Options
-| Argument | Description | Example |
-| :--- | :--- | :--- |
-| `--anki-create-subdecks` | Generates a parent deck with a subdeck for each mode (e.g., `My-Text::My-Text.word.de`). | `--anki-create-subdecks` |
-| `--anki-markdown-decks` | Parses Markdown headers in the source text to create a hierarchical deck structure. | `--anki-markdown-decks` |
-| `--anki-sentence-subdecks` | Creates a final subdeck level for each sentence. Requires `--anki-markdown-decks`. | `--anki-sentence-subdecks` |
-| `--anki-parent-deck` | Manually specifies a parent deck name for shared deck creation. | `--anki-parent-deck "My-Book"` |
-| `--anki-deck-content` | Populates Anki deck descriptions. Choices: `parent-source`, `parent-translations`, `subdeck-source`, `subdeck-translations`. | `--anki-deck-content parent-source` |
-| `--strip-headers` | Strip Markdown headers from text fields in the final output. Choices: `all`, `source`, `translations`. Default is `all` if no argument is given. | `--strip-headers source` |
-| `--suspend-cards` | Suspends all newly imported or updated cards in Anki. | `--suspend-cards` |
+| Argument                   | Description                                                                                                                                      | Example                             |
+| :------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------- |
+| `--anki-create-subdecks`   | Generates a parent deck with a subdeck for each mode (e.g., `My-Text::My-Text.word.de`).                                                         | `--anki-create-subdecks`            |
+| `--anki-markdown-decks`    | Parses Markdown headers in the source text to create a hierarchical deck structure.                                                              | `--anki-markdown-decks`             |
+| `--anki-sentence-subdecks` | Creates a final subdeck level for each sentence. Requires `--anki-markdown-decks`.                                                               | `--anki-sentence-subdecks`          |
+| `--anki-parent-deck`       | Manually specifies a parent deck name for shared deck creation.                                                                                  | `--anki-parent-deck "My-Book"`      |
+| `--anki-deck-content`      | Populates Anki deck descriptions. Choices: `parent-source`, `parent-translations`, `subdeck-source`, `subdeck-translations`.                     | `--anki-deck-content parent-source` |
+| `--strip-headers`          | Strip Markdown headers from text fields in the final output. Choices: `all`, `source`, `translations`. Default is `all` if no argument is given. | `--strip-headers source`            |
+| `--suspend-cards`          | Suspends all newly imported or updated cards in Anki.                                                                                            | `--suspend-cards`                   |
 
 ### Card Content & Formatting
-| Argument | Description | Example |
-| :--- | :--- | :--- |
-| `--sentence-context-size` | Sets the number of preceding and succeeding sentences (`N`) to include as context. Runner default is `4`. | `--sentence-context-size 2` |
-| `--tts-destination-lang` | The destination language for TTS field activation (e.g., 'ru', 'en'). | `--tts-destination-lang ru` |
-| `--add-wordlist-col` | Include a list of all unique words from the source sentence in the `SentenceSourceWordlist` field. | `--add-wordlist-col` |
-| `--wordlist-use-br` | Use `<br>` tags instead of newlines for the wordlist. | `--wordlist-use-br` |
-| `--add-header` | Include the header row in the output TSV file. | `--add-header` |
-| `--add-source-word-col` | Add the original inflected form of a word to the `WordSourceInflectedForm` field. | `--add-source-word-col` |
-| `--add-sentence-index-col` | Add a column with the sentence index for chronological sorting. | `--add-sentence-index-col` |
+| Argument                   | Description                                                                                               | Example                     |
+| :------------------------- | :-------------------------------------------------------------------------------------------------------- | :-------------------------- |
+| `--sentence-context-size`  | Sets the number of preceding and succeeding sentences (`N`) to include as context. Runner default is `4`. | `--sentence-context-size 2` |
+| `--tts-destination-lang`   | The destination language for TTS field activation (e.g., 'ru', 'en').                                     | `--tts-destination-lang ru` |
+| `--add-wordlist-col`       | Include a list of all unique words from the source sentence in the `SentenceSourceWordlist` field.        | `--add-wordlist-col`        |
+| `--wordlist-use-br`        | Use `<br>` tags instead of newlines for the wordlist.                                                     | `--wordlist-use-br`         |
+| `--add-header`             | Include the header row in the output TSV file.                                                            | `--add-header`              |
+| `--add-source-word-col`    | Add the original inflected form of a word to the `WordSourceInflectedForm` field.                         | `--add-source-word-col`     |
+| `--add-sentence-index-col` | Add a column with the sentence index for chronological sorting.                                           | `--add-sentence-index-col`  |
 
 ### NLP & Lemmatization Control
-| Argument | Description | Example |
-| :--- | :--- | :--- |
-| `--lemma-override-file` | Path to a TSV file for context-aware lemma overrides. | `--lemma-override-file "data/overrides.tsv"` |
-| `--lemma-index-file` | Path to a word frequency CSV file for sorting. | `--lemma-index-file "data/frequency.csv"` |
-| `--deduplication-scope` | Sets the scope for lemma deduplication. `global`: unique lemmas across the entire text. `sentence`: unique per sentence. `none`: no deduplication. | `--deduplication-scope sentence` |
-| `--prefer-shortest-form` | With `global` deduplication, prefer the shortest word form of a lemma instead of the first one encountered. | `--prefer-shortest-form` |
-| `--force-proper-noun-capitalization` | Force capitalization of proper noun lemmas (PROPN). | `--force-proper-noun-capitalization` |
+| Argument                             | Description                                                                                                                                        | Example                                      |
+| :----------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------- |
+| `--lemma-override-file`              | Path to a TSV file for context-aware lemma overrides.                                                                                              | `--lemma-override-file "data/overrides.tsv"` |
+| `--lemma-index-file`                 | Path to a word frequency CSV file for sorting.                                                                                                     | `--lemma-index-file "data/frequency.csv"`    |
+| `--deduplication-scope`              | Sets the scope for lemma deduplication. `global`: unique lemmas across the entire text. `sentence`: unique per sentence. `none`: no deduplication. | `--deduplication-scope sentence`             |
+| `--prefer-shortest-form`             | With `global` deduplication, prefer the shortest word form of a lemma instead of the first one encountered.                                        | `--prefer-shortest-form`                     |
+| `--force-proper-noun-capitalization` | Force capitalization of proper noun lemmas (PROPN).                                                                                                | `--force-proper-noun-capitalization`         |
 
 ### German Compound Splitting (GCS) Options
-| Argument | Description | Example |
-| :--- | :--- | :--- |
-| `--de-gcs` | **Enable** German Compound Splitting. | `--de-gcs` |
-| `--de-dictionary-file` | Path to the dictionary file used by GCS for validation. | `--de-dictionary-file "data/de/german.dic"` |
-| `--de-gcs-preserve-compound-word` | Include the original compound word in the card list along with its split parts. | `--de-gcs-preserve-compound-word` |
-| `--de-gcs-add-parts-to-wordlist` | Also add the split components to the `SentenceSourceWordlist` field. | `--de-gcs-add-parts-to-wordlist` |
-| `--de-gcs-split-mode` | Set splitting mode: `only-nouns` (safe), `any` (aggressive), or `combined`. | `--de-gcs-split-mode combined` |
-| `--de-gcs-pos-tags` | Specify which Part-of-Speech tags to apply splitting to (e.g. `NOUN PROPN` or `!VERB`). | `--de-gcs-pos-tags "NOUN PROPN"` |
-| `--de-fix-genitive` | Attempts to correct German genitive noun lemmas (e.g., 'Hauses' -> 'Haus'). | `--de-fix-genitive` |
-| `--de-force-noun-capitalization` | Force capitalization of all German noun lemmas (NOUN, PROPN). | `--de-force-noun-capitalization` |
+| Argument                          | Description                                                                             | Example                                     |
+| :-------------------------------- | :-------------------------------------------------------------------------------------- | :------------------------------------------ |
+| `--de-gcs`                        | **Enable** German Compound Splitting.                                                   | `--de-gcs`                                  |
+| `--de-dictionary-file`            | Path to the dictionary file used by GCS for validation.                                 | `--de-dictionary-file "data/de/german.dic"` |
+| `--de-gcs-preserve-compound-word` | Include the original compound word in the card list along with its split parts.         | `--de-gcs-preserve-compound-word`           |
+| `--de-gcs-add-parts-to-wordlist`  | Also add the split components to the `SentenceSourceWordlist` field.                    | `--de-gcs-add-parts-to-wordlist`            |
+| `--de-gcs-split-mode`             | Set splitting mode: `only-nouns` (safe), `any` (aggressive), or `combined`.             | `--de-gcs-split-mode combined`              |
+| `--de-gcs-pos-tags`               | Specify which Part-of-Speech tags to apply splitting to (e.g. `NOUN PROPN` or `!VERB`). | `--de-gcs-pos-tags "NOUN PROPN"`            |
+| `--de-fix-genitive`               | Attempts to correct German genitive noun lemmas (e.g., 'Hauses' -> 'Haus').             | `--de-fix-genitive`                         |
+| `--de-force-noun-capitalization`  | Force capitalization of all German noun lemmas (NOUN, PROPN).                           | `--de-force-noun-capitalization`            |
 
 ### Runner-Specific & UX Options
-| Argument | Description | Example |
-| :--- | :--- | :--- |
-| `--show-success-message` | Display a user-friendly success message on standard output upon completion. | `--show-success-message` |
-| `--play-sound-on-completion` | Play a system beep sound upon successful completion of the entire process. | `--play-sound-on-completion` |
+| Argument                     | Description                                                                 | Example                      |
+| :--------------------------- | :-------------------------------------------------------------------------- | :--------------------------- |
+| `--show-success-message`     | Display a user-friendly success message on standard output upon completion. | `--show-success-message`     |
+| `--play-sound-on-completion` | Play a system beep sound upon successful completion of the entire process.  | `--play-sound-on-completion` |
 
 ### Standard Output (STDOUT) Options
 These flags are for direct console output when `--output-file` is not used.

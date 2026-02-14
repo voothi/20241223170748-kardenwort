@@ -400,7 +400,8 @@ def get_anki_csv_header():
         "am-score-terms",
         "am-study-morphs",
         "SentenceSourceIndex",
-        "Deck"
+        "Deck",
+        "WordDestinationInflectedForm"
     ]
 
 def generate_filename_prefix_from_text(text, word_count):
@@ -976,7 +977,7 @@ def process_parallel_text_files(
                 tsv_writer.writerow(get_anki_csv_header())
 
             for item in sorted_items:
-                csv_row = [""] * 82
+                csv_row = [""] * 83
                 
                 word, source_word_col_val, sentence_index, source_sentence_for_lemmas, deck_name = "", "", -1, "", ""
 
@@ -1397,7 +1398,7 @@ def process_single_text(
             tsv_writer.writerow(get_anki_csv_header())
 
         for item in sorted_items:
-            csv_row = [""] * 82
+            csv_row = [""] * 83
             
             word, source_word_col_val, unit_index, source_sentence_for_lemmas, deck_name = "", "", -1, "", ""
 
@@ -1606,7 +1607,7 @@ def process_parallel_sentences_to_csv(
             content_line_idx += 1
             if content_line_idx >= len(display_source_content_lines): break
 
-            csv_row = [""] * 82
+            csv_row = [""] * 83
             source_sentence = display_source_content_lines[content_line_idx].strip()
             target_sentence = display_target_content_lines[content_line_idx].strip() if content_line_idx < len(display_target_content_lines) else ""
             

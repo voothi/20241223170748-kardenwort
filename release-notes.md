@@ -1,5 +1,18 @@
 # Release Notes
 
+## [v1.50.2] - 2026-02-21
+
+### Added
+- **Strict Configuration Enforcement**: The script now strictly validates that Anki-related configuration sections (`[anki_fields]`, `[anki_field_mapping.*]`) are present in `config.ini`, preventing accidental misconfigurations.
+- **Improved Field Population**: Refactored the internal data pipeline (`prepare_row_data`) to ensure all context and translation fields are captured and available for mapping in both word and sentence modes.
+- **Enhanced Documentation**: Updated `config.ini.template` with comprehensive documentation for all available data sources and example mappings.
+
+### Fixed
+- **Missing Translations Regression**: Restored translation and context fields in word extraction mode that were missing in the initial refactor.
+- **NameError Fixes**: Resolved several `NameError` exceptions related to `sentence_lemmas_cache` and `context_end_index`.
+- **Anki Importer Warnings**: Ensured `Quotation` fields are always populated in sentence mode to prevent importer warnings about empty identity fields.
+
+
 ## [v1.48.2] - 2026-02-20
 
 ### Added

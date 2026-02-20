@@ -1923,8 +1923,8 @@ def main():
         except json.JSONDecodeError as e:
             print(f"Error: Invalid JSON for --anki-csv-header: {e}", file=sys.stderr)
             sys.exit(1)
-    else:
-        print("Error: --anki-csv-header is required. The core engine no longer uses hardcoded defaults for unambiguousness.", file=sys.stderr)
+    elif final_output_path:
+        print("Error: --anki-csv-header is required when writing to an output file. The core engine no longer uses hardcoded defaults for unambiguousness.", file=sys.stderr)
         sys.exit(1)
 
     if args.anki_field_mapping:
@@ -1933,8 +1933,8 @@ def main():
         except json.JSONDecodeError as e:
             print(f"Error: Invalid JSON for --anki-field-mapping: {e}", file=sys.stderr)
             sys.exit(1)
-    else:
-        print("Error: --anki-field-mapping is required. The core engine no longer uses hardcoded defaults for unambiguousness.", file=sys.stderr)
+    elif final_output_path:
+        print("Error: --anki-field-mapping is required when writing to an output file. The core engine no longer uses hardcoded defaults for unambiguousness.", file=sys.stderr)
         sys.exit(1)
     # -------------------------------------------
 

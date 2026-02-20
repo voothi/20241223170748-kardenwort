@@ -80,7 +80,7 @@ note_type = Basic 20240218092126
 ; - tertiary_sentence, tertiary_context_left, tertiary_context_right: Tertiary translation content.
 ;
 ; Example overrides:
-; WordSourceAI = lemma
+; WordSourceAI = source_word
 ; WordSourceInflectedFormAI = source_word
 
 [anki_field_mapping.sentence]

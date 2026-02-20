@@ -708,6 +708,7 @@ def process_parallel_text_files(
     deck_stack = []
     level_stack = []
     header_counter = 1
+    sentence_lemmas_cache = {}
     
     branch_header_lines = set()
     if args.anki_markdown_decks:
@@ -1038,7 +1039,7 @@ def process_single_text(
     source_text, lemma_sort_index, language, sentence_context_size,
     output_file_path, add_source_word_col, add_wordlist_col, add_sentence_index_col,
     add_header, wordlist_use_br, stdout_print_output_basename, de_gcs, gcs_automaton, de_gcs_add_parts_to_wordlist, de_dictionary, lemma_override_rules, 
-    de_gcs_pos_tags, field_mapping, args, **kwargs
+    de_gcs_pos_tags, field_mapping, anki_header, args, **kwargs
 ):
     de_gcs_only_nouns = kwargs.get('de_gcs_only_nouns', True)
     de_gcs_combine_noun_modes = kwargs.get('de_gcs_combine_noun_modes', False)
@@ -1487,6 +1488,7 @@ def process_parallel_sentences_to_csv(
         deck_stack = []
         level_stack = []
         subdeck_content_map = {}
+        sentence_lemmas_cache = {}
         header_counter = 1
         branch_header_lines = set()
         if args.anki_markdown_decks:
@@ -1990,7 +1992,7 @@ def main():
                 final_output_path, args.add_source_word_col, args.add_wordlist_col, args.add_sentence_index_col,
                 args.add_header, args.wordlist_use_br, args.stdout_print_output_basename,
                 args.de_gcs, gcs_automaton, args.de_gcs_add_parts_to_wordlist, de_dictionary, lemma_override_rules,
-                args.de_gcs_pos_tags, field_mapping, args, **processing_options
+                args.de_gcs_pos_tags, field_mapping, anki_header, args, **processing_options
             )
 
     elif args.type == "sentence":

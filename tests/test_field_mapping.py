@@ -1,5 +1,5 @@
 import unittest
-from kardenwort.core.kardenwort import apply_field_mapping, get_anki_csv_header, get_field_index_map
+from kardenwort.core.kardenwort import apply_field_mapping, get_anki_csv_header, get_field_index_map, prepare_row_data
 
 class TestFieldMapping(unittest.TestCase):
 
@@ -99,21 +99,46 @@ class TestFieldMapping(unittest.TestCase):
     def test_field_index_map_size(self):
         self.assertEqual(len(self.field_index_map), len(self.header))
 
-    def test_get_tts_field_indices_validity(self):
-        from kardenwort.core.kardenwort import get_tts_field_indices
-        tts_indices = get_tts_field_indices()
+    def test_prepare_row_data_basic(self):
+        class MockArgs:
+            language = "de"
+            tts_destination_lang = "ru"
         
-        # Check source languages
-        for lang_key in ['en', 'us', 'de', 'uk', 'ru']:
-            idx = tts_indices['source'][lang_key]
-            self.assertIsInstance(idx, int)
-            self.assertTrue(0 <= idx < len(self.header))
-            
-        # Check destination languages
-        for lang_key in ['en', 'us', 'de', 'uk', 'ru']:
-            idx = tts_indices['destination'][lang_key]
-            self.assertIsInstance(idx, int)
-            self.assertTrue(0 <= idx < len(self.header))
+        args = MockArgs()
+        data = prepare_row_data(
+            args,
+            lemma="Haus",
+            source_word="Häuser",
+            source_sentence="Schöne Häuser.",
+            deck_name="German::Architecture"
+        )
+        
+        self.assertEqual(data['lemma'], "Haus")
+        self.assertEqual(data['source_word'], "Häuser")
+        self.assertEqual(data['source_sentence'], "Schöne Häuser.")
+        self.assertEqual(data['deck_name'], "German::Architecture")
+        self.assertEqual(data['tts_source_de'], "1")
+        self.assertEqual(data['tts_dest_ru'], "1")
+
+    def test_prepare_row_data_empty_args(self):
+        class MockArgs:
+            language = None
+            tts_destination_lang = None
+        
+        args = MockArgs()
+        data = prepare_row_data(args, lemma="test")
+        self.assertEqual(data['lemma'], "test")
+        # Ensure no tts keys are added
+        self.assertNotIn('tts_source_None', data)
+        self.assertNotIn('tts_dest_None', data)
+
+    def test_get_anki_csv_header_override(self):
+        custom_header = ["A", "B", "C"]
+        header = get_anki_csv_header(header_override=custom_header)
+        self.assertEqual(header, custom_header)
+        
+        f_map = get_field_index_map(header_override=custom_header)
+        self.assertEqual(f_map, {"A": 0, "B": 1, "C": 2})
 
     def test_apply_field_mapping_duplicate_mapping(self):
         csv_row = list(self.empty_row)

@@ -32,21 +32,7 @@ def _cleanup_temp_files():
 atexit.register(_cleanup_temp_files)
 
 
-def get_tts_field_indices():
-    """Returns TTS field indices derived from the Anki CSV header."""
-    F = get_field_index_map()
-    return {
-        'source': {
-            'en': F['Source-en-GB'], 'us': F['Source-en-US'],
-            'de': F['Source-de-DE'], 'uk': F['Source-uk-UA'],
-            'ru': F['Source-ru-RU'],
-        },
-        'destination': {
-            'en': F['Destination-en-GB'], 'us': F['Destination-en-US'],
-            'de': F['Destination-de-DE'], 'uk': F['Destination-uk-UA'],
-            'ru': F['Destination-ru-RU'],
-        }
-    }
+
 
 def _strip_markdown_header(line):
     """Removes Markdown header prefixes (#, ##, etc.) from a line."""
@@ -976,7 +962,6 @@ def process_parallel_text_files(
                 tsv_writer.writerow(anki_header)
 
             F = get_field_index_map(anki_header)
-            TTS = get_tts_field_indices()
             for item in sorted_items:
                 csv_row = [""] * len(anki_header)
                 
@@ -1499,7 +1484,6 @@ def process_parallel_sentences_to_csv(
             tsv_writer.writerow(anki_header)
 
         F = get_field_index_map(anki_header)
-        TTS = get_tts_field_indices()
         deck_stack = []
         level_stack = []
         subdeck_content_map = {}

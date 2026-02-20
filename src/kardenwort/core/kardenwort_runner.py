@@ -22,7 +22,7 @@ def load_config():
 
     project_root = config_path.parent
     
-    config = configparser.ConfigParser()
+    config = configparser.ConfigParser(allow_no_value=True)
     config.optionxform = str
     config.read(config_path, encoding='utf-8')
 
@@ -91,14 +91,24 @@ def get_script_args(args, python_path, workspace_path, config):
     if 'anki_fields' not in config:
         sys.exit("Error: Missing '[anki_fields]' section in config.ini. Please update your configuration following config.ini.template to define your Anki structure.")
     
-    # Sort by integer keys to guarantee the user's intended order
-    raw_fields = dict(config['anki_fields'])
-    try:
-        sorted_keys = sorted(raw_fields.keys(), key=lambda x: int(x))
-        anki_header = [raw_fields[k] for k in sorted_keys]
-    except ValueError:
-        sys.exit("Error: All keys in '[anki_fields]' must be integers representing the field order.")
+    # Support both numbered lists (backward compatibility) and simple ordered lists
+    raw_fields_dict = dict(config.items('anki_fields'))
     
+    # Check if we should use numeric sorting (old format) or list order (new format)
+    # If all keys are numeric, use numeric sorting. Otherwise, use keys as field names in order.
+    try:
+        # Check if all keys are integers
+        [int(k) for k in raw_fields_dict.keys()]
+        # Numeric format detected
+        sorted_keys = sorted(raw_fields_dict.keys(), key=lambda x: int(x))
+        anki_header = [raw_fields_dict[k] for k in sorted_keys]
+    except (ValueError, TypeError):
+        # Key format detected (list of names)
+        # config.items() preserves order in Python 3.7+
+        anki_header = list(raw_fields_dict.keys())
+
+    if not anki_header:
+        sys.exit("Error: No fields defined in '[anki_fields]' section of config.ini.")
     base_args.extend(["--anki-csv-header", json.dumps(anki_header)])
 
     mapping_section = f'anki_field_mapping.{args.type}'

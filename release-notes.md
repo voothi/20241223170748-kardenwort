@@ -1,5 +1,16 @@
 # Release Notes
 
+## [v1.52.2] - 2026-02-21
+
+### Added
+- **Simplified Anki Field Configuration**: You can now define Anki fields in `config.ini` as a simple unnumbered list. The system automatically handles order based on line position.
+- **Improved Field Parser**: Updated `kardenwort_runner.py` to support value-less keys in `[anki_fields]`, making it easier to reorder or add fields without manual re-numbering.
+
+### Fixed
+- **Restored GoldenDict Integration**: Fixed a regression in `kardenwort.py` where Anki headers were strictly required even for STDOUT output modes. Direct queries for lemmas (HTML/TSV/List) now work correctly without additional arguments.
+- **Robustness**: Ensured `kardenwort.py` only enforces strict Anki configuration when an output file is explicitly requested.
+
+
 ## [v1.50.2] - 2026-02-21
 
 ### Added

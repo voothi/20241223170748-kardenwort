@@ -1616,7 +1616,7 @@ def process_parallel_sentences_to_csv(
                 target_context_right=" ".join(line.strip() for line in display_target_content_lines[content_line_idx + 1:context_end_index]),
                 tertiary_sentence=tertiary_sentence,
                 tertiary_context_left=" ".join(line.strip() for line in display_tertiary_content_lines[context_start_index:content_line_idx]),
-                tertiary_context_right=" ".join(line.strip() for line in display_tertiary_content_lines[content_line_idx + 1:content_end_index]),
+                tertiary_context_right=" ".join(line.strip() for line in display_tertiary_content_lines[content_line_idx + 1:context_end_index]),
                 wordlist=current_wordlist,
                 cloze=source_sentence,
                 sentence_index=str(content_line_idx + 1).zfill(6),

@@ -128,3 +128,5 @@ bundle_for_prompt/
 
 /source_texts/
 /results/
+
+__pycache__

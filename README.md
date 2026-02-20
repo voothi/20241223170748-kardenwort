@@ -41,6 +41,10 @@ This tool is not just a word collector; it's an intelligent pipeline powered by 
     - [Runner-Specific \& UX Options](#runner-specific--ux-options)
     - [Standard Output (STDOUT) Options](#standard-output-stdout-options)
   - [Configuration](#configuration)
+  - [Flexible Anki Field Mapping](#flexible-anki-field-mapping)
+    - [1. Defining your Note Type](#1-defining-your-note-type)
+    - [2. Mapping Data Sources](#2-mapping-data-sources)
+    - [Available Data Source Keys](#available-data-source-keys)
   - [Important Notes](#important-notes)
   - [Our Ecosystem](#our-ecosystem)
   - [Development and Testing](#development-and-testing)
@@ -452,6 +456,8 @@ The behavior of the `kardenwort_runner.py` script is controlled by `config.ini`.
 
 Relative paths are supported and are calculated from the location of the `config.ini` file, making the setup portable.
 
+[Return to Top](#map-of-contents)
+
 ## Flexible Anki Field Mapping
 
 Kardenwort uses a configuration-driven system to map linguistic analysis results to your specific Anki Note Type. This allows you to use any Note Type without modifying the source code.
@@ -556,7 +562,7 @@ This project was born from my own struggle and eventual success in learning Germ
 
 This project is part of the **[Kardenwort](https://github.com/kardenwort)** environment, designed to create a focused and efficient learning ecosystem.
 
-[Back to Top](#table-of-contents)
+[Return to Top](#map-of-contents)
 
 ## License and Acknowledgements
 

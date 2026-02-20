@@ -63,3 +63,30 @@ dictionary_file_de = de/german.dic
 [anki_importer_settings]
 ; Settings for the Anki CSV Importer script
 note_type = Basic 20240218092126
+
+[anki_field_mapping.word]
+; Define custom mappings for word extraction mode.
+; Format: AnkiFieldName = DataSourceName
+; 
+; Available Data Sources:
+; - lemma: The lemmatized word.
+; - source_word: The original inflected word.
+; - sentence_index: Index of the sentence (e.g., 000001).
+; - source_sentence: The source sentence or cloze.
+; - deck_name: The name of the deck.
+; - wordlist: The list of lemmas in the sentence.
+; - source_context_left, source_context_right: Context sentences.
+; - target_sentence, target_context_left, target_context_right: Translation content (if available).
+; - tertiary_sentence, tertiary_context_left, tertiary_context_right: Tertiary translation content.
+;
+; Example overrides:
+; WordSourceAI = lemma
+; WordSourceInflectedFormAI = source_word
+
+[anki_field_mapping.sentence]
+; Define custom mappings for sentence extraction mode.
+; dataSourceNames are the same as above.
+; Note: 'lemma' and 'source_word' are not available in sentence mode.
+; 
+; Example overrides:
+; Quotation = source_sentence

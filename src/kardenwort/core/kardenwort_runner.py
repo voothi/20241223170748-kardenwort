@@ -5,6 +5,7 @@ import configparser
 import sys
 import os
 import re
+import json
 
 if sys.platform == "win32":
     import winsound
@@ -22,6 +23,7 @@ def load_config():
     project_root = config_path.parent
     
     config = configparser.ConfigParser()
+    config.optionxform = str
     config.read(config_path, encoding='utf-8')
 
     section = 'environment'
@@ -85,6 +87,14 @@ def get_script_args(args, python_path, workspace_path, config):
         "--add-header",
         "--sentence-context-size", "4",
     ]
+
+    mapping_section = f'anki_field_mapping.{args.type}'
+    field_mapping = {}
+    if mapping_section in config:
+        field_mapping = dict(config[mapping_section])
+
+    if field_mapping:
+        base_args.extend(["--anki-field-mapping", json.dumps(field_mapping)])
 
     if args.tts_destination_lang:
         base_args.extend(["--tts-destination-lang", args.tts_destination_lang])

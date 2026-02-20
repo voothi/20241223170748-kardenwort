@@ -88,13 +88,25 @@ def get_script_args(args, python_path, workspace_path, config):
         "--sentence-context-size", "4",
     ]
 
-    mapping_section = f'anki_field_mapping.{args.type}'
-    field_mapping = {}
-    if mapping_section in config:
-        field_mapping = dict(config[mapping_section])
+    if 'anki_fields' not in config:
+        sys.exit("Error: Missing '[anki_fields]' section in config.ini. Please update your configuration following config.ini.template to define your Anki structure.")
+    
+    # Sort by integer keys to guarantee the user's intended order
+    raw_fields = dict(config['anki_fields'])
+    try:
+        sorted_keys = sorted(raw_fields.keys(), key=lambda x: int(x))
+        anki_header = [raw_fields[k] for k in sorted_keys]
+    except ValueError:
+        sys.exit("Error: All keys in '[anki_fields]' must be integers representing the field order.")
+    
+    base_args.extend(["--anki-csv-header", json.dumps(anki_header)])
 
-    if field_mapping:
-        base_args.extend(["--anki-field-mapping", json.dumps(field_mapping)])
+    mapping_section = f'anki_field_mapping.{args.type}'
+    if mapping_section not in config:
+        sys.exit(f"Error: Missing '[{mapping_section}]' section in config.ini. Please define your data mappings.")
+    
+    field_mapping = dict(config[mapping_section])
+    base_args.extend(["--anki-field-mapping", json.dumps(field_mapping)])
 
     if args.tts_destination_lang:
         base_args.extend(["--tts-destination-lang", args.tts_destination_lang])

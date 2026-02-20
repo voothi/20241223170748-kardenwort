@@ -64,6 +64,95 @@ dictionary_file_de = de/german.dic
 ; Settings for the Anki CSV Importer script
 note_type = Basic 20240218092126
 
+[anki_fields]
+; ORDERED list of fields as they appear in your Anki Note Type.
+; The values here will be the search keys in the mapping sections below.
+1 = Quotation
+2 = WordSource
+3 = WordSourceInflectedForm
+4 = WordDestination
+5 = WordSourceContext
+6 = SentenceSourceContextLeft
+7 = SentenceSource
+8 = SentenceSourceContextRight
+9 = SentenceDestinationContextLeft
+10 = SentenceDestination
+11 = SentenceDestinationContextRight
+12 = SentenceDestination2ContextLeft
+13 = SentenceDestination2
+14 = SentenceDestination2ContextRight
+15 = SentenceSourceWordlist
+16 = SentenceSourceCloze
+17 = SentenceSourceRewriteAISentenceSource
+18 = SentenceSourceRewriteAISentenceDestination
+19 = WordSourceMorphologyAI
+20 = Note
+21 = WordRussian
+22 = WordUkrainian
+23 = WordEnglish
+24 = WordGerman
+25 = WordSourceMorphemeFirst
+26 = WordSourceMorphemeFirstDefinition
+27 = WordSourceMorphemeSecond
+28 = WordSourceMorphemeSecondDefinition
+29 = WordSourceMorphemeThird
+30 = WordSourceMorphemeThirdDefinition
+31 = WordSourceMorphemeFourth
+32 = WordSourceMorphemeFourthDefinition
+33 = WordSourceMorphemeFifth
+34 = WordSourceMorphemeFifthDefinition
+35 = WordSourceIPA
+36 = WordSourceSynonymAI
+37 = WordSourceDefinitionAISentenceSource
+38 = WordSourceDefinitionAISentenceDestination
+39 = WordSourceDefinitionFirst
+40 = WordSourceDefinitionFirstClipping
+41 = WordSourceDefinitionSecond
+42 = WordDestinationDefinitionFirst
+43 = WordDestinationDefinitionSecond
+44 = WordSourceAudio
+45 = SentenceSourceIPA
+46 = SentenceSourceAudio
+47 = Image
+48 = WordSourceCloze
+49 = WordSourceContextAI
+50 = TextSource
+51 = TextDestination
+52 = TextSourceURL
+53 = SentenceEnglish
+54 = SentenceGerman
+55 = SentenceUkrainian
+56 = SentenceRussian
+57 = Source
+58 = SourceURL
+59 = SeparatorAudio
+60 = Source-en-GB
+61 = Source-en-US
+62 = Source-de-DE
+63 = Source-uk-UA
+64 = Source-ru-RU
+65 = Destination-en-GB
+66 = Destination-en-US
+67 = Destination-de-DE
+68 = Destination-uk-UA
+69 = Destination-ru-RU
+70 = Overlapping
+71 = ToggleAlwaysEmptyField
+72 = Note ID
+73 = am-all-morphs
+74 = am-all-morphs-count
+75 = am-unknown-morphs
+76 = am-unknown-morphs-count
+77 = am-highlighted
+78 = am-score
+79 = am-score-terms
+80 = am-study-morphs
+81 = SentenceSourceIndex
+82 = Deck
+83 = WordDestinationInflectedForm
+84 = WordSourceAI
+85 = WordSourceInflectedFormAI
+
 [anki_field_mapping.word]
 ; Define custom mappings for word extraction mode.
 ; Format: AnkiFieldName = DataSourceName
@@ -84,9 +173,29 @@ note_type = Basic 20240218092126
 ; WordSourceInflectedFormAI = source_word
 
 [anki_field_mapping.sentence]
-; Define custom mappings for sentence extraction mode.
-; dataSourceNames are the same as above.
-; Note: 'lemma' and 'source_word' are not available in sentence mode.
-; 
-; Example overrides:
-; Quotation = source_sentence
+; Mapping for 'sentence' extraction mode.
+SentenceSourceContextLeft = source_context_left
+SentenceSource = source_sentence
+SentenceSourceContextRight = source_context_right
+SentenceDestinationContextLeft = target_context_left
+SentenceDestination = target_sentence
+SentenceDestinationContextRight = target_context_right
+SentenceDestination2ContextLeft = tertiary_context_left
+SentenceDestination2 = tertiary_sentence
+SentenceDestination2ContextRight = tertiary_context_right
+SentenceSourceWordlist = wordlist
+SentenceSourceCloze = cloze
+SentenceSourceIndex = sentence_index
+Deck = deck_name
+
+; TTS activation fields
+Source-en-GB = tts_source_en
+Source-en-US = tts_source_us
+Source-de-DE = tts_source_de
+Source-uk-UA = tts_source_uk
+Source-ru-RU = tts_source_ru
+Destination-en-GB = tts_dest_en
+Destination-en-US = tts_dest_us
+Destination-de-DE = tts_dest_de
+Destination-uk-UA = tts_dest_uk
+Destination-ru-RU = tts_dest_ru

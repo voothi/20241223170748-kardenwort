@@ -316,98 +316,74 @@ def read_text_from_file(file_path):
     except Exception as e:
         print(f"Error reading file {file_path}: {e}", file=sys.stderr); exit(1)
 
-def get_anki_csv_header():
+def get_anki_csv_header(header_override=None):
+    if header_override:
+        return header_override
+    # This should technically never be reached in strict mode, but we keep it
+    # for internal unit tests or if called without an override.
     return [
-        "Quotation",                                    # 1
-        "WordSource",                                   # 2
-        "WordSourceInflectedForm",                      # 3
-        "WordDestination",                              # 4
-        "WordSourceContext",                            # 5
-        "SentenceSourceContextLeft",                    # 6
-        "SentenceSource",                               # 7
-        "SentenceSourceContextRight",                   # 8
-        "SentenceDestinationContextLeft",               # 9
-        "SentenceDestination",                          # 10
-        "SentenceDestinationContextRight",              # 11
-        "SentenceDestination2ContextLeft",              # 12
-        "SentenceDestination2",                         # 13
-        "SentenceDestination2ContextRight",             # 14
-        "SentenceSourceWordlist",                       # 15
-        "SentenceSourceCloze",                          # 16
-        "SentenceSourceRewriteAISentenceSource",
-        "SentenceSourceRewriteAISentenceDestination",
-        "WordSourceMorphologyAI",
-        "Note",
-        "WordRussian",
-        "WordUkrainian",
-        "WordEnglish",
-        "WordGerman",
-        "WordSourceMorphemeFirst",
-        "WordSourceMorphemeFirstDefinition",
-        "WordSourceMorphemeSecond",
-        "WordSourceMorphemeSecondDefinition",
-        "WordSourceMorphemeThird",
-        "WordSourceMorphemeThirdDefinition",
-        "WordSourceMorphemeFourth",
-        "WordSourceMorphemeFourthDefinition",
-        "WordSourceMorphemeFifth",
-        "WordSourceMorphemeFifthDefinition",
-        "WordSourceIPA",
-        "WordSourceSynonymAI",
-        "WordSourceDefinitionAISentenceSource",
-        "WordSourceDefinitionAISentenceDestination",
-        "WordSourceDefinitionFirst",
-        "WordSourceDefinitionFirstClipping",
-        "WordSourceDefinitionSecond",
-        "WordDestinationDefinitionFirst",
-        "WordDestinationDefinitionSecond",
-        "WordSourceAudio",
-        "SentenceSourceIPA",
-        "SentenceSourceAudio",
-        "Image",
-        "WordSourceCloze",
-        "WordSourceContextAI",
-        "TextSource",
-        "TextDestination",
-        "TextSourceURL",
-        "SentenceEnglish",
-        "SentenceGerman",
-        "SentenceUkrainian",
-        "SentenceRussian",
-        "Source",
-        "SourceURL",
-        "SeparatorAudio",
-        "Source-en-GB",
-        "Source-en-US",
-        "Source-de-DE",
-        "Source-uk-UA",
-        "Source-ru-RU",
-        "Destination-en-GB",
-        "Destination-en-US",
-        "Destination-de-DE",
-        "Destination-uk-UA",
-        "Destination-ru-RU",
-        "Overlapping",
-        "ToggleAlwaysEmptyField",
-        "Note ID",
-        "am-all-morphs",
-        "am-all-morphs-count",
-        "am-unknown-morphs",
-        "am-unknown-morphs-count",
-        "am-highlighted",
-        "am-score",
-        "am-score-terms",
-        "am-study-morphs",
-        "SentenceSourceIndex",
-        "Deck",
-        "WordDestinationInflectedForm",
-        "WordSourceAI",
-        "WordSourceInflectedFormAI"
+        "Quotation", "WordSource", "WordSourceInflectedForm", "WordDestination",
+        "WordSourceContext", "SentenceSourceContextLeft", "SentenceSource",
+        "SentenceSourceContextRight", "SentenceDestinationContextLeft",
+        "SentenceDestination", "SentenceDestinationContextRight",
+        "SentenceDestination2ContextLeft", "SentenceDestination2",
+        "SentenceDestination2ContextRight", "SentenceSourceWordlist",
+        "SentenceSourceCloze", "SentenceSourceRewriteAISentenceSource",
+        "SentenceSourceRewriteAISentenceDestination", "WordSourceMorphologyAI",
+        "Note", "WordRussian", "WordUkrainian", "WordEnglish", "WordGerman",
+        "WordSourceMorphemeFirst", "WordSourceMorphemeFirstDefinition",
+        "WordSourceMorphemeSecond", "WordSourceMorphemeSecondDefinition",
+        "WordSourceMorphemeThird", "WordSourceMorphemeThirdDefinition",
+        "WordSourceMorphemeFourth", "WordSourceMorphemeFourthDefinition",
+        "WordSourceMorphemeFifth", "WordSourceMorphemeFifthDefinition",
+        "WordSourceIPA", "WordSourceSynonymAI", "WordSourceDefinitionAISentenceSource",
+        "WordSourceDefinitionAISentenceDestination", "WordSourceDefinitionFirst",
+        "WordSourceDefinitionFirstClipping", "WordSourceDefinitionSecond",
+        "WordDestinationDefinitionFirst", "WordDestinationDefinitionSecond",
+        "WordSourceAudio", "SentenceSourceIPA", "SentenceSourceAudio", "Image",
+        "WordSourceCloze", "WordSourceContextAI", "TextSource", "TextDestination",
+        "TextSourceURL", "SentenceEnglish", "SentenceGerman", "SentenceUkrainian",
+        "SentenceRussian", "Source", "SourceURL", "SeparatorAudio", "Source-en-GB",
+        "Source-en-US", "Source-de-DE", "Source-uk-UA", "Source-ru-RU",
+        "Destination-en-GB", "Destination-en-US", "Destination-de-DE",
+        "Destination-uk-UA", "Destination-ru-RU", "Overlapping",
+        "ToggleAlwaysEmptyField", "Note ID", "am-all-morphs", "am-all-morphs-count",
+        "am-unknown-morphs", "am-unknown-morphs-count", "am-highlighted",
+        "am-score", "am-score-terms", "am-study-morphs", "SentenceSourceIndex",
+        "Deck", "WordDestinationInflectedForm", "WordSourceAI", "WordSourceInflectedFormAI"
     ]
 
-def get_field_index_map():
+def get_field_index_map(header_override=None):
     """Returns a dict mapping each header field name to its 0-based index."""
-    return {name: i for i, name in enumerate(get_anki_csv_header())}
+    return {name: i for i, name in enumerate(get_anki_csv_header(header_override))}
+
+def prepare_row_data(args, **kwargs):
+    """Consolidates all possibly mapped data into a single dictionary."""
+    row_data = {
+        'lemma': kwargs.get('lemma', ''),
+        'source_word': kwargs.get('source_word', ''),
+        'source_sentence': kwargs.get('source_sentence', ''),
+        'source_context_left': kwargs.get('source_context_left', ''),
+        'source_context_right': kwargs.get('source_context_right', ''),
+        'target_sentence': kwargs.get('target_sentence', ''),
+        'target_context_left': kwargs.get('target_context_left', ''),
+        'target_context_right': kwargs.get('target_context_right', ''),
+        'tertiary_sentence': kwargs.get('tertiary_sentence', ''),
+        'tertiary_context_left': kwargs.get('tertiary_context_left', ''),
+        'tertiary_context_right': kwargs.get('tertiary_context_right', ''),
+        'wordlist': kwargs.get('wordlist', ''),
+        'cloze': kwargs.get('cloze', ''),
+        'sentence_index': kwargs.get('sentence_index', ''),
+        'deck_name': kwargs.get('deck_name', ''),
+    }
+    
+    # Dynamic TTS activation flags
+    if args.language:
+        row_data[f'tts_source_{args.language}'] = "1"
+    if args.tts_destination_lang:
+        row_data[f'tts_dest_{args.tts_destination_lang}'] = "1"
+        
+    return row_data
 
 def apply_field_mapping(csv_row, row_data, field_mapping, field_index_map):
     """Applies a field mapping to override csv_row values using row_data.
@@ -693,10 +669,11 @@ def _write_deck_metadata(args, output_file_path, source_text_content, target_tex
         print(f"Warning: Could not write metadata file to {metadata_path}: {e}", file=sys.stderr)
 
 def process_parallel_text_files(
-    source_text_content, lemma_sort_index, language, target_text_path, tertiary_text_path, sentence_context_size,
-    output_file_path, add_source_word_col, add_wordlist_col, add_sentence_index_col,
-    add_header, wordlist_use_br, stdout_print_output_basename, de_gcs, gcs_automaton, de_gcs_add_parts_to_wordlist, de_dictionary, lemma_override_rules,
-    de_gcs_pos_tags, field_mapping, args, **kwargs
+    source_text, lemma_sort_index, language, target_text_path, tertiary_text_path,
+    sentence_context_size, output_file_path, add_source_word_col, add_wordlist_col,
+    add_sentence_index_col, add_header, wordlist_use_br, stdout_print_output_basename,
+    de_gcs, gcs_automaton, de_gcs_add_parts_to_wordlist, de_dictionary,
+    lemma_override_rules, de_gcs_pos_tags, field_mapping, anki_header, args, **kwargs
 ):
     de_gcs_only_nouns = kwargs.get('de_gcs_only_nouns', True)
     de_gcs_combine_noun_modes = kwargs.get('de_gcs_combine_noun_modes', False)
@@ -707,7 +684,7 @@ def process_parallel_text_files(
     sentence_lemmas_cache = {}
     doc_cache = {}
 
-    source_text_lines_all = [line.rstrip("\n") for line in source_text_content.splitlines()]
+    source_text_lines_all = [line.rstrip("\n") for line in source_text.splitlines()]
 
     target_content_lines_all = []
     if target_text_path:
@@ -837,8 +814,8 @@ def process_parallel_text_files(
             sentence_prefix = str(content_line_idx + 1).zfill(6)
             sentence_slug = generate_filename_prefix_from_text(source_sentence, 4)
             if sentence_slug:
-                sentence_deck_name = f"{sentence_prefix}-{sentence_slug}"
-                final_deck = f"{final_deck}::{sentence_deck_name}"
+                sentence_deck_name = f"{final_deck}::{sentence_prefix}-{sentence_slug}"
+                final_deck = sentence_deck_name
 
         if source_sentence not in doc_cache:
             doc_cache[source_sentence] = nlp(source_sentence)
@@ -996,12 +973,12 @@ def process_parallel_text_files(
         with open(output_file_path, "w", newline="", encoding="utf-8") as tsvfile:
             tsv_writer = csv.writer(tsvfile, delimiter="\t")
             if add_header:
-                tsv_writer.writerow(get_anki_csv_header())
+                tsv_writer.writerow(anki_header)
 
+            F = get_field_index_map(anki_header)
+            TTS = get_tts_field_indices()
             for item in sorted_items:
-                F = get_field_index_map()
-                TTS = get_tts_field_indices()
-                csv_row = [""] * len(get_anki_csv_header())
+                csv_row = [""] * len(anki_header)
                 
                 word, source_word_col_val, sentence_index, source_sentence_for_lemmas, deck_name = "", "", -1, "", ""
 
@@ -1019,88 +996,43 @@ def process_parallel_text_files(
 
                 context_start_index, context_end_index = max(0, sentence_index - sentence_context_size), sentence_index + sentence_context_size + 1
                 
-                csv_row[F['SentenceSourceContextLeft']] = " ".join(line.strip() for line in display_source_content_lines[context_start_index:sentence_index])
-                csv_row[F['SentenceSource']] = display_source_content_lines[sentence_index].strip() if sentence_index < len(display_source_content_lines) else ""
-                csv_row[F['SentenceSourceContextRight']] = " ".join(line.strip() for line in display_source_content_lines[sentence_index + 1:context_end_index])
-                
-                if target_text_path:
-                    csv_row[F['SentenceDestinationContextLeft']] = " ".join(line.strip() for line in display_target_content_lines[context_start_index:sentence_index])
-                    csv_row[F['SentenceDestination']] = display_target_content_lines[sentence_index].strip() if sentence_index < len(display_target_content_lines) else ""
-                    csv_row[F['SentenceDestinationContextRight']] = " ".join(line.strip() for line in display_target_content_lines[sentence_index + 1:context_end_index])
-                
-                if tertiary_text_path:
-                    csv_row[F['SentenceDestination2ContextLeft']] = " ".join(line.strip() for line in display_tertiary_content_lines[context_start_index:sentence_index])
-                    csv_row[F['SentenceDestination2']] = display_tertiary_content_lines[sentence_index].strip() if sentence_index < len(display_tertiary_content_lines) else ""
-                    csv_row[F['SentenceDestination2ContextRight']] = " ".join(line.strip() for line in display_tertiary_content_lines[sentence_index + 1:context_end_index])
-                
-                csv_row[F['Quotation']] = source_word_col_val
-                csv_row[F['WordSource']] = word
-                if add_source_word_col:
-                    csv_row[F['WordSourceInflectedForm']] = source_word_col_val
-
                 source_sentence_for_tsv = display_source_content_lines[sentence_index].strip() if sentence_index < len(display_source_content_lines) else ""
-                csv_row[F['SentenceSourceCloze']] = source_sentence_for_tsv 
+                target_sentence_for_tsv = display_target_content_lines[sentence_index].strip() if sentence_index < len(display_target_content_lines) else ""
+                tertiary_sentence_for_tsv = display_tertiary_content_lines[sentence_index].strip() if sentence_index < len(display_tertiary_content_lines) else ""
+
+                current_wordlist = ""
                 if add_wordlist_col:
                     if source_sentence_for_lemmas not in sentence_lemmas_cache:
                         wordlist_generation_args = {**kwargs, 'de_gcs': de_gcs, 'gcs_automaton': gcs_automaton, 'de_gcs_add_parts_to_wordlist': de_gcs_add_parts_to_wordlist}
                         lemmas = extract_lemmas_from_sentence(source_sentence_for_lemmas, lemma_sort_index, nlp, de_dictionary, lemma_override_rules, de_gcs_pos_tags, args, **wordlist_generation_args)
                         sentence_lemmas_cache[source_sentence_for_lemmas] = lemmas
-                    csv_row[F['SentenceSourceWordlist']] = "<br>".join(sentence_lemmas_cache[source_sentence_for_lemmas]) if wordlist_use_br else "\n".join(sentence_lemmas_cache[source_sentence_for_lemmas])
-                if add_sentence_index_col:
-                    csv_row[F['SentenceSourceIndex']] = str(sentence_index + 1).zfill(6)
+                    current_wordlist = "<br>".join(sentence_lemmas_cache[source_sentence_for_lemmas]) if wordlist_use_br else "\n".join(sentence_lemmas_cache[source_sentence_for_lemmas])
                 
-                source_lang_code = args.language
-                dest_lang_code = args.tts_destination_lang
-
-                source_index = TTS['source'].get(source_lang_code)
-                if source_index is not None:
-                    csv_row[source_index] = "1"
-                else:
-                    print(f"Warning: No source TTS field index found for language '{source_lang_code}'", file=sys.stderr)
-
-                dest_index = TTS['destination'].get(dest_lang_code)
-                if dest_index is not None:
-                    csv_row[dest_index] = "1"
-                else:
-                    print(f"Warning: No destination TTS field index found for language '{dest_lang_code}'", file=sys.stderr)
-
                 CSV_ROW_DECK_VAL = ""
                 if args.anki_markdown_decks:
                     CSV_ROW_DECK_VAL = deck_name
                 elif full_deck_name:
                     CSV_ROW_DECK_VAL = full_deck_name
-                
-                if CSV_ROW_DECK_VAL:
-                    csv_row[F['Deck']] = CSV_ROW_DECK_VAL
 
-                csv_row[F['WordSourceAI']] = word
-                csv_row[F['WordSourceInflectedFormAI']] = source_word_col_val
-
-                # --- Flexible Mapping Application ---
-                row_data = {
-                    'lemma': word,
-                    'source_word': source_word_col_val,
-                    'sentence_index': str(sentence_index + 1).zfill(6),
-                    'source_sentence': source_sentence_for_tsv,
-                    'deck_name': CSV_ROW_DECK_VAL, # We use a temporary variable for the deck logic
-                }
-                # Capture all context fields in row_data
-                row_data['source_context_left'] = csv_row[F['SentenceSourceContextLeft']]
-                row_data['source_context_right'] = csv_row[F['SentenceSourceContextRight']]
-                if target_text_path:
-                    row_data['target_sentence'] = csv_row[F['SentenceDestination']]
-                    row_data['target_context_left'] = csv_row[F['SentenceDestinationContextLeft']]
-                    row_data['target_context_right'] = csv_row[F['SentenceDestinationContextRight']]
-                if tertiary_text_path:
-                    row_data['tertiary_sentence'] = csv_row[F['SentenceDestination2']]
-                    row_data['tertiary_context_left'] = csv_row[F['SentenceDestination2ContextLeft']]
-                    row_data['tertiary_context_right'] = csv_row[F['SentenceDestination2ContextRight']]
-                if add_wordlist_col:
-                    row_data['wordlist'] = csv_row[F['SentenceSourceWordlist']]
-
+                row_data = prepare_row_data(
+                    args,
+                    lemma=word,
+                    source_word=source_word_col_val,
+                    sentence_index=str(sentence_index + 1).zfill(6),
+                    source_sentence=source_sentence_for_tsv,
+                    source_context_left=" ".join(line.strip() for line in display_source_content_lines[context_start_index:sentence_index]),
+                    source_context_right=" ".join(line.strip() for line in display_source_content_lines[sentence_index + 1:context_end_index]),
+                    target_sentence=target_sentence_for_tsv,
+                    target_context_left=" ".join(line.strip() for line in display_target_content_lines[context_start_index:sentence_index]),
+                    target_context_right=" ".join(line.strip() for line in display_target_content_lines[sentence_index + 1:context_end_index]),
+                    tertiary_sentence=tertiary_sentence_for_tsv,
+                    tertiary_context_left=" ".join(line.strip() for line in display_tertiary_content_lines[context_start_index:sentence_index]),
+                    tertiary_context_right=" ".join(line.strip() for line in display_tertiary_content_lines[sentence_index + 1:context_end_index]),
+                    wordlist=current_wordlist,
+                    cloze=source_sentence_for_tsv,
+                    deck_name=CSV_ROW_DECK_VAL
+                )
                 apply_field_mapping(csv_row, row_data, field_mapping, F)
-                # ------------------------------------
-
                 tsv_writer.writerow(csv_row)
         
         target_text_content = None
@@ -1113,7 +1045,7 @@ def process_parallel_text_files(
             with open(tertiary_text_path, "r", encoding="utf-8") as f:
                 tertiary_text_content = f.read()
         
-        _write_deck_metadata(args, output_file_path, source_text_content, target_text_content, tertiary_text_content, subdeck_content_map)
+        _write_deck_metadata(args, output_file_path, source_text, target_text_content, tertiary_text_content, subdeck_content_map)
 
     return output_file_path
 
@@ -1219,8 +1151,8 @@ def process_single_text(
                 sentence_prefix = str(len(text_units) + 1).zfill(6)
                 sentence_slug = generate_filename_prefix_from_text(line, 4)
                 if sentence_slug:
-                    sentence_deck_name = f"{sentence_prefix}-{sentence_slug}"
-                    final_deck = f"{final_deck}::{sentence_deck_name}"
+                    sentence_deck_name = f"{final_deck}::{sentence_prefix}-{sentence_slug}"
+                    final_deck = sentence_deck_name
 
             deck_map[len(text_units)] = final_deck
             text_units.append(line)
@@ -1451,12 +1383,11 @@ def process_single_text(
     with open(output_file_path, "w", newline="", encoding="utf-8") as tsvfile:
         tsv_writer = csv.writer(tsvfile, delimiter="\t")
         if add_header:
-            tsv_writer.writerow(get_anki_csv_header())
+            tsv_writer.writerow(anki_header)
 
+        F = get_field_index_map(anki_header)
         for item in sorted_items:
-            F = get_field_index_map()
-            TTS = get_tts_field_indices()
-            csv_row = [""] * len(get_anki_csv_header())
+            csv_row = [""] * len(anki_header)
             
             word, source_word_col_val, unit_index, source_sentence_for_lemmas, deck_name = "", "", -1, "", ""
 
@@ -1475,67 +1406,35 @@ def process_single_text(
             source_sentence_for_tsv = display_text_units[unit_index].strip()
             context_start_index = max(0, unit_index - sentence_context_size)
             context_end_index = min(len(display_text_units), unit_index + sentence_context_size + 1)
-            csv_row[F['SentenceSourceContextLeft']] = " ".join(u.strip() for u in display_text_units[context_start_index:unit_index])
-            csv_row[F['SentenceSource']] = source_sentence_for_tsv
-            csv_row[F['SentenceSourceContextRight']] = " ".join(u.strip() for u in display_text_units[unit_index + 1:context_end_index])
-            csv_row[F['Quotation']] = source_word_col_val
-            csv_row[F['WordSource']] = word
-            if add_source_word_col:
-                csv_row[F['WordSourceInflectedForm']] = source_word_col_val
-            csv_row[F['SentenceSourceCloze']] = source_sentence_for_tsv
+            
+            current_wordlist = ""
             if add_wordlist_col:
                 if source_sentence_for_lemmas not in sentence_lemmas_cache:
                     wordlist_generation_args = {**kwargs, 'de_gcs': de_gcs, 'gcs_automaton': gcs_automaton, 'de_gcs_add_parts_to_wordlist': de_gcs_add_parts_to_wordlist}
                     lemmas = extract_lemmas_from_sentence(source_sentence_for_lemmas, lemma_sort_index, nlp, de_dictionary, lemma_override_rules, de_gcs_pos_tags, args, **wordlist_generation_args)
                     sentence_lemmas_cache[source_sentence_for_lemmas] = lemmas
-                csv_row[F['SentenceSourceWordlist']] = "<br>".join(sentence_lemmas_cache[source_sentence_for_lemmas]) if wordlist_use_br else "\n".join(sentence_lemmas_cache[source_sentence_for_lemmas])
-            if add_sentence_index_col:
-                csv_row[F['SentenceSourceIndex']] = str(unit_index + 1).zfill(6)
-            
-            source_lang_code = args.language
-            dest_lang_code = args.tts_destination_lang
+                current_wordlist = "<br>".join(sentence_lemmas_cache[source_sentence_for_lemmas]) if wordlist_use_br else "\n".join(sentence_lemmas_cache[source_sentence_for_lemmas])
 
-            source_index = TTS['source'].get(source_lang_code)
-            if source_index is not None:
-                csv_row[source_index] = "1"
-            else:
-                print(f"Warning: No source TTS field index found for language '{source_lang_code}'", file=sys.stderr)
-
-            dest_index = TTS['destination'].get(dest_lang_code)
-            if dest_index is not None:
-                csv_row[dest_index] = "1"
-            else:
-                print(f"Warning: No destination TTS field index found for language '{dest_lang_code}'", file=sys.stderr)
-
+            CSV_ROW_DECK_VAL = ""
             if args.anki_markdown_decks:
                 CSV_ROW_DECK_VAL = deck_name
             elif full_deck_name:
                 CSV_ROW_DECK_VAL = full_deck_name
-            else:
-                CSV_ROW_DECK_VAL = ""
-            
-            if CSV_ROW_DECK_VAL:
-                csv_row[F['Deck']] = CSV_ROW_DECK_VAL
 
-            csv_row[F['WordSourceAI']] = word
-            csv_row[F['WordSourceInflectedFormAI']] = source_word_col_val
-
-            # --- Flexible Mapping Application ---
-            row_data = {
-                'lemma': word,
-                'source_word': source_word_col_val,
-                'sentence_index': str(unit_index + 1).zfill(6),
-                'source_sentence': source_sentence_for_tsv,
-                'deck_name': CSV_ROW_DECK_VAL,
-                'source_context_left': csv_row[F['SentenceSourceContextLeft']],
-                'source_context_right': csv_row[F['SentenceSourceContextRight']],
-            }
-            if add_wordlist_col:
-                row_data['wordlist'] = csv_row[F['SentenceSourceWordlist']]
+            row_data = prepare_row_data(
+                args,
+                lemma=word,
+                source_word=source_word_col_val,
+                source_sentence=source_sentence_for_tsv,
+                source_context_left=" ".join(u.strip() for u in display_text_units[context_start_index:unit_index]),
+                source_context_right=" ".join(u.strip() for u in display_text_units[unit_index + 1:context_end_index]),
+                wordlist=current_wordlist,
+                cloze=source_sentence_for_tsv,
+                sentence_index=str(unit_index + 1).zfill(6),
+                deck_name=CSV_ROW_DECK_VAL
+            )
             
             apply_field_mapping(csv_row, row_data, field_mapping, F)
-            # ------------------------------------
-
             tsv_writer.writerow(csv_row)
 
     _write_deck_metadata(args, output_file_path, source_text, subdeck_content_map=subdeck_content_map)
@@ -1543,7 +1442,7 @@ def process_single_text(
 
 def process_parallel_sentences_to_csv(
     language, lemma_sort_index, source_text_path, target_text_path, tertiary_text_path, sentence_context_size,
-    output_file_path, add_wordlist_col, add_sentence_index_col, add_header, wordlist_use_br, stdout_print_output_basename, de_gcs_pos_tags, field_mapping, args, **kwargs
+    output_file_path, add_wordlist_col, add_sentence_index_col, add_header, wordlist_use_br, stdout_print_output_basename, de_gcs_pos_tags, field_mapping, anki_header, args, **kwargs
 ):
     lemma_override_rules = kwargs.pop('lemma_override_rules', {})
     
@@ -1597,8 +1496,10 @@ def process_parallel_sentences_to_csv(
     with open(output_file_path, "w", newline="", encoding="utf-8") as output_csv_file:
         tsv_writer = csv.writer(output_csv_file, delimiter="\t")
         if add_header:
-            tsv_writer.writerow(get_anki_csv_header())
+            tsv_writer.writerow(anki_header)
 
+        F = get_field_index_map(anki_header)
+        TTS = get_tts_field_indices()
         deck_stack = []
         level_stack = []
         subdeck_content_map = {}
@@ -1689,53 +1590,24 @@ def process_parallel_sentences_to_csv(
             content_line_idx += 1
             if content_line_idx >= len(display_source_content_lines): break
 
-            F = get_field_index_map()
-            TTS = get_tts_field_indices()
-            csv_row = [""] * len(get_anki_csv_header())
+            csv_row = [""] * len(anki_header)
             source_sentence = display_source_content_lines[content_line_idx].strip()
             target_sentence = display_target_content_lines[content_line_idx].strip() if content_line_idx < len(display_target_content_lines) else ""
+            tertiary_sentence = display_tertiary_content_lines[content_line_idx].strip() if content_line_idx < len(display_tertiary_content_lines) else ""
             
             context_start_index = max(0, content_line_idx - sentence_context_size)
             context_end_index = content_line_idx + sentence_context_size + 1
 
-            csv_row[F['Quotation']] = source_sentence
-            csv_row[F['SentenceSourceContextLeft']] = " ".join(line.strip() for line in display_source_content_lines[context_start_index:content_line_idx])
-            csv_row[F['SentenceSource']] = source_sentence
-            csv_row[F['SentenceSourceContextRight']] = " ".join(line.strip() for line in display_source_content_lines[content_line_idx + 1:context_end_index])
-            
-            csv_row[F['SentenceDestinationContextLeft']] = " ".join(line.strip() for line in display_target_content_lines[context_start_index:content_line_idx])
-            csv_row[F['SentenceDestination']] = target_sentence
-            csv_row[F['SentenceDestinationContextRight']] = " ".join(line.strip() for line in display_target_content_lines[content_line_idx + 1:context_end_index])
-            
+            current_wordlist = ""
             if add_wordlist_col:
-                lemmas = extract_lemmas_from_sentence(source_line_for_analysis, lemma_sort_index, nlp, de_dictionary, lemma_override_rules, de_gcs_pos_tags, args, **kwargs)
-                csv_row[F['SentenceSourceWordlist']] = "<br>".join(lemmas) if wordlist_use_br else "\n".join(lemmas)
-            csv_row[F['SentenceSourceCloze']] = source_sentence
-            
-            if tertiary_text_path and content_line_idx < len(display_tertiary_content_lines):
-                csv_row[F['SentenceDestination2ContextLeft']] = " ".join(line.strip() for line in display_tertiary_content_lines[context_start_index:content_line_idx])
-                csv_row[F['SentenceDestination2']] = display_tertiary_content_lines[content_line_idx].strip()
-                csv_row[F['SentenceDestination2ContextRight']] = " ".join(line.strip() for line in display_tertiary_content_lines[content_line_idx + 1:context_end_index])
-            
-            if add_sentence_index_col:
-                csv_row[F['SentenceSourceIndex']] = str(content_line_idx + 1).zfill(6)
+                source_sentence_for_lemmas = source_text_lines_all[line_index]
+                if source_sentence_for_lemmas not in sentence_lemmas_cache:
+                    wordlist_generation_args = {**kwargs, 'de_gcs': args.de_gcs, 'gcs_automaton': None} # simplify for now
+                    lemmas = extract_lemmas_from_sentence(source_sentence_for_lemmas, lemma_sort_index, nlp, None, lemma_override_rules, de_gcs_pos_tags, args, **wordlist_generation_args)
+                    sentence_lemmas_cache[source_sentence_for_lemmas] = lemmas
+                current_wordlist = "<br>".join(sentence_lemmas_cache[source_sentence_for_lemmas]) if wordlist_use_br else "\n".join(sentence_lemmas_cache[source_sentence_for_lemmas])
 
-            source_lang_code = args.language
-            dest_lang_code = args.tts_destination_lang
-
-            source_index = TTS['source'].get(source_lang_code)
-            if source_index is not None:
-                csv_row[source_index] = "1"
-            else:
-                print(f"Warning: No source TTS field index found for language '{source_lang_code}'", file=sys.stderr)
-
-            dest_index = TTS['destination'].get(dest_lang_code)
-            if dest_index is not None:
-                csv_row[dest_index] = "1"
-            else:
-                print(f"Warning: No destination TTS field index found for language '{dest_lang_code}'", file=sys.stderr)
-            
-            CSV_ROW_DECK_VAL = ""
+            final_deck_for_card = ""
             if args.anki_markdown_decks:
                 final_deck_for_card = "::".join(deck_stack)
                 if active_header_line_index in branch_header_lines:
@@ -1745,37 +1617,29 @@ def process_parallel_sentences_to_csv(
                     sentence_prefix = str(content_line_idx + 1).zfill(6)
                     sentence_slug = generate_filename_prefix_from_text(source_sentence, 4)
                     if sentence_slug:
-                        sentence_deck_name = f"{sentence_prefix}-{sentence_slug}"
-                        final_deck_for_card = f"{final_deck_for_card}::{sentence_deck_name}"
-                
-                CSV_ROW_DECK_VAL = final_deck_for_card
+                        sentence_deck_name = f"{final_deck_for_card}::{sentence_prefix}-{sentence_slug}"
+                        final_deck_for_card = sentence_deck_name
             elif full_deck_name:
-                CSV_ROW_DECK_VAL = full_deck_name
+                final_deck_for_card = full_deck_name
 
-            if CSV_ROW_DECK_VAL:
-                csv_row[F['Deck']] = CSV_ROW_DECK_VAL
+            row_data = prepare_row_data(
+                args,
+                source_sentence=source_sentence,
+                source_context_left=" ".join(line.strip() for line in display_source_content_lines[context_start_index:content_line_idx]),
+                source_context_right=" ".join(line.strip() for line in display_source_content_lines[content_line_idx + 1:context_end_index]),
+                target_sentence=target_sentence,
+                target_context_left=" ".join(line.strip() for line in display_target_content_lines[context_start_index:content_line_idx]),
+                target_context_right=" ".join(line.strip() for line in display_target_content_lines[content_line_idx + 1:context_end_index]),
+                tertiary_sentence=tertiary_sentence,
+                tertiary_context_left=" ".join(line.strip() for line in display_tertiary_content_lines[context_start_index:content_line_idx]),
+                tertiary_context_right=" ".join(line.strip() for line in display_tertiary_content_lines[content_line_idx + 1:content_end_index]),
+                wordlist=current_wordlist,
+                cloze=source_sentence,
+                sentence_index=str(content_line_idx + 1).zfill(6),
+                deck_name=final_deck_for_card
+            )
 
-            # --- Flexible Mapping Application ---
-            row_data = {
-                'source_sentence': source_sentence,
-                'target_sentence': target_sentence,
-                'sentence_index': str(content_line_idx + 1).zfill(6),
-                'deck_name': CSV_ROW_DECK_VAL,
-                'source_context_left': csv_row[F['SentenceSourceContextLeft']],
-                'source_context_right': csv_row[F['SentenceSourceContextRight']],
-                'target_context_left': csv_row[F['SentenceDestinationContextLeft']],
-                'target_context_right': csv_row[F['SentenceDestinationContextRight']],
-            }
-            if tertiary_text_path and content_line_idx < len(display_tertiary_content_lines):
-                row_data['tertiary_sentence'] = csv_row[F['SentenceDestination2']]
-                row_data['tertiary_context_left'] = csv_row[F['SentenceDestination2ContextLeft']]
-                row_data['tertiary_context_right'] = csv_row[F['SentenceDestination2ContextRight']]
-            if add_wordlist_col:
-                row_data['wordlist'] = csv_row[F['SentenceSourceWordlist']]
-            
             apply_field_mapping(csv_row, row_data, field_mapping, F)
-            # ------------------------------------
-                
             tsv_writer.writerow(csv_row)
             
     target_text_content = None
@@ -1873,6 +1737,12 @@ def main():
         help="JSON string mapping Anki field names to internal data source names. "
              "Used to customize which data populates which field in the output TSV. "
              "Example: '{\"WordSourceAI\": \"source_word\", \"Quotation\": \"lemma\"}'"
+    )
+    output_format_group.add_argument(
+        "--anki-csv-header",
+        type=str,
+        default=None,
+        help="JSON string list of Anki field names for CSV header and order."
     )
     stdout_group = parser.add_argument_group('Standard Output (STDOUT) Arguments (used only if --output is not specified)')
     output_format_group.add_argument("--stdout-format", choices=['list', 'context', 'tsv', 'html'], default='list', 
@@ -2057,15 +1927,30 @@ def main():
             new_filename = f"{timestamp_id}-{filename}"
             final_output_path = os.path.join(output_directory, new_filename)
     
-    # --- Parse Anki Field Mapping ---
+    # --- Parse Anki Field Mapping and Header ---
     field_mapping = {}
+    anki_header = []
+
+    if args.anki_csv_header:
+        try:
+            anki_header = json.loads(args.anki_csv_header)
+        except json.JSONDecodeError as e:
+            print(f"Error: Invalid JSON for --anki-csv-header: {e}", file=sys.stderr)
+            sys.exit(1)
+    else:
+        print("Error: --anki-csv-header is required. The core engine no longer uses hardcoded defaults for unambiguousness.", file=sys.stderr)
+        sys.exit(1)
+
     if args.anki_field_mapping:
         try:
             field_mapping = json.loads(args.anki_field_mapping)
         except json.JSONDecodeError as e:
             print(f"Error: Invalid JSON for --anki-field-mapping: {e}", file=sys.stderr)
             sys.exit(1)
-    # ---------------------------------
+    else:
+        print("Error: --anki-field-mapping is required. The core engine no longer uses hardcoded defaults for unambiguousness.", file=sys.stderr)
+        sys.exit(1)
+    # -------------------------------------------
 
     if args.lemmas_per_line:
         if not args.text1_file:
@@ -2111,7 +1996,7 @@ def main():
                 args.add_source_word_col, args.add_wordlist_col, args.add_sentence_index_col,
                 args.add_header, args.wordlist_use_br, args.stdout_print_output_basename,
                 args.de_gcs, gcs_automaton, args.de_gcs_add_parts_to_wordlist, de_dictionary, lemma_override_rules,
-                args.de_gcs_pos_tags, field_mapping, args, **processing_options
+                args.de_gcs_pos_tags, field_mapping, anki_header, args, **processing_options
             )
         else:
              if not input_text:
@@ -2147,7 +2032,7 @@ def main():
             args.language, lemma_index, args.text1_file, args.text2_file, args.text3_file,
             args.sentence_context_size, final_output_path,
             args.add_wordlist_col, args.add_sentence_index_col, args.add_header, args.wordlist_use_br, args.stdout_print_output_basename,
-            args.de_gcs_pos_tags, field_mapping, args, **processing_options
+            args.de_gcs_pos_tags, field_mapping, anki_header, args, **processing_options
         )
 
     if args.stdout_print_output_basename and processed_output_file:

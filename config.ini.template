@@ -195,6 +195,7 @@ WordSourceInflectedFormAI = source_word
 ; See [anki_field_mapping.word] for available data sources.
 ;
 ; Default mappings:
+Quotation = source_sentence
 SentenceSourceContextLeft = source_context_left
 SentenceSource = source_sentence
 SentenceSourceContextRight = source_context_right

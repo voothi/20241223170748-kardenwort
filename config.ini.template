@@ -167,13 +167,34 @@ note_type = Basic 20240218092126
 ; - source_context_left, source_context_right: Context sentences.
 ; - target_sentence, target_context_left, target_context_right: Translation content (if available).
 ; - tertiary_sentence, tertiary_context_left, tertiary_context_right: Tertiary translation content.
+; - tts_source_[lang], tts_dest_[lang]: TTS activation flags (set to "1" if languages match).
 ;
-; Example overrides:
-; WordSourceAI = source_word
-; WordSourceInflectedFormAI = source_word
+; Default mappings:
+Quotation = source_word
+WordSource = lemma
+WordSourceInflectedForm = source_word
+SentenceSourceContextLeft = source_context_left
+SentenceSource = source_sentence
+SentenceSourceContextRight = source_context_right
+SentenceSourceWordlist = wordlist
+SentenceSourceCloze = cloze
+SentenceSourceIndex = sentence_index
+Deck = deck_name
+WordSourceAI = lemma
+WordSourceInflectedFormAI = source_word
+
+; TTS examples
+; Source-en-GB = tts_source_en
+; Source-de-DE = tts_source_de
+; Destination-ru-RU = tts_dest_ru
 
 [anki_field_mapping.sentence]
-; Mapping for 'sentence' extraction mode.
+; Define custom mappings for sentence extraction mode.
+; Format: AnkiFieldName = DataSourceName
+; 
+; See [anki_field_mapping.word] for available data sources.
+;
+; Default mappings:
 SentenceSourceContextLeft = source_context_left
 SentenceSource = source_sentence
 SentenceSourceContextRight = source_context_right

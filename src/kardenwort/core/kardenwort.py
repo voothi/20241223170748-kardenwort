@@ -401,7 +401,9 @@ def get_anki_csv_header():
         "am-study-morphs",
         "SentenceSourceIndex",
         "Deck",
-        "WordDestinationInflectedForm"
+        "WordDestinationInflectedForm",
+        "WordSourceAI",
+        "WordSourceInflectedFormAI"
     ]
 
 def generate_filename_prefix_from_text(text, word_count):
@@ -977,7 +979,7 @@ def process_parallel_text_files(
                 tsv_writer.writerow(get_anki_csv_header())
 
             for item in sorted_items:
-                csv_row = [""] * 83
+                csv_row = [""] * 85
                 
                 word, source_word_col_val, sentence_index, source_sentence_for_lemmas, deck_name = "", "", -1, "", ""
 
@@ -1044,6 +1046,9 @@ def process_parallel_text_files(
                     csv_row[81] = deck_name
                 elif full_deck_name:
                     csv_row[81] = full_deck_name
+
+                csv_row[83] = word
+                csv_row[84] = source_word_col_val
 
                 tsv_writer.writerow(csv_row)
         
@@ -1398,7 +1403,7 @@ def process_single_text(
             tsv_writer.writerow(get_anki_csv_header())
 
         for item in sorted_items:
-            csv_row = [""] * 83
+            csv_row = [""] * 85
             
             word, source_word_col_val, unit_index, source_sentence_for_lemmas, deck_name = "", "", -1, "", ""
 
@@ -1453,6 +1458,9 @@ def process_single_text(
                 csv_row[81] = deck_name
             elif full_deck_name:
                 csv_row[81] = full_deck_name
+
+            csv_row[83] = word
+            csv_row[84] = source_word_col_val
 
             tsv_writer.writerow(csv_row)
 
@@ -1607,7 +1615,7 @@ def process_parallel_sentences_to_csv(
             content_line_idx += 1
             if content_line_idx >= len(display_source_content_lines): break
 
-            csv_row = [""] * 83
+            csv_row = [""] * 85
             source_sentence = display_source_content_lines[content_line_idx].strip()
             target_sentence = display_target_content_lines[content_line_idx].strip() if content_line_idx < len(display_target_content_lines) else ""
             

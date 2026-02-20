@@ -72,6 +72,7 @@ Our core principles are:
 *   **Hierarchical Deck Creation**: Automatically build nested Anki decks from Markdown headers (`#`, `##`) in your source text.
 *   **Automatic Deck Descriptions**: Populates Anki deck descriptions with the full source text and translations, providing valuable context directly within the deck browser.
 *   **Granular Deck Control**: Generate sentence-level subdecks for highly organized study sets.
+*   **Fully Configurable Field Mapping**: Decouple your Anki Note Type from the source code. Map any field (e.g., `Quotation`, `WordSource`) to internal linguistic data via `config.ini`.
 *   **Multi-Language Support:** Currently supports **English (en)** and **German (de)**.
 *   **Direct Anki Integration:** Automatically imports generated cards into Anki via a runner script.
 *   **GoldenDict-ng Integration:** Create vocabulary lists on-the-fly directly from your favorite dictionary application.
@@ -365,6 +366,8 @@ Below is a detailed list of all available arguments for the core processing scri
 | `--lemmas-per-line` | A special mode that outputs one line of sorted lemmas per input line. **Mutually exclusive with `--type`**.                                             | `--lemmas-per-line`   |
 | `--language`        | The source language of the text (`de` or `en`).                                                                                                         | `--language de`       |
 | `--mode`            | (Runner only) Processing mode (`single`, `dual`, `triple`, `mixed-triple`). `mixed-triple` runs sentence and word modes sequentially for a shared deck. | `--mode mixed-triple` |
+| `--anki-csv-header` | (Runner only) JSON list of Anki field names. Overrides `[anki_fields]` from `config.ini`.                                                              | `--anki-csv-header '["FieldA", "FieldB"]'` |
+| `--anki-field-mapping` | (Runner only) JSON object mapping Anki fields to data sources. Overrides `[anki_field_mapping.*]` from `config.ini`.                                | `--anki-field-mapping '{"FieldA": "lemma"}'` |
 
 ### Input & Output
 | Argument                         | Description                                                             | Example                           |
@@ -448,6 +451,53 @@ The behavior of the `kardenwort_runner.py` script is controlled by `config.ini`.
     *   `importer_workspace`: Path to the `kardenwort-anki-csv-importer` project folder.
 
 Relative paths are supported and are calculated from the location of the `config.ini` file, making the setup portable.
+
+## Flexible Anki Field Mapping
+
+Kardenwort uses a configuration-driven system to map linguistic analysis results to your specific Anki Note Type. This allows you to use any Note Type without modifying the source code.
+
+### 1. Defining your Note Type
+In the `[anki_fields]` section of `config.ini`, list the fields of your Anki Note Type in the exact order they appear:
+
+```ini
+[anki_fields]
+1 = Quotation
+2 = WordSource
+3 = SentenceSource
+...
+```
+
+### 2. Mapping Data Sources
+Use the `[anki_field_mapping.word]` and `[anki_field_mapping.sentence]` sections to assign internal data to these fields.
+
+```ini
+[anki_field_mapping.word]
+WordSource = lemma
+Quotation = source_word
+SentenceSource = source_sentence
+```
+
+### Available Data Source Keys
+
+| Key | Description | Mode |
+| :--- | :--- | :--- |
+| `lemma` | The base form of the word (lemmatized). | Word |
+| `source_word` | The original inflected word from the text. | Word |
+| `source_sentence` | The current sentence/unit being processed. | Both |
+| `source_context_left` | Preceding context sentence(s). | Both |
+| `source_context_right` | Succeeding context sentence(s). | Both |
+| `target_sentence` | Primary translation of the source sentence. | Both |
+| `target_context_left` | Preceding translation context. | Both |
+| `target_context_right` | Succeeding translation context. | Both |
+| `tertiary_sentence` | Tertiary translation (if available). | Both |
+| `tertiary_context_left` | Preceding tertiary translation context. | Both |
+| `tertiary_context_right` | Succeeding tertiary translation context. | Both |
+| `cloze` | The source sentence, intended for cloze deletion. | Both |
+| `wordlist` | A list of all unique lemmas found in the sentence. | Both |
+| `sentence_index` | The serial index of the sentence (e.g., `000001`). | Both |
+| `deck_name` | The final computed Anki deck name. | Both |
+| `tts_source_[lang]` | TTS flag (e.g., `tts_source_de`) - set to "1" on match. | Both |
+| `tts_dest_[lang]` | TTS flag (e.g., `tts_dest_en`) - set to "1" on match. | Both |
 
 [Return to Top](#map-of-contents)
 

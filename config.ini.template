@@ -169,7 +169,6 @@ note_type = Basic 20240218092126
 ; - tertiary_sentence, tertiary_context_left, tertiary_context_right: Tertiary translation content.
 ; - tts_source_[lang], tts_dest_[lang]: TTS activation flags (set to "1" if languages match).
 ;
-; Default mappings:
 Quotation = source_word
 WordSource = lemma
 WordSourceInflectedForm = source_word
@@ -189,10 +188,17 @@ Deck = deck_name
 WordSourceAI = lemma
 WordSourceInflectedFormAI = source_word
 
-; TTS examples
-; Source-en-GB = tts_source_en
-; Source-de-DE = tts_source_de
-; Destination-ru-RU = tts_dest_ru
+; TTS activation fields
+Source-en-GB = tts_source_en
+Source-en-US = tts_source_us
+Source-de-DE = tts_source_de
+Source-uk-UA = tts_source_uk
+Source-ru-RU = tts_source_ru
+Destination-en-GB = tts_dest_en
+Destination-en-US = tts_dest_us
+Destination-de-DE = tts_dest_de
+Destination-uk-UA = tts_dest_uk
+Destination-ru-RU = tts_dest_ru
 
 [anki_field_mapping.sentence]
 ; Define custom mappings for sentence extraction mode.
@@ -200,7 +206,6 @@ WordSourceInflectedFormAI = source_word
 ; 
 ; See [anki_field_mapping.word] for available data sources.
 ;
-; Default mappings:
 Quotation = source_sentence
 SentenceSourceContextLeft = source_context_left
 SentenceSource = source_sentence

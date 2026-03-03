@@ -544,7 +544,7 @@ Every two weeks, the code is cleanly transferred from these development repos to
 The project uses `pytest` for all testing. The test suite is organized into three distinct tiers:
 *   **`tests/smoke/`**: Extremely fast, high-level sanity checks to ensure the CLI boots and basic string extractions work without fatal errors.
 *   **`tests/unit/`**: Granular tests targeting isolated functions, particularly core lexical logic (`kardenwort.py`) and command-line configurations (`kardenwort_runner.py`).
-*   **`tests/integration/`**: End-to-end tests that process full parallel text files dynamically discovered from the `tests/cases/*` directory. These tests physically generate TSV outputs and validate that the columns match their `config.ini` field mappings seamlessly.
+*   **`tests/integration/`**: End-to-end tests that process full parallel text files dynamically discovered from the `tests/cases/*` directory. These tests physically generate TSV outputs and perform deep verification of field order, frequency-based sorting, and content matches against reference files.
 
 **Commands:**
 Ensure your virtual environment is active before running tests.

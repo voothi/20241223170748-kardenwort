@@ -556,9 +556,12 @@ Every two weeks, the code is cleanly transferred from these development repos to
 ### Running Tests and Coverage
 
 The project uses `pytest` for all testing. The test suite is organized into three distinct tiers:
-*   **`tests/smoke/`**: Extremely fast, high-level sanity checks to ensure the CLI boots and basic string extractions work without fatal errors.
-*   **`tests/unit/`**: Granular tests targeting isolated functions, particularly core lexical logic (`kardenwort.py`) and command-line configurations (`kardenwort_runner.py`).
-*   **`tests/integration/`**: End-to-end tests that process full parallel text files dynamically discovered from the `tests/cases/*` directory. These tests physically generate TSV outputs and perform deep verification of field order, frequency-based sorting, and content matches against reference files.
+*   **`tests/01_smoke/`**: Extremely fast, high-level sanity checks to ensure the CLI boots and basic string extractions work without fatal errors.
+*   **`tests/02_unit/`**: Granular tests targeting isolated functions, particularly core lexical logic (`kardenwort.py`) and command-line configurations (`kardenwort_runner.py`).
+*   **`tests/03_integration/`**: End-to-end tests that process full parallel text files dynamically discovered from the `tests/cases/*` directory. These tests physically generate TSV outputs and perform deep verification of field order, frequency-based sorting, and content matches against reference files.
+
+> [!TIP]
+> **Fastest First Logic**: The test directories are prefixed with numbers (`01_`, `02_`, `03_`) to ensure `pytest` executes the fastest tests first. This "Fail Fast" approach ensures you catch basic errors in seconds before waiting for the heavy integration analysis.
 
 **Commands:**
 Ensure your virtual environment is active before running tests.
@@ -568,7 +571,7 @@ Ensure your virtual environment is active before running tests.
 U:\voothi\20250825231214-spacy-env\Scripts\python.exe -m pytest tests/ -v
 
 # Run only a specific suite (e.g., unit tests)
-U:\voothi\20250825231214-spacy-env\Scripts\python.exe -m pytest tests/unit/ -v
+U:\voothi\20250825231214-spacy-env\Scripts\python.exe -m pytest tests/02_unit/ -v
 
 # Run tests and generate a code coverage report for the source code
 U:\voothi\20250825231214-spacy-env\Scripts\python.exe -m pytest tests/ -v --cov=src --cov-report=term-missing

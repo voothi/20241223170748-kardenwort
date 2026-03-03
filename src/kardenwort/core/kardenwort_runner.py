@@ -195,15 +195,20 @@ def get_script_args(args, python_path, workspace_path, config):
     else:
         mode_for_input_files = "triple" if args.mode == "mixed-triple" else args.mode
 
+        # Define the paths, prioritizing command-line arguments over config defaults
+        text1_path = args.text1_file if args.text1_file else str(input_path / text1_filename)
+        text2_path = args.text2_file if args.text2_file else str(input_path / text2_filename)
+        text3_path = args.text3_file if args.text3_file else str(input_path / text3_filename)
+
         if mode_for_input_files == "single":
-             mode_args.extend(["--text1-file", str(input_path / text1_filename)])
+             mode_args.extend(["--text1-file", text1_path])
         elif mode_for_input_files == "dual":
-            mode_args.extend(["--text1-file", str(input_path / text1_filename)])
-            mode_args.extend(["--text2-file", str(input_path / text2_filename)])
+            mode_args.extend(["--text1-file", text1_path])
+            mode_args.extend(["--text2-file", text2_path])
         elif mode_for_input_files == "triple":
-            mode_args.extend(["--text1-file", str(input_path / text1_filename)])
-            mode_args.extend(["--text2-file", str(input_path / text2_filename)])
-            mode_args.extend(["--text3-file", str(input_path / text3_filename)])
+            mode_args.extend(["--text1-file", text1_path])
+            mode_args.extend(["--text2-file", text2_path])
+            mode_args.extend(["--text3-file", text3_path])
         else:
             raise ValueError(f"Unknown mode: {args.mode}")
 

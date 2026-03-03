@@ -29,7 +29,7 @@ class TestIntegration(unittest.TestCase):
         return result
 
     def test_german_mixed_triple_from_cases(self):
-        test_case_dir = self.project_root / "tests" / "cases" / "20260303182012-de"
+        test_case_dir = self.project_root / "tests" / "source_texts" / "de"
         
         args = [
             "--language", "de",
@@ -47,7 +47,7 @@ class TestIntegration(unittest.TestCase):
         self.assertIn("All operations for mixed-triple mode completed successfully", result.stdout + result.stderr)
 
     def test_english_mixed_triple_from_cases(self):
-        test_case_dir = self.project_root / "tests" / "cases" / "20260303182028-en"
+        test_case_dir = self.project_root / "tests" / "source_texts" / "en"
         
         args = [
             "--language", "en",

@@ -8,7 +8,7 @@
 ### Changed
 - **Comprehensive Test Suite Refactoring**: Migrated existing `unittest` tests to `pytest`, utilizing fixtures and parameterization for improved maintainability.
 - **Deep Integration Verification**: Refactored integration tests to dynamically discover test cases and perform bit-for-bit TSV/JSON verification (normalized for timestamps). Includes strict validation of field order (`WordSource` index 1, `SentenceSource` index 9) and frequency-based sorting in `SentenceSourceWordlist`.
-- **Test Restructuring**: Reorganized the `tests/` directory hierarchy into distinct `unit`, `integration`, and `smoke` subdirectories, making the codebase easier to navigate.
+- **Fastest First Test Hierarchy**: Reorganized the `tests/` directory into numbered subdirectories (`01_smoke`, `02_unit`, `03_integration`). This forces `pytest` to execute fast sanity and unit tests before the compute-intensive integration analysis, implementing a "Fail Fast" workflow.
 
 ### Fixed
 - **Runner Argument Precedence**: Fixed a bug in `kardenwort_runner.py` where command-line arguments for input files were being ignored in favor of `config.ini` defaults.

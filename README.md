@@ -568,10 +568,10 @@ Ensure your virtual environment is active before running tests.
 U:\voothi\20250825231214-spacy-env\Scripts\python.exe -m pytest tests/ -v
 
 # Run only a specific suite (e.g., unit tests)
-u:\voothi\20250825231214-spacy-env\Scripts\python.exe -m pytest tests/unit/ -v
+U:\voothi\20250825231214-spacy-env\Scripts\python.exe -m pytest tests/unit/ -v
 
 # Run tests and generate a code coverage report for the source code
-u:\voothi\20250825231214-spacy-env\Scripts\python.exe -m pytest tests/ -v --cov=src --cov-report=term-missing
+U:\voothi\20250825231214-spacy-env\Scripts\python.exe -m pytest tests/ -v --cov=src --cov-report=term-missing
 ```
 
 ### Development Repositories

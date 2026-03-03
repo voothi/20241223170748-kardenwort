@@ -178,11 +178,11 @@ Follow these steps to get the entire Kardenwort ecosystem up and running.
     > The new feature for adding automatic descriptions to Anki decks (`--anki-deck-content`) **requires a specific, modified version of AnkiConnect**.
     >
     > Please download and install it from this repository:
-    > **[https://github.com/voothi/20251110002755-anki-ankiconnect](https://github.com/voothi/20251110002755-anki-ankiconnect)**
+    > **[https://github.com/voothi/20251110002755-kardenwort-ankiconnect](https://github.com/voothi/20251110002755-kardenwort-ankiconnect)**
     >
     > If you use the standard AnkiConnect add-on, all other features will work correctly, but deck descriptions will not be updated.
 
-**Setup Steps:**
+### Setup Steps
 
 1.  **Clone the Repositories**:
     Clone all three projects into a common parent directory. For example, create a folder named `kardenwort-ecosystem` and clone the repositories inside it.

@@ -321,6 +321,9 @@ def main():
     parser.add_argument("--suspend-cards", action="store_true", help="Suspend all newly imported/updated cards in Anki.")
     parser.add_argument("--anki-deck-content", nargs='+', choices=['parent-source', 'parent-translations', 'subdeck-source', 'subdeck-translations'], help="Adds content to the Anki deck description.")
     parser.add_argument("--strip-headers", nargs='*', choices=['all', 'source', 'translations'], help="Strip Markdown headers (#) from text fields in the final output. No arguments implies 'all'.")
+    parser.add_argument("--text1-file", type=str, help="Path to the first source text file.")
+    parser.add_argument("--text2-file", type=str, help="Path to the second source text file (for dual/triple modes).")
+    parser.add_argument("--text3-file", type=str, help="Path to the third source text file (for triple mode).")
 
     args = parser.parse_args()
     

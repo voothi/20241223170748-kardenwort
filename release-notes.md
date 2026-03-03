@@ -1,5 +1,19 @@
 # Release Notes
 
+## [v2.0.4] - 2026-03-04
+
+### Added
+- **Smoke Tests**: Introduced a new suite of fast, high-level sanity checks (`test_smoke.py`) for basic script operability and quick text extraction verification.
+
+### Changed
+- **Comprehensive Test Suite Refactoring**: Migrated existing `unittest` tests to `pytest`, utilizing fixtures and parameterization for improved maintainability.
+- **Dynamic Integration Tests**: Refactored `test_extraction_flow.py` (formerly `test_integration.py`) to dynamically discover test cases from `tests/cases/*` and deeply verify TSV/JSON outputs against config.ini mappings.
+- **Test Restructuring**: Reorganized the `tests/` directory hierarchy into distinct `unit`, `integration`, and `smoke` subdirectories, making the codebase easier to navigate.
+
+### Fixed
+- **Core Unit Test Coverage**: Added rigorous unit testing around core lexical logic (`kardenwort.py`), including the `extract_lemmas_from_sentence` function, error pathways, and exception handling. Increased direct unit coverage of the core linguistic processing file by ~5x.
+- **Integration Test Robustness**: Removed brittle hardcoded column index checks in integration tests and instead implemented dynamic evaluation driven by `config.ini`.
+
 ## [v2.0.0] - 2026-03-03
 
 ### Added

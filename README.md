@@ -6,7 +6,7 @@
 
 > *Kontext. Kern. Karte.* (Context. Core. Card.)
 
-[![Version](https://img.shields.io/badge/version-v1.52.2-blue)](https://github.com/kardenwort/20250913122858-kardenwort)  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Version](https://img.shields.io/badge/version-v2.0.4-blue)](https://github.com/kardenwort/20250913122858-kardenwort)  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 **Kardenwort** is an intelligent command-line utility designed to accelerate language learning by deconstructing text and automatically creating context-rich flashcards for **Anki**. It serves as a powerful offline companion to your study materials, transforming any text—books, articles, or AI-generated content—into a structured vocabulary list ready for efficient learning.
 
@@ -20,6 +20,7 @@ This tool is not just a word collector; it's an intelligent pipeline powered by 
   - [Key Advantages and Differences from Alternatives](#key-advantages-and-differences-from-alternatives)
   - [Project Structure](#project-structure)
   - [Installation and Setup](#installation-and-setup)
+    - [Setup Steps](#setup-steps)
   - [Usage and Workflows](#usage-and-workflows)
     - [Command-Line Runner](#command-line-runner)
     - [Using Pre-configured Windows CMD Scripts](#using-pre-configured-windows-cmd-scripts)
@@ -48,6 +49,7 @@ This tool is not just a word collector; it's an intelligent pipeline powered by 
   - [Important Notes](#important-notes)
   - [Our Ecosystem](#our-ecosystem)
   - [Development and Testing](#development-and-testing)
+    - [Running Tests and Coverage](#running-tests-and-coverage)
     - [Development Repositories](#development-repositories)
   - [My Personal Motivation](#my-personal-motivation)
   - [Kardenwort Ecosystem](#kardenwort-ecosystem)
@@ -467,9 +469,9 @@ In the `[anki_fields]` section of `config.ini`, list the fields of your Anki Not
 
 ```ini
 [anki_fields]
-1 = Quotation
-2 = WordSource
-3 = SentenceSource
+Quotation
+WordSource
+SentenceSource
 ...
 ```
 
@@ -536,6 +538,28 @@ Kardenwort is a suite of integrated tools designed to work together seamlessly:
 If you need the latest updates, want to access intermediate versions, or wish to explore the development history and feature branches, please refer to our dedicated development repositories where active development takes place.
 
 Every two weeks, the code is cleanly transferred from these development repos to the main public repositories. A new stable build is then created and tagged with a common version number across all related projects.
+
+### Running Tests and Coverage
+
+The project uses `pytest` for all testing. The test suite is organized into three distinct tiers:
+*   **`tests/smoke/`**: Extremely fast, high-level sanity checks to ensure the CLI boots and basic string extractions work without fatal errors.
+*   **`tests/unit/`**: Granular tests targeting isolated functions, particularly core lexical logic (`kardenwort.py`) and command-line configurations (`kardenwort_runner.py`).
+*   **`tests/integration/`**: End-to-end tests that process full parallel text files dynamically discovered from the `tests/cases/*` directory. These tests physically generate TSV outputs and validate that the columns match their `config.ini` field mappings seamlessly.
+
+**Commands:**
+Ensure your virtual environment is active before running tests.
+
+```bash
+# Run ALL tests (smoke, unit, and integration)
+python -m pytest tests/ -v
+
+# Run only a specific suite (e.g., unit tests)
+python -m pytest tests/unit/ -v
+
+# Run tests and generate a code coverage report for the source code
+# (requires the pytest-cov package)
+python -m pytest tests/ -v --cov=src --cov-report=term-missing
+```
 
 ### Development Repositories
 

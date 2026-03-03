@@ -139,3 +139,7 @@ old_kardenwort.py
 .kiro
 .qoder
 config.ini
+
+coverage.json
+check_cov.py
+.coverage

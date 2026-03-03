@@ -169,3 +169,175 @@ def test_apply_field_mapping():
     mapping = {"A": "src1", "B": "src2"}
     apply_field_mapping(row, data, mapping, f_map)
     assert row == ["VAL1", "VAL2"]
+
+from kardenwort.core.kardenwort import _format_gcs_component_case, _cleanup_temp_files, TEMP_FILES_TO_CLEANUP
+
+def test_format_gcs_component_case():
+    assert _format_gcs_component_case("") == ""
+    assert _format_gcs_component_case("A") == "A"
+    assert _format_gcs_component_case("HAUS") == "Haus"
+    assert _format_gcs_component_case("auto") == "auto" # The function does not capitalize the first letter; it preserves it.
+
+def test_cleanup_temp_files(tmp_path):
+    f1 = tmp_path / "1.txt"
+    f2 = tmp_path / "2.txt"
+    f1.write_text("test")
+    
+    # f2 doesn't exist, shouldn't crash
+    TEMP_FILES_TO_CLEANUP.clear()
+    TEMP_FILES_TO_CLEANUP.extend([str(f1), str(f2)])
+    
+    _cleanup_temp_files()
+    assert not f1.exists()
+    
+    # Cleanup state
+    TEMP_FILES_TO_CLEANUP.clear()
+
+def test_load_dictionary_errors(tmp_path, capsys):
+    # Test missing file error
+    dic = load_dictionary(str(tmp_path / "missing.dic"))
+    assert len(dic) == 0
+    captured = capsys.readouterr()
+    assert "Dictionary file not found" in captured.err
+
+    # Test general exception (e.g., passing a directory instead of a file)
+    dic = load_dictionary(str(tmp_path))
+    assert len(dic) == 0
+    captured = capsys.readouterr()
+    assert "Error reading dictionary file" in captured.err
+
+def test_load_lemma_override_rules_errors(tmp_path, capsys):
+    o_file = tmp_path / "bad_override.tsv"
+    # Format: Result_Lemma \t Original_Word \t Target_Lemma \t Context
+    content = [
+        "too\tshort", # malformed line < 3 cols
+        "missing\ttarget\t", # empty target_lemma
+        "\t\tvalid_target" # missing spacy_lemma and source_word
+    ]
+    o_file.write_text("\n".join(content), encoding="utf-8")
+    
+    rules = load_lemma_override_rules(str(o_file))
+    captured = capsys.readouterr()
+    
+    assert "Skipping malformed line 1" in captured.err
+    assert "Skipping invalid rule on line 2" in captured.err
+    assert "Skipping invalid rule on line 3" in captured.err
+    assert not rules['priority1']
+
+def test_extract_lemmas_from_sentence():
+    from kardenwort.core.kardenwort import extract_lemmas_from_sentence
+    
+    class MockMorph:
+        def __init__(self, data): self.data = data
+        def get(self, key, default=None): return self.data.get(key, default)
+        
+    class MockToken:
+        def __init__(self, text, lemma, pos, i, dep, head_i=None, is_alpha=True, like_url=False, like_email=False, is_sent_start=False):
+            self.text = text
+            self.lemma_ = lemma
+            self.pos_ = pos
+            self.i = i
+            self.dep_ = dep
+            self.head = MagicMock()
+            self.head.i = head_i
+            self.is_alpha = is_alpha
+            self.like_url = like_url
+            self.like_email = like_email
+            self.is_sent_start = is_sent_start
+            self.morph = MockMorph({})
+
+    # "Das ist ein Test." -> skip "Das" (stop word? wait, no stop word logic here, just extracts all).
+    # But wait, extract_lemmas_from_sentence extracts EVERYTHING that is is_alpha.
+    
+    t0 = MockToken("Das", "der", "PRON", 0, "sb", is_sent_start=True)
+    t1 = MockToken("ist", "sein", "AUX", 1, "ROOT")
+    t2 = MockToken("ein", "ein", "DET", 2, "nk")
+    t3 = MockToken("Test", "Test", "NOUN", 3, "pd")
+    t4 = MockToken(".", ".", "PUNCT", 4, "punct", is_alpha=False)
+    
+    doc = [t0, t1, t2, t3, t4]
+    
+    class MockNLP:
+        lang = 'de'
+        def __call__(self, text):
+            return doc
+    
+    class MockArgs:
+        de_force_noun_capitalization = True
+        force_proper_noun_capitalization = True
+        de_gcs_part_singularization = 'none'
+
+    from kardenwort.core import kardenwort
+    original_nlp = getattr(kardenwort, 'nlp', None)
+    kardenwort.nlp = MockNLP()
+    
+    try:
+        lemmas = extract_lemmas_from_sentence(
+            "Das ist ein Test.",
+            lemma_sort_index={"Sein": 0, "Test": 1, "Der": 2, "Ein": 3},
+            nlp_model=MockNLP(),
+            de_dictionary=set(["Test"]),
+            lemma_override_rules={},
+            de_gcs_pos_tags=["NOUN", "PROPN"],
+            args=MockArgs()
+        )
+        
+        # We expect: "sein", "Test", "der", "ein" (but formatted with capitalization)
+        # Because we mocked de_force_noun_capitalization=True, NOUNs become capitalized.
+        # "Test" becomes "Test". "sein" becomes "Sein" (wait, format_lemma_capitalization doesn't change verbs if not NOUN, but `str.capitalize()` might not be called on verbs).
+        # Actually, let's just see what it produces: "der", "sein", "ein", "Test".
+        # deduplicate_lemmas prefers capitalized forms.
+        assert "Test" in lemmas
+        assert len(lemmas) == 4
+    finally:
+        kardenwort.nlp = original_nlp
+
+
+def test_load_lemma_override_rules_regex(tmp_path):
+    o_file = tmp_path / "regex_override.tsv"
+    content = [
+        "Result_Lemma\tOriginal_Word\tTarget_Lemma\tContext",
+        "spm1\tregex:.*word.*\ttgt1\t",
+        "\tregex:^start\ttgt2\t",
+        "spm3\t\ttgt3\tregex:.*context.*"
+    ]
+    o_file.write_text("\n".join(content), encoding="utf-8")
+    
+    rules = load_lemma_override_rules(str(o_file))
+    
+    assert len(rules['priority1_regex']) == 1
+    assert rules['priority1_regex'][0][0] == "spm1"
+    assert rules['priority1_regex'][0][1] == ".*word.*"
+    assert rules['priority1_regex'][0][2][0] == "tgt1"
+    
+    assert len(rules['priority2_regex']) == 1
+    assert rules['priority2_regex'][0][0] == "^start"
+    
+    assert "spm3" in rules['priority3']
+    assert rules['priority3']["spm3"][0][1] == "regex:.*context.*"
+
+def test_find_matching_override_in_context():
+    from kardenwort.core.kardenwort import find_matching_override_in_context
+    rules = [
+        ("tgt1", "regex:.*match.*"),
+        ("tgt2", "exact"),
+        ("tgt3", None)
+    ]
+    
+    assert find_matching_override_in_context(rules, "this is a match here") == "tgt1"
+    assert find_matching_override_in_context(rules, "we need exact phrase") == "tgt2"
+    assert find_matching_override_in_context(rules, "no context overlap") == "tgt3"
+    assert find_matching_override_in_context([("tgt", "regex:[.*")], "err") is None # testing regex error branch doesn't necessarily crash but caught
+
+def test_get_overridden_lemma_for_word_regex():
+    from kardenwort.core.kardenwort import get_overridden_lemma_for_word
+    rules = {
+        'priority1': {},
+        'priority1_regex': [("spl1", ".*match.*", ("tgt1", None))],
+        'priority2': {},
+        'priority2_regex': [(".*start.*", ("tgt2", None))],
+        'priority3': {}
+    }
+    
+    assert get_overridden_lemma_for_word("spl1", "this_is_a_match", rules, "") == "tgt1"
+    assert get_overridden_lemma_for_word("spl2", "we_start_here", rules, "") == "tgt2"

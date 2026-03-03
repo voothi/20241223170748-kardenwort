@@ -1,0 +1,20 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.9.13, pytest-8.4.2, pluggy-1.6.0
+rootdir: U:\voothi\20241223170748-kardenwort
+configfile: pyproject.toml
+collected 0 items / 1 error
+
+=================================== ERRORS ====================================
+________________ ERROR collecting tests/test_field_mapping.py _________________
+ImportError while importing test module 'U:\voothi\20241223170748-kardenwort\tests\test_field_mapping.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.9_3.9.3568.0_x64__qbz5n2kfra8p0\lib\importlib\__init__.py:127: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests\test_field_mapping.py:2: in <module>
+    from kardenwort.core.kardenwort import apply_field_mapping, get_anki_csv_header, get_field_index_map, prepare_row_data
+E   ModuleNotFoundError: No module named 'kardenwort'
+=========================== short test summary info ===========================
+ERROR tests/test_field_mapping.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+============================== 1 error in 0.12s ===============================

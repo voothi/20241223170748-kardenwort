@@ -1699,11 +1699,8 @@ def main():
     filename_group.add_argument("--stdout-print-output-basename", action="store_true", help="Print the basename of the generated output file to stdout. Useful for scripting.")
 
     output_format_group = parser.add_argument_group('Output Content & Formatting')
-    output_format_group.add_argument("--add-source-word-col", action="store_true", help="In the output file, add a column with the original, inflected source word for each lemma.")
-    output_format_group.add_argument("--add-wordlist-col", action="store_true", help="For each entry, add a field containing all unique lemmas from the source sentence.")
-    output_format_group.add_argument("--wordlist-use-br", action="store_true", help="Use HTML <br> tags instead of newlines as separators in the wordlist column. Requires --add-wordlist-col.")
-    output_format_group.add_argument("--add-header", action="store_true", help="Prepend the output file with the full Anki CSV header.")
-    output_format_group.add_argument("--add-sentence-index-col", action="store_true", help="Add a column with the sentence index number, for sorting.")
+    output_format_group.add_argument("--wordlist-use-br", action="store_true", help="Use HTML <br> tags instead of newlines as separators in the wordlist column. Automatically enabled if wordlist is in the mapping.")
+    output_format_group.add_argument("--add-header", action="store_true", default=True, help="Prepend the output file with the full Anki CSV header.")
     output_format_group.add_argument("--sentence-context-size", type=int, default=1, help="The number of sentences to include before and after the source sentence as context.")
     output_format_group.add_argument("--anki-create-subdecks", action="store_true", help="Automatically generate a parent deck and sub-decks for Anki based on the output filename.")
     output_format_group.add_argument("--anki-markdown-decks", action="store_true", help="Parse Markdown headers in source text to create a hierarchical deck structure in Anki.")
@@ -1937,6 +1934,13 @@ def main():
         print("Error: --anki-field-mapping is required when writing to an output file. The core engine no longer uses hardcoded defaults for unambiguousness.", file=sys.stderr)
         sys.exit(1)
     # -------------------------------------------
+    
+    # --- Derive legacy flags from mapping ---
+    data_sources_needed = set(field_mapping.values())
+    add_wordlist_col = "wordlist" in data_sources_needed
+    add_sentence_index_col = "sentence_index" in data_sources_needed
+    add_source_word_col = "source_word" in data_sources_needed
+    # ----------------------------------------
 
     if args.lemmas_per_line:
         if not args.text1_file:
@@ -1979,7 +1983,7 @@ def main():
              processed_output_file = process_parallel_text_files(
                 input_text, lemma_index, args.language, args.text2_file, args.text3_file,
                 args.sentence_context_size, final_output_path,
-                args.add_source_word_col, args.add_wordlist_col, args.add_sentence_index_col,
+                add_source_word_col, add_wordlist_col, add_sentence_index_col,
                 args.add_header, args.wordlist_use_br, args.stdout_print_output_basename,
                 args.de_gcs, gcs_automaton, args.de_gcs_add_parts_to_wordlist, de_dictionary, lemma_override_rules,
                 args.de_gcs_pos_tags, field_mapping, anki_header, args, **processing_options
@@ -1989,7 +1993,7 @@ def main():
                  print("Error: No input provided for single text processing.", file=sys.stderr); exit(1)
              processed_output_file = process_single_text(
                 input_text, lemma_index, args.language, args.sentence_context_size,
-                final_output_path, args.add_source_word_col, args.add_wordlist_col, args.add_sentence_index_col,
+                final_output_path, add_source_word_col, add_wordlist_col, add_sentence_index_col,
                 args.add_header, args.wordlist_use_br, args.stdout_print_output_basename,
                 args.de_gcs, gcs_automaton, args.de_gcs_add_parts_to_wordlist, de_dictionary, lemma_override_rules,
                 args.de_gcs_pos_tags, field_mapping, anki_header, args, **processing_options
@@ -2017,7 +2021,7 @@ def main():
         processed_output_file = process_parallel_sentences_to_csv(
             args.language, lemma_index, args.text1_file, args.text2_file, args.text3_file,
             args.sentence_context_size, final_output_path,
-            args.add_wordlist_col, args.add_sentence_index_col, args.add_header, args.wordlist_use_br, args.stdout_print_output_basename,
+            add_wordlist_col, add_sentence_index_col, args.add_header, args.wordlist_use_br, args.stdout_print_output_basename,
             args.de_gcs_pos_tags, field_mapping, anki_header, args, **processing_options
         )
 

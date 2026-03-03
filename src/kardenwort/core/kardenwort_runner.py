@@ -80,13 +80,16 @@ def get_script_args(args, python_path, workspace_path, config):
         "--basename-add-timestamp",
         "--basename-add-first-words",
         "--stdout-print-output-basename",
-        "--add-source-word-col",
-        "--add-wordlist-col",
-        "--add-sentence-index-col",
-        "--wordlist-use-br",
-        "--add-header",
         "--sentence-context-size", "4",
     ]
+    
+    wordlist_use_br = config.getboolean('output_format', 'wordlist_use_br', fallback=False)
+    if wordlist_use_br:
+        base_args.append("--wordlist-use-br")
+        
+    add_header = config.getboolean('output_format', 'add_header', fallback=True)
+    if add_header:
+        base_args.append("--add-header")
 
     if 'anki_fields' not in config:
         sys.exit("Error: Missing '[anki_fields]' section in config.ini. Please update your configuration following config.ini.template to define your Anki structure.")

@@ -1,5 +1,19 @@
 # Release Notes
 
+## [v2.0.0] - 2026-03-03
+
+### Added
+- **Configuration Migration**: Migrated legacy command-line arguments (`--wordlist-use-br`, `--add-header`) to `config.ini` for better maintainability and consistency.
+- **Dynamic Field Mapping**: Refactored `kardenwort.py` to automatically derive extraction flags from the `anki_field_mapping` in `config.ini`, simplifying the command-line interface.
+- **Improved Runner Logic**: Updated `kardenwort_runner.py` to utilize the new configuration structure, ensuring a seamless end-to-end extraction process.
+
+### Changed
+- **Directory Cleanup**: Removed obsolete `.kiro` and `.qoder` directories from the project structure.
+- **Git Configuration**: Improved `.gitignore` and removed `config.ini` from version control to prevent local configuration leaks.
+
+### Fixed
+- **Configuration Consistency**: Resolved discrepancies between command-line arguments and `config.ini` parameters, establishing a clear priority for configuration settings.
+
 ## [v1.52.2] - 2026-02-21
 
 ### Added

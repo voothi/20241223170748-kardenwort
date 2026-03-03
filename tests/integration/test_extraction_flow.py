@@ -44,7 +44,7 @@ def get_field_mapping_indices(config, extraction_type):
 
 class IntegrationTester:
     def __init__(self):
-        self.project_root = Path(__file__).resolve().parent.parent
+        self.project_root = Path(__file__).resolve().parent.parent.parent
         self.runner_path = self.project_root / "src" / "kardenwort" / "core" / "kardenwort_runner.py"
         self.config = load_integration_config(self.project_root)
         self.results_dir = self.project_root / "results"
@@ -134,7 +134,7 @@ def tester():
     return IntegrationTester()
 
 def discover_test_cases():
-    cases_root = Path(__file__).resolve().parent / "cases"
+    cases_root = Path(__file__).resolve().parent.parent / "cases"
     cases = []
     # Only look at top-level directories in cases/ to avoid legacy/stale subfolders like 'a/'
     for case_dir in cases_root.iterdir():

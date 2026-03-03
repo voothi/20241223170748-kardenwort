@@ -5,7 +5,7 @@ import sys
 from unittest.mock import MagicMock
 
 # Add src to sys.path to allow importing from kardenwort
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / 'src'))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / 'src'))
 
 from kardenwort.core.kardenwort_runner import get_script_args
 

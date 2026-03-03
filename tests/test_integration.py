@@ -9,11 +9,9 @@ class TestIntegration(unittest.TestCase):
         self.project_root = Path(__file__).resolve().parent.parent
         self.runner_path = self.project_root / "src" / "kardenwort" / "core" / "kardenwort_runner.py"
         
-        # Determine python executable from config.ini if possible, otherwise use sys.executable
-        # For simplicity in this test, we use sys.executable but ensure src is in PYTHONPATH
         self.env = os.environ.copy()
         self.env["PYTHONPATH"] = str(self.project_root / "src")
-        
+
         self.results_dir = self.project_root / "results"
         if not self.results_dir.exists():
             self.results_dir.mkdir(parents=True)
@@ -30,37 +28,39 @@ class TestIntegration(unittest.TestCase):
         )
         return result
 
-    def test_german_mixed_triple(self):
-        # We use the defaults from config.ini (which should point to text1.txt, etc.)
-        # Or we can pass --text if we want to be isolated, but the plan asked for cases in tests/cases.
-        # However, kardenwort_runner.py currently reads text files from source_texts_dir in config.ini.
+    def test_german_mixed_triple_from_cases(self):
+        test_case_dir = self.project_root / "tests" / "cases" / "20260303182012-de"
         
         args = [
             "--language", "de",
             "--mode", "mixed-triple",
             "--deduplication-scope", "global",
-            "--suspend-cards"
+            "--suspend-cards",
+            "--text1-file", str(test_case_dir / "text1.txt"),
+            "--text2-file", str(test_case_dir / "text2.txt"),
+            "--text3-file", str(test_case_dir / "text3.txt")
         ]
         
         result = self.run_runner(args)
         
-        if result.returncode != 0:
-            print(f"STDOUT: {result.stdout}")
-            print(f"STDERR: {result.stderr}")
-            
         self.assertEqual(result.returncode, 0, f"Runner failed with: {result.stderr}")
-        self.assertIn("All operations for mixed-triple mode completed successfully", result.stderr)
+        self.assertIn("All operations for mixed-triple mode completed successfully", result.stdout + result.stderr)
 
-    def test_english_mixed_triple(self):
+    def test_english_mixed_triple_from_cases(self):
+        test_case_dir = self.project_root / "tests" / "cases" / "20260303182028-en"
+        
         args = [
             "--language", "en",
             "--mode", "mixed-triple",
-            "--deduplication-scope", "global"
+            "--deduplication-scope", "global",
+            "--text1-file", str(test_case_dir / "text1.txt"),
+            "--text2-file", str(test_case_dir / "text2.txt"),
+            "--text3-file", str(test_case_dir / "text3.txt")
         ]
         
         result = self.run_runner(args)
         self.assertEqual(result.returncode, 0, f"Runner failed with: {result.stderr}")
-        self.assertIn("All operations for mixed-triple mode completed successfully", result.stderr)
+        self.assertIn("All operations for mixed-triple mode completed successfully", result.stdout + result.stderr)
 
 if __name__ == '__main__':
     unittest.main()

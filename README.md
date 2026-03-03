@@ -564,15 +564,14 @@ The project uses `pytest` for all testing. The test suite is organized into thre
 Ensure your virtual environment is active before running tests.
 
 ```bash
-# Run ALL tests (smoke, unit, and integration)
-python -m pytest tests/ -v
+# Run ALL tests (smoke, unit, and integration) using the dedicated virtual environment
+U:\voothi\20250825231214-spacy-env\Scripts\python.exe -m pytest tests/ -v
 
 # Run only a specific suite (e.g., unit tests)
-python -m pytest tests/unit/ -v
+u:\voothi\20250825231214-spacy-env\Scripts\python.exe -m pytest tests/unit/ -v
 
 # Run tests and generate a code coverage report for the source code
-# (requires the pytest-cov package)
-python -m pytest tests/ -v --cov=src --cov-report=term-missing
+u:\voothi\20250825231214-spacy-env\Scripts\python.exe -m pytest tests/ -v --cov=src --cov-report=term-missing
 ```
 
 ### Development Repositories

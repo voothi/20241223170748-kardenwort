@@ -18,16 +18,17 @@
 ## [v2.0.0] - 2026-03-03
 
 ### Added
-- **Configuration Migration**: Migrated legacy command-line arguments (`--wordlist-use-br`, `--add-header`) to `config.ini` for better maintainability and consistency.
-- **Dynamic Field Mapping**: Refactored `kardenwort.py` to automatically derive extraction flags from the `anki_field_mapping` in `config.ini`, simplifying the command-line interface.
-- **Improved Runner Logic**: Updated `kardenwort_runner.py` to utilize the new configuration structure, ensuring a seamless end-to-end extraction process.
+- **Configuration Migration**: Migrated legacy command-line arguments (`--wordlist-use-br`, `--add-header`) to `config.ini` for better maintainability. CLI arguments now act as overrides for centralized defaults.
+- **Automated Extraction Logic**: Refactored the core engine to automatically detect and enable extraction logic (e.g., wordlist generation, sentence indexing, inflected form capture) based on the `anki_field_mapping` in `config.ini`.
+- **Baseline Integration Tests**: Developed an automated integration test suite (`tests/test_integration.py`) to verify multi-language `mixed-triple` mode extraction against `tests/source_texts/`.
+- **Improved Runner Coordination**: Updated `kardenwort_runner.py` to synchronize configuration across the entire pipeline, ensuring seamless data flow from text to Anki.
 
 ### Changed
-- **Directory Cleanup**: Removed obsolete `.kiro` and `.qoder` directories from the project structure.
-- **Git Configuration**: Improved `.gitignore` and removed `config.ini` from version control to prevent local configuration leaks.
+- **Repository Hygiene**: Deleted obsolete and redundant directories `.kiro`, `.qoder`, and `./a` (archive).
+- **Environment Safety**: Finalized `.gitignore` patterns and removed `config.ini` from the Git cache to prevent leaking local environment paths while preserving `config.ini.template`.
 
 ### Fixed
-- **Configuration Consistency**: Resolved discrepancies between command-line arguments and `config.ini` parameters, establishing a clear priority for configuration settings.
+- **Configuration Consistency**: Resolved internal discrepancies between command-line argument parsers and configuration file readers, establishing a strict and predictable parameter priority.
 
 ## [v1.52.2] - 2026-02-21
 

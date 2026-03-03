@@ -404,11 +404,11 @@ Below is a detailed list of all available arguments for the core processing scri
 | :------------------------- | :-------------------------------------------------------------------------------------------------------- | :-------------------------- |
 | `--sentence-context-size`  | Sets the number of preceding and succeeding sentences (`N`) to include as context. Runner default is `4`. | `--sentence-context-size 2` |
 | `--tts-destination-lang`   | The destination language for TTS field activation (e.g., 'ru', 'en').                                     | `--tts-destination-lang ru` |
-| `--add-wordlist-col`       | Include a list of all unique words from the source sentence in the `SentenceSourceWordlist` field.        | `--add-wordlist-col`        |
-| `--wordlist-use-br`        | Use `<br>` tags instead of newlines for the wordlist.                                                     | `--wordlist-use-br`         |
-| `--add-header`             | Include the header row in the output TSV file.                                                            | `--add-header`              |
-| `--add-source-word-col`    | Add the original inflected form of a word to the `WordSourceInflectedForm` field.                         | `--add-source-word-col`     |
-| `--add-sentence-index-col` | Add a column with the sentence index for chronological sorting.                                           | `--add-sentence-index-col`  |
+| `--add-wordlist-col`       | **(Auto-enabled)** Include a list of unique words in `SentenceSourceWordlist`. Driven by mapping. | `--add-wordlist-col`        |
+| `--wordlist-use-br`        | Use `<br>` tags for wordlist. Can be set in `config.ini` `[output_format]`.            | `--wordlist-use-br`         |
+| `--add-header`             | Include TSV header row. Can be set in `config.ini` `[output_format]`.                  | `--add-header`              |
+| `--add-source-word-col`    | **(Auto-enabled)** Add inflected word to `WordSourceInflectedForm`. Driven by mapping. | `--add-source-word-col`     |
+| `--add-sentence-index-col` | **(Auto-enabled)** Add index for sorting to `SentenceSourceIndex`. Driven by mapping.  | `--add-sentence-index-col`  |
 
 ### NLP & Lemmatization Control
 | Argument                             | Description                                                                                                                                        | Example                                      |

@@ -1,4 +1,4 @@
-# Testen deutscher trennbarer Verben und anderer
+Testen deutscher trennbarer Verben und anderer
 ## Teil 1
 Ich stehe morgen früh auf.
 Sie räumt ihr Zimmer immer auf.
@@ -9,9 +9,13 @@ Sie zieht die Jacke aus.
 Er bringt das Buch zurück. 
 ## Teil 2
 Du schläfst nachmittags ein.
+### Teil 2.1
 Sie gibt die Hausaufgaben ab. 
+### Teil 2.2
 Ich esse die Suppe auf.
+#### Teil 2.2.1
 Er fährt morgen weg.
+## Teil 3
 Morgen fährt der neue Donaudampfschifffahrtsgesellschaftskapitän mit seinem Boot donauabwärts ab.
 Vor der Anmeldung seines neuen Autos schließt der Besitzer schnell noch eine neue Kraftfahrzeughaftpflichtversicherung ab.
 Der Landtag von Mecklenburg-Vorpommern schafft das Rindfleischetikettierungsüberwachungsaufgabenübertragungsgesetz nach einer EU-Änderung wieder ab.

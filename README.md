@@ -83,6 +83,7 @@ Our core principles are:
 *   **Direct Anki Integration:** Automatically imports generated cards into Anki via a runner script.
 *   **GoldenDict-ng Integration:** Create vocabulary lists on-the-fly directly from your favorite dictionary application.
 *   **Auditory-Focused Cards:** The template is designed to work with audio, helping you practice listening and pronunciation.
+*   **Configuration-Driven Intelligence:** Extraction features (wordlists, sorting, indexing) are automatically enabled based on your Anki field mapping, reducing CLI complexity and ensuring consistent output.
 
 [Return to Top](#map-of-contents)
 
@@ -458,6 +459,15 @@ The behavior of the `kardenwort_runner.py` script is controlled by `config.ini`.
 
 Relative paths are supported and are calculated from the location of the `config.ini` file, making the setup portable.
 
+### Configuration Priority and Overrides
+Kardenwort follows a strict hierarchy for resolving settings:
+1.  **Command-Line Arguments**: Any argument passed directly to `kardenwort_runner.py` or `kardenwort.py` takes the highest priority. This allows you to override global defaults for specific runs.
+2.  **`config.ini` Settings**: If an argument is not provided via CLI, the script falls back to the values defined in your configuration file.
+3.  **Internal Defaults**: If neither a CLI argument nor a config setting is present, the script uses safe, built-in defaults.
+
+> [!NOTE]
+> Since version 2.0.0, output formatting options like `--wordlist-use-br` and `--add-header` should be primarily managed in the `[output_format]` section of `config.ini` for a cleaner CLI experience.
+
 [Return to Top](#map-of-contents)
 
 ## Flexible Anki Field Mapping
@@ -472,8 +482,12 @@ In the `[anki_fields]` section of `config.ini`, list the fields of your Anki Not
 Quotation
 WordSource
 SentenceSource
+SentenceSourceWordlist
 ...
 ```
+
+> [!TIP]
+> You no longer need to number your fields (e.g., `1 = Quotation`). A simple list is preferred; the system automatically calculates indices based on the line order.
 
 ### 2. Mapping Data Sources
 Use the `[anki_field_mapping.word]` and `[anki_field_mapping.sentence]` sections to assign internal data to these fields.

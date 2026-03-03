@@ -29,13 +29,20 @@ class TestIntegration(unittest.TestCase):
         return result
 
     def test_german_mixed_triple_from_cases(self):
-        test_case_dir = self.project_root / "tests" / "source_texts" / "de"
+        test_case_dir = self.project_root / "tests" / "cases" / "20260303214721-de"
         
         args = [
             "--language", "de",
             "--mode", "mixed-triple",
+            "--tts-destination-lang", "ru",
             "--deduplication-scope", "global",
+            "--anki-create-subdecks",
+            "--anki-markdown-decks",
+            "--anki-sentence-subdecks",
+            "--anki-deck-content", "parent-source", "parent-translations", "subdeck-source", "subdeck-translations",
             "--suspend-cards",
+            "--show-success-message",
+            "--play-sound-on-completion",
             "--text1-file", str(test_case_dir / "text1.txt"),
             "--text2-file", str(test_case_dir / "text2.txt"),
             "--text3-file", str(test_case_dir / "text3.txt")
@@ -47,12 +54,20 @@ class TestIntegration(unittest.TestCase):
         self.assertIn("All operations for mixed-triple mode completed successfully", result.stdout + result.stderr)
 
     def test_english_mixed_triple_from_cases(self):
-        test_case_dir = self.project_root / "tests" / "source_texts" / "en"
+        test_case_dir = self.project_root / "tests" / "cases" / "20260303214728-en"
         
         args = [
             "--language", "en",
             "--mode", "mixed-triple",
+            "--tts-destination-lang", "ru",
             "--deduplication-scope", "global",
+            "--anki-create-subdecks",
+            "--anki-markdown-decks",
+            "--anki-sentence-subdecks",
+            "--anki-deck-content", "parent-source", "parent-translations", "subdeck-source", "subdeck-translations",
+            "--suspend-cards",
+            "--show-success-message",
+            "--play-sound-on-completion",
             "--text1-file", str(test_case_dir / "text1.txt"),
             "--text2-file", str(test_case_dir / "text2.txt"),
             "--text3-file", str(test_case_dir / "text3.txt")

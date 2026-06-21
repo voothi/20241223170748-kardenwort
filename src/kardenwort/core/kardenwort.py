@@ -1,5 +1,4 @@
 import sys
-import spacy
 import csv
 import argparse
 from datetime import datetime
@@ -1670,6 +1669,51 @@ def process_lemmas_per_line(
     return output_file_path
 
 def main():
+    import configparser
+    from pathlib import Path
+
+    # --- Auto-lite redirection check ---
+    config_path = Path(__file__).resolve().parent.parent.parent.parent / 'config.ini'
+    auto_lite_mode = False
+    if config_path.exists():
+        config = configparser.ConfigParser(allow_no_value=True)
+        config.read(config_path, encoding='utf-8')
+        if 'optimization' in config and config.getboolean('optimization', 'auto_lite_mode', fallback=False):
+            auto_lite_mode = True
+
+    if auto_lite_mode:
+        input_text = ""
+        if len(sys.argv) == 2 and not sys.argv[1].startswith('-'):
+            input_text = sys.argv[1]
+        elif "--text" in sys.argv:
+            text_idx = sys.argv.index("--text")
+            if text_idx + 1 < len(sys.argv):
+                input_text = sys.argv[text_idx + 1]
+
+        if input_text:
+            cleaned = input_text.strip()
+            if cleaned and " " not in cleaned and "\n" not in cleaned and "\t" not in cleaned:
+                lang = ""
+                if "--language" in sys.argv:
+                    lang_idx = sys.argv.index("--language")
+                    if lang_idx + 1 < len(sys.argv):
+                        lang = sys.argv[lang_idx + 1]
+                
+                sys.argv = [sys.argv[0]]
+                if lang:
+                    sys.argv.append(f"--langs={lang}")
+                sys.argv.append(cleaned)
+                
+                try:
+                    import kardenwort_lite
+                    kardenwort_lite.main()
+                    sys.exit(0)
+                except ImportError:
+                    pass # Fall back to heavy mode if lite script is missing
+
+    # --- End Auto-lite check ---
+    import spacy
+
     parser = argparse.ArgumentParser(
         description="Extract and process words or sentences from text.",
         formatter_class=argparse.RawTextHelpFormatter

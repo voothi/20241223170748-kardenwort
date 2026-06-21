@@ -206,6 +206,11 @@ Destination-de-DE = tts_dest_de
 Destination-uk-UA = tts_dest_uk
 Destination-ru-RU = tts_dest_ru
 
+[optimization]
+; Automatically redirect to the lightweight script (sub-100ms) when the input is a single word.
+; If the input contains multiple words, normal heavy mode (spaCy) is used.
+auto_lite_mode = True
+
 [anki_field_mapping.sentence]
 ; Define custom mappings for sentence extraction mode.
 ; Format: AnkiFieldName = DataSourceName

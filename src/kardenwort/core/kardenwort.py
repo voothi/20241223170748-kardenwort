@@ -1699,16 +1699,37 @@ def main():
                     if lang_idx + 1 < len(sys.argv):
                         lang = sys.argv[lang_idx + 1]
                 
-                sys.argv = [sys.argv[0]]
+                has_html_format = False
+                original_argv = sys.argv[:]
+                if "--stdout-format" in original_argv:
+                    fmt_idx = original_argv.index("--stdout-format")
+                    if fmt_idx + 1 < len(original_argv) and original_argv[fmt_idx + 1] == "html":
+                        has_html_format = True
+                
+                sys.argv = [original_argv[0]]
                 if lang:
                     sys.argv.append(f"--langs={lang}")
                 sys.argv.append(cleaned)
                 
                 try:
+                    import io
+                    import contextlib
                     import kardenwort_lite
-                    kardenwort_lite.main()
+                    
+                    f = io.StringIO()
+                    f.reconfigure = lambda *args, **kwargs: None
+                    with contextlib.redirect_stdout(f):
+                        kardenwort_lite.main()
+                        
+                    lemma = f.getvalue()
+                    
+                    if has_html_format:
+                        print(f"<table>\n<tr><td>{lemma}</td><td>{cleaned}</td></tr>\n</table>\n", end="")
+                    else:
+                        print(lemma, end="")
                     sys.exit(0)
                 except ImportError:
+                    sys.argv = original_argv
                     pass # Fall back to heavy mode if lite script is missing
 
     # --- End Auto-lite check ---

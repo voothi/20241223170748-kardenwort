@@ -86,8 +86,10 @@ def set_clipboard(text):
 
 def main():
     # Ensure UTF-8 encoding for standard streams (useful for Windows consoles)
-    sys.stdin.reconfigure(encoding='utf-8')
-    sys.stdout.reconfigure(encoding='utf-8')
+    if sys.stdin is not None:
+        sys.stdin.reconfigure(encoding='utf-8')
+    if sys.stdout is not None:
+        sys.stdout.reconfigure(encoding='utf-8')
 
     # Default languages supported
     langs = ('en', 'de', 'ru', 'uk')
@@ -106,7 +108,7 @@ def main():
     if word_args:
         word = word_args[0]
         use_clipboard = True
-    else:
+    elif sys.stdin is not None:
         word = sys.stdin.read()
 
     word = word.strip()
@@ -117,7 +119,8 @@ def main():
     cleaned_word = word.strip(string.punctuation + " \t\n\r«»„“")
     
     if not cleaned_word:
-        print(word, end="")
+        if sys.stdout is not None:
+            print(word, end="")
         if use_clipboard:
             set_clipboard(word)
         return
@@ -138,11 +141,13 @@ def main():
 
     try:
         lemma = simplemma.lemmatize(cleaned_word, lang=active_langs)
-        print(lemma, end="")
+        if sys.stdout is not None:
+            print(lemma, end="")
         if use_clipboard:
             set_clipboard(lemma)
     except Exception:
-        print(cleaned_word, end="")
+        if sys.stdout is not None:
+            print(cleaned_word, end="")
         if use_clipboard:
             set_clipboard(cleaned_word)
 

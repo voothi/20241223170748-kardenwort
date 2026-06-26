@@ -145,3 +145,7 @@ check_cov.py
 .coverage
 
 .pytest_cache
+.agent/
+.kilocode/
+AGENTS.md
+openspec/

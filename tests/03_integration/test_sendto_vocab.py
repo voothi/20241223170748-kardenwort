@@ -1,0 +1,213 @@
+import configparser
+import json
+import os
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+from unittest.mock import MagicMock
+
+import pytest
+
+# Add project root to sys.path to allow importing scripts package
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+
+import scripts.install as inst
+import scripts.sendto_vocab as sv
+
+# ==============================================================================
+# UNIT TESTS FOR SENDTO_VOCAB.PY HELPERS
+# ==============================================================================
+
+def test_parse_filename():
+    # Scenario 1: Sequential ZID plus numbered postfix
+    p1 = Path("20260626231725-text.1.en.txt")
+    zid, title, lang, ext = sv.parse_filename(p1)
+    assert zid == "20260626231725"
+    assert title == "text.1"
+    assert lang == "en"
+    assert ext == "txt"
+    
+    # Scenario 2: Plain numbered files
+    p2 = Path("text1.txt")
+    zid, title, lang, ext = sv.parse_filename(p2)
+    assert zid is None
+    assert title == "text1"
+    assert lang is None
+    assert ext == "txt"
+    
+    # Scenario 3: Same-ZID batch
+    p3 = Path("20260626232001-text1.txt")
+    zid, title, lang, ext = sv.parse_filename(p3)
+    assert zid == "20260626232001"
+    assert title == "text1"
+    assert lang is None
+    assert ext == "txt"
+
+def test_detect_language():
+    # Valid postfix
+    paths1 = [Path("text.1.en.txt"), Path("text.2.de.txt")]
+    assert sv.detect_language(paths1, "de") == "en"
+    
+    # Unsupported postfix
+    paths2 = [Path("text.1.ru.txt")]
+    assert sv.detect_language(paths2, "en") == "en"
+    
+    # No postfix
+    paths3 = [Path("text1.txt")]
+    assert sv.detect_language(paths3, "de") == "de"
+
+def test_sort_send_order():
+    # Mix of different files to check sorting keys
+    paths = [
+        Path("20260626232001-text3.txt"),
+        Path("20260626231725-text.1.en.txt"),
+        Path("text2.txt"),
+        Path("20260626232001-text1.txt"),
+        Path("text1.txt")
+    ]
+    
+    # Expected order:
+    # 1. Plain files (no ZID, primary key = "") sorted by index: text1.txt, text2.txt
+    # 2. Files with ZID: 20260626231725-text.1.en.txt, then 20260626232001-text1.txt, then 20260626232001-text3.txt
+    sorted_paths = sv.sort_send_order(paths)
+    expected = [
+        Path("text1.txt"),
+        Path("text2.txt"),
+        Path("20260626231725-text.1.en.txt"),
+        Path("20260626232001-text1.txt"),
+        Path("20260626232001-text3.txt")
+    ]
+    assert sorted_paths == expected
+
+def test_clean_subtitle_text():
+    raw_sub = "Hello <i>world</i>! Welcome {\\an8}here. <b>Enjoy</b> the show."
+    cleaned = sv.clean_subtitle_text(raw_sub)
+    assert cleaned == "Hello world! Welcome here. Enjoy the show."
+
+def test_stage_inputs_txt_and_srt(tmp_path):
+    sent_dir = tmp_path / "session"
+    sent_dir.mkdir()
+    
+    t1 = sent_dir / "input1.txt"
+    t1.write_text("Hello plain text.", encoding="utf-8")
+    
+    t2 = sent_dir / "input2.srt"
+    t2.write_text(
+        "1\n"
+        "00:00:01,000 --> 00:00:03,000\n"
+        "Hello <i>subtitles</i>!\n",
+        encoding="utf-8"
+    )
+    
+    staged = sv.stage_inputs([t1, t2], sent_dir)
+    
+    assert len(staged) == 3
+    assert staged[0].read_text(encoding="utf-8") == "Hello plain text."
+    assert staged[1].read_text(encoding="utf-8") == "Hello subtitles!"
+    # Slot 3 is empty placeholder
+    assert staged[2].read_text(encoding="utf-8") == ""
+
+# ==============================================================================
+# INTEGRATION TEST FOR SENDTO_VOCAB.PY MAIN FLOW
+# ==============================================================================
+
+def test_sendto_vocab_full_flow(tmp_path, monkeypatch):
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    results_dir = workspace / "results"
+    results_dir.mkdir()
+    
+    # Create mock runner script so that runner_path.exists() is True
+    runner_path = workspace / "src" / "kardenwort" / "core" / "runner.py"
+    runner_path.parent.mkdir(parents=True, exist_ok=True)
+    runner_path.write_text("# mock runner", encoding="utf-8")
+    
+    sent_dir = tmp_path / "sent_files"
+    sent_dir.mkdir()
+    
+    # Mock load_config
+    config = configparser.ConfigParser()
+    config.read_string(
+        "[environment]\n"
+        "python_executable = python\n"
+        f"kardenwort_workspace = {workspace.as_posix()}\n"
+        "[scripts]\n"
+        "kardenwort_runner_filename = runner.py\n"
+        "[project_structure]\n"
+        "generated_results_dir = results\n"
+    )
+    monkeypatch.setattr(sv, "load_config", lambda: (workspace, config))
+    
+    # Mock subprocess.run to simulate a successful runner execution
+    called_args = []
+    def mock_run(args, **kwargs):
+        called_args.append(args)
+        # Simulate runner writing a new result file
+        res_file = results_dir / "20260626232001-mock.triple.sentence.en.tsv"
+        res_file.write_text("mock sentence tsv", encoding="utf-8")
+        res_json = results_dir / "20260626232001-mock.triple.sentence.en.json"
+        res_json.write_text("{}", encoding="utf-8")
+        
+        # Return a mock completed process
+        mock_proc = MagicMock()
+        mock_proc.returncode = 0
+        return mock_proc
+        
+    monkeypatch.setattr(subprocess, "run", mock_run)
+    
+    # Create input file
+    f1 = sent_dir / "text1.txt"
+    f1.write_text("Sentence content", encoding="utf-8")
+    
+    # Mock sys.argv to simulate SendTo call
+    monkeypatch.setattr(sys, "argv", ["sendto_vocab.py", "--sendto", str(f1)])
+    
+    # Run main
+    sv.main()
+    
+    # Assertions
+    staged_dir = sent_dir / "source_texts"
+    assert (staged_dir / "text1.txt").read_text(encoding="utf-8") == "Sentence content"
+    assert (staged_dir / "text2.txt").read_text(encoding="utf-8") == ""
+    assert (staged_dir / "text3.txt").read_text(encoding="utf-8") == ""
+    
+    # Runner was called with correct arguments
+    assert len(called_args) == 1
+    run_args = called_args[0]
+    assert "--mode" in run_args
+    assert "mixed-triple" in run_args
+    assert "--text1-file" in run_args
+    assert run_args[run_args.index("--text1-file") + 1] == str(staged_dir / "text1.txt")
+    
+    # Results were relocated
+    relocated_tsv = sent_dir / "results" / "20260626232001-mock.triple.sentence.en.tsv"
+    relocated_json = sent_dir / "results" / "20260626232001-mock.triple.sentence.en.json"
+    assert relocated_tsv.exists()
+    assert relocated_json.exists()
+    assert not (results_dir / "20260626232001-mock.triple.sentence.en.tsv").exists()
+
+# ==============================================================================
+# INTEGRATION TEST FOR INSTALL.PY
+# ==============================================================================
+
+def test_install_script(tmp_path, monkeypatch):
+    # Override SENDTO_DIRECTORY to a temp folder under tmp_path
+    temp_sendto = tmp_path / "SendTo"
+    monkeypatch.setattr(inst, "SENDTO_DIRECTORY", str(temp_sendto))
+    
+    # Create a legacy shortcut to verify cleanup
+    temp_sendto.mkdir(parents=True, exist_ok=True)
+    legacy_shortcut = temp_sendto / "Kardenwort Vocab Processor.lnk"
+    legacy_shortcut.write_text("old shortcut content", encoding="utf-8")
+    
+    # Run the installer main
+    inst.main()
+    
+    # Assertions
+    # 1. Legacy shortcut should be deleted
+    assert not legacy_shortcut.exists()
+    
+    # 2. New shortcut should be created by the OS's PowerShell COM script
+    new_shortcut = temp_sendto / "Kardenwort Vocab.lnk"
+    assert new_shortcut.exists()

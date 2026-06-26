@@ -49,14 +49,31 @@ def log_ok(msg):
     print(f"{_tag_ok()} {msg}", flush=True)
 
 # ==============================================================================
+# ERROR & CONFIG HELPERS
+# ==============================================================================
+def _fail(msg: str, pause: bool = False):
+    """Logs error, optionally pauses, and exits with code 1."""
+    log_error(msg)
+    if pause:
+        pause_console(success=False)
+    sys.exit(1)
+
+def _sendto_config_get(cfg: configparser.ConfigParser, key: str, getter_name: str, fallback):
+    """Resolves config key with fallback from [sendto] to [environment]."""
+    for section in ("sendto", "environment"):
+        if section in cfg and key in cfg[section]:
+            getter = getattr(cfg, getter_name)
+            return getter(section, key)
+    return fallback
+
+# ==============================================================================
 # CONFIGURATION LOADING
 # ==============================================================================
 def load_config() -> Tuple[Path, configparser.ConfigParser]:
     """Loads configuration settings from the project's config.ini."""
     config_path = Path(__file__).resolve().parent.parent / "config.ini"
     if not config_path.exists():
-        log_error(f"Configuration file not found at {config_path}")
-        sys.exit(1)
+        _fail(f"Configuration file not found at {config_path}")
         
     config = configparser.ConfigParser(allow_no_value=True)
     config.optionxform = str
@@ -66,8 +83,8 @@ def load_config() -> Tuple[Path, configparser.ConfigParser]:
 # ==============================================================================
 # FILENAME PARSING
 # ==============================================================================
-def parse_filename(file_path: Path) -> Tuple[Optional[str], str, Optional[str], str]:
-    """Parses a filename to extract ZID, title, source language, and extension.
+def parse_filename(file_path: Path) -> Tuple[Optional[str], str, Optional[str]]:
+    """Parses a filename to extract ZID, title, and source language.
     
     Mirrors the logic in subtitle_translator.py.
     """
@@ -97,14 +114,14 @@ def parse_filename(file_path: Path) -> Tuple[Optional[str], str, Optional[str], 
         lang = None
         clean_title = remaining_stem
 
-    return zid, clean_title, lang, ext
+    return zid, clean_title, lang
 
 def detect_language(paths: List[Path], default_lang: str) -> str:
     """Picks the language from the first/primary sent file's postfix."""
     if not paths:
         return default_lang
     primary_file = paths[0]
-    _, _, lang, _ = parse_filename(primary_file)
+    _, _, lang = parse_filename(primary_file)
     if lang:
         lang_lower = lang.lower()
         if lang_lower in ('en', 'de'):
@@ -122,7 +139,7 @@ def sort_send_order(paths: List[Path]) -> List[Path]:
     
     def extract_key(item):
         index, path = item
-        zid, clean_title, lang, ext = parse_filename(path)
+        zid, clean_title, lang = parse_filename(path)
         
         # Primary: ZID (defaults to empty string so it sorts predictably)
         primary = zid if zid else ""
@@ -142,51 +159,37 @@ def sort_send_order(paths: List[Path]) -> List[Path]:
 # ==============================================================================
 # SRT PARSING & CLEANING
 # ==============================================================================
-def parse_srt(content: str) -> List[dict]:
-    """Parses SRT content into structured blocks."""
+def parse_srt(content: str) -> List[List[str]]:
+    """Parses SRT content to extract only subtitle text lines."""
     content = content.replace('\r\n', '\n').replace('\r', '\n')
-    lines = content.split('\n')
     
     blocks = []
     current_block_lines = []
-    
-    for line in lines:
+    for line in content.split('\n'):
         if line.strip() == "":
             if current_block_lines:
                 blocks.append(current_block_lines)
                 current_block_lines = []
         else:
-            current_block_lines.append(line)
+            current_block_lines.append(line.strip())
     if current_block_lines:
         blocks.append(current_block_lines)
         
     parsed_blocks = []
     for block_lines in blocks:
-        index = ""
-        timeline = ""
-        text_lines = []
+        if not block_lines:
+            continue
+        # Skip index if it's a digit
+        start_idx = 0
+        if block_lines[0].isdigit():
+            start_idx = 1
+        # Skip timeline if it contains '-->'
+        if start_idx < len(block_lines) and '-->' in block_lines[start_idx]:
+            start_idx += 1
         
-        if len(block_lines) > 0:
-            first = block_lines[0].strip()
-            if first.isdigit():
-                index = first
-                if len(block_lines) > 1 and '-->' in block_lines[1]:
-                    timeline = block_lines[1].strip()
-                    text_lines = block_lines[2:]
-                else:
-                    text_lines = block_lines[1:]
-            elif '-->' in first:
-                timeline = first
-                text_lines = block_lines[1:]
-            else:
-                text_lines = block_lines
-                
-        parsed_blocks.append({
-            'index': index,
-            'timeline': timeline,
-            'text_lines': [t.strip() for t in text_lines]
-        })
-        
+        text_lines = block_lines[start_idx:]
+        if text_lines:
+            parsed_blocks.append(text_lines)
     return parsed_blocks
 
 def clean_subtitle_text(text: str) -> str:
@@ -226,8 +229,8 @@ def stage_inputs(sorted_paths: List[Path], sent_dir: Path) -> List[Path]:
                 if src_path.suffix.lower() == ".srt":
                     blocks = parse_srt(content)
                     cleaned_lines = []
-                    for block in blocks:
-                        block_text = " ".join(block['text_lines'])
+                    for block_text_lines in blocks:
+                        block_text = " ".join(block_text_lines)
                         cleaned_text = clean_subtitle_text(block_text)
                         if cleaned_text:
                             cleaned_lines.append(cleaned_text)
@@ -237,8 +240,7 @@ def stage_inputs(sorted_paths: List[Path], sent_dir: Path) -> List[Path]:
                     
                 target_path.write_text(cleaned_content, encoding="utf-8", newline="\n")
             except Exception as e:
-                log_error(f"Failed to stage file '{src_path.name}': {e}")
-                sys.exit(1)
+                _fail(f"Failed to stage file '{src_path.name}': {e}")
         else:
             log_info(f"Staging slot {slot_num}: [empty placeholder] -> '{target_path.relative_to(sent_dir)}'")
             target_path.write_text("", encoding="utf-8", newline="\n")
@@ -315,10 +317,7 @@ def main():
             log_warn(f"Ignoring unsupported file: '{p.name}' (only .txt and .srt are supported)")
             
     if not valid_paths:
-        log_error("No valid .txt or .srt files were provided.")
-        if args.pause:
-            pause_console(success=False)
-        sys.exit(1)
+        _fail("No valid .txt or .srt files were provided.", args.pause)
         
     # 2. Sort the files in send-order
     sorted_paths = sort_send_order(valid_paths)
@@ -337,18 +336,13 @@ def main():
     project_root, config = load_config()
     
     # Resolve default language
-    default_lang = config.get('sendto', 'sendto_default_language', fallback=None)
-    if not default_lang:
-        default_lang = config.get('environment', 'sendto_default_language', fallback='en')
-    default_lang = default_lang.strip().lower()
+    default_lang = _sendto_config_get(config, 'sendto_default_language', 'get', 'en').strip().lower()
     
     # Resolve save results with source
-    save_results_with_source = config.getboolean('sendto', 'sendto_save_results_with_source', fallback=None)
-    if save_results_with_source is None:
-        save_results_with_source = config.getboolean('environment', 'sendto_save_results_with_source', fallback=True)
+    save_results_with_source = _sendto_config_get(config, 'sendto_save_results_with_source', 'getboolean', True)
         
-    # 6. Detect language
-    language = detect_language(sorted_paths, default_lang)
+    # 6. Detect language from original argv order (before sorting)
+    language = detect_language(valid_paths, default_lang)
     
     # Print resolved mapping if in SendTo mode
     if args.sendto:
@@ -378,16 +372,10 @@ def main():
         source_code_dir = config.get('project_structure', 'source_code_dir', fallback='src/kardenwort/core')
         runner_path = (workspace_path / source_code_dir / runner_filename).resolve()
     except KeyError as e:
-        log_error(f"Missing required configuration key in config.ini: {e}")
-        if args.pause:
-            pause_console(success=False)
-        sys.exit(1)
+        _fail(f"Missing required configuration key in config.ini: {e}", args.pause)
         
     if not runner_path.exists():
-        log_error(f"Runner script not found at '{runner_path}'")
-        if args.pause:
-            pause_console(success=False)
-        sys.exit(1)
+        _fail(f"Runner script not found at '{runner_path}'", args.pause)
         
     # 9. Build arguments matching the v3 cmd launcher
     cmd_args = [
@@ -409,61 +397,86 @@ def main():
         "--text3-file", str(staged_paths[2])
     ]
     
-    # 10. Record results directory files before running to capture new ones
-    results_dir_name = config.get('project_structure', 'generated_results_dir', fallback='results')
-    results_dir = (workspace_path / results_dir_name).resolve()
-    
+    # 10. Record results directory snapshot immediately before running (gated by save_results_with_source)
     existing_results_files = set()
-    if results_dir.exists():
-        existing_results_files = {f.name for f in results_dir.iterdir() if f.is_file()}
+    results_dir = None
+    if save_results_with_source:
+        results_dir_name = config.get('project_structure', 'generated_results_dir', fallback='results')
+        results_dir = (workspace_path / results_dir_name).resolve()
+        if results_dir.exists():
+            existing_results_files = {f.name for f in results_dir.iterdir() if f.is_file()}
         
-    start_time = time.time()
-    
     # 11. Run the runner
     log_info("Starting Kardenwort extraction runner...")
     try:
-        # Run directly without capturing output so the user sees the extraction progress
         subprocess.run(cmd_args, check=True)
     except subprocess.CalledProcessError as e:
-        log_error(f"Runner failed with exit code {e.returncode}")
-        if args.pause:
-            pause_console(success=False)
-        sys.exit(1)
+        _fail(f"Runner failed with exit code {e.returncode}", args.pause)
     except Exception as e:
-        log_error(f"Failed to start runner: {e}")
-        if args.pause:
-            pause_console(success=False)
-        sys.exit(1)
+        _fail(f"Failed to start runner: {e}", args.pause)
         
     log_ok("Runner finished successfully.")
     
-    # 12. Capture and move new files if save_results_with_source is true
-    if save_results_with_source:
+    # 12. Relocate new results if save_results_with_source is true
+    if save_results_with_source and results_dir and results_dir.exists():
         log_info("Scanning for newly generated result files...")
         target_results_dir = sent_dir / "results"
         
-        # Short sleep to allow the filesystem to settle
-        time.sleep(1)
-        
+        # Compute set-difference to find newly created TSV/JSON files matching the output pattern
         new_files = []
-        if results_dir.exists():
-            for f in results_dir.iterdir():
-                if f.is_file() and f.suffix.lower() in ('.tsv', '.json'):
-                    # Check if file is new or modified during/after execution
-                    if f.name not in existing_results_files or f.stat().st_mtime >= (start_time - 5):
-                        new_files.append(f)
-                        
+        pattern = rf"\.triple\.(sentence|word)\.{language}\.(tsv|json)$"
+        for f in results_dir.iterdir():
+            if f.is_file() and re.search(pattern, f.name, re.IGNORECASE):
+                if f.name not in existing_results_files:
+                    new_files.append(f)
+                    
         if new_files:
             target_results_dir.mkdir(parents=True, exist_ok=True)
-            for f in new_files:
-                dest = target_results_dir / f.name
-                log_info(f"Moving result: '{f.name}' -> '{dest.relative_to(sent_dir)}'")
-                try:
-                    if dest.exists():
-                        dest.unlink()
-                    shutil.move(str(f), str(dest))
-                except Exception as e:
-                    log_warn(f"Failed to move result file '{f.name}': {e}")
+            moved_files = []
+            failed_files = []
+            
+            try:
+                for f in new_files:
+                    dest = target_results_dir / f.name
+                    log_info(f"Moving result atomically: '{f.name}' -> '{dest.relative_to(sent_dir)}'")
+                    
+                    # Atomic move: move to a *.tmp sibling, then replace
+                    tmp_dest = dest.with_suffix(dest.suffix + ".tmp")
+                    
+                    try:
+                        shutil.move(str(f), str(tmp_dest))
+                        os.replace(str(tmp_dest), str(dest))
+                        moved_files.append((dest, f))
+                    except Exception as file_err:
+                        failed_files.append((f, file_err))
+                        raise file_err
+            except Exception as e:
+                # Rollback successfully moved files to keep project results/ untouched
+                log_error("Relocation failed. Rolling back successfully moved files...")
+                for moved_dest, original_src in moved_files:
+                    try:
+                        if moved_dest.exists():
+                            shutil.move(str(moved_dest), str(original_src))
+                    except Exception as rollback_err:
+                        log_error(f"Rollback failed for '{moved_dest.name}': {rollback_err}")
+                
+                # Log the manifest of moved/failed/untouched files
+                log_error("\nRelocation Manifest (Failure):")
+                log_error("Successfully moved (and rolled back):")
+                for _, orig in moved_files:
+                    log_error(f"  [ROLLBACK] {orig.name}")
+                log_error("Failed to move:")
+                for orig, err in failed_files:
+                    log_error(f"  [FAILED] {orig.name}: {err}")
+                log_error("Remaining files (untouched):")
+                untouched_files = [
+                    f for f in new_files 
+                    if f not in [x[1] for x in moved_files] and f not in [y[0] for y in failed_files]
+                ]
+                for f in untouched_files:
+                    log_error(f"  [UNTOUCHED] {f.name}")
+                
+                _fail(f"Relocation failed: {e}", args.pause)
         else:
             log_warn("No newly generated result files were detected.")
             

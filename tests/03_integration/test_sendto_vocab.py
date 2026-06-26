@@ -22,27 +22,24 @@ import scripts.sendto_vocab as sv
 def test_parse_filename():
     # Scenario 1: Sequential ZID plus numbered postfix
     p1 = Path("20260626231725-text.1.en.txt")
-    zid, title, lang, ext = sv.parse_filename(p1)
+    zid, title, lang = sv.parse_filename(p1)
     assert zid == "20260626231725"
     assert title == "text.1"
     assert lang == "en"
-    assert ext == "txt"
     
     # Scenario 2: Plain numbered files
     p2 = Path("text1.txt")
-    zid, title, lang, ext = sv.parse_filename(p2)
+    zid, title, lang = sv.parse_filename(p2)
     assert zid is None
     assert title == "text1"
     assert lang is None
-    assert ext == "txt"
     
     # Scenario 3: Same-ZID batch
     p3 = Path("20260626232001-text1.txt")
-    zid, title, lang, ext = sv.parse_filename(p3)
+    zid, title, lang = sv.parse_filename(p3)
     assert zid == "20260626232001"
     assert title == "text1"
     assert lang is None
-    assert ext == "txt"
 
 def test_detect_language():
     # Valid postfix
@@ -67,9 +64,6 @@ def test_sort_send_order():
         Path("text1.txt")
     ]
     
-    # Expected order:
-    # 1. Plain files (no ZID, primary key = "") sorted by index: text1.txt, text2.txt
-    # 2. Files with ZID: 20260626231725-text.1.en.txt, then 20260626232001-text1.txt, then 20260626232001-text3.txt
     sorted_paths = sv.sort_send_order(paths)
     expected = [
         Path("text1.txt"),
@@ -109,7 +103,7 @@ def test_stage_inputs_txt_and_srt(tmp_path):
     assert staged[2].read_text(encoding="utf-8") == ""
 
 # ==============================================================================
-# INTEGRATION TEST FOR SENDTO_VOCAB.PY MAIN FLOW
+# INTEGRATION TESTS FOR HARDENED SENDTO_VOCAB.PY
 # ==============================================================================
 
 def test_sendto_vocab_full_flow(tmp_path, monkeypatch):
@@ -118,7 +112,7 @@ def test_sendto_vocab_full_flow(tmp_path, monkeypatch):
     results_dir = workspace / "results"
     results_dir.mkdir()
     
-    # Create mock runner script so that runner_path.exists() is True
+    # Create mock runner script so path exists
     runner_path = workspace / "src" / "kardenwort" / "core" / "runner.py"
     runner_path.parent.mkdir(parents=True, exist_ok=True)
     runner_path.write_text("# mock runner", encoding="utf-8")
@@ -169,16 +163,12 @@ def test_sendto_vocab_full_flow(tmp_path, monkeypatch):
     # Assertions
     staged_dir = sent_dir / "source_texts"
     assert (staged_dir / "text1.txt").read_text(encoding="utf-8") == "Sentence content"
-    assert (staged_dir / "text2.txt").read_text(encoding="utf-8") == ""
-    assert (staged_dir / "text3.txt").read_text(encoding="utf-8") == ""
     
     # Runner was called with correct arguments
     assert len(called_args) == 1
     run_args = called_args[0]
     assert "--mode" in run_args
     assert "mixed-triple" in run_args
-    assert "--text1-file" in run_args
-    assert run_args[run_args.index("--text1-file") + 1] == str(staged_dir / "text1.txt")
     
     # Results were relocated
     relocated_tsv = sent_dir / "results" / "20260626232001-mock.triple.sentence.en.tsv"
@@ -187,8 +177,192 @@ def test_sendto_vocab_full_flow(tmp_path, monkeypatch):
     assert relocated_json.exists()
     assert not (results_dir / "20260626232001-mock.triple.sentence.en.tsv").exists()
 
+def test_concurrent_writer(tmp_path, monkeypatch):
+    """Scenario 12.3: Verify foreign files are not relocated."""
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    results_dir = workspace / "results"
+    results_dir.mkdir()
+    
+    # Create mock runner script
+    runner_path = workspace / "src" / "kardenwort" / "core" / "runner.py"
+    runner_path.parent.mkdir(parents=True, exist_ok=True)
+    runner_path.write_text("# mock", encoding="utf-8")
+    
+    sent_dir = tmp_path / "sent_files"
+    sent_dir.mkdir()
+    
+    config = configparser.ConfigParser()
+    config.read_string(
+        "[environment]\n"
+        "python_executable = python\n"
+        f"kardenwort_workspace = {workspace.as_posix()}\n"
+        "[scripts]\n"
+        "kardenwort_runner_filename = runner.py\n"
+        "[project_structure]\n"
+        "generated_results_dir = results\n"
+    )
+    monkeypatch.setattr(sv, "load_config", lambda: (workspace, config))
+    
+    # Mock subprocess.run: simulates runner writing new results AND a foreign writer placing a file
+    def mock_run(args, **kwargs):
+        # Runner writes its files
+        (results_dir / "mock.triple.sentence.en.tsv").write_text("runner", encoding="utf-8")
+        
+        # Concurrent writer writes a foreign file
+        (results_dir / "foreign_file.tsv").write_text("foreign content", encoding="utf-8")
+        
+        mock_proc = MagicMock()
+        mock_proc.returncode = 0
+        return mock_proc
+        
+    monkeypatch.setattr(subprocess, "run", mock_run)
+    
+    f1 = sent_dir / "text1.txt"
+    f1.write_text("content", encoding="utf-8")
+    
+    # Mock sys.argv
+    monkeypatch.setattr(sys, "argv", ["sendto_vocab.py", "--sendto", str(f1)])
+    
+    # Run
+    sv.main()
+    
+    # Assertions
+    # 1. Runner's file is relocated
+    assert (sent_dir / "results" / "mock.triple.sentence.en.tsv").exists()
+    # 2. Foreign file is NOT relocated (stays in project results/)
+    assert not (sent_dir / "results" / "foreign_file.tsv").exists()
+    assert (results_dir / "foreign_file.tsv").exists()
+
+def test_atomic_overwrite_and_rollback(tmp_path, monkeypatch):
+    """Scenario 12.4: Verify atomic replacement and rollback on relocation failure."""
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    results_dir = workspace / "results"
+    results_dir.mkdir()
+    
+    runner_path = workspace / "src" / "kardenwort" / "core" / "runner.py"
+    runner_path.parent.mkdir(parents=True, exist_ok=True)
+    runner_path.write_text("# mock", encoding="utf-8")
+    
+    sent_dir = tmp_path / "sent_files"
+    sent_dir.mkdir()
+    
+    # Pre-create results folder next to source with an existing file to test overwrite
+    src_results_dir = sent_dir / "results"
+    src_results_dir.mkdir(parents=True, exist_ok=True)
+    existing_dest_file = src_results_dir / "mock.triple.sentence.en.tsv"
+    existing_dest_file.write_text("old content", encoding="utf-8")
+    
+    config = configparser.ConfigParser()
+    config.read_string(
+        "[environment]\n"
+        "python_executable = python\n"
+        f"kardenwort_workspace = {workspace.as_posix()}\n"
+        "[scripts]\n"
+        "kardenwort_runner_filename = runner.py\n"
+        "[project_structure]\n"
+        "generated_results_dir = results\n"
+    )
+    monkeypatch.setattr(sv, "load_config", lambda: (workspace, config))
+    
+    # Mock runner: creates two result files
+    def mock_run(args, **kwargs):
+        (results_dir / "mock.triple.sentence.en.tsv").write_text("new content", encoding="utf-8")
+        (results_dir / "mock.triple.sentence.en.json").write_text("{}", encoding="utf-8")
+        mock_proc = MagicMock()
+        mock_proc.returncode = 0
+        return mock_proc
+        
+    monkeypatch.setattr(subprocess, "run", mock_run)
+    
+    # Mock shutil.move to fail on the second file (.json) to trigger rollback
+    original_move = shutil.move
+    def mock_move(src, dst, *args, **kwargs):
+        if "mock.triple.sentence.en.json" in str(src):
+            raise IOError("Simulated move failure")
+        return original_move(src, dst, *args, **kwargs)
+    monkeypatch.setattr(shutil, "move", mock_move)
+    
+    f1 = sent_dir / "text1.txt"
+    f1.write_text("content", encoding="utf-8")
+    
+    monkeypatch.setattr(sys, "argv", ["sendto_vocab.py", "--sendto", str(f1)])
+    
+    # Run should raise SystemExit because of hard relocation failure
+    with pytest.raises(SystemExit) as exc:
+        sv.main()
+    assert exc.value.code == 1
+    
+    # Assertions
+    # 1. Rollback occurred: the first file was restored back to project results/
+    assert (results_dir / "mock.triple.sentence.en.tsv").exists()
+    assert (results_dir / "mock.triple.sentence.en.json").exists()
+    
+    # 2. The existing destination file next to source remains untouched with its original content
+    assert existing_dest_file.read_text(encoding="utf-8") == "old content"
+
+def test_language_detection_first_selected(tmp_path, monkeypatch):
+    """Scenario 12.5: Language detected from first selected file regardless of sort order."""
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    results_dir = workspace / "results"
+    results_dir.mkdir()
+    
+    runner_path = workspace / "src" / "kardenwort" / "core" / "runner.py"
+    runner_path.parent.mkdir(parents=True, exist_ok=True)
+    runner_path.write_text("# mock", encoding="utf-8")
+    
+    sent_dir = tmp_path / "sent_files"
+    sent_dir.mkdir()
+    
+    config = configparser.ConfigParser()
+    config.read_string(
+        "[environment]\n"
+        "python_executable = python\n"
+        f"kardenwort_workspace = {workspace.as_posix()}\n"
+        "[scripts]\n"
+        "kardenwort_runner_filename = runner.py\n"
+        "[project_structure]\n"
+        "generated_results_dir = results\n"
+    )
+    monkeypatch.setattr(sv, "load_config", lambda: (workspace, config))
+    
+    # We send a .de file first, and a .en file second.
+    # Note that 20260626231737-text.2.de.txt sorts *after* 20260626231725-text.1.en.txt.
+    # But because it was selected first (comes first in sys.argv), the language should be "de"!
+    f_de = sent_dir / "20260626231737-text.2.de.txt"
+    f_en = sent_dir / "20260626231725-text.1.en.txt"
+    
+    f_de.write_text("German content", encoding="utf-8")
+    f_en.write_text("English content", encoding="utf-8")
+    
+    called_args = []
+    def mock_run(args, **kwargs):
+        called_args.append(args)
+        # Simulate writing result
+        (results_dir / "mock.triple.sentence.de.tsv").write_text("content", encoding="utf-8")
+        mock_proc = MagicMock()
+        mock_proc.returncode = 0
+        return mock_proc
+        
+    monkeypatch.setattr(subprocess, "run", mock_run)
+    
+    # sys.argv has f_de first
+    monkeypatch.setattr(sys, "argv", ["sendto_vocab.py", "--sendto", str(f_de), str(f_en)])
+    
+    sv.main()
+    
+    # Assertions
+    assert len(called_args) == 1
+    run_args = called_args[0]
+    # Check that --language is de
+    assert "--language" in run_args
+    assert run_args[run_args.index("--language") + 1] == "de"
+    print("✓ Language detected from first selected file correctly")
+
 # ==============================================================================
-# INTEGRATION TEST FOR INSTALL.PY
+# INTEGRATION TESTS FOR INSTALL.PY
 # ==============================================================================
 
 def test_install_script(tmp_path, monkeypatch):

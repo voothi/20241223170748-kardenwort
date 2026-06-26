@@ -52,12 +52,17 @@ def main():
     print(f"SendTo Directory:  {sendto_dir}")
     print(f"Shortcut Path:     {shortcut_path}")
 
+    # Escape single quotes for PowerShell single-quoted strings
+    shortcut_path_escaped = shortcut_path.replace("'", "''")
+    python_path_escaped = python_path.replace("'", "''")
+    script_path_escaped = script_path.replace("'", "''")
+
     # 3. Build the shortcut via PowerShell + WScript.Shell COM
     ps_script = (
         f"$WshShell = New-Object -ComObject WScript.Shell; "
-        f"$Shortcut = $WshShell.CreateShortcut('{shortcut_path}'); "
-        f"$Shortcut.TargetPath = '{python_path}'; "
-        f"$Shortcut.Arguments = '\"{script_path}\" --sendto --pause'; "
+        f"$Shortcut = $WshShell.CreateShortcut('{shortcut_path_escaped}'); "
+        f"$Shortcut.TargetPath = '{python_path_escaped}'; "
+        f"$Shortcut.Arguments = '\"{script_path_escaped}\" --sendto --pause'; "
         f"$Shortcut.Description = 'Extracts vocabulary from sent files and imports them to Anki'; "
         f"$Shortcut.WindowStyle = 1; "   # SW_SHOWNORMAL
         f"$Shortcut.Save()"

@@ -356,6 +356,72 @@ def pause_console(success: bool = True, timeout_secs: Optional[int] = PAUSE_AUTO
         except Exception:
             pass
 
+def relocate_results(results_dir: Optional[Path], existing_results_files: set, language: str, sent_dir: Path, save_results_with_source: bool):
+    """Scans results_dir for newly generated TSV/JSON files and moves them to sent_dir/results."""
+    if not (save_results_with_source and results_dir and results_dir.exists()):
+        return
+        
+    log_info("Scanning for newly generated result files...")
+    target_results_dir = sent_dir / "results"
+    
+    # Compute set-difference to find newly created TSV/JSON files matching the output pattern
+    new_files = []
+    pattern = rf"\.triple\.(sentence|word)\.{language}\.(tsv|json)$"
+    for f in results_dir.iterdir():
+        if f.is_file() and re.search(pattern, f.name, re.IGNORECASE):
+            if f.name not in existing_results_files:
+                new_files.append(f)
+                
+    if new_files:
+        target_results_dir.mkdir(parents=True, exist_ok=True)
+        moved_files = []
+        failed_files = []
+        
+        try:
+            for f in new_files:
+                dest = target_results_dir / f.name
+                log_info(f"Moving result atomically: '{f.name}' -> '{dest.relative_to(sent_dir)}'")
+                
+                # Atomic move: move to a *.tmp sibling, then replace
+                tmp_dest = dest.with_suffix(dest.suffix + ".tmp")
+                
+                try:
+                    shutil.move(str(f), str(tmp_dest))
+                    os.replace(str(tmp_dest), str(dest))
+                    moved_files.append((dest, f))
+                except Exception as file_err:
+                    failed_files.append((f, file_err))
+                    raise file_err
+        except Exception as e:
+            # Rollback successfully moved files to keep project results/ untouched
+            log_error("Relocation failed. Rolling back successfully moved files...")
+            for moved_dest, original_src in moved_files:
+                try:
+                    if moved_dest.exists():
+                        shutil.move(str(moved_dest), str(original_src))
+                except Exception as rollback_err:
+                    log_error(f"Rollback failed for '{moved_dest.name}': {rollback_err}")
+            
+            # Log the manifest of moved/failed/untouched files
+            log_error("\nRelocation Manifest (Failure):")
+            log_error("Successfully moved (and rolled back):")
+            for _, orig in moved_files:
+                log_error(f"  [ROLLBACK] {orig.name}")
+            log_error("Failed to move:")
+            for orig, err in failed_files:
+                log_error(f"  [FAILED] {orig.name}: {err}")
+            log_error("Remaining files (untouched):")
+            untouched_files = [
+                f for f in new_files 
+                if f not in [x[1] for x in moved_files] and f not in [y[0] for y in failed_files]
+            ]
+            for f in untouched_files:
+                log_error(f"  [UNTOUCHED] {f.name}")
+            
+            raise RuntimeError(f"Relocation failed: {e}")
+    else:
+        log_warn("No newly generated result files were detected.")
+
 # ==============================================================================
 # MAIN FLOW
 # ==============================================================================
@@ -526,77 +592,27 @@ def main():
         
     # 11. Run the runner
     log_info("Starting Kardenwort extraction runner...")
+    runner_error = None
     try:
         subprocess.run(cmd_args, check=True)
     except subprocess.CalledProcessError as e:
-        _fail(f"Runner failed with exit code {e.returncode}", pause_mode)
+        runner_error = f"Runner failed with exit code {e.returncode}"
     except Exception as e:
-        _fail(f"Failed to start runner: {e}", pause_mode)
+        runner_error = f"Failed to start runner: {e}"
         
-    log_ok("Runner finished successfully.")
-    
+    if runner_error:
+        log_warn(f"{runner_error}. Trying to relocate any generated TSV/JSON files...")
+    else:
+        log_ok("Runner finished successfully.")
+        
     # 12. Relocate new results if save_results_with_source is true
-    if save_results_with_source and results_dir and results_dir.exists():
-        log_info("Scanning for newly generated result files...")
-        target_results_dir = sent_dir / "results"
+    try:
+        relocate_results(results_dir, existing_results_files, language, sent_dir, save_results_with_source)
+    except Exception as e:
+        _fail(str(e), pause_mode)
         
-        # Compute set-difference to find newly created TSV/JSON files matching the output pattern
-        new_files = []
-        pattern = rf"\.triple\.(sentence|word)\.{language}\.(tsv|json)$"
-        for f in results_dir.iterdir():
-            if f.is_file() and re.search(pattern, f.name, re.IGNORECASE):
-                if f.name not in existing_results_files:
-                    new_files.append(f)
-                    
-        if new_files:
-            target_results_dir.mkdir(parents=True, exist_ok=True)
-            moved_files = []
-            failed_files = []
-            
-            try:
-                for f in new_files:
-                    dest = target_results_dir / f.name
-                    log_info(f"Moving result atomically: '{f.name}' -> '{dest.relative_to(sent_dir)}'")
-                    
-                    # Atomic move: move to a *.tmp sibling, then replace
-                    tmp_dest = dest.with_suffix(dest.suffix + ".tmp")
-                    
-                    try:
-                        shutil.move(str(f), str(tmp_dest))
-                        os.replace(str(tmp_dest), str(dest))
-                        moved_files.append((dest, f))
-                    except Exception as file_err:
-                        failed_files.append((f, file_err))
-                        raise file_err
-            except Exception as e:
-                # Rollback successfully moved files to keep project results/ untouched
-                log_error("Relocation failed. Rolling back successfully moved files...")
-                for moved_dest, original_src in moved_files:
-                    try:
-                        if moved_dest.exists():
-                            shutil.move(str(moved_dest), str(original_src))
-                    except Exception as rollback_err:
-                        log_error(f"Rollback failed for '{moved_dest.name}': {rollback_err}")
-                
-                # Log the manifest of moved/failed/untouched files
-                log_error("\nRelocation Manifest (Failure):")
-                log_error("Successfully moved (and rolled back):")
-                for _, orig in moved_files:
-                    log_error(f"  [ROLLBACK] {orig.name}")
-                log_error("Failed to move:")
-                for orig, err in failed_files:
-                    log_error(f"  [FAILED] {orig.name}: {err}")
-                log_error("Remaining files (untouched):")
-                untouched_files = [
-                    f for f in new_files 
-                    if f not in [x[1] for x in moved_files] and f not in [y[0] for y in failed_files]
-                ]
-                for f in untouched_files:
-                    log_error(f"  [UNTOUCHED] {f.name}")
-                
-                _fail(f"Relocation failed: {e}", pause_mode)
-        else:
-            log_warn("No newly generated result files were detected.")
+    if runner_error:
+        _fail(runner_error, pause_mode)
             
     cleanup_staged_dir()
             

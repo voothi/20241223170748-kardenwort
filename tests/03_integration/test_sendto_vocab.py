@@ -583,6 +583,58 @@ def test_language_detection_first_selected(tmp_path, monkeypatch):
     assert run_args[run_args.index("--language") + 1] == "de"
     print("✓ Language detected from first selected file correctly")
 
+def test_sendto_relocation_on_runner_failure(tmp_path, monkeypatch):
+    """Verify that generated TSV/JSON files are still relocated even if the runner fails."""
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    results_dir = workspace / "results"
+    results_dir.mkdir()
+    
+    runner_path = workspace / "src" / "kardenwort" / "core" / "runner.py"
+    runner_path.parent.mkdir(parents=True, exist_ok=True)
+    runner_path.write_text("# mock runner", encoding="utf-8")
+    
+    sent_dir = tmp_path / "sent_files"
+    sent_dir.mkdir()
+    
+    config = configparser.ConfigParser()
+    config.read_string(
+        "[environment]\n"
+        "python_executable = python\n"
+        f"kardenwort_workspace = {workspace.as_posix()}\n"
+        "[scripts]\n"
+        "kardenwort_runner_filename = runner.py\n"
+        "[project_structure]\n"
+        "generated_results_dir = results\n"
+    )
+    monkeypatch.setattr(sv, "load_config", lambda: (workspace, config))
+    
+    # Mock subprocess.run to raise CalledProcessError (importer failure)
+    # but simulate that the extraction step had already written the TSV file
+    def mock_run(args, **kwargs):
+        res_file = results_dir / "20260626232001-mock.triple.sentence.en.tsv"
+        res_file.write_text("mock content", encoding="utf-8")
+        
+        # Raise error representing importer failure
+        raise subprocess.CalledProcessError(1, args)
+        
+    monkeypatch.setattr(subprocess, "run", mock_run)
+    
+    f1 = sent_dir / "text1.txt"
+    f1.write_text("content", encoding="utf-8")
+    
+    monkeypatch.setattr(sys, "argv", ["sendto_vocab.py", "--sendto", str(f1)])
+    
+    # The script should fail and raise SystemExit
+    with pytest.raises(SystemExit) as exc:
+        sv.main()
+    assert exc.value.code == 1
+    
+    # Verify that the TSV file was successfully relocated despite the runner failure
+    relocated_tsv = sent_dir / "results" / "20260626232001-mock.triple.sentence.en.tsv"
+    assert relocated_tsv.exists()
+    assert relocated_tsv.read_text(encoding="utf-8") == "mock content"
+
 # ==============================================================================
 # INTEGRATION TESTS FOR INSTALL.PY
 # ==============================================================================

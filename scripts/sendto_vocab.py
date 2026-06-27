@@ -211,7 +211,7 @@ def clean_subtitle_text(text: str) -> str:
 # ==============================================================================
 # SLOT MAPPING RESOLUTION
 # ==============================================================================
-def resolve_slots(sorted_paths: List[Path], lang_slots: dict, default_lang: str) -> dict:
+def resolve_slots(sorted_paths: List[Path], lang_slots: dict, default_lang: str, batch_lang: str) -> dict:
     """Assigns each path in sorted_paths to slot 1, 2, or 3 based on numeric index/language rules."""
     slots = {1: None, 2: None, 3: None}
     unassigned = []
@@ -227,7 +227,13 @@ def resolve_slots(sorted_paths: List[Path], lang_slots: dict, default_lang: str)
             if num in (1, 2, 3):
                 assigned_slot = num
                 
-        # Rule 2: Language mapping
+        # Rule 2: If the file language matches the batch source language, it goes to slot 1
+        if not assigned_slot:
+            resolved_lang = (lang if lang else default_lang).lower()
+            if resolved_lang == batch_lang.lower():
+                assigned_slot = 1
+                
+        # Rule 3: Language mapping
         if not assigned_slot:
             resolved_lang = (lang if lang else default_lang).lower()
             if resolved_lang in lang_slots:
@@ -409,7 +415,7 @@ def main():
     language = detect_language(valid_paths, default_lang)
     
     # Resolve slot mapping
-    resolved_slots = resolve_slots(sorted_paths, lang_slots, default_lang)
+    resolved_slots = resolve_slots(sorted_paths, lang_slots, default_lang, language)
     
     # Print resolved mapping if in SendTo mode
     if sendto_mode:

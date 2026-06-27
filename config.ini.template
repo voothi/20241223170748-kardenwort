@@ -254,5 +254,5 @@ sendto_default_language = en
 sendto_save_results_with_source = True
 
 ; Mapping of language postfixes to specific text1/text2/text3 slots.
-; Allows selective translation paths to map to the correct triple positions (default: en:1, de:2, ru:3).
-sendto_language_slots = en:1, de:2, ru:3
+; Allows selective translation paths to map to the correct triple positions (default: en:1, de:2, uk:2, ru:3).
+sendto_language_slots = en:1, de:2, uk:2, ru:3

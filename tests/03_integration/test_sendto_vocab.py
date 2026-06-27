@@ -99,7 +99,7 @@ def test_stage_inputs_txt_and_srt(tmp_path):
         encoding="utf-8"
     )
     
-    slots = sv.resolve_slots([t1, t2], {"en": 1, "de": 2, "ru": 3}, "en")
+    slots = sv.resolve_slots([t1, t2], {"en": 1, "de": 2, "ru": 3}, "en", "en")
     staged = sv.stage_inputs(slots, sent_dir)
     
     assert len(staged) == 3
@@ -118,7 +118,7 @@ def test_resolve_slots_by_language_and_index():
     # Case 1: Language-based mapping for 2 files (en and ru) -> slots 1 and 3
     p_en = Path("20260606211142-anthropic-just-warned-everyone.en.srt")
     p_ru = Path("20260606211142-anthropic-just-warned-everyone.ru.srt")
-    slots = sv.resolve_slots([p_en, p_ru], lang_slots, "en")
+    slots = sv.resolve_slots([p_en, p_ru], lang_slots, "en", "en")
     assert slots[1] == p_en
     assert slots[2] is None
     assert slots[3] == p_ru
@@ -126,16 +126,23 @@ def test_resolve_slots_by_language_and_index():
     # Case 2: Index-based mapping (file1.txt and file3.txt) -> slots 1 and 3
     p1 = Path("file1.txt")
     p3 = Path("file3.txt")
-    slots = sv.resolve_slots([p1, p3], lang_slots, "en")
+    slots = sv.resolve_slots([p1, p3], lang_slots, "en", "en")
     assert slots[1] == p1
     assert slots[2] is None
     assert slots[3] == p3
     
     # Case 3: Mixed case and fallbacks
     p_extra = Path("unmapped.txt")
-    slots = sv.resolve_slots([p_en, p_ru, p_extra], lang_slots, "en")
+    slots = sv.resolve_slots([p_en, p_ru, p_extra], lang_slots, "en", "en")
     assert slots[1] == p_en
     assert slots[2] == p_extra # Fallback to first available empty slot
+    assert slots[3] == p_ru
+    
+    # Case 4: German is source language, should map to slot 1 even though de:2 is in mapping
+    p_de = Path("20260606211142-anthropic-just-warned-everyone.de.srt")
+    slots = sv.resolve_slots([p_de, p_ru], lang_slots, "en", "de")
+    assert slots[1] == p_de
+    assert slots[2] is None
     assert slots[3] == p_ru
 
 # ==============================================================================

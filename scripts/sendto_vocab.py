@@ -230,11 +230,11 @@ def stage_inputs(sorted_paths: List[Path], sent_dir: Path) -> List[Path]:
                     blocks = parse_srt(content)
                     cleaned_lines = []
                     for block_text_lines in blocks:
-                        block_text = " ".join(block_text_lines)
-                        cleaned_text = clean_subtitle_text(block_text)
-                        if cleaned_text:
-                            cleaned_lines.append(cleaned_text)
-                    cleaned_content = " ".join(cleaned_lines)
+                        for line in block_text_lines:
+                            cleaned_text = clean_subtitle_text(line)
+                            if cleaned_text:
+                                cleaned_lines.append(cleaned_text)
+                    cleaned_content = "\n".join(cleaned_lines)
                 else:
                     cleaned_content = content
                     

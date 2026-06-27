@@ -90,7 +90,12 @@ def test_stage_inputs_txt_and_srt(tmp_path):
     t2.write_text(
         "1\n"
         "00:00:01,000 --> 00:00:03,000\n"
-        "Hello <i>subtitles</i>!\n",
+        "Hello <i>subtitles</i>!\n"
+        "\n"
+        "2\n"
+        "00:00:04,000 --> 00:00:06,000\n"
+        "Line two.\n"
+        "Line three.\n",
         encoding="utf-8"
     )
     
@@ -98,7 +103,11 @@ def test_stage_inputs_txt_and_srt(tmp_path):
     
     assert len(staged) == 3
     assert staged[0].read_text(encoding="utf-8") == "Hello plain text."
-    assert staged[1].read_text(encoding="utf-8") == "Hello subtitles!"
+    
+    # Asserting that lines are separated by newline (\n) as in whisper project
+    staged_srt_content = staged[1].read_text(encoding="utf-8")
+    assert staged_srt_content == "Hello subtitles!\nLine two.\nLine three."
+    
     # Slot 3 is empty placeholder
     assert staged[2].read_text(encoding="utf-8") == ""
 

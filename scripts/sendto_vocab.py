@@ -208,22 +208,61 @@ def clean_subtitle_text(text: str) -> str:
     return text.strip()
 
 # ==============================================================================
+# ==============================================================================
+# SLOT MAPPING RESOLUTION
+# ==============================================================================
+def resolve_slots(sorted_paths: List[Path], lang_slots: dict, default_lang: str) -> dict:
+    """Assigns each path in sorted_paths to slot 1, 2, or 3 based on numeric index/language rules."""
+    slots = {1: None, 2: None, 3: None}
+    unassigned = []
+    
+    for path in sorted_paths:
+        zid, clean_title, lang = parse_filename(path)
+        
+        # Rule 1: Filename numeric index (1, 2, or 3)
+        match = re.search(r'(\d+)\D*$', clean_title)
+        assigned_slot = None
+        if match:
+            num = int(match.group(1))
+            if num in (1, 2, 3):
+                assigned_slot = num
+                
+        # Rule 2: Language mapping
+        if not assigned_slot:
+            resolved_lang = (lang if lang else default_lang).lower()
+            if resolved_lang in lang_slots:
+                assigned_slot = lang_slots[resolved_lang]
+                
+        if assigned_slot:
+            if slots[assigned_slot] is None:
+                slots[assigned_slot] = path
+            else:
+                unassigned.append(path)
+        else:
+            unassigned.append(path)
+            
+    # Second pass: fill empty slots
+    for slot_num in (1, 2, 3):
+        if slots[slot_num] is None and unassigned:
+            slots[slot_num] = unassigned.pop(0)
+            
+    return slots
+
+# ==============================================================================
 # INPUT STAGING
 # ==============================================================================
-def stage_inputs(sorted_paths: List[Path], sent_dir: Path) -> List[Path]:
+def stage_inputs(slots: dict, sent_dir: Path) -> List[Path]:
     """Writes staged files to <sent_dir>/source_texts/textN.txt (N=1..3)."""
     source_texts_dir = sent_dir / "source_texts"
     source_texts_dir.mkdir(parents=True, exist_ok=True)
     
     staged_paths = []
-    for i in range(3):
-        slot_num = i + 1
+    for slot_num in (1, 2, 3):
         target_path = source_texts_dir / f"text{slot_num}.txt"
+        src_path = slots[slot_num]
         
-        if i < len(sorted_paths):
-            src_path = sorted_paths[i]
+        if src_path:
             log_info(f"Staging slot {slot_num}: '{src_path.name}' -> '{target_path.relative_to(sent_dir)}'")
-            
             try:
                 content = src_path.read_text(encoding="utf-8", errors="replace")
                 
@@ -349,23 +388,40 @@ def main():
     # Resolve default language
     default_lang = _sendto_config_get(config, 'sendto_default_language', 'get', 'en').strip().lower()
     
+    # Resolve language slots mapping (default: en:1, de:2, ru:3)
+    lang_slots_str = _sendto_config_get(config, 'sendto_language_slots', 'get', 'en:1, de:2, ru:3')
+    lang_slots = {}
+    for item in lang_slots_str.split(','):
+        if ':' in item:
+            k, v = item.split(':', 1)
+            k = k.strip().lower()
+            try:
+                val = int(v.strip())
+                if val in (1, 2, 3):
+                    lang_slots[k] = val
+            except ValueError:
+                pass
+    
     # Resolve save results with source
     save_results_with_source = _sendto_config_get(config, 'sendto_save_results_with_source', 'getboolean', True)
         
     # 6. Detect language from original argv order (before sorting)
     language = detect_language(valid_paths, default_lang)
     
+    # Resolve slot mapping
+    resolved_slots = resolve_slots(sorted_paths, lang_slots, default_lang)
+    
     # Print resolved mapping if in SendTo mode
     if sendto_mode:
         print("\nResolved File Mapping:")
-        for i, p in enumerate(sorted_paths):
-            print(f"  Slot {i+1}: {p.name}")
-        for i in range(len(sorted_paths), 3):
-            print(f"  Slot {i+1}: [Empty Placeholder]")
+        for slot_num in (1, 2, 3):
+            p = resolved_slots[slot_num]
+            name = p.name if p else "[Empty Placeholder]"
+            print(f"  Slot {slot_num}: {name}")
         print(f"Detected Language: {language.upper()}\n")
         
     # 7. Stage inputs
-    staged_paths = stage_inputs(sorted_paths, sent_dir)
+    staged_paths = stage_inputs(resolved_slots, sent_dir)
     
     # 8. Resolve runner path and python path
     try:

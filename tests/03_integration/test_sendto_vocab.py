@@ -99,7 +99,8 @@ def test_stage_inputs_txt_and_srt(tmp_path):
         encoding="utf-8"
     )
     
-    staged = sv.stage_inputs([t1, t2], sent_dir)
+    slots = sv.resolve_slots([t1, t2], {"en": 1, "de": 2, "ru": 3}, "en")
+    staged = sv.stage_inputs(slots, sent_dir)
     
     assert len(staged) == 3
     assert staged[0].read_text(encoding="utf-8") == "Hello plain text."
@@ -110,6 +111,32 @@ def test_stage_inputs_txt_and_srt(tmp_path):
     
     # Slot 3 is empty placeholder
     assert staged[2].read_text(encoding="utf-8") == ""
+
+def test_resolve_slots_by_language_and_index():
+    lang_slots = {"en": 1, "de": 2, "ru": 3}
+    
+    # Case 1: Language-based mapping for 2 files (en and ru) -> slots 1 and 3
+    p_en = Path("20260606211142-anthropic-just-warned-everyone.en.srt")
+    p_ru = Path("20260606211142-anthropic-just-warned-everyone.ru.srt")
+    slots = sv.resolve_slots([p_en, p_ru], lang_slots, "en")
+    assert slots[1] == p_en
+    assert slots[2] is None
+    assert slots[3] == p_ru
+    
+    # Case 2: Index-based mapping (file1.txt and file3.txt) -> slots 1 and 3
+    p1 = Path("file1.txt")
+    p3 = Path("file3.txt")
+    slots = sv.resolve_slots([p1, p3], lang_slots, "en")
+    assert slots[1] == p1
+    assert slots[2] is None
+    assert slots[3] == p3
+    
+    # Case 3: Mixed case and fallbacks
+    p_extra = Path("unmapped.txt")
+    slots = sv.resolve_slots([p_en, p_ru, p_extra], lang_slots, "en")
+    assert slots[1] == p_en
+    assert slots[2] == p_extra # Fallback to first available empty slot
+    assert slots[3] == p_ru
 
 # ==============================================================================
 # INTEGRATION TESTS FOR HARDENED SENDTO_VOCAB.PY

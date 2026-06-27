@@ -15,6 +15,7 @@ import shutil
 import subprocess
 import sys
 import time
+import atexit
 from pathlib import Path
 from typing import List, Tuple, Optional
 
@@ -23,6 +24,8 @@ from typing import List, Tuple, Optional
 # ==============================================================================
 PAUSE_AUTO_CLOSE_TIMEOUT_SECS = 15
 PAUSE_ON_ERROR = False
+
+_staged_dir_to_clean: Optional[Path] = None
 
 # ==============================================================================
 # CONSOLE OUTPUT HELPERS
@@ -58,6 +61,18 @@ def _fail(msg: str, pause: bool = False):
     if pause or PAUSE_ON_ERROR:
         pause_console(success=False)
     sys.exit(1)
+
+def cleanup_staged_dir():
+    global _staged_dir_to_clean
+    if _staged_dir_to_clean and _staged_dir_to_clean.exists():
+        try:
+            shutil.rmtree(_staged_dir_to_clean)
+            log_info(f"Cleaned up temporary staging directory: '{_staged_dir_to_clean.name}'")
+        except Exception as e:
+            log_warn(f"Failed to clean up temporary staging directory '{_staged_dir_to_clean}': {e}")
+        _staged_dir_to_clean = None
+
+atexit.register(cleanup_staged_dir)
 
 def _sendto_config_get(cfg: configparser.ConfigParser, key: str, getter_name: str, fallback):
     """Resolves config key with fallback from [sendto] to [environment]."""
@@ -446,6 +461,8 @@ def main():
         
     # 7. Stage inputs
     source_texts_dir = sent_dir / "source_texts"
+    global _staged_dir_to_clean
+    _staged_dir_to_clean = source_texts_dir
     staged_paths = stage_inputs(resolved_slots, sent_dir)
     
     # 8. Resolve runner path and python path
@@ -581,13 +598,7 @@ def main():
         else:
             log_warn("No newly generated result files were detected.")
             
-    # Clean up temporary staging directory
-    if source_texts_dir.exists():
-        try:
-            shutil.rmtree(source_texts_dir)
-            log_info(f"Cleaned up temporary staging directory: '{source_texts_dir.name}'")
-        except Exception as cleanup_err:
-            log_warn(f"Failed to clean up temporary staging directory '{source_texts_dir}': {cleanup_err}")
+    cleanup_staged_dir()
             
     if pause_mode:
         pause_console(success=True, timeout_secs=auto_close_timeout)

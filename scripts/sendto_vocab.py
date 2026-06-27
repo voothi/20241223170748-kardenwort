@@ -413,6 +413,12 @@ def main():
     
     # Resolve upload to Anki
     upload_to_anki = _sendto_config_get(config, 'sendto_upload_to_anki', 'getboolean', True)
+    
+    # Resolve extraction mode (mix, word, sentence)
+    extraction_mode = _sendto_config_get(config, 'sendto_extraction_mode', 'get', 'mix').strip().lower()
+    if extraction_mode not in ('mix', 'word', 'sentence'):
+        log_warn(f"Unknown sendto_extraction_mode '{extraction_mode}' in config.ini. Falling back to 'mix'.")
+        extraction_mode = 'mix'
         
     # 6. Detect language from original argv order (before sorting)
     language = detect_language(valid_paths, default_lang)
@@ -454,10 +460,16 @@ def main():
         _fail(f"Runner script not found at '{runner_path}'", pause_mode)
         
     # 9. Build arguments matching the v3 cmd launcher
+    mode_flag = "mixed-triple" if extraction_mode == "mix" else "triple"
     cmd_args = [
         str(python_path),
         str(runner_path),
-        "--mode", "mixed-triple",
+        "--mode", mode_flag,
+    ]
+    if extraction_mode in ("word", "sentence"):
+        cmd_args.extend(["--type", extraction_mode])
+        
+    cmd_args.extend([
         "--language", language,
         "--tts-destination-lang", "ru",
         "--deduplication-scope", "global",
@@ -471,7 +483,7 @@ def main():
         "--text1-file", str(staged_paths[0]),
         "--text2-file", str(staged_paths[1]),
         "--text3-file", str(staged_paths[2])
-    ]
+    ])
     
     if not upload_to_anki:
         cmd_args.append("--skip-import")

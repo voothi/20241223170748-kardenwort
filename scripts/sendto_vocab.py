@@ -22,6 +22,7 @@ from typing import List, Tuple, Optional
 # GLOBAL CONSTANTS
 # ==============================================================================
 PAUSE_AUTO_CLOSE_TIMEOUT_SECS = 15
+PAUSE_ON_ERROR = False
 
 # ==============================================================================
 # CONSOLE OUTPUT HELPERS
@@ -54,7 +55,7 @@ def log_ok(msg):
 def _fail(msg: str, pause: bool = False):
     """Logs error, optionally pauses, and exits with code 1."""
     log_error(msg)
-    if pause:
+    if pause or PAUSE_ON_ERROR:
         pause_console(success=False)
     sys.exit(1)
 
@@ -238,12 +239,14 @@ def stage_inputs(sorted_paths: List[Path], sent_dir: Path) -> List[Path]:
                 else:
                     cleaned_content = content
                     
-                target_path.write_text(cleaned_content, encoding="utf-8", newline="\n")
+                with open(target_path, "w", encoding="utf-8", newline="\n") as f_out:
+                    f_out.write(cleaned_content)
             except Exception as e:
                 _fail(f"Failed to stage file '{src_path.name}': {e}")
         else:
             log_info(f"Staging slot {slot_num}: [empty placeholder] -> '{target_path.relative_to(sent_dir)}'")
-            target_path.write_text("", encoding="utf-8", newline="\n")
+            with open(target_path, "w", encoding="utf-8", newline="\n") as f_out:
+                f_out.write("")
             
         staged_paths.append(target_path)
     return staged_paths
@@ -308,6 +311,9 @@ def main():
             pause_mode = True
         else:
             files.append(arg)
+            
+    global PAUSE_ON_ERROR
+    PAUSE_ON_ERROR = pause_mode
             
     if sendto_mode:
         print("=== Kardenwort SendTo Vocab Processor ===")

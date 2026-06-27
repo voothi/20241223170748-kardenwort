@@ -87,6 +87,10 @@ def get_script_args(args, python_path, workspace_path, config):
     if wordlist_use_br:
         base_args.append("--wordlist-use-br")
         
+    anki_context_use_br = config.getboolean('output_format', 'anki_context_use_br', fallback=False)
+    if anki_context_use_br:
+        base_args.append("--anki-context-use-br")
+        
     add_header = config.getboolean('output_format', 'add_header', fallback=True)
     if add_header:
         base_args.append("--add-header")

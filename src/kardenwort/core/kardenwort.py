@@ -999,20 +999,21 @@ def process_parallel_text_files(
                 elif full_deck_name:
                     CSV_ROW_DECK_VAL = full_deck_name
 
+                context_join_str = "<br>" if args.anki_context_use_br else " "
                 row_data = prepare_row_data(
                     args,
                     lemma=word,
                     source_word=source_word_col_val,
                     sentence_index=str(sentence_index + 1).zfill(6),
                     source_sentence=source_sentence_for_tsv,
-                    source_context_left=" ".join(line.strip() for line in display_source_content_lines[context_start_index:sentence_index]),
-                    source_context_right=" ".join(line.strip() for line in display_source_content_lines[sentence_index + 1:context_end_index]),
+                    source_context_left=context_join_str.join(line.strip() for line in display_source_content_lines[context_start_index:sentence_index]),
+                    source_context_right=context_join_str.join(line.strip() for line in display_source_content_lines[sentence_index + 1:context_end_index]),
                     target_sentence=target_sentence_for_tsv,
-                    target_context_left=" ".join(line.strip() for line in display_target_content_lines[context_start_index:sentence_index]),
-                    target_context_right=" ".join(line.strip() for line in display_target_content_lines[sentence_index + 1:context_end_index]),
+                    target_context_left=context_join_str.join(line.strip() for line in display_target_content_lines[context_start_index:sentence_index]),
+                    target_context_right=context_join_str.join(line.strip() for line in display_target_content_lines[sentence_index + 1:context_end_index]),
                     tertiary_sentence=tertiary_sentence_for_tsv,
-                    tertiary_context_left=" ".join(line.strip() for line in display_tertiary_content_lines[context_start_index:sentence_index]),
-                    tertiary_context_right=" ".join(line.strip() for line in display_tertiary_content_lines[sentence_index + 1:context_end_index]),
+                    tertiary_context_left=context_join_str.join(line.strip() for line in display_tertiary_content_lines[context_start_index:sentence_index]),
+                    tertiary_context_right=context_join_str.join(line.strip() for line in display_tertiary_content_lines[sentence_index + 1:context_end_index]),
                     wordlist=current_wordlist,
                     cloze=source_sentence_for_tsv,
                     deck_name=CSV_ROW_DECK_VAL
@@ -1406,13 +1407,14 @@ def process_single_text(
             elif full_deck_name:
                 CSV_ROW_DECK_VAL = full_deck_name
 
+            context_join_str = "<br>" if args.anki_context_use_br else " "
             row_data = prepare_row_data(
                 args,
                 lemma=word,
                 source_word=source_word_col_val,
                 source_sentence=source_sentence_for_tsv,
-                source_context_left=" ".join(u.strip() for u in display_text_units[context_start_index:unit_index]),
-                source_context_right=" ".join(u.strip() for u in display_text_units[unit_index + 1:context_end_index]),
+                source_context_left=context_join_str.join(u.strip() for u in display_text_units[context_start_index:unit_index]),
+                source_context_right=context_join_str.join(u.strip() for u in display_text_units[unit_index + 1:context_end_index]),
                 wordlist=current_wordlist,
                 cloze=source_sentence_for_tsv,
                 sentence_index=str(unit_index + 1).zfill(6),
@@ -1607,17 +1609,18 @@ def process_parallel_sentences_to_csv(
             elif full_deck_name:
                 final_deck_for_card = full_deck_name
 
+            context_join_str = "<br>" if args.anki_context_use_br else " "
             row_data = prepare_row_data(
                 args,
                 source_sentence=source_sentence,
-                source_context_left=" ".join(line.strip() for line in display_source_content_lines[context_start_index:content_line_idx]),
-                source_context_right=" ".join(line.strip() for line in display_source_content_lines[content_line_idx + 1:context_end_index]),
+                source_context_left=context_join_str.join(line.strip() for line in display_source_content_lines[context_start_index:content_line_idx]),
+                source_context_right=context_join_str.join(line.strip() for line in display_source_content_lines[content_line_idx + 1:context_end_index]),
                 target_sentence=target_sentence,
-                target_context_left=" ".join(line.strip() for line in display_target_content_lines[context_start_index:content_line_idx]),
-                target_context_right=" ".join(line.strip() for line in display_target_content_lines[content_line_idx + 1:context_end_index]),
+                target_context_left=context_join_str.join(line.strip() for line in display_target_content_lines[context_start_index:content_line_idx]),
+                target_context_right=context_join_str.join(line.strip() for line in display_target_content_lines[content_line_idx + 1:context_end_index]),
                 tertiary_sentence=tertiary_sentence,
-                tertiary_context_left=" ".join(line.strip() for line in display_tertiary_content_lines[context_start_index:content_line_idx]),
-                tertiary_context_right=" ".join(line.strip() for line in display_tertiary_content_lines[content_line_idx + 1:context_end_index]),
+                tertiary_context_left=context_join_str.join(line.strip() for line in display_tertiary_content_lines[context_start_index:content_line_idx]),
+                tertiary_context_right=context_join_str.join(line.strip() for line in display_tertiary_content_lines[content_line_idx + 1:context_end_index]),
                 wordlist=current_wordlist,
                 cloze=source_sentence,
                 sentence_index=str(content_line_idx + 1).zfill(6),
@@ -1767,6 +1770,7 @@ def main():
 
     output_format_group = parser.add_argument_group('Output Content & Formatting')
     output_format_group.add_argument("--wordlist-use-br", action="store_true", help="Use HTML <br> tags instead of newlines as separators in the wordlist column. Automatically enabled if wordlist is in the mapping.")
+    output_format_group.add_argument("--anki-context-use-br", action="store_true", help="Use HTML <br> tags instead of spaces as separators in context columns.")
     output_format_group.add_argument("--add-header", action="store_true", default=True, help="Prepend the output file with the full Anki CSV header.")
     output_format_group.add_argument("--sentence-context-size", type=int, default=1, help="The number of sentences to include before and after the source sentence as context.")
     output_format_group.add_argument("--anki-create-subdecks", action="store_true", help="Automatically generate a parent deck and sub-decks for Anki based on the output filename.")

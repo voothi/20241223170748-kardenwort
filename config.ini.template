@@ -52,6 +52,9 @@ output_template = result.{mode}.{suffix}.{language}.tsv
 ; Use HTML <br> tags instead of newlines as separators in the wordlist column
 wordlist_use_br = True
 
+; Use HTML <br> tags instead of spaces as separators in context columns
+anki_context_use_br = False
+
 ; Prepend the output file with the full Anki CSV header
 add_header = True
 

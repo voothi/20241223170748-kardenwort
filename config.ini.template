@@ -243,3 +243,16 @@ Destination-en-US = tts_dest_us
 Destination-de-DE = tts_dest_de
 Destination-uk-UA = tts_dest_uk
 Destination-ru-RU = tts_dest_ru
+
+[sendto]
+; --- Windows "Send to" integration settings ---
+
+; Default language to fall back on when a sent file has no BCP-47 postfix.
+sendto_default_language = en
+
+; Save results back to the directory of the sent files instead of the project results/ folder.
+sendto_save_results_with_source = True
+
+; Mapping of language postfixes to specific text1/text2/text3 slots.
+; Allows selective translation paths to map to the correct triple positions (default: en:1, de:2, ru:3).
+sendto_language_slots = en:1, de:2, ru:3

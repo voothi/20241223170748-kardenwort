@@ -217,7 +217,7 @@ def test_sendto_vocab_full_flow(tmp_path, monkeypatch):
     
     # Assertions
     staged_dir = sent_dir / "source_texts"
-    assert (staged_dir / "text1.txt").read_text(encoding="utf-8") == "Sentence content"
+    assert not staged_dir.exists()  # Staging directory cleaned up on success
     
     # Runner was called with correct arguments
     assert len(called_args) == 1

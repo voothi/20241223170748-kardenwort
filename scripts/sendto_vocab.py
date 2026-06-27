@@ -445,6 +445,7 @@ def main():
         print(f"Detected Language: {language.upper()}\n")
         
     # 7. Stage inputs
+    source_texts_dir = sent_dir / "source_texts"
     staged_paths = stage_inputs(resolved_slots, sent_dir)
     
     # 8. Resolve runner path and python path
@@ -579,6 +580,14 @@ def main():
                 _fail(f"Relocation failed: {e}", pause_mode)
         else:
             log_warn("No newly generated result files were detected.")
+            
+    # Clean up temporary staging directory
+    if source_texts_dir.exists():
+        try:
+            shutil.rmtree(source_texts_dir)
+            log_info(f"Cleaned up temporary staging directory: '{source_texts_dir.name}'")
+        except Exception as cleanup_err:
+            log_warn(f"Failed to clean up temporary staging directory '{source_texts_dir}': {cleanup_err}")
             
     if pause_mode:
         pause_console(success=True, timeout_secs=auto_close_timeout)

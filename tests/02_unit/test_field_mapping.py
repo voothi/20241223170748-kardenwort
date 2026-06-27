@@ -95,6 +95,16 @@ def test_prepare_row_data_empty_args():
     assert 'tts_source_None' not in data
     assert 'tts_dest_None' not in data
 
+def test_prepare_row_data_subtitle_start_time():
+    class MockArgs:
+        language = "en"
+        tts_destination_lang = "de"
+        
+    args = MockArgs()
+    data = prepare_row_data(args, lemma="hello", subtitle_start_time="1.234")
+    assert data['lemma'] == "hello"
+    assert data['subtitle_start_time'] == "1.234"
+
 def test_get_anki_csv_header_override():
     custom_header = ["A", "B", "C"]
     header = get_anki_csv_header(header_override=custom_header)

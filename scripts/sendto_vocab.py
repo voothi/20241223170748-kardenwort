@@ -175,8 +175,28 @@ def sort_send_order(paths: List[Path]) -> List[Path]:
 # ==============================================================================
 # SRT PARSING & CLEANING
 # ==============================================================================
-def parse_srt(content: str) -> List[List[str]]:
-    """Parses SRT content to extract only subtitle text lines."""
+def parse_timecode(tc: str) -> int:
+    """Converts an SRT timestamp string (HH:MM:SS,mmm) to milliseconds."""
+    tc = tc.strip().replace(',', '.')
+    parts = tc.split(':')
+    if len(parts) != 3:
+        raise ValueError(f"Invalid timecode: {tc!r}")
+    hours = int(parts[0])
+    minutes = int(parts[1])
+    sec_parts = parts[2].split('.')
+    seconds = int(sec_parts[0])
+    millis = int(sec_parts[1]) if len(sec_parts) > 1 else 0
+    return hours * 3_600_000 + minutes * 60_000 + seconds * 1_000 + millis
+
+def parse_timeline(timeline: str) -> Tuple[int, int]:
+    """Extracts start and end milliseconds from an SRT timeline string."""
+    parts = timeline.split('-->')
+    if len(parts) != 2:
+        raise ValueError(f"Invalid timeline: {timeline!r}")
+    return parse_timecode(parts[0]), parse_timecode(parts[1])
+
+def parse_srt(content: str) -> List[Tuple[str, List[str]]]:
+    """Parses SRT content to extract subtitle start time (seconds as string) and text lines."""
     content = content.replace('\r\n', '\n').replace('\r', '\n')
     
     blocks = []
@@ -199,13 +219,23 @@ def parse_srt(content: str) -> List[List[str]]:
         start_idx = 0
         if block_lines[0].isdigit():
             start_idx = 1
-        # Skip timeline if it contains '-->'
+        # Parse timeline if it contains '-->'
+        timeline = None
         if start_idx < len(block_lines) and '-->' in block_lines[start_idx]:
+            timeline = block_lines[start_idx]
             start_idx += 1
+        
+        timestamp_str = ""
+        if timeline:
+            try:
+                start_ms, _ = parse_timeline(timeline)
+                timestamp_str = f"{start_ms / 1000.0:.3f}"
+            except Exception as e:
+                log_warn(f"Failed to parse timeline '{timeline}': {e}")
         
         text_lines = block_lines[start_idx:]
         if text_lines:
-            parsed_blocks.append(text_lines)
+            parsed_blocks.append((timestamp_str, text_lines))
     return parsed_blocks
 
 def clean_subtitle_text(text: str) -> str:
@@ -280,6 +310,15 @@ def stage_inputs(slots: dict, sent_dir: Path) -> List[Path]:
     staged_paths = []
     for slot_num in (1, 2, 3):
         target_path = source_texts_dir / f"text{slot_num}.txt"
+        timestamp_path = source_texts_dir / f"text{slot_num}.timestamps.txt"
+        
+        # Proactively clean up any existing timestamp file for this slot
+        if timestamp_path.exists():
+            try:
+                timestamp_path.unlink()
+            except Exception:
+                pass
+                
         src_path = slots[slot_num]
         
         if src_path:
@@ -290,12 +329,21 @@ def stage_inputs(slots: dict, sent_dir: Path) -> List[Path]:
                 if src_path.suffix.lower() == ".srt":
                     blocks = parse_srt(content)
                     cleaned_lines = []
-                    for block_text_lines in blocks:
+                    timestamps = []
+                    for timestamp, block_text_lines in blocks:
+                        cleaned_parts = []
                         for line in block_text_lines:
                             cleaned_text = clean_subtitle_text(line)
                             if cleaned_text:
-                                cleaned_lines.append(cleaned_text)
+                                cleaned_parts.append(cleaned_text)
+                        if cleaned_parts:
+                            cleaned_lines.append(" ".join(cleaned_parts))
+                            timestamps.append(timestamp)
                     cleaned_content = "\n".join(cleaned_lines)
+                    
+                    # Write sidecar timestamp file
+                    with open(timestamp_path, "w", encoding="utf-8", newline="\n") as f_time:
+                        f_time.write("\n".join(timestamps))
                 else:
                     cleaned_content = content
                     

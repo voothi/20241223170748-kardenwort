@@ -216,6 +216,14 @@ def get_script_args(args, python_path, workspace_path, config):
         else:
             raise ValueError(f"Unknown mode: {args.mode}")
 
+        # Resolve sibling subtitle timestamps sidecar file if it exists
+        candidate_ts = Path(text1_path).parent / (Path(text1_path).stem + ".timestamps.txt")
+        if candidate_ts.exists() and not getattr(args, 'subtitle_timestamps_file', None):
+            args.subtitle_timestamps_file = str(candidate_ts.resolve())
+
+    if getattr(args, 'subtitle_timestamps_file', None):
+        mode_args.extend(["--subtitle-timestamps-file", args.subtitle_timestamps_file])
+
     mode_args.extend(["--output-file", str(output_path / output_filename)])
     return base_args + mode_args
 
@@ -334,6 +342,7 @@ def main():
     parser.add_argument("--text2-file", type=str, help="Path to the second source text file (for dual/triple modes).")
     parser.add_argument("--text3-file", type=str, help="Path to the third source text file (for triple mode).")
     parser.add_argument("--skip-import", action="store_true", help="Skip importing TSV files to Anki.")
+    parser.add_argument("--subtitle-timestamps-file", type=str, help="Path to the sidecar subtitle timestamps file.")
 
     args = parser.parse_args()
     

@@ -360,6 +360,7 @@ def prepare_row_data(args, **kwargs):
         'cloze': kwargs.get('cloze', ''),
         'sentence_index': kwargs.get('sentence_index', ''),
         'deck_name': kwargs.get('deck_name', ''),
+        'subtitle_start_time': kwargs.get('subtitle_start_time', ''),
     }
     
     # Dynamic TTS activation flags
@@ -369,6 +370,7 @@ def prepare_row_data(args, **kwargs):
         row_data[f'tts_dest_{args.tts_destination_lang}'] = "1"
         
     return row_data
+
 
 def apply_field_mapping(csv_row, row_data, field_mapping, field_index_map):
     """Applies a field mapping to override csv_row values using row_data.
@@ -999,6 +1001,9 @@ def process_parallel_text_files(
                 elif full_deck_name:
                     CSV_ROW_DECK_VAL = full_deck_name
 
+                source_timestamps = getattr(args, 'source_timestamps', [])
+                subtitle_start_time = source_timestamps[sentence_index] if sentence_index < len(source_timestamps) else ""
+
                 context_join_str = "<br>" if args.anki_context_use_br else " "
                 row_data = prepare_row_data(
                     args,
@@ -1016,7 +1021,8 @@ def process_parallel_text_files(
                     tertiary_context_right=context_join_str.join(line.strip() for line in display_tertiary_content_lines[sentence_index + 1:context_end_index]),
                     wordlist=current_wordlist,
                     cloze=source_sentence_for_tsv,
-                    deck_name=CSV_ROW_DECK_VAL
+                    deck_name=CSV_ROW_DECK_VAL,
+                    subtitle_start_time=subtitle_start_time
                 )
                 apply_field_mapping(csv_row, row_data, field_mapping, F)
                 tsv_writer.writerow(csv_row)
@@ -1407,6 +1413,9 @@ def process_single_text(
             elif full_deck_name:
                 CSV_ROW_DECK_VAL = full_deck_name
 
+            source_timestamps = getattr(args, 'source_timestamps', [])
+            subtitle_start_time = source_timestamps[unit_index] if unit_index < len(source_timestamps) else ""
+
             context_join_str = "<br>" if args.anki_context_use_br else " "
             row_data = prepare_row_data(
                 args,
@@ -1418,7 +1427,8 @@ def process_single_text(
                 wordlist=current_wordlist,
                 cloze=source_sentence_for_tsv,
                 sentence_index=str(unit_index + 1).zfill(6),
-                deck_name=CSV_ROW_DECK_VAL
+                deck_name=CSV_ROW_DECK_VAL,
+                subtitle_start_time=subtitle_start_time
             )
             
             apply_field_mapping(csv_row, row_data, field_mapping, F)
@@ -1609,6 +1619,9 @@ def process_parallel_sentences_to_csv(
             elif full_deck_name:
                 final_deck_for_card = full_deck_name
 
+            source_timestamps = getattr(args, 'source_timestamps', [])
+            subtitle_start_time = source_timestamps[content_line_idx] if content_line_idx < len(source_timestamps) else ""
+
             context_join_str = "<br>" if args.anki_context_use_br else " "
             row_data = prepare_row_data(
                 args,
@@ -1624,7 +1637,8 @@ def process_parallel_sentences_to_csv(
                 wordlist=current_wordlist,
                 cloze=source_sentence,
                 sentence_index=str(content_line_idx + 1).zfill(6),
-                deck_name=final_deck_for_card
+                deck_name=final_deck_for_card,
+                subtitle_start_time=subtitle_start_time
             )
 
             apply_field_mapping(csv_row, row_data, field_mapping, F)
@@ -1757,7 +1771,7 @@ def main():
     input_output_group.add_argument("--text3-file", help="Path to a third parallel text file.")
     input_output_group.add_argument("--output-file", help="Path to the output file. If not provided, results are printed to standard output.")
     input_output_group.add_argument("--multi-text", action="store_true", help="Parse input from --text or stdin as up to three texts separated by '---'.")
-
+    input_output_group.add_argument("--subtitle-timestamps-file", help="Path to the sidecar subtitle timestamps file.")
     data_files_group = parser.add_argument_group('Data Files')
     data_files_group.add_argument("--lemma-index-file", default="", help="Path to a CSV file with lemmas, used for frequency-based sorting of the output.")
     data_files_group.add_argument("--lemma-override-file", help="Path to a TSV file that defines rules for correcting specific lemma results.")
@@ -1870,6 +1884,15 @@ def main():
     gcs_group.add_argument("--de-gcs-skip-merge-fractions", action="store_true", help="[GCS] Disable merging of components, outputting raw parts from dissection.")
 
     args = parser.parse_args()
+    
+    source_timestamps = []
+    if getattr(args, 'subtitle_timestamps_file', None):
+        try:
+            with open(args.subtitle_timestamps_file, 'r', encoding='utf-8') as f_time:
+                source_timestamps = [line.strip() for line in f_time]
+        except Exception as e:
+            print(f"Warning: Could not read subtitle timestamps file {args.subtitle_timestamps_file}: {e}", file=sys.stderr)
+    args.source_timestamps = source_timestamps
     
     if args.multi_text:
         if args.text1_file:

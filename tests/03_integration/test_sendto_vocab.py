@@ -105,9 +105,19 @@ def test_stage_inputs_txt_and_srt(tmp_path):
     assert len(staged) == 3
     assert staged[0].read_text(encoding="utf-8") == "Hello plain text."
     
-    # Asserting that lines are separated by newline (\n) as in whisper project
+    # Asserting that blocks are staged as single lines (collapsed)
     staged_srt_content = staged[1].read_text(encoding="utf-8")
-    assert staged_srt_content == "Hello subtitles!\nLine two.\nLine three."
+    assert staged_srt_content == "Hello subtitles!\nLine two. Line three."
+    
+    # Asserting that sidecar timestamp file is written correctly for the SRT slot
+    timestamps_path_1 = sent_dir / "source_texts" / "text1.timestamps.txt"
+    timestamps_path_2 = sent_dir / "source_texts" / "text2.timestamps.txt"
+    timestamps_path_3 = sent_dir / "source_texts" / "text3.timestamps.txt"
+    
+    assert not timestamps_path_1.exists()
+    assert timestamps_path_2.exists()
+    assert timestamps_path_2.read_text(encoding="utf-8") == "1.000\n4.000"
+    assert not timestamps_path_3.exists()
     
     # Slot 3 is empty placeholder
     assert staged[2].read_text(encoding="utf-8") == ""
@@ -709,3 +719,34 @@ def test_install_script(tmp_path, monkeypatch):
     # 2. New shortcut should be created by the OS's PowerShell COM script
     new_shortcut = temp_sendto / "Kardenwort Vocab.lnk"
     assert new_shortcut.exists()
+
+# ==============================================================================
+# SRT TIMESTAMP PARSING TESTS
+# ==============================================================================
+
+def test_parse_timecode():
+    assert sv.parse_timecode("00:00:01,000") == 1000
+    assert sv.parse_timecode("01:02:03,456") == 3723456
+    assert sv.parse_timecode("00:00:00,005") == 5
+    with pytest.raises(ValueError):
+        sv.parse_timecode("invalid")
+
+def test_parse_timeline():
+    start, end = sv.parse_timeline("00:00:01,000 --> 00:00:03,000")
+    assert start == 1000
+    assert end == 3000
+
+def test_parse_srt_with_timestamps():
+    srt_content = (
+        "1\n"
+        "00:00:01,123 --> 00:00:03,456\n"
+        "Hello World\n"
+        "\n"
+        "2\n"
+        "00:00:05,000 --> 00:00:07,000\n"
+        "Sub two\n"
+    )
+    blocks = sv.parse_srt(srt_content)
+    assert len(blocks) == 2
+    assert blocks[0] == ("1.123", ["Hello World"])
+    assert blocks[1] == ("5.000", ["Sub two"])

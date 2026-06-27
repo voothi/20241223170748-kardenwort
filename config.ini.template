@@ -196,7 +196,7 @@ SentenceDestination2ContextRight = tertiary_context_right
 Deck = deck_name
 WordSource2 = lemma
 WordSourceInflectedForm2 = source_word
-
+Note = subtitle_start_time
 ; TTS activation fields
 Source-en-GB = tts_source_en
 Source-en-US = tts_source_us
@@ -234,7 +234,7 @@ SentenceDestination2ContextLeft = tertiary_context_left
 SentenceDestination2 = tertiary_sentence
 SentenceDestination2ContextRight = tertiary_context_right
 Deck = deck_name
-
+Note = subtitle_start_time
 ; TTS activation fields
 Source-en-GB = tts_source_en
 Source-en-US = tts_source_us

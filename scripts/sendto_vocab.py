@@ -356,13 +356,16 @@ def pause_console(success: bool = True, timeout_secs: Optional[int] = PAUSE_AUTO
         except Exception:
             pass
 
-def relocate_results(results_dir: Optional[Path], existing_results_files: set, language: str, sent_dir: Path, save_results_with_source: bool):
-    """Scans results_dir for newly generated TSV/JSON files and moves them to sent_dir/results."""
+def relocate_results(results_dir: Optional[Path], existing_results_files: set, language: str, sent_dir: Path, save_results_with_source: bool, relocation_subfolder: str):
+    """Scans results_dir for newly generated TSV/JSON files and moves them to sent_dir / relocation_subfolder."""
     if not (save_results_with_source and results_dir and results_dir.exists()):
         return
         
     log_info("Scanning for newly generated result files...")
-    target_results_dir = sent_dir / "results"
+    if relocation_subfolder:
+        target_results_dir = (sent_dir / relocation_subfolder).resolve()
+    else:
+        target_results_dir = sent_dir.resolve()
     
     # Compute set-difference to find newly created TSV/JSON files matching the output pattern
     new_files = []
@@ -492,6 +495,9 @@ def main():
     # Resolve save results with source
     save_results_with_source = _sendto_config_get(config, 'sendto_save_results_with_source', 'getboolean', True)
     
+    # Resolve relocation subfolder (default: 'results'; leave empty/blank to put directly in dropped folder)
+    relocation_subfolder = _sendto_config_get(config, 'sendto_relocation_subfolder', 'get', 'results').strip()
+    
     # Resolve upload to Anki
     upload_to_anki = _sendto_config_get(config, 'sendto_upload_to_anki', 'getboolean', True)
     
@@ -607,7 +613,7 @@ def main():
         
     # 12. Relocate new results if save_results_with_source is true
     try:
-        relocate_results(results_dir, existing_results_files, language, sent_dir, save_results_with_source)
+        relocate_results(results_dir, existing_results_files, language, sent_dir, save_results_with_source, relocation_subfolder)
     except Exception as e:
         _fail(str(e), pause_mode)
         

@@ -259,6 +259,11 @@ sendto_upload_to_anki = True
 ; Extraction mode: mix (both word and sentence passes), word (word-only), or sentence (sentence-only).
 sendto_extraction_mode = mix
 
+; Subfolder next to source files where results will be moved (e.g. results).
+; Leave empty to move results directly to the folder from which you are calling (the root directory).
+; Default: results
+sendto_relocation_subfolder = results
+
 ; Console auto-close timeout in seconds (on successful runs in SendTo/pause mode).
 ; Set to 0 to close instantly; set to -1 or leave empty to disable auto-close.
 ; Default: 15

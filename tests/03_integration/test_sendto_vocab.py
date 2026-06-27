@@ -635,6 +635,56 @@ def test_sendto_relocation_on_runner_failure(tmp_path, monkeypatch):
     assert relocated_tsv.exists()
     assert relocated_tsv.read_text(encoding="utf-8") == "mock content"
 
+def test_sendto_relocate_to_root(tmp_path, monkeypatch):
+    """Verify that results are relocated directly to the dropped folder root if subfolder is empty."""
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    results_dir = workspace / "results"
+    results_dir.mkdir()
+    
+    runner_path = workspace / "src" / "kardenwort" / "core" / "runner.py"
+    runner_path.parent.mkdir(parents=True, exist_ok=True)
+    runner_path.write_text("# mock runner", encoding="utf-8")
+    
+    sent_dir = tmp_path / "sent_files"
+    sent_dir.mkdir()
+    
+    config = configparser.ConfigParser()
+    config.read_string(
+        "[environment]\n"
+        "python_executable = python\n"
+        f"kardenwort_workspace = {workspace.as_posix()}\n"
+        "[scripts]\n"
+        "kardenwort_runner_filename = runner.py\n"
+        "[project_structure]\n"
+        "generated_results_dir = results\n"
+        "[sendto]\n"
+        "sendto_relocation_subfolder = \n"
+    )
+    monkeypatch.setattr(sv, "load_config", lambda: (workspace, config))
+    
+    def mock_run(args, **kwargs):
+        res_file = results_dir / "20260626232001-mock.triple.sentence.en.tsv"
+        res_file.write_text("root content", encoding="utf-8")
+        mock_proc = MagicMock()
+        mock_proc.returncode = 0
+        return mock_proc
+        
+    monkeypatch.setattr(subprocess, "run", mock_run)
+    
+    f1 = sent_dir / "text1.txt"
+    f1.write_text("content", encoding="utf-8")
+    
+    monkeypatch.setattr(sys, "argv", ["sendto_vocab.py", "--sendto", str(f1)])
+    
+    sv.main()
+    
+    # Verify that the TSV file was successfully relocated directly into sent_dir (root)
+    relocated_tsv = sent_dir / "20260626232001-mock.triple.sentence.en.tsv"
+    assert relocated_tsv.exists()
+    assert relocated_tsv.read_text(encoding="utf-8") == "root content"
+    assert not (sent_dir / "results").exists()
+
 # ==============================================================================
 # INTEGRATION TESTS FOR INSTALL.PY
 # ==============================================================================

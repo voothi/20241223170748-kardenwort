@@ -144,6 +144,18 @@ def test_resolve_slots_by_language_and_index():
     assert slots[1] == p_de
     assert slots[2] is None
     assert slots[3] == p_ru
+    
+    # Case 5: User's exact config mapping string
+    user_slots_str = "en:1, de:1, ru:3, 1.en:1, 1.de:1, 2.ru:2, 3.ru:3, text1:1, text2:2, text3:3"
+    user_lang_slots = {}
+    for item in user_slots_str.split(','):
+        k, v = item.split(':', 1)
+        user_lang_slots[k.strip().lower()] = int(v.strip())
+    
+    slots = sv.resolve_slots([p_en, p_ru], user_lang_slots, "en", "en")
+    assert slots[1] == p_en
+    assert slots[2] is None
+    assert slots[3] == p_ru
 
 # ==============================================================================
 # INTEGRATION TESTS FOR HARDENED SENDTO_VOCAB.PY

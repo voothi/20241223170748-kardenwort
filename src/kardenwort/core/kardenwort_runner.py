@@ -329,6 +329,7 @@ def main():
     parser.add_argument("--text1-file", type=str, help="Path to the first source text file.")
     parser.add_argument("--text2-file", type=str, help="Path to the second source text file (for dual/triple modes).")
     parser.add_argument("--text3-file", type=str, help="Path to the third source text file (for triple mode).")
+    parser.add_argument("--skip-import", action="store_true", help="Skip importing TSV files to Anki.")
 
     args = parser.parse_args()
     
@@ -368,18 +369,23 @@ def main():
             sys.exit(1)
 
         args.anki_deck_content = original_deck_content
-        args.anki_parent_deck = None 
-        print_debug(f"\n--- Importing SENTENCE file: {sentence_filename_basename} ---")
-        run_importer_script(sentence_filename_basename, args, python_path, workspace_path, importer_workspace, config)
+        args.anki_parent_deck = parent_deck_name
+        if not args.skip_import:
+            print_debug(f"\n--- Importing SENTENCE file: {sentence_filename_basename} ---")
+            run_importer_script(sentence_filename_basename, args, python_path, workspace_path, importer_workspace, config)
 
         args.anki_parent_deck = parent_deck_name
-        print_debug(f"\n--- Importing WORD file: {word_filename_basename} ---")
-        run_importer_script(word_filename_basename, args, python_path, workspace_path, importer_workspace, config)
+        if not args.skip_import:
+            print_debug(f"\n--- Importing WORD file: {word_filename_basename} ---")
+            run_importer_script(word_filename_basename, args, python_path, workspace_path, importer_workspace, config)
 
         print_debug("\nAll operations for mixed-triple mode completed successfully.")
         
         if args.show_success_message:
-            success_message = f"Completed successfully!\n\nCards have been imported into the deck:\n{parent_deck_name}"
+            if args.skip_import:
+                success_message = f"Completed successfully!\n\nTSV files generated."
+            else:
+                success_message = f"Completed successfully!\n\nCards have been imported into the deck:\n{parent_deck_name}"
             print(success_message)
 
     else: # Logic for single, dual, triple modes
@@ -389,7 +395,8 @@ def main():
         if not output_filename_basename:
             sys.exit(1)
         
-        run_importer_script(output_filename_basename, args, python_path, workspace_path, importer_workspace, config)
+        if not args.skip_import:
+            run_importer_script(output_filename_basename, args, python_path, workspace_path, importer_workspace, config)
         
         print(output_filename_basename)
 

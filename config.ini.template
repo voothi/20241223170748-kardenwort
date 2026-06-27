@@ -253,5 +253,8 @@ sendto_default_language = en
 ; Save results back to the directory of the sent files instead of the project results/ folder.
 sendto_save_results_with_source = True
 
+; Automatically upload/import the generated TSV cards to Anki.
+sendto_upload_to_anki = True
+
 ; Mapping of language postfixes to specific slots: 1 (source_sentence), 2 (target_sentence), 3 (tertiary_sentence).
 sendto_language_slots = en:1, de:1, ru:3, 1.en:1, 1.de:1, 2.ru:2, 3.ru:3, text1:1, text2:2, text3:3

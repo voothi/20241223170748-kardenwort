@@ -410,6 +410,9 @@ def main():
     
     # Resolve save results with source
     save_results_with_source = _sendto_config_get(config, 'sendto_save_results_with_source', 'getboolean', True)
+    
+    # Resolve upload to Anki
+    upload_to_anki = _sendto_config_get(config, 'sendto_upload_to_anki', 'getboolean', True)
         
     # 6. Detect language from original argv order (before sorting)
     language = detect_language(valid_paths, default_lang)
@@ -469,6 +472,9 @@ def main():
         "--text2-file", str(staged_paths[1]),
         "--text3-file", str(staged_paths[2])
     ]
+    
+    if not upload_to_anki:
+        cmd_args.append("--skip-import")
     
     # 10. Record results directory snapshot immediately before running (gated by save_results_with_source)
     existing_results_files = set()

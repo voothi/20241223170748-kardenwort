@@ -297,19 +297,24 @@ def pause_console(success: bool = True, timeout_secs: Optional[int] = PAUSE_AUTO
 # MAIN FLOW
 # ==============================================================================
 def main():
-    parser = argparse.ArgumentParser(description="Kardenwort SendTo Vocab Processor")
-    parser.add_argument("--sendto", action="store_true", help="Enable SendTo mode")
-    parser.add_argument("--pause", action="store_true", help="Pause console on exit")
-    parser.add_argument("files", nargs="*", help="File paths to process")
+    sendto_mode = False
+    pause_mode = False
+    files = []
     
-    args = parser.parse_args()
-    
-    if args.sendto:
+    for arg in sys.argv[1:]:
+        if arg == "--sendto":
+            sendto_mode = True
+        elif arg == "--pause":
+            pause_mode = True
+        else:
+            files.append(arg)
+            
+    if sendto_mode:
         print("=== Kardenwort SendTo Vocab Processor ===")
         
     # 1. Filter files to .txt and .srt
     valid_paths = []
-    for f in args.files:
+    for f in files:
         p = Path(f)
         if p.suffix.lower() in ('.txt', '.srt'):
             valid_paths.append(p)
@@ -317,7 +322,7 @@ def main():
             log_warn(f"Ignoring unsupported file: '{p.name}' (only .txt and .srt are supported)")
             
     if not valid_paths:
-        _fail("No valid .txt or .srt files were provided.", args.pause)
+        _fail("No valid .txt or .srt files were provided.", pause_mode)
         
     # 2. Sort the files in send-order
     sorted_paths = sort_send_order(valid_paths)
@@ -345,7 +350,7 @@ def main():
     language = detect_language(valid_paths, default_lang)
     
     # Print resolved mapping if in SendTo mode
-    if args.sendto:
+    if sendto_mode:
         print("\nResolved File Mapping:")
         for i, p in enumerate(sorted_paths):
             print(f"  Slot {i+1}: {p.name}")
@@ -372,10 +377,10 @@ def main():
         source_code_dir = config.get('project_structure', 'source_code_dir', fallback='src/kardenwort/core')
         runner_path = (workspace_path / source_code_dir / runner_filename).resolve()
     except KeyError as e:
-        _fail(f"Missing required configuration key in config.ini: {e}", args.pause)
+        _fail(f"Missing required configuration key in config.ini: {e}", pause_mode)
         
     if not runner_path.exists():
-        _fail(f"Runner script not found at '{runner_path}'", args.pause)
+        _fail(f"Runner script not found at '{runner_path}'", pause_mode)
         
     # 9. Build arguments matching the v3 cmd launcher
     cmd_args = [
@@ -411,9 +416,9 @@ def main():
     try:
         subprocess.run(cmd_args, check=True)
     except subprocess.CalledProcessError as e:
-        _fail(f"Runner failed with exit code {e.returncode}", args.pause)
+        _fail(f"Runner failed with exit code {e.returncode}", pause_mode)
     except Exception as e:
-        _fail(f"Failed to start runner: {e}", args.pause)
+        _fail(f"Failed to start runner: {e}", pause_mode)
         
     log_ok("Runner finished successfully.")
     
@@ -476,12 +481,19 @@ def main():
                 for f in untouched_files:
                     log_error(f"  [UNTOUCHED] {f.name}")
                 
-                _fail(f"Relocation failed: {e}", args.pause)
+                _fail(f"Relocation failed: {e}", pause_mode)
         else:
             log_warn("No newly generated result files were detected.")
             
-    if args.pause:
+    if pause_mode:
         pause_console(success=True)
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        import traceback
+        log_error(f"Unhandled exception occurred:\n{traceback.format_exc()}")
+        if "--pause" in sys.argv:
+            pause_console(success=False)
+        sys.exit(1)

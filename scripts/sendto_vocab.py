@@ -301,7 +301,7 @@ def stage_inputs(slots: dict, sent_dir: Path) -> List[Path]:
 # ==============================================================================
 def pause_console(success: bool = True, timeout_secs: Optional[int] = PAUSE_AUTO_CLOSE_TIMEOUT_SECS):
     """Pauses the console window for inspection."""
-    if not success or timeout_secs is None:
+    if not success or timeout_secs is None or timeout_secs < 0:
         try:
             input("\nPress Enter to exit...")
         except Exception:
@@ -419,6 +419,15 @@ def main():
     if extraction_mode not in ('mix', 'word', 'sentence'):
         log_warn(f"Unknown sendto_extraction_mode '{extraction_mode}' in config.ini. Falling back to 'mix'.")
         extraction_mode = 'mix'
+        
+    # Resolve auto close timeout
+    timeout_val = _sendto_config_get(config, 'sendto_auto_close_timeout_secs', 'get', '15').strip()
+    auto_close_timeout = None
+    if timeout_val:
+        try:
+            auto_close_timeout = int(timeout_val)
+        except ValueError:
+            auto_close_timeout = 15
         
     # 6. Detect language from original argv order (before sorting)
     language = detect_language(valid_paths, default_lang)
@@ -572,7 +581,7 @@ def main():
             log_warn("No newly generated result files were detected.")
             
     if pause_mode:
-        pause_console(success=True)
+        pause_console(success=True, timeout_secs=auto_close_timeout)
 
 if __name__ == "__main__":
     try:

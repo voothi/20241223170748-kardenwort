@@ -339,6 +339,66 @@ def test_sendto_extraction_mode(tmp_path, monkeypatch):
     assert "--type" in run_args
     assert "word" in run_args
 
+def test_sendto_auto_close_timeout(tmp_path, monkeypatch):
+    """Verify that pause_console is called with the configured timeout_secs."""
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    results_dir = workspace / "results"
+    results_dir.mkdir()
+    
+    runner_path = workspace / "src" / "kardenwort" / "core" / "runner.py"
+    runner_path.parent.mkdir(parents=True, exist_ok=True)
+    runner_path.write_text("# mock runner", encoding="utf-8")
+    
+    sent_dir = tmp_path / "sent_files"
+    sent_dir.mkdir()
+    
+    config = configparser.ConfigParser()
+    config.read_string(
+        "[environment]\n"
+        "python_executable = python\n"
+        f"kardenwort_workspace = {workspace.as_posix()}\n"
+        "[scripts]\n"
+        "kardenwort_runner_filename = runner.py\n"
+        "[project_structure]\n"
+        "generated_results_dir = results\n"
+        "[sendto]\n"
+        "sendto_auto_close_timeout_secs = 5\n"
+    )
+    monkeypatch.setattr(sv, "load_config", lambda: (workspace, config))
+    
+    # Mock subprocess.run
+    def mock_run(args, **kwargs):
+        res_file = results_dir / "20260626232001-mock.triple.sentence.en.tsv"
+        res_file.write_text("mock", encoding="utf-8")
+        mock_proc = MagicMock()
+        mock_proc.returncode = 0
+        return mock_proc
+    monkeypatch.setattr(subprocess, "run", mock_run)
+    
+    # Mock pause_console to capture call args
+    captured_calls = []
+    def mock_pause_console(success, timeout_secs):
+        captured_calls.append((success, timeout_secs))
+    monkeypatch.setattr(sv, "pause_console", mock_pause_console)
+    
+    f1 = sent_dir / "text1.txt"
+    f1.write_text("content", encoding="utf-8")
+    
+    monkeypatch.setattr(sys, "argv", ["sendto_vocab.py", "--sendto", "--pause", str(f1)])
+    
+    sv.main()
+    
+    assert len(captured_calls) == 1
+    assert captured_calls[0] == (True, 5)
+    
+    # Case 2: Negative value configured (disabling auto-close)
+    config.set("sendto", "sendto_auto_close_timeout_secs", "-1")
+    captured_calls.clear()
+    sv.main()
+    assert len(captured_calls) == 1
+    assert captured_calls[0] == (True, -1)
+
 def test_concurrent_writer(tmp_path, monkeypatch):
     """Scenario 12.3: Verify foreign files are not relocated."""
     workspace = tmp_path / "workspace"

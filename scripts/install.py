@@ -115,7 +115,7 @@ def main(argv=None):
         python_path = python_path[:-len("pythonw.exe")] + "python.exe"
 
     sendto_vocab_path = os.path.join(current_dir, "sendto_vocab.py")
-    runner_path = os.path.join(current_dir, "kardenwort_runner.py")
+    runner_path = os.path.join(project_root, "src", "kardenwort", "core", "kardenwort_runner.py")
     
     # Resolve intellifiller workspace
     if os.path.isabs(intellifiller_workspace_str):

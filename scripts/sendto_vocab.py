@@ -564,6 +564,12 @@ def main():
         except ValueError:
             auto_close_timeout = 15
         
+    # Check if 'extract' stage is enabled in pipeline config
+    pipeline_stages_str = config.get('pipeline', 'stages', fallback='extract, import')
+    stages = [s.strip().lower() for s in pipeline_stages_str.split(',') if s.strip()]
+    if 'extract' not in stages:
+        _fail("Pipeline configuration error: 'extract' stage is not enabled in config.ini.", pause_mode)
+
     # 6. Detect language from original argv order (before sorting)
     language = detect_language(valid_paths, default_lang)
     

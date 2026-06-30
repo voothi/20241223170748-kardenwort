@@ -18,6 +18,8 @@ kardenwort_workspace = ./
 ; The workspace for the anki-importer script.
 ; This path is relative to the location of config.ini
 importer_workspace = ../20250401192017-anki-csv-importer
+intellifiller_workspace = ../20251206123938-intellifiller-ai-addon-for-anki
+
 
 ; --- Linux/macOS Example ---
 ; python_executable = /path/to/your/venv/bin/python
@@ -274,3 +276,7 @@ sendto_auto_close_timeout_secs = -1
 
 ; Mapping of language postfixes to specific slots: 1 (source_sentence), 2 (target_sentence), 3 (tertiary_sentence).
 sendto_language_slots = en:1, de:1, ru:3, 1.en:1, 1.de:1, 2.ru:2, 3.ru:3, text1:1, text2:2, text3:3
+
+[pipeline]
+stages = extract, import
+

@@ -268,17 +268,22 @@ def run_importer_script(output_filename_basename, args, python_path, workspace_p
     note_type = config.get('anki_importer_settings', 'note_type', fallback='Basic')
     output_dir_name = config.get('project_structure', 'generated_results_dir', fallback='results')
 
+    tsv_path = Path(output_filename_basename)
+    if not tsv_path.is_absolute():
+        tsv_path = workspace_path / output_dir_name / output_filename_basename
+
     importer_command = [
         str(python_path),
         str(importer_workspace / importer_script),
-        "--path", str(workspace_path / output_dir_name / output_filename_basename),
+        "--path", str(tsv_path),
         "--note", note_type,
     ]
     
     single_deck_name_for_importer = ""
     if not args.anki_markdown_decks:
         if args.anki_create_subdecks:
-            sub_deck_name = os.path.splitext(output_filename_basename)[0]
+            basename = os.path.basename(output_filename_basename)
+            sub_deck_name = os.path.splitext(basename)[0]
             if args.anki_parent_deck:
                 parent_deck_name = args.anki_parent_deck
             else:
@@ -289,7 +294,8 @@ def run_importer_script(output_filename_basename, args, python_path, workspace_p
             else:
                 single_deck_name_for_importer = parent_deck_name
         else:
-            single_deck_name_for_importer = os.path.splitext(output_filename_basename)[0]
+            basename = os.path.basename(output_filename_basename)
+            single_deck_name_for_importer = os.path.splitext(basename)[0]
 
     if single_deck_name_for_importer:
         importer_command.extend(["--deck", single_deck_name_for_importer])
@@ -297,10 +303,14 @@ def run_importer_script(output_filename_basename, args, python_path, workspace_p
     if args.suspend_cards:
         importer_command.append("--suspend")
     
-    output_base_path = workspace_path / output_dir_name / output_filename_basename
+    output_base_path = Path(output_filename_basename)
+    if not output_base_path.is_absolute():
+        output_base_path = workspace_path / output_dir_name / output_filename_basename
     metadata_path = output_base_path.with_suffix('.json')
     if metadata_path.exists():
         importer_command.extend(["--deck-metadata-file", str(metadata_path)])
+    else:
+        print_debug(f"Warning: Sibling metadata JSON file not found at {metadata_path}. Proceeding with importer defaults.")
 
     print_debug(f"Running importer with command:\n{' '.join(map(str, importer_command))}\n")
     
@@ -309,6 +319,44 @@ def run_importer_script(output_filename_basename, args, python_path, workspace_p
     except subprocess.CalledProcessError as e:
         print_debug(f"ERROR: Anki importer failed with exit code {e.returncode}.")
         sys.exit(1)
+
+def run_fill_stage(tsv_filename_basename, args, python_path, workspace_path, config):
+    """Runs headless IntelliFiller to enrich the generated TSV."""
+    print_debug(f"Processing file for AI enrichment (fill): {tsv_filename_basename}")
+    
+    intellifiller_workspace_str = config.get('environment', 'intellifiller_workspace', fallback='../20251206123938-intellifiller-ai-addon-for-anki')
+    intellifiller_workspace = Path(intellifiller_workspace_str)
+    if not intellifiller_workspace.is_absolute():
+        project_root = Path(__file__).resolve().parent.parent.parent.parent
+        intellifiller_workspace = (project_root / intellifiller_workspace).resolve()
+        
+    headless_script = intellifiller_workspace / "IntelliFiller" / "headless_entrypoint.py"
+    if not headless_script.exists():
+        print_debug(f"Warning: IntelliFiller headless script not found at {headless_script}. Skipping fill stage.")
+        return
+        
+    prompt_name = "English Vocabulary Analysis and Translation (JSON)"
+    if args.language == "de":
+        prompt_name = "German Vocabulary Analysis and Translation (JSON)"
+        
+    tsv_path = Path(tsv_filename_basename)
+    if not tsv_path.is_absolute():
+        tsv_path = workspace_path / config.get('project_structure', 'generated_results_dir', fallback='results') / tsv_filename_basename
+        
+    fill_command = [
+        str(python_path),
+        str(headless_script),
+        "--tsv", str(tsv_path),
+        "--prompt", prompt_name,
+    ]
+    
+    print_debug(f"Running fill stage with command:\n{' '.join(map(str, fill_command))}\n")
+    try:
+        subprocess.run(fill_command, check=True, text=True, encoding='utf-8')
+    except subprocess.CalledProcessError as e:
+        print_debug(f"ERROR: IntelliFiller headless fill failed with exit code {e.returncode}.")
+        sys.exit(1)
+
 
 def main():
     if "--get-python-path" in sys.argv:
@@ -322,8 +370,8 @@ def main():
     parser.add_argument("--play-sound-on-completion", action="store_true", help="Play a system beep sound upon successful completion.")
     parser.add_argument("--show-success-message", action="store_true", help="Display a user-friendly success message on stdout. Useful for interactive tools like GoldenDict.")
     parser.add_argument("--type", type=str, choices=["word", "sentence"], help="Type of processing: 'word' for word extraction, 'sentence' for parallel sentences. Not required for 'mixed-triple' mode.")
-    parser.add_argument("--mode", type=str, required=True, choices=["single", "dual", "triple", "mixed-triple"], help="Processing mode: single, dual, triple, or mixed-triple (runs sentence and word modes sequentially).")
-    parser.add_argument("--language", type=str, required=True, choices=["de", "en"], help="Language for processing: German (de) or English (en).")
+    parser.add_argument("--mode", type=str, choices=["single", "dual", "triple", "mixed-triple"], help="Processing mode: single, dual, triple, or mixed-triple (runs sentence and word modes sequentially).")
+    parser.add_argument("--language", type=str, choices=["de", "en"], help="Language for processing: German (de) or English (en).")
     parser.add_argument("--deduplication-scope", type=str, choices=['global', 'sentence', 'none'], default='global', help="Set the scope for lemma deduplication.")
     parser.add_argument("--tts-destination-lang", type=str, help="Specify the destination language for TTS field activation (e.g., 'ru', 'en').")
     parser.add_argument("--text", type=str, help="Directly pass a text string for 'single' mode processing, bypassing the default text1.txt file.")
@@ -343,9 +391,29 @@ def main():
     parser.add_argument("--text3-file", type=str, help="Path to the third source text file (for triple mode).")
     parser.add_argument("--skip-import", action="store_true", help="Skip importing TSV files to Anki.")
     parser.add_argument("--subtitle-timestamps-file", type=str, help="Path to the sidecar subtitle timestamps file.")
+    parser.add_argument("--import-only", action="store_true", help="Import an existing TSV directly into Anki without running extraction.")
+    parser.add_argument("--tsv", type=str, help="Path to the TSV file (required for --import-only).")
 
     args = parser.parse_args()
     
+    python_path, workspace_path, importer_workspace, config = load_config()
+
+    if args.import_only:
+        if not args.tsv:
+            parser.error('--tsv is required when running in --import-only mode.')
+        tsv_path = Path(args.tsv).resolve()
+        if not tsv_path.exists():
+            print_debug(f"ERROR: TSV file not found at {tsv_path}")
+            sys.exit(1)
+        run_importer_script(str(tsv_path), args, python_path, workspace_path, importer_workspace, config)
+        sys.exit(0)
+
+    # Standard run validation
+    if not args.mode:
+        parser.error('the following arguments are required: --mode')
+    if not args.language:
+        parser.error('the following arguments are required: --language')
+
     if args.mode != 'mixed-triple' and not args.type:
         parser.error('--type is required for modes single, dual, and triple.')
     if args.mode == 'mixed-triple' and args.type:
@@ -355,63 +423,111 @@ def main():
         print_debug("Info: Automatically enabling --multi-text for mixed-triple mode with --text input.")
         args.multi_text = True
 
-    python_path, workspace_path, importer_workspace, config = load_config()
+
+    # Load and validate pipeline stages
+    pipeline_stages_str = config.get('pipeline', 'stages', fallback='extract, import')
+    stages = [s.strip().lower() for s in pipeline_stages_str.split(',') if s.strip()]
+    
+    valid_stages = {'extract', 'fill', 'import'}
+    unknown = set(stages) - valid_stages
+    if unknown:
+        print_debug(f"ERROR: Unknown pipeline stage(s): {', '.join(unknown)}")
+        sys.exit(1)
+        
+    idx_extract = stages.index('extract') if 'extract' in stages else -1
+    idx_fill = stages.index('fill') if 'fill' in stages else -1
+    idx_import = stages.index('import') if 'import' in stages else -1
+    
+    if 'fill' in stages and 'extract' not in stages:
+        print_debug("ERROR: Pipeline configuration error: 'fill' stage requires 'extract' stage.")
+        sys.exit(1)
+    if 'import' in stages and 'extract' not in stages:
+        print_debug("ERROR: Pipeline configuration error: 'import' stage requires 'extract' stage.")
+        sys.exit(1)
+    if 'extract' in stages and 'fill' in stages and idx_fill < idx_extract:
+        print_debug("ERROR: Out-of-order pipeline: 'extract' must precede 'fill'.")
+        sys.exit(1)
+    if 'fill' in stages and 'import' in stages and idx_import < idx_fill:
+        print_debug("ERROR: Out-of-order pipeline: 'fill' must precede 'import'.")
+        sys.exit(1)
+    if 'extract' in stages and 'import' in stages and idx_import < idx_extract:
+        print_debug("ERROR: Out-of-order pipeline: 'extract' must precede 'import'.")
+        sys.exit(1)
 
     if args.mode == "mixed-triple":
-        print_debug("--- Running mixed-triple mode: SENTENCE pass ---")
-        args.type = "sentence"
-        sentence_script_args = get_script_args(args, python_path, workspace_path, config)
-        
-        sentence_filename_basename = run_extraction_script(sentence_script_args)
-        if not sentence_filename_basename:
-            sys.exit(1)
+        sentence_filename_basename = None
+        if 'extract' in stages:
+            print_debug("--- Running mixed-triple mode: SENTENCE pass ---")
+            args.type = "sentence"
+            sentence_script_args = get_script_args(args, python_path, workspace_path, config)
+            sentence_filename_basename = run_extraction_script(sentence_script_args)
+            if not sentence_filename_basename:
+                sys.exit(1)
 
-        temp_deck_name = os.path.splitext(sentence_filename_basename)[0]
-        parent_deck_name = temp_deck_name.replace('.sentence', '')
-        print_debug(f"Parent Deck Name for this session is: {parent_deck_name}")
-        args.anki_parent_deck = parent_deck_name
+            temp_deck_name = os.path.splitext(sentence_filename_basename)[0]
+            parent_deck_name = temp_deck_name.replace('.sentence', '')
+            print_debug(f"Parent Deck Name for this session is: {parent_deck_name}")
+            args.anki_parent_deck = parent_deck_name
+        else:
+            parent_deck_name = args.anki_parent_deck or "DefaultParentDeck"
 
-        print_debug("\n--- Running mixed-triple mode: WORD pass ---")
-        args.type = "word"
-        original_deck_content = args.anki_deck_content
-        args.anki_deck_content = None 
-        word_script_args = get_script_args(args, python_path, workspace_path, config)
-        
-        word_filename_basename = run_extraction_script(word_script_args)
-        if not word_filename_basename:
-            sys.exit(1)
+        word_filename_basename = None
+        if 'extract' in stages:
+            print_debug("\n--- Running mixed-triple mode: WORD pass ---")
+            args.type = "word"
+            original_deck_content = args.anki_deck_content
+            args.anki_deck_content = None 
+            word_script_args = get_script_args(args, python_path, workspace_path, config)
+            
+            word_filename_basename = run_extraction_script(word_script_args)
+            if not word_filename_basename:
+                sys.exit(1)
 
-        args.anki_deck_content = original_deck_content
-        args.anki_parent_deck = parent_deck_name
-        if not args.skip_import:
-            print_debug(f"\n--- Importing SENTENCE file: {sentence_filename_basename} ---")
-            run_importer_script(sentence_filename_basename, args, python_path, workspace_path, importer_workspace, config)
+            args.anki_deck_content = original_deck_content
+            args.anki_parent_deck = parent_deck_name
 
-        args.anki_parent_deck = parent_deck_name
-        if not args.skip_import:
-            print_debug(f"\n--- Importing WORD file: {word_filename_basename} ---")
-            run_importer_script(word_filename_basename, args, python_path, workspace_path, importer_workspace, config)
+        if 'fill' in stages:
+            if word_filename_basename:
+                run_fill_stage(word_filename_basename, args, python_path, workspace_path, config)
+
+        if 'import' in stages and not args.skip_import:
+            if sentence_filename_basename:
+                args.anki_parent_deck = parent_deck_name
+                print_debug(f"\n--- Importing SENTENCE file: {sentence_filename_basename} ---")
+                run_importer_script(sentence_filename_basename, args, python_path, workspace_path, importer_workspace, config)
+
+            if word_filename_basename:
+                args.anki_parent_deck = parent_deck_name
+                print_debug(f"\n--- Importing WORD file: {word_filename_basename} ---")
+                run_importer_script(word_filename_basename, args, python_path, workspace_path, importer_workspace, config)
 
         print_debug("\nAll operations for mixed-triple mode completed successfully.")
         
         if args.show_success_message:
-            if args.skip_import:
+            if 'import' not in stages or args.skip_import:
                 success_message = f"Completed successfully!\n\nTSV files generated."
             else:
                 success_message = f"Completed successfully!\n\nCards have been imported into the deck:\n{parent_deck_name}"
             print(success_message)
 
     else: # Logic for single, dual, triple modes
-        script_args = get_script_args(args, python_path, workspace_path, config)
-        output_filename_basename = run_extraction_script(script_args)
+        output_filename_basename = None
+        if 'extract' in stages:
+            script_args = get_script_args(args, python_path, workspace_path, config)
+            output_filename_basename = run_extraction_script(script_args)
+            if not output_filename_basename:
+                sys.exit(1)
         
-        if not output_filename_basename:
-            sys.exit(1)
+        if 'fill' in stages and args.type == "word":
+            if output_filename_basename:
+                run_fill_stage(output_filename_basename, args, python_path, workspace_path, config)
         
-        if not args.skip_import:
-            run_importer_script(output_filename_basename, args, python_path, workspace_path, importer_workspace, config)
+        if 'import' in stages and not args.skip_import:
+            if output_filename_basename:
+                run_importer_script(output_filename_basename, args, python_path, workspace_path, importer_workspace, config)
         
-        print(output_filename_basename)
+        if output_filename_basename:
+            print(output_filename_basename)
 
     if args.play_sound_on_completion:
         try:
@@ -421,6 +537,7 @@ def main():
                 print('\a', file=sys.stderr, flush=True)
         except Exception as e:
             print_debug(f"Warning: Could not play completion sound. Error: {e}")
+
 
 
 if __name__ == "__main__":

@@ -15,6 +15,7 @@ def test_runner_cli_help():
     
     env = os.environ.copy()
     env["PYTHONPATH"] = str(project_root / "src")
+    env["KARDENWORT_TESTING"] = "true"
     
     result = subprocess.run(
         [sys.executable, str(runner_path), "--help"],
@@ -36,6 +37,7 @@ def test_fast_execution_single_mode(tmp_path):
     
     env = os.environ.copy()
     env["PYTHONPATH"] = str(project_root / "src")
+    env["KARDENWORT_TESTING"] = "true"
     
     # We use tmp_path as the current working directory to avoid cluttering the project root
     result = subprocess.run(

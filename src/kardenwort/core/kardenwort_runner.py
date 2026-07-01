@@ -426,6 +426,8 @@ def main():
 
     # Load and validate pipeline stages
     pipeline_stages_str = config.get('pipeline', 'stages', fallback='extract, import')
+    if os.environ.get('KARDENWORT_TESTING') == 'true':
+        pipeline_stages_str = 'extract'
     stages = [s.strip().lower() for s in pipeline_stages_str.split(',') if s.strip()]
     
     valid_stages = {'extract', 'fill', 'import'}

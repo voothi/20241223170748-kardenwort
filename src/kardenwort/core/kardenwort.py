@@ -334,6 +334,7 @@ def get_anki_csv_header(header_override=None):
         "Destination-uk-UA", "Destination-ru-RU", "Overlapping",
         "ToggleAlwaysEmptyField", "Note ID", "am-all-morphs", "am-all-morphs-count",
         "am-unknown-morphs", "am-unknown-morphs-count", "am-highlighted",
+        "DeskSelected",
         "am-score", "am-score-terms", "am-study-morphs", "SentenceSourceIndex",
         "Deck", "WordDestinationInflectedForm", "WordSourceAI", "WordSourceInflectedFormAI"
     ]

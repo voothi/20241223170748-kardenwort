@@ -163,6 +163,9 @@ am-score-terms
 am-study-morphs
 SentenceSourceIndex
 Deck
+LeitnerBox
+LeitnerDue
+DeskSelected
 
 [anki_field_mapping.word]
 ; Define custom mappings for word extraction mode.

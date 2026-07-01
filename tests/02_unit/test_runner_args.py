@@ -95,7 +95,7 @@ def test_get_script_args_de_word(mock_config):
     workspace_path = Path("/mock/workspace")
     args = MockArgs(language="de", type="word", tts_destination_lang="ru")
     
-    script_args = get_script_args(args, python_path, workspace_path, mock_config)
+    script_args = get_script_args(args, python_path, workspace_path, mock_config, mock_config)
     
     # Verify base args
     assert "--language" in script_args
@@ -121,7 +121,7 @@ def test_get_script_args_wordlist_br_enabled(mock_config):
     workspace_path = Path("/mock/workspace")
     args = MockArgs(language="de", type="word")
     
-    script_args = get_script_args(args, python_path, workspace_path, mock_config)
+    script_args = get_script_args(args, python_path, workspace_path, mock_config, mock_config)
     assert "--wordlist-use-br" in script_args
 
 @pytest.mark.parametrize("lang, expected_lemma", [
@@ -133,7 +133,7 @@ def test_get_script_args_languages(mock_config, lang, expected_lemma):
     workspace_path = Path("/mock/workspace")
     args = MockArgs(language=lang, type="word")
     
-    script_args = get_script_args(args, python_path, workspace_path, mock_config)
+    script_args = get_script_args(args, python_path, workspace_path, mock_config, mock_config)
     assert f"--lemma-index-file" in script_args
     # Find the index of --lemma-index-file and check the next element
     idx = script_args.index("--lemma-index-file")
@@ -145,4 +145,4 @@ def test_get_script_args_missing_lang_config(mock_config):
     args = MockArgs(language="fr", type="word")
     
     with pytest.raises(ValueError, match="Missing config for language 'fr'"):
-        get_script_args(args, python_path, workspace_path, mock_config)
+        get_script_args(args, python_path, workspace_path, mock_config, mock_config)

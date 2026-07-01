@@ -55,7 +55,20 @@ def load_config():
     return python_path, workspace_path, importer_workspace, config
 
 
-def get_script_args(args, python_path, workspace_path, config):
+def load_anki_mapping():
+    mapping_path = Path(__file__).resolve().parent.parent.parent.parent / 'anki-mapping.ini'
+    if not mapping_path.exists():
+        print_debug(f"ERROR: Anki mapping file not found at {mapping_path}")
+        print_debug("Please copy 'anki-mapping.ini.template' to 'anki-mapping.ini' and fill it in.")
+        sys.exit(1)
+        
+    mapping = configparser.ConfigParser(allow_no_value=True)
+    mapping.optionxform = str
+    mapping.read(mapping_path, encoding='utf-8')
+    return mapping
+
+
+def get_script_args(args, python_path, workspace_path, config, anki_mapping):
     src_path = workspace_path / config.get('project_structure', 'source_code_dir', fallback='src/kardenwort/core')
     data_path = workspace_path / config.get('project_structure', 'data_dir', fallback='data')
     input_path = workspace_path / config.get('project_structure', 'source_texts_dir', fallback='source_texts')
@@ -95,11 +108,11 @@ def get_script_args(args, python_path, workspace_path, config):
     if add_header:
         base_args.append("--add-header")
 
-    if 'anki_fields' not in config:
-        sys.exit("Error: Missing '[anki_fields]' section in config.ini. Please update your configuration following config.ini.template to define your Anki structure.")
+    if 'anki_fields' not in anki_mapping:
+        sys.exit("Error: Missing '[anki_fields]' section in anki-mapping.ini. Please update your configuration following anki-mapping.ini.template to define your Anki structure.")
     
     # Support both numbered lists (backward compatibility) and simple ordered lists
-    raw_fields_dict = dict(config.items('anki_fields'))
+    raw_fields_dict = dict(anki_mapping.items('anki_fields'))
     
     # Check if we should use numeric sorting (old format) or list order (new format)
     # If all keys are numeric, use numeric sorting. Otherwise, use keys as field names in order.
@@ -115,14 +128,14 @@ def get_script_args(args, python_path, workspace_path, config):
         anki_header = list(raw_fields_dict.keys())
 
     if not anki_header:
-        sys.exit("Error: No fields defined in '[anki_fields]' section of config.ini.")
+        sys.exit("Error: No fields defined in '[anki_fields]' section of anki-mapping.ini.")
     base_args.extend(["--anki-csv-header", json.dumps(anki_header)])
 
     mapping_section = f'anki_field_mapping.{args.type}'
-    if mapping_section not in config:
-        sys.exit(f"Error: Missing '[{mapping_section}]' section in config.ini. Please define your data mappings.")
+    if mapping_section not in anki_mapping:
+        sys.exit(f"Error: Missing '[{mapping_section}]' section in anki-mapping.ini. Please define your data mappings.")
     
-    field_mapping = dict(config[mapping_section])
+    field_mapping = dict(anki_mapping[mapping_section])
     base_args.extend(["--anki-field-mapping", json.dumps(field_mapping)])
 
     if args.tts_destination_lang:
@@ -397,6 +410,7 @@ def main():
     args = parser.parse_args()
     
     python_path, workspace_path, importer_workspace, config = load_config()
+    anki_mapping = load_anki_mapping()
 
     if args.import_only:
         if not args.tsv:
@@ -461,7 +475,7 @@ def main():
         if 'extract' in stages:
             print_debug("--- Running mixed-triple mode: SENTENCE pass ---")
             args.type = "sentence"
-            sentence_script_args = get_script_args(args, python_path, workspace_path, config)
+            sentence_script_args = get_script_args(args, python_path, workspace_path, config, anki_mapping)
             sentence_filename_basename = run_extraction_script(sentence_script_args)
             if not sentence_filename_basename:
                 sys.exit(1)
@@ -479,7 +493,7 @@ def main():
             args.type = "word"
             original_deck_content = args.anki_deck_content
             args.anki_deck_content = None 
-            word_script_args = get_script_args(args, python_path, workspace_path, config)
+            word_script_args = get_script_args(args, python_path, workspace_path, config, anki_mapping)
             
             word_filename_basename = run_extraction_script(word_script_args)
             if not word_filename_basename:
@@ -515,7 +529,7 @@ def main():
     else: # Logic for single, dual, triple modes
         output_filename_basename = None
         if 'extract' in stages:
-            script_args = get_script_args(args, python_path, workspace_path, config)
+            script_args = get_script_args(args, python_path, workspace_path, config, anki_mapping)
             output_filename_basename = run_extraction_script(script_args)
             if not output_filename_basename:
                 sys.exit(1)

@@ -13,6 +13,12 @@ def load_integration_config(project_root):
     config.read(project_root / "config.ini", encoding='utf-8')
     return config
 
+def load_integration_mapping(project_root):
+    mapping = configparser.ConfigParser(allow_no_value=True)
+    mapping.optionxform = str
+    mapping.read(project_root / "anki-mapping.ini", encoding='utf-8')
+    return mapping
+
 def get_field_mapping_indices(config, extraction_type):
     """
     Returns a map of {internal_data_source: column_index} 
@@ -47,6 +53,7 @@ class IntegrationTester:
         self.project_root = Path(__file__).resolve().parent.parent.parent
         self.runner_path = self.project_root / "src" / "kardenwort" / "core" / "kardenwort_runner.py"
         self.config = load_integration_config(self.project_root)
+        self.mapping = load_integration_mapping(self.project_root)
         self.results_dir = self.project_root / "results"
         
         self.env = os.environ.copy()
@@ -97,7 +104,7 @@ class IntegrationTester:
         assert gen_rows[0][:ref_len] == ref_rows[0], f"Header mismatch in {latest_tsv}"
         
         # Verify field mapping indices based on config
-        mapping_indices = get_field_mapping_indices(self.config, suffix)
+        mapping_indices = get_field_mapping_indices(self.mapping, suffix)
         
         # We check critical fields if they are mapped
         # In current config.ini:

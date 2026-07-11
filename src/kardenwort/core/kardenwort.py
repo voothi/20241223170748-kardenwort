@@ -481,7 +481,7 @@ def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, de_
         if token.i in processed_particle_indices:
             continue
 
-        if not (token.is_alpha or '-' in token.text):
+        if not (token.is_alpha or ('-' in token.text and token.text.strip('-'))):
             continue
 
         lemmas_for_current_token = []

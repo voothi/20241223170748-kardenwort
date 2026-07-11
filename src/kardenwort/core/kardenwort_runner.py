@@ -429,11 +429,31 @@ def main():
                 else:
                     expanded_files.append(path)
                     
-        tsv_files = [f for f in expanded_files if f.suffix.lower() == '.tsv']
-        
         def extract_runner_zid(path):
             match = re.search(r'^(\d{14})', path.name)
             return match.group(1) if match else ""
+
+        def map_to_tsv(path):
+            if path.suffix.lower() == '.tsv':
+                return path
+            zid = extract_runner_zid(path)
+            if zid:
+                parent = path.parent
+                matches = []
+                for pattern in (f"{zid}-*.tsv", f"{zid}.*.tsv", f"{zid}.tsv"):
+                    for m in parent.glob(pattern):
+                        m_res = m.resolve()
+                        if m_res not in matches:
+                            matches.append(m_res)
+                if matches:
+                    return matches[0]
+            return None
+
+        tsv_files = []
+        for f in expanded_files:
+            tsv_path = map_to_tsv(f)
+            if tsv_path and tsv_path not in tsv_files:
+                tsv_files.append(tsv_path)
             
         if len(tsv_files) == 2 and tsv_files[0].parent == tsv_files[1].parent:
             parent_dir = tsv_files[0].parent

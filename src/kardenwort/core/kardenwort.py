@@ -1762,7 +1762,7 @@ def main():
     
     input_output_group = parser.add_argument_group('Input & Output')
     processing_mode_group = parser.add_mutually_exclusive_group(required=True)
-    processing_mode_group.add_argument("--type", choices=["word", "sentence"], help="Specify the processing type: 'word' for word extraction, 'sentence' for parallel sentence processing.")
+    processing_mode_group.add_argument("--type", choices=["word", "sentence", "sort-frequency"], help="Specify the processing type: 'word' for word extraction, 'sentence' for parallel sentence processing, 'sort-frequency' to sort lemmas from stdin by frequency.")
     processing_mode_group.add_argument("--lemmas-per-line", action="store_true", help="Process each line of text1-file to output a single line of frequency-sorted lemmas.")
     input_output_group.add_argument("--language", default="de", choices=["de", "en"], help="The language of the text to be processed.")
     input_output_group.add_argument("--tts-destination-lang", default="ru", help="The destination language for TTS field activation (e.g., 'ru', 'en').")
@@ -1885,6 +1885,20 @@ def main():
     gcs_group.add_argument("--de-gcs-skip-merge-fractions", action="store_true", help="[GCS] Disable merging of components, outputting raw parts from dissection.")
 
     args = parser.parse_args()
+    if args.type == "sort-frequency":
+        lemma_index = load_lemma_frequency_index(args.lemma_index_file)
+        input_words = []
+        for line in sys.stdin:
+            word = line.strip()
+            if word:
+                input_words.append(word)
+        sorted_words = sorted(
+            input_words,
+            key=lambda w: (w not in lemma_index, lemma_index.get(w, 0), w.lower())
+        )
+        for w in sorted_words:
+            print(w)
+        sys.exit(0)
     
     source_timestamps = []
     if getattr(args, 'subtitle_timestamps_file', None):

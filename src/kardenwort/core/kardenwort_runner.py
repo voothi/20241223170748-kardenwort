@@ -405,7 +405,7 @@ def main():
     parser.add_argument("--skip-import", action="store_true", help="Skip importing TSV files to Anki.")
     parser.add_argument("--subtitle-timestamps-file", type=str, help="Path to the sidecar subtitle timestamps file.")
     parser.add_argument("--import-only", action="store_true", help="Import an existing TSV directly into Anki without running extraction.")
-    parser.add_argument("--tsv", type=str, help="Path to the TSV file (required for --import-only).")
+    parser.add_argument("--tsv", nargs="+", help="Path to the TSV file(s) (required for --import-only).")
 
     args = parser.parse_args()
     
@@ -415,11 +415,22 @@ def main():
     if args.import_only:
         if not args.tsv:
             parser.error('--tsv is required when running in --import-only mode.')
-        tsv_path = Path(args.tsv).resolve()
-        if not tsv_path.exists():
-            print_debug(f"ERROR: TSV file not found at {tsv_path}")
+        
+        # Support both a single string (from older APIs/tests) and a list of paths
+        if isinstance(args.tsv, list):
+            tsv_files = [Path(f).resolve() for f in args.tsv if Path(f).suffix.lower() == '.tsv']
+        else:
+            tsv_files = [Path(args.tsv).resolve()] if Path(args.tsv).suffix.lower() == '.tsv' else []
+
+        if not tsv_files:
+            print_debug("ERROR: No TSV files found in the selection to import.")
             sys.exit(1)
-        run_importer_script(str(tsv_path), args, python_path, workspace_path, importer_workspace, config)
+
+        for tsv_path in tsv_files:
+            if not tsv_path.exists():
+                print_debug(f"ERROR: TSV file not found at {tsv_path}")
+                sys.exit(1)
+            run_importer_script(str(tsv_path), args, python_path, workspace_path, importer_workspace, config)
         sys.exit(0)
 
     # Standard run validation

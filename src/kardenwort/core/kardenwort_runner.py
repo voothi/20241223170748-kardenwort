@@ -417,14 +417,46 @@ def main():
             parser.error('--tsv is required when running in --import-only mode.')
         
         # Support both a single string (from older APIs/tests) and a list of paths
-        if isinstance(args.tsv, list):
-            tsv_files = [Path(f).resolve() for f in args.tsv if Path(f).suffix.lower() == '.tsv']
-        else:
-            tsv_files = [Path(args.tsv).resolve()] if Path(args.tsv).suffix.lower() == '.tsv' else []
+        raw_tsv_list = args.tsv if isinstance(args.tsv, list) else [args.tsv]
+        
+        # Expand any folders in the input list
+        expanded_files = []
+        for f in raw_tsv_list:
+            if f:
+                path = Path(f).resolve()
+                if path.is_dir():
+                    expanded_files.extend(list(path.glob("*.tsv")))
+                else:
+                    expanded_files.append(path)
+                    
+        tsv_files = [f for f in expanded_files if f.suffix.lower() == '.tsv']
+        
+        def extract_runner_zid(path):
+            match = re.search(r'^(\d{14})', path.name)
+            return match.group(1) if match else ""
+            
+        if len(tsv_files) == 2 and tsv_files[0].parent == tsv_files[1].parent:
+            parent_dir = tsv_files[0].parent
+            all_tsvs = sorted(list(parent_dir.glob("*.tsv")), key=extract_runner_zid)
+            
+            tsv_files.sort(key=extract_runner_zid)
+            start_zid = extract_runner_zid(tsv_files[0])
+            end_zid = extract_runner_zid(tsv_files[1])
+            
+            if start_zid and end_zid:
+                range_files = []
+                for f in all_tsvs:
+                    f_zid = extract_runner_zid(f)
+                    if f_zid and start_zid <= f_zid <= end_zid:
+                        range_files.append(f)
+                if range_files:
+                    tsv_files = range_files
 
         if not tsv_files:
             print_debug("ERROR: No TSV files found in the selection to import.")
             sys.exit(1)
+            
+        tsv_files.sort(key=extract_runner_zid)
 
         for tsv_path in tsv_files:
             if not tsv_path.exists():

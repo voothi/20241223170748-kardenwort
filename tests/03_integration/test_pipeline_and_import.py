@@ -132,3 +132,73 @@ def test_import_only_mode_multiple_files_with_filtering(tmp_path):
                 assert str(txt_file) not in calls
                 # Check it exits with 0
                 assert excinfo.value.code == 0
+
+
+def test_import_only_folder_scanning(tmp_path):
+    sub = tmp_path / "folder"
+    sub.mkdir()
+    tsv1 = sub / "20260630000000-part1.en.tsv"
+    tsv1.touch()
+    tsv2 = sub / "20260630000001-part2.en.tsv"
+    tsv2.touch()
+    
+    with patch("kardenwort_runner.run_importer_script") as mock_importer, patch("sys.exit", side_effect=mock_exit_fn) as mock_exit:
+        sys_argv_mock = ["kardenwort_runner.py", "--import-only", "--tsv", str(sub)]
+        with patch("sys.argv", sys_argv_mock), patch("argparse.ArgumentParser.parse_args") as mock_parse:
+            args = MagicMock()
+            args.import_only = True
+            args.tsv = [str(sub)]
+            mock_parse.return_value = args
+            
+            cfg = configparser.ConfigParser()
+            cfg.add_section("environment")
+            cfg.set("environment", "python_executable", "python.exe")
+            cfg.set("environment", "kardenwort_workspace", "workspace")
+            cfg.set("environment", "importer_workspace", "importer")
+            
+            with patch("kardenwort_runner.load_config") as mock_load:
+                mock_load.return_value = (Path("python.exe"), Path("workspace"), Path("importer"), cfg)
+                with pytest.raises(SystemExit) as excinfo:
+                    kardenwort_runner.main()
+                
+                assert mock_importer.call_count == 2
+                calls = [call[0][0] for call in mock_importer.call_args_list]
+                assert str(tsv1) in calls
+                assert str(tsv2) in calls
+                assert excinfo.value.code == 0
+
+
+def test_import_only_range_selection(tmp_path):
+    tsv1 = tmp_path / "20260630000000-part1.en.tsv"
+    tsv1.touch()
+    tsv2 = tmp_path / "20260630000001-part2.en.tsv"
+    tsv2.touch()
+    tsv3 = tmp_path / "20260630000002-part3.en.tsv"
+    tsv3.touch()
+    
+    with patch("kardenwort_runner.run_importer_script") as mock_importer, patch("sys.exit", side_effect=mock_exit_fn) as mock_exit:
+        sys_argv_mock = ["kardenwort_runner.py", "--import-only", "--tsv", str(tsv1), str(tsv3)]
+        with patch("sys.argv", sys_argv_mock), patch("argparse.ArgumentParser.parse_args") as mock_parse:
+            args = MagicMock()
+            args.import_only = True
+            args.tsv = [str(tsv1), str(tsv3)]
+            mock_parse.return_value = args
+            
+            cfg = configparser.ConfigParser()
+            cfg.add_section("environment")
+            cfg.set("environment", "python_executable", "python.exe")
+            cfg.set("environment", "kardenwort_workspace", "workspace")
+            cfg.set("environment", "importer_workspace", "importer")
+            
+            with patch("kardenwort_runner.load_config") as mock_load:
+                mock_load.return_value = (Path("python.exe"), Path("workspace"), Path("importer"), cfg)
+                with pytest.raises(SystemExit) as excinfo:
+                    kardenwort_runner.main()
+                
+                assert mock_importer.call_count == 3
+                calls = [call[0][0] for call in mock_importer.call_args_list]
+                assert str(tsv1) in calls
+                assert str(tsv2) in calls
+                assert str(tsv3) in calls
+                assert excinfo.value.code == 0
+

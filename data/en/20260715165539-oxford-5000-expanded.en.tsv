@@ -1,3 +1,98 @@
+abolish	v.	C1
+abortion	n.	C1
+absence	n.	C1
+absent	adj.	C1
+absorb	v.	B2
+abstract	adj.	B2
+absurd	adj.	C1
+abundance	n.	C1
+abuse	n., v.	C1
+academy	n.	C1
+accelerate	v.	C1
+accent	n.	B2
+acceptance	n.	C1
+accessible	adj.	C1
+accidentally	adv.	B2
+accommodate	v.	B2
+accomplish	v.	B2
+accomplishment	n.	C1
+accordance	n.	C1
+accordingly	adv.	C1
+accountability	n.	C1
+accountable	adj.	C1
+accountant	n.	B2
+accumulate	v.	C1
+accumulation	n.	C1
+accuracy	n.	B2
+accurately	adv.	B2
+accusation	n.	C1
+accused	n.	C1
+acid	n., adj.	B2, C1
+acquisition	n.	C1
+acre	n.	C1
+activate	v.	B2
+activation	n.	C1
+activist	n.	C1
+acute	adj.	C1
+adaptation	n.	C1
+addiction	n.	B2
+additionally	adv.	B2
+adequate	adj.	B2
+adequately	adv.	B2
+adhere	v.	C1
+adjacent	adj.	C1
+adjust	v.	B2
+adjustment	n.	C1
+administer	v.	C1
+administrative	adj.	C1
+administrator	n.	C1
+admission	n.	C1
+adolescent	n.	C1
+adoption	n.	C1
+adverse	adj.	C1
+advocate	n., v.	C1
+aesthetic	adj.	C1
+affection	n.	C1
+affordable	adj.	B2
+aftermath	n.	C1
+aggression	n.	C1
+agricultural	adj.	C1
+agriculture	n.	B2
+aide	n.	C1
+AIDS	n.	B2
+albeit	conj.	C1
+alert	v., n., adj.	C1
+alien	n., adj.	B2, C1
+align	v.	C1
+alignment	n.	C1
+alike	adv., adj.	C1
+allegation	n.	C1
+allege	v.	C1
+allegedly	adv.	C1
+alliance	n.	C1
+allocate	v.	C1
+allocation	n.	C1
+allowance	n.	C1
+ally	n.	C1
+alongside	prep.	B2
+altogether	adv.	B2
+aluminium	n.	C1
+amateur	adj., n.	C1
+ambassador	n.	C1
+ambulance	n.	B2
+amend	v.	C1
+amendment	n.	C1
+amid	prep.	C1
+amusing	adj.	B2
+analogy	n.	C1
+analyst	n.	B2
+ancestor	n.	B2
+anchor	n.	C1
+angel	n.	C1
+animation	n.	B2
+annually	adv.	B2
+anonymous	adj.	C1
+anticipate	v.	B2
 anxiety	n.	B2
 apology	n.	B2
 apparatus	n.	C1
@@ -25,6 +120,11 @@ aspiration	n.	C1
 aspire	v.	C1
 assassination	n.	C1
 assault	n., v.	C1
+assemble	v.	C1
+assembly	n.	C1
+assert	v.	C1
+assertion	n.	C1
+asset	n.	B2
 assign	v.	B2
 assistance	n.	B2
 assumption	n.	B2
@@ -173,7 +273,7 @@ chunk	n.	C1
 circuit	n.	B2
 circulate	v.	C1
 circulation	n.	C1
-citizenship	n.	
+citizenship	n.	C1
 civic	adj.	C1
 civilian	n., adj.	C1
 civilization	n.	B2
@@ -1460,6 +1560,7 @@ rival	n., adj.	B2
 rob	v.	B2
 robbery	n.	B2
 robust	adj.	C1
+rock	v.	C1
 rocket	n.	B2
 rocky	adj.	C1
 rod	n.	C1

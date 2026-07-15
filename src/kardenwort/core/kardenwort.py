@@ -1077,7 +1077,8 @@ def process_parallel_text_files(
                     wordlist=current_wordlist,
                     cloze=source_sentence_for_tsv,
                     deck_name=CSV_ROW_DECK_VAL,
-                    subtitle_start_time=subtitle_start_time
+                    subtitle_start_time=subtitle_start_time,
+                    classifications=kwargs.get('classifications', {})
                 )
                 apply_field_mapping(csv_row, row_data, field_mapping, F)
                 tsv_writer.writerow(csv_row)
@@ -1483,7 +1484,8 @@ def process_single_text(
                 cloze=source_sentence_for_tsv,
                 sentence_index=str(unit_index + 1).zfill(6),
                 deck_name=CSV_ROW_DECK_VAL,
-                subtitle_start_time=subtitle_start_time
+                subtitle_start_time=subtitle_start_time,
+                classifications=kwargs.get('classifications', {})
             )
             
             apply_field_mapping(csv_row, row_data, field_mapping, F)
@@ -1693,7 +1695,8 @@ def process_parallel_sentences_to_csv(
                 cloze=source_sentence,
                 sentence_index=str(content_line_idx + 1).zfill(6),
                 deck_name=final_deck_for_card,
-                subtitle_start_time=subtitle_start_time
+                subtitle_start_time=subtitle_start_time,
+                classifications=kwargs.get('classifications', {})
             )
 
             apply_field_mapping(csv_row, row_data, field_mapping, F)

@@ -1940,6 +1940,27 @@ def main():
     gcs_group.add_argument("--de-gcs-skip-merge-fractions", action="store_true", help="[GCS] Disable merging of components, outputting raw parts from dissection.")
 
     args = parser.parse_args()
+    
+    # Load Classifications from Config
+    config_path_classify = Path(__file__).resolve().parent.parent.parent.parent / 'config.ini'
+    if config_path_classify.exists():
+        import configparser
+        cfg = configparser.ConfigParser(allow_no_value=True)
+        cfg.read(config_path_classify, encoding='utf-8')
+        if cfg.has_section('classification') and cfg.getboolean('classification', 'enabled', fallback=False):
+            dicts = cfg.get('classification', 'dictionaries', fallback='')
+            if dicts:
+                if args.classify is None:
+                    args.classify = []
+                for d in dicts.split(','):
+                    d = d.strip()
+                    if not d: continue
+                    if '=' in d:
+                        name, rel_path = d.split('=', 1)
+                        kw_ws = cfg.get('environment', 'kardenwort_workspace', fallback='./')
+                        ws_path = (config_path_classify.parent / kw_ws).resolve()
+                        full_path = ws_path / rel_path.strip()
+                        args.classify.append(f"{name.strip()}={full_path}")
     if args.type == "sort-frequency":
         lemma_index = load_lemma_frequency_index(args.lemma_index_file)
         input_words = []

@@ -111,5 +111,12 @@ sendto_auto_close_timeout_secs = -1
 sendto_language_slots = en:1, de:1, ru:3, 1.en:1, 1.de:1, 2.ru:2, 3.ru:3, text1:1, text2:2, text3:3
 
 [pipeline]
-stages = extract, import
+stages = extract, fill, import
 
+[classification]
+; Enable the dictionary classification mechanism
+enabled = false
+
+; Comma-separated list of classifications (name=path) relative to kardenwort_workspace
+; Example: oxford=data/en/oxford.tsv, cambridge=data/en/cambridge.tsv
+dictionaries =

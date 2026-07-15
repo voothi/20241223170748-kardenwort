@@ -117,6 +117,6 @@ stages = extract, fill, import
 ; Enable the dictionary classification mechanism
 enabled = false
 
-; Comma-separated list of classifications (name=path) relative to kardenwort_workspace
-; Example: oxford=data/en/oxford.tsv, cambridge=data/en/cambridge.tsv
+; Comma-separated list of classifications (name=[prefix:]path) relative to kardenwort_workspace
+; Example: oxford=3k:data/en/oxford.tsv, cambridge=data/en/cambridge.tsv
 dictionaries =

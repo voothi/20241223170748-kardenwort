@@ -55,6 +55,21 @@ def load_dictionary(file_path):
         print(f"Error reading dictionary file {file_path}: {e}", file=sys.stderr)
     return dictionary
 
+def parse_prefix_and_path(raw_val):
+    """
+    Parses a raw string of prefix:path or just path.
+    Avoids interpreting Windows drive letters (like C:) as prefixes.
+    """
+    raw_val = raw_val.strip()
+    if ":" in raw_val:
+        parts = raw_val.split(":", 1)
+        prefix = parts[0].strip()
+        if len(prefix) == 1 and prefix.isalpha():
+            return "", raw_val
+        if len(prefix) <= 5 and "/" not in prefix and "\\" not in prefix:
+            return prefix, parts[1].strip()
+    return "", raw_val
+
 def load_classification_dictionaries(classify_args):
     """
     Parses --classify name=path arguments, loads TSV files, skipping headers,
@@ -69,19 +84,14 @@ def load_classification_dictionaries(classify_args):
             print(f"Warning: Invalid --classify format '{arg}'. Expected name=path", file=sys.stderr)
             continue
         
-        name, path = arg.split("=", 1)
+        name, prefix_path = arg.split("=", 1)
         name = name.strip()
-        path = path.strip()
+        prefix_path = prefix_path.strip()
         
         if name not in classifications:
             classifications[name] = {}
             
-        filename_lower = os.path.basename(path).lower()
-        prefix = ""
-        if "3000" in filename_lower:
-            prefix = "3k:"
-        elif "5000" in filename_lower:
-            prefix = "5k:"
+        prefix, path = parse_prefix_and_path(prefix_path)
 
         try:
             with open(path, "r", encoding="utf-8") as f:
@@ -103,7 +113,7 @@ def load_classification_dictionaries(classify_args):
                             val = "1"
                         
                         if prefix:
-                            val = f"{prefix}{val}"
+                            val = f"{prefix}:{val}"
                             
                         if lemma in classifications[name]:
                             # Keep 3k if it already exists to prioritize core list
@@ -1974,11 +1984,13 @@ def main():
                     d = d.strip()
                     if not d: continue
                     if '=' in d:
-                        name, rel_path = d.split('=', 1)
+                        name, prefix_path = d.split('=', 1)
+                        prefix, rel_path = parse_prefix_and_path(prefix_path)
                         kw_ws = cfg.get('environment', 'kardenwort_workspace', fallback='./')
                         ws_path = (config_path_classify.parent / kw_ws).resolve()
                         full_path = ws_path / rel_path.strip()
-                        args.classify.append(f"{name.strip()}={full_path}")
+                        classify_val = f"{prefix}:{full_path}" if prefix else str(full_path)
+                        args.classify.append(f"{name.strip()}={classify_val}")
     if args.type == "sort-frequency":
         lemma_index = load_lemma_frequency_index(args.lemma_index_file)
         input_words = []

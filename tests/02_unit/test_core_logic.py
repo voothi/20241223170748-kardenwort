@@ -179,6 +179,20 @@ def test_load_classification_dictionaries(tmp_path, capsys):
     captured = capsys.readouterr()
     assert "Classification dictionary file not found" in captured.err
 
+    # Test prefix parsing
+    c_file_prefix = tmp_path / "oxford-prefix.tsv"
+    c_file_prefix.write_text("word\tcefr\nbanana\tB1\n", encoding="utf-8")
+    args_prefix = [f"oxford=3k:{c_file_prefix}"]
+    classifications_prefix = load_classification_dictionaries(args_prefix)
+    assert classifications_prefix["oxford"]["banana"] == "3k:B1"
+
+    # Test parse_prefix_and_path explicitly
+    from kardenwort.core.kardenwort import parse_prefix_and_path
+    assert parse_prefix_and_path("3k:path/to/file") == ("3k", "path/to/file")
+    assert parse_prefix_and_path("5k:path/to/file") == ("5k", "path/to/file")
+    assert parse_prefix_and_path("C:\\path\\to\\file") == ("", "C:\\path\\to\\file")
+    assert parse_prefix_and_path("path/to/file") == ("", "path/to/file")
+
 def test_load_lemma_override_rules(tmp_path):
     o_file = tmp_path / "override.tsv"
     content = [
@@ -393,3 +407,40 @@ def test_get_overridden_lemma_for_word_regex():
     
     assert get_overridden_lemma_for_word("spl1", "this_is_a_match", rules, "") == "tgt1"
     assert get_overridden_lemma_for_word("spl2", "we_start_here", rules, "") == "tgt2"
+
+def test_accountant_zettelkasten_sentence(tmp_path):
+    from kardenwort.core.kardenwort import load_classification_dictionaries, prepare_row_data
+    
+    # 1. Create simulated dictionaries
+    dict_3k = tmp_path / "oxford-3000.tsv"
+    dict_3k.write_text("word\tcefr\ndecision\tA2\nmethod\tA2\nmake\tA1\n", encoding="utf-8")
+    
+    dict_5k = tmp_path / "oxford-5000.tsv"
+    dict_5k.write_text("word\tcefr\naccountant\tB2\nabolish\tC1\n", encoding="utf-8")
+    
+    # 2. Load classifications using dynamic prefixes
+    args = [
+        f"oxford=3k:{dict_3k}",
+        f"oxford=5k:{dict_5k}"
+    ]
+    classifications = load_classification_dictionaries(args)
+    
+    # 3. Test various words in the target sentence
+    class MockArgs:
+        language = "en"
+        tts_destination_lang = "ru"
+        
+    sentence_words = {
+        "accountant": "5k:B2",
+        "decision": "3k:A2",
+        "abolish": "5k:C1",
+        "zettelkasten": None,
+        "method": "3k:A2"
+    }
+    
+    for word, expected_val in sentence_words.items():
+        row_data = prepare_row_data(MockArgs(), lemma=word, classifications=classifications)
+        if expected_val:
+            assert row_data.get("oxford") == expected_val
+        else:
+            assert "oxford" not in row_data

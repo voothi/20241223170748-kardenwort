@@ -404,6 +404,7 @@ def main():
     parser.add_argument("--text3-file", type=str, help="Path to the third source text file (for triple mode).")
     parser.add_argument("--skip-import", action="store_true", help="Skip importing TSV files to Anki.")
     parser.add_argument("--skip-fill", action="store_true", help="Skip the IntelliFiller fill stage.")
+    parser.add_argument("--fill", action="store_true", help="Explicitly run the IntelliFiller fill stage.")
     parser.add_argument("--stages", type=str, help="Override pipeline stages (comma-separated, e.g., 'extract,import').")
     parser.add_argument("--subtitle-timestamps-file", type=str, help="Path to the sidecar subtitle timestamps file.")
     parser.add_argument("--import-only", action="store_true", help="Import an existing TSV directly into Anki without running extraction.")
@@ -512,6 +513,12 @@ def main():
         pipeline_stages_str = 'extract'
     stages = [s.strip().lower() for s in pipeline_stages_str.split(',') if s.strip()]
     
+    # By default, do not run the fill stage unless explicitly requested via --fill or --stages
+    if 'fill' in stages:
+        has_explicit_fill = (getattr(args, 'fill', False) is True) or (getattr(args, 'stages', None) and isinstance(args.stages, str) and 'fill' in args.stages.lower())
+        if not has_explicit_fill:
+            stages.remove('fill')
+            
     if getattr(args, 'skip_fill', False) is True and 'fill' in stages:
         stages.remove('fill')
     if getattr(args, 'skip_import', False) is True and 'import' in stages:

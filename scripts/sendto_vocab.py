@@ -635,8 +635,7 @@ def main():
         "--play-sound-on-completion",
         "--text1-file", str(staged_paths[0]),
         "--text2-file", str(staged_paths[1]),
-        "--text3-file", str(staged_paths[2]),
-        "--skip-fill"
+        "--text3-file", str(staged_paths[2])
     ])
     
     if not upload_to_anki:

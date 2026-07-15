@@ -44,8 +44,7 @@ call "%PYTHON_EXE%" "%KARDENWORT_RUNNER_SCRIPT%" ^
     --anki-deck-content parent-source parent-translations subdeck-source subdeck-translations ^
     --suspend-cards ^
     --show-success-message ^
-    --play-sound-on-completion ^
-    --skip-fill
+    --play-sound-on-completion
 
 if errorlevel 1 goto :error
 

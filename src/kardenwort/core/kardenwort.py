@@ -106,7 +106,7 @@ def load_classification_dictionaries(classify_args):
                             continue
                     
                     if len(row) >= 1:
-                        lemma = row[0].strip().lower()
+                        raw_lemma = row[0].strip().lower()
                         if len(row) > 1:
                             val = row[-1].strip()
                         else:
@@ -115,11 +115,14 @@ def load_classification_dictionaries(classify_args):
                         if prefix:
                             val = f"{prefix}:{val}"
                             
-                        if lemma in classifications[name]:
-                            # Keep 3k if it already exists to prioritize core list
-                            if classifications[name][lemma].startswith("3k:"):
-                                continue
-                        classifications[name][lemma] = val
+                        # Split by comma to support lists of synonyms/variants like "a, an"
+                        lemmas = [x.strip() for x in raw_lemma.split(",") if x.strip()]
+                        for lemma in lemmas:
+                            if lemma in classifications[name]:
+                                # Keep 3k if it already exists to prioritize core list
+                                if classifications[name][lemma].startswith("3k:"):
+                                    continue
+                            classifications[name][lemma] = val
         except FileNotFoundError:
             print(f"Classification dictionary file not found: {path}", file=sys.stderr)
         except Exception as e:

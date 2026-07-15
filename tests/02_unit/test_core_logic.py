@@ -156,6 +156,7 @@ def test_load_classification_dictionaries(tmp_path, capsys):
         "word\tpos\tcefr",
         "apple\tn\tA1",
         "abandon\tv\tB2",
+        "a, an\tdet\tA1",
         "Header_like_but_lowercase\t\tC1"
     ]
     c_file.write_text("\n".join(content), encoding="utf-8")
@@ -166,6 +167,8 @@ def test_load_classification_dictionaries(tmp_path, capsys):
     assert "oxford" in classifications
     assert classifications["oxford"]["apple"] == "A1"
     assert classifications["oxford"]["abandon"] == "B2"
+    assert classifications["oxford"]["a"] == "A1"
+    assert classifications["oxford"]["an"] == "A1"
     # The 'word' header should be skipped.
     assert "word" not in classifications["oxford"]
     

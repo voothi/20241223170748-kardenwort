@@ -55,6 +55,54 @@ def load_dictionary(file_path):
         print(f"Error reading dictionary file {file_path}: {e}", file=sys.stderr)
     return dictionary
 
+def load_classification_dictionaries(classify_args):
+    """
+    Parses --classify name=path arguments, loads TSV files, skipping headers,
+    and returns a nested dict: {classification_name: {lemma_lower: classification_value}}
+    """
+    classifications = {}
+    if not classify_args:
+        return classifications
+    
+    for arg in classify_args:
+        if "=" not in arg:
+            print(f"Warning: Invalid --classify format '{arg}'. Expected name=path", file=sys.stderr)
+            continue
+        
+        name, path = arg.split("=", 1)
+        name = name.strip()
+        path = path.strip()
+        
+        if name not in classifications:
+            classifications[name] = {}
+            
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                reader = csv.reader(f, delimiter="\t")
+                first_row = True
+                for row in reader:
+                    if not row:
+                        continue
+                    if first_row:
+                        first_row = False
+                        if row[0].lower() in ['word', 'lemma', 'headword', 'text']:
+                            continue
+                    
+                    if len(row) >= 1:
+                        lemma = row[0].strip().lower()
+                        if len(row) > 1:
+                            val = row[-1].strip()
+                        else:
+                            val = "1"
+                        
+                        classifications[name][lemma] = val
+        except FileNotFoundError:
+            print(f"Classification dictionary file not found: {path}", file=sys.stderr)
+        except Exception as e:
+            print(f"Error reading classification dictionary file {path}: {e}", file=sys.stderr)
+            
+    return classifications
+
 def load_lemma_override_rules(file_path):
     override_rules = {
         'priority1': {},
@@ -370,6 +418,12 @@ def prepare_row_data(args, **kwargs):
     if args.tts_destination_lang:
         row_data[f'tts_dest_{args.tts_destination_lang}'] = "1"
         
+    classifications = kwargs.get('classifications', {})
+    lemma_lower = row_data['lemma'].lower()
+    for c_name, c_dict in classifications.items():
+        if lemma_lower in c_dict:
+            row_data[c_name] = c_dict[lemma_lower]
+            
     return row_data
 
 
@@ -1777,6 +1831,7 @@ def main():
     data_files_group.add_argument("--lemma-index-file", default="", help="Path to a CSV file with lemmas, used for frequency-based sorting of the output.")
     data_files_group.add_argument("--lemma-override-file", help="Path to a TSV file that defines rules for correcting specific lemma results.")
     data_files_group.add_argument("--de-dictionary-file", default="german.dic", help="Path to the dictionary file for German-specific operations.")
+    data_files_group.add_argument("--classify", action="append", help="Classification dictionary in format name=path.tsv. Can be specified multiple times.")
 
     filename_group = parser.add_argument_group('Output Filename Generation')
     filename_group.add_argument("--basename-add-timestamp", action="store_true", help="Prepend the output filename with a 'YYYYMMDDHHMMSS' timestamp.")
@@ -1988,6 +2043,7 @@ def main():
                 print(f"Error loading GCS dictionary: {e}", file=sys.stderr); exit(1)
 
     lemma_index = load_lemma_frequency_index(args.lemma_index_file)
+    classifications = load_classification_dictionaries(getattr(args, 'classify', None))
     processed_output_file = None
     final_output_path = args.output_file
     
@@ -2095,7 +2151,7 @@ def main():
                 add_source_word_col, add_wordlist_col, add_sentence_index_col,
                 args.add_header, args.wordlist_use_br, args.stdout_print_output_basename,
                 args.de_gcs, gcs_automaton, args.de_gcs_add_parts_to_wordlist, de_dictionary, lemma_override_rules,
-                args.de_gcs_pos_tags, field_mapping, anki_header, args, **processing_options
+                args.de_gcs_pos_tags, field_mapping, anki_header, args, classifications=classifications, **processing_options
             )
         else:
              if not input_text:
@@ -2105,7 +2161,7 @@ def main():
                 final_output_path, add_source_word_col, add_wordlist_col, add_sentence_index_col,
                 args.add_header, args.wordlist_use_br, args.stdout_print_output_basename,
                 args.de_gcs, gcs_automaton, args.de_gcs_add_parts_to_wordlist, de_dictionary, lemma_override_rules,
-                args.de_gcs_pos_tags, field_mapping, anki_header, args, **processing_options
+                args.de_gcs_pos_tags, field_mapping, anki_header, args, classifications=classifications, **processing_options
             )
 
     elif args.type == "sentence":
@@ -2131,7 +2187,7 @@ def main():
             args.language, lemma_index, args.text1_file, args.text2_file, args.text3_file,
             args.sentence_context_size, final_output_path,
             add_wordlist_col, add_sentence_index_col, args.add_header, args.wordlist_use_br, args.stdout_print_output_basename,
-            args.de_gcs_pos_tags, field_mapping, anki_header, args, **processing_options
+            args.de_gcs_pos_tags, field_mapping, anki_header, args, classifications=classifications, **processing_options
         )
 
     if args.stdout_print_output_basename and processed_output_file:

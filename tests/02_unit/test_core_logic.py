@@ -19,7 +19,9 @@ from kardenwort.core.kardenwort import (
     load_dictionary,
     apply_field_mapping,
     get_anki_csv_header,
-    get_field_index_map
+    get_field_index_map,
+    load_classification_dictionaries,
+    prepare_row_data
 )
 
 def test_deduplicate_lemmas():
@@ -147,6 +149,36 @@ def test_load_dictionary(tmp_path):
     assert "Haus" in dic
     assert "Auto" in dic
 
+def test_load_classification_dictionaries(tmp_path, capsys):
+    # Test valid parsing
+    c_file = tmp_path / "oxford.tsv"
+    content = [
+        "word\tpos\tcefr",
+        "apple\tn\tA1",
+        "abandon\tv\tB2",
+        "Header_like_but_lowercase\t\tC1"
+    ]
+    c_file.write_text("\n".join(content), encoding="utf-8")
+    
+    args = [f"oxford={c_file}"]
+    classifications = load_classification_dictionaries(args)
+    
+    assert "oxford" in classifications
+    assert classifications["oxford"]["apple"] == "A1"
+    assert classifications["oxford"]["abandon"] == "B2"
+    # The 'word' header should be skipped.
+    assert "word" not in classifications["oxford"]
+    
+    # Test invalid format
+    load_classification_dictionaries(["invalid_format"])
+    captured = capsys.readouterr()
+    assert "Invalid --classify format" in captured.err
+    
+    # Test file not found
+    load_classification_dictionaries(["missing=missing.tsv"])
+    captured = capsys.readouterr()
+    assert "Classification dictionary file not found" in captured.err
+
 def test_load_lemma_override_rules(tmp_path):
     o_file = tmp_path / "override.tsv"
     content = [
@@ -169,6 +201,26 @@ def test_apply_field_mapping():
     mapping = {"A": "src1", "B": "src2"}
     apply_field_mapping(row, data, mapping, f_map)
     assert row == ["VAL1", "VAL2"]
+
+def test_prepare_row_data_with_classifications():
+    class MockArgs:
+        language = "en"
+        tts_destination_lang = "ru"
+
+    kwargs = {
+        'lemma': 'apple',
+        'classifications': {
+            'oxford': {'apple': 'A1', 'banana': 'A2'},
+            'cambridge': {'apple': 'B1'}
+        }
+    }
+    
+    row_data = prepare_row_data(MockArgs(), **kwargs)
+    assert row_data['lemma'] == 'apple'
+    assert row_data['oxford'] == 'A1'
+    assert row_data['cambridge'] == 'B1'
+    assert row_data['tts_source_en'] == "1"
+    assert row_data['tts_dest_ru'] == "1"
 
 from kardenwort.core.kardenwort import _format_gcs_component_case, _cleanup_temp_files, TEMP_FILES_TO_CLEANUP
 

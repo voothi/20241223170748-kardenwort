@@ -570,7 +570,6 @@ contact	n., v.	B1
 contain	v.	A2
 container	n.	B1
 contemporary	adj.	B2
-content	n.	B1
 content1	n.	B1
 contest	n., v.	B2
 context	n.	A2
@@ -780,7 +779,6 @@ district	n.	B2
 divide	v., n.	B1, B2
 division	n.	B2
 divorced	adj.	A2
-do	v., auxiliary v.	A1
 do1	v., auxiliary v.	A1
 doctor	n.	A1
 document	n., v.	A2, B2
@@ -1480,8 +1478,6 @@ language	n.	A1
 laptop	n.	A2
 large	adj.	A1
 largely	adv.	B2
-last' (final)	det., adv., n.	A1, A2
-last' (taking time)	v.	A2
 last1 (final)	det. A1, adv., n.	A2
 last1 (taking time)	v.	A2
 late	adj., adv.	A1
@@ -1495,7 +1491,6 @@ lawyer	n.	A2
 lay	v.	B1
 layer	n.	B1
 lazy	adj.	A2
-lead	v., n.	A2, B1
 lead1	v. A2, n.	B1
 leader	n.	A2
 leadership	n.	B2
@@ -1523,10 +1518,8 @@ letter	n.	A1
 level	n., adj., v.	A2, B1, B2
 library	n.	A1
 licence	n.	B2
-lie	v.	A1
 lie1	v.	A1
 lie2 (tell a lie)	v., n.	B1
-lie² (tell a lie)	v., n.	B1
 life	n.	A1
 lifestyle	n.	A2
 lift	v., n.	A2
@@ -1547,10 +1540,8 @@ listen	v.	A1
 listener	n.	A2
 literature	n.	B1
 little	adj., det./pron., adv.	A1, A2
-live	v.	A1
 live1	v.	A1
 live2	adj., adv.	B1
-live²	adj., adv.	B1
 lively	adj.	B2
 living	adj., n.	B1
 load	n., v.	B2
@@ -1562,7 +1553,6 @@ location	n.	B1
 lock	v., n.	A2
 logical	adj.	B2
 lonely	adj.	B1
-long	adj., adv.	A1
 long-term	adj., adv.	B2
 long1	adj., adv.	A1
 look	v., n.	A1, A2
@@ -1666,7 +1656,6 @@ minimum	adj., n.	B2
 minister	n.	B2
 minor	adj.	B2
 minority	n.	B2
-minute	n.	A1
 minute1	n.	A1
 mirror	n.	A2
 miss	v.	A1
@@ -1911,7 +1900,6 @@ peaceful	adj.	B1
 pen	n.	A1
 pencil	n.	A1
 penny	n.	A2
-pension	n.	B2
 pension1	n.	B2
 people	n.	A1
 pepper	n.	A1
@@ -1975,7 +1963,6 @@ pleased	adj.	A2
 pleasure	n.	B1
 plenty	pron.	B1
 plot	n., v.	B1, B2
-plus	prep., adj., conj., n.	B1, B2
 plus1	prep. B1,  adj., conj., n.	B2
 pocket	n.	A2
 poem	n.	B1
@@ -2178,7 +2165,6 @@ reduction	n.	B2
 refer	v.	A2
 reference	n.	B1
 reflect	v.	B1
-refuse	v.	A2
 refuse1	v.	A2
 regard	v., n.	B2
 region	n.	A2
@@ -2259,8 +2245,6 @@ rich	adj.	A1
 rid	v.	B2
 ride	v., n.	A1, A2
 right	adj., adv., n.	A1
-ring	v., n.	A2, B1
-ring'	n.	A2
 ring1	n.	A2
 ring2	v. A2, n.	B1
 rise	v., n.	A2, B1
@@ -2281,7 +2265,6 @@ rough	adj.	B1
 round	adj., adv., prep., n.	A2, B2
 route	n.	A2
 routine	n., adj.	A1, B2
-row'	n.	B1
 row1	n.	B1
 royal	adj.	B1
 rub	v.	B2
@@ -2338,8 +2321,6 @@ sea	n.	A1
 search	n., v.	A2
 season	n.	A2
 seat	n., v.	A2, B2
-second' (next after the first)	det./number, adv.	A1, A2
-second' (unit of time)	n.	A1
 second1 (next after the first)	det./	
 second1 (unit of time)	n.	A1
 secondary	adj.	B1
@@ -2668,7 +2649,6 @@ teach	v.	A1
 teacher	n.	A1
 teaching	n.	A2
 team	n.	A1
-tear	v., n.	B2
 tear1	v., n.	B2
 tear2	n.	B2
 technical	adj.	B1
@@ -2694,7 +2674,6 @@ thank	v.	A1
 thanks	exclam., n.	A1
 that	det., pron., conj., adv.	A1, B1
 the	definite article	A1
-the definite article		A1
 theatre	n.	A1
 their	det.	A1
 theirs	pron.	B1
@@ -2860,10 +2839,8 @@ urge	v.	B2
 us	pron.	A1
 use	v., n.	A1, A2
 used to	modal v.	A2
-used'	adj.	B1
 used1	adj.	B1
 used2	adj.	B1
-used²	adj.	B1
 useful	adj.	A1
 user	n.	A2
 usual	adj.	A2
@@ -2968,10 +2945,8 @@ wildlife	n.	B2
 will	modal v., n.	A1, B1
 willing	adj.	B2
 win	v., n.	A1, B1
-wind'	n.	A2
 wind1	n.	A2
 wind2	v.	B2
-wind²	v.	B2
 window	n.	A1
 wine	n.	A1
 wing	n.	B1

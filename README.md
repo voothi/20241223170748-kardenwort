@@ -435,6 +435,9 @@ Below is a detailed list of all available arguments for the core processing scri
 ### Runner-Specific & UX Options
 | Argument                     | Description                                                                 | Example                      |
 | :--------------------------- | :-------------------------------------------------------------------------- | :--------------------------- |
+| `--stages`                   | Override pipeline stages (comma-separated, e.g., 'extract,import').         | `--stages extract,import`    |
+| `--fill`                     | Explicitly run the IntelliFiller fill stage (disabled by default).          | `--fill`                     |
+| `--skip-fill`                | Skip the IntelliFiller fill stage.                                          | `--skip-fill`                |
 | `--show-success-message`     | Display a user-friendly success message on standard output upon completion. | `--show-success-message`     |
 | `--play-sound-on-completion` | Play a system beep sound upon successful completion of the entire process.  | `--play-sound-on-completion` |
 

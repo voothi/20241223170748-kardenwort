@@ -116,7 +116,9 @@ def load_classification_dictionaries(classify_args):
                             val = f"{prefix}:{val}"
                             
                         # Split by comma to support lists of synonyms/variants like "a, an"
-                        lemmas = [x.strip() for x in raw_lemma.split(",") if x.strip()]
+                        # Strip any parenthetical annotations like "(money)" or "(not heavy)"
+                        lemmas = [re.sub(r"\(.*?\)", "", x).strip() for x in raw_lemma.split(",")]
+                        lemmas = [x for x in lemmas if x]
                         for lemma in lemmas:
                             if lemma in classifications[name]:
                                 # Keep 3k if it already exists to prioritize core list

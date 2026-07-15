@@ -1832,6 +1832,7 @@ def main():
     data_files_group.add_argument("--lemma-override-file", help="Path to a TSV file that defines rules for correcting specific lemma results.")
     data_files_group.add_argument("--de-dictionary-file", default="german.dic", help="Path to the dictionary file for German-specific operations.")
     data_files_group.add_argument("--classify", action="append", help="Classification dictionary in format name=path.tsv. Can be specified multiple times.")
+    data_files_group.add_argument("--disable-classification", action="store_true", help="Disable loading classifications from config.ini.")
 
     filename_group = parser.add_argument_group('Output Filename Generation')
     filename_group.add_argument("--basename-add-timestamp", action="store_true", help="Prepend the output filename with a 'YYYYMMDDHHMMSS' timestamp.")
@@ -1943,7 +1944,7 @@ def main():
     
     # Load Classifications from Config
     config_path_classify = Path(__file__).resolve().parent.parent.parent.parent / 'config.ini'
-    if config_path_classify.exists():
+    if config_path_classify.exists() and not args.disable_classification:
         import configparser
         cfg = configparser.ConfigParser(allow_no_value=True)
         cfg.read(config_path_classify, encoding='utf-8')

@@ -403,6 +403,8 @@ def main():
     parser.add_argument("--text2-file", type=str, help="Path to the second source text file (for dual/triple modes).")
     parser.add_argument("--text3-file", type=str, help="Path to the third source text file (for triple mode).")
     parser.add_argument("--skip-import", action="store_true", help="Skip importing TSV files to Anki.")
+    parser.add_argument("--skip-fill", action="store_true", help="Skip the IntelliFiller fill stage.")
+    parser.add_argument("--stages", type=str, help="Override pipeline stages (comma-separated, e.g., 'extract,import').")
     parser.add_argument("--subtitle-timestamps-file", type=str, help="Path to the sidecar subtitle timestamps file.")
     parser.add_argument("--import-only", action="store_true", help="Import an existing TSV directly into Anki without running extraction.")
     parser.add_argument("--tsv", nargs="+", help="Path to the TSV file(s) (required for --import-only).")
@@ -502,10 +504,18 @@ def main():
 
 
     # Load and validate pipeline stages
-    pipeline_stages_str = config.get('pipeline', 'stages', fallback='extract, import')
+    if getattr(args, 'stages', None) and isinstance(args.stages, str):
+        pipeline_stages_str = args.stages
+    else:
+        pipeline_stages_str = config.get('pipeline', 'stages', fallback='extract, import')
     if os.environ.get('KARDENWORT_TESTING') == 'true':
         pipeline_stages_str = 'extract'
     stages = [s.strip().lower() for s in pipeline_stages_str.split(',') if s.strip()]
+    
+    if getattr(args, 'skip_fill', False) is True and 'fill' in stages:
+        stages.remove('fill')
+    if getattr(args, 'skip_import', False) is True and 'import' in stages:
+        stages.remove('import')
     
     valid_stages = {'extract', 'fill', 'import'}
     unknown = set(stages) - valid_stages

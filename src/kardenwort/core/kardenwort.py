@@ -76,6 +76,13 @@ def load_classification_dictionaries(classify_args):
         if name not in classifications:
             classifications[name] = {}
             
+        filename_lower = os.path.basename(path).lower()
+        prefix = ""
+        if "3000" in filename_lower:
+            prefix = "3k:"
+        elif "5000" in filename_lower:
+            prefix = "5k:"
+
         try:
             with open(path, "r", encoding="utf-8") as f:
                 reader = csv.reader(f, delimiter="\t")
@@ -95,6 +102,13 @@ def load_classification_dictionaries(classify_args):
                         else:
                             val = "1"
                         
+                        if prefix:
+                            val = f"{prefix}{val}"
+                            
+                        if lemma in classifications[name]:
+                            # Keep 3k if it already exists to prioritize core list
+                            if classifications[name][lemma].startswith("3k:"):
+                                continue
                         classifications[name][lemma] = val
         except FileNotFoundError:
             print(f"Classification dictionary file not found: {path}", file=sys.stderr)

@@ -90,6 +90,7 @@ LeitnerBox
 LeitnerDue
 DeskSelected
 ClassificationOxford
+ClassificationGoethe
 
 [anki_field_mapping.word]
 ; Define custom mappings for word extraction mode.
@@ -124,6 +125,7 @@ SentenceDestination2 = tertiary_sentence
 SentenceDestination2ContextRight = tertiary_context_right
 Deck = deck_name
 ClassificationOxford = oxford
+ClassificationGoethe = goethe
 WordSource2 = lemma
 WordSourceInflectedForm2 = source_word
 Note = subtitle_start_time
@@ -160,6 +162,7 @@ SentenceDestination2 = tertiary_sentence
 SentenceDestination2ContextRight = tertiary_context_right
 Deck = deck_name
 ClassificationOxford = oxford
+ClassificationGoethe = goethe
 Note = subtitle_start_time
 ; TTS activation fields
 Source-en-GB = tts_source_en

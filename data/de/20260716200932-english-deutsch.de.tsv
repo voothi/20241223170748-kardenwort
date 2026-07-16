@@ -1,5 +1,4 @@
 Word	Annotation	Sense	Part of Speech	Level
--jährig	-jährig		adj	B1
 ab	ab		prep	A1
 ab	ab		adv	A1
 Abbau	der Abbau, -e		der	B2+
@@ -22,12 +21,12 @@ abgrenzen, grenzt ab, grenzte ab, hat abgegrenzt	abgrenzen, grenzt ab, grenzte a
 Abgrenzung	die Abgrenzung, -en		die	B2+
 Abgrund	der Abgrund, -̈e		der	B2+
 abhalten, hält ab, hielt ab, hat abgehalten	abhalten, hält ab, hielt ab, hat abgehalten		verb	B2+
-abhauen, haut ab, hieb ab, hat abgehauen	abhauen, haut ab, hieb ab, hat abgehauen		verb	B2+
-abheben, hebt ab, hob ab, hat abgehoben	abheben, hebt ab, hob ab, hat abgehoben		verb	B1
-abholen, holt ab, holte ab, hat abgeholt	abholen, holt ab, holte ab, hat abgeholt		verb	A1
 abhängen, hängt ab, hing ab, hat abgehangen	abhängen, hängt ab, hing ab, hat abgehangen		verb	B1
 abhängig	abhängig		adj	B1
 Abhängigkeit	die Abhängigkeit, -en		die	B1
+abhauen, haut ab, hieb ab, hat abgehauen	abhauen, haut ab, hieb ab, hat abgehauen		verb	B2+
+abheben, hebt ab, hob ab, hat abgehoben	abheben, hebt ab, hob ab, hat abgehoben		verb	B1
+abholen, holt ab, holte ab, hat abgeholt	abholen, holt ab, holte ab, hat abgeholt		verb	A1
 Abitur	das Abitur, -e		das	B1
 Abkommen	das Abkommen, -		das	B2+
 Ablauf	der Ablauf, -̈e		der	B1
@@ -89,8 +88,8 @@ Addition	die Addition, -en		die	B2+
 Adjektiv	das Adjektiv, -e		das	B2+
 Adresse	die Adresse, -n		die	A1
 AfD	AfD (Alternative für Deutschland)		die	B1
-Affe	der Affe, -n		der	B2+
 Affäre	die Affäre, -n		die	B2+
+Affe	der Affe, -n		der	B2+
 afghanisch	afghanisch		adj	B2+
 Afghanistan	Afghanistan		das	B1
 Afrika	Afrika		das	B1
@@ -99,9 +98,14 @@ AG	AG (Aktiengesellschaft)		die	B1
 Agentur	die Agentur, -en		die	B2+
 aggressiv	aggressiv		adj	B2+
 agieren, agiert, agierte, hat agiert	agieren, agiert, agierte, hat agiert		verb	B2+
+Ägypten	Ägypten		das	B2+
 ah	ah		part	B1
+äh	äh		part	B1
 aha	aha		part	B1
+ähneln, ähnelt, ähnelte, hat geähnelt	ähneln, ähnelt, ähnelte, hat geähnelt		verb	B2+
 ahnen, ahnt, ahnte, hat geahnt	ahnen, ahnt, ahnte, hat geahnt		verb	B1
+ähnlich	ähnlich		adj	B1
+Ähnlichkeit	die Ähnlichkeit, -en		die	B2+
 Ahnung	die Ahnung, -en		die	A2
 Airline	die Airline, -s		die	B2+
 Akademie	die Akademie, -n		die	B2+
@@ -163,19 +167,21 @@ anbringen, bringt an, brachte an, hat angebracht	anbringen, bringt an, brachte a
 andauern, dauert an, dauerte an, hat angedauert	andauern, dauert an, dauerte an, hat angedauert		verb	B2+
 andere	andere (r, s)		pron	A1
 andererseits	andererseits		adv	B1
+ändern, ändert, änderte, hat geändert	ändern, ändert, änderte, hat geändert		verb	A2
 anders	anders		adv	A2
 anderswo	anderswo		adv	B2+
+Änderung	die Änderung, -en		die	B1
 andeuten, deutet an, deutete an, hat angedeutet	andeuten, deutet an, deutete an, hat angedeutet		verb	B2+
 anerkennen, erkennt an, erkannte an, hat anerkannt	anerkennen, erkennt an, erkannte an, hat anerkannt		verb	B1
 Anerkennung	die Anerkennung, -en		die	B2+
 anfallen, fällt an, fiel an, hat angefallen	anfallen, fällt an, fiel an, hat angefallen		verb	B2+
 Anfang	der Anfang, -̈e		der	A1
 anfangen, fängt an, fing an, hat angefangen	anfangen, fängt an, fing an, hat angefangen		verb	A1
+anfänglich	anfänglich		adj	B2+
 anfangs	anfangs		adv	B1
 anfassen, fasst an, fasste an, hat angefasst	anfassen, fasst an, fasste an, hat angefasst		verb	B2+
 Anforderung	die Anforderung, -en		die	B1
 Anfrage	die Anfrage, -n		die	B2+
-anfänglich	anfänglich		adj	B2+
 anfühlen, fühlt an, fühlte an, hat angefühlt	anfühlen, fühlt an, fühlte an, hat angefühlt		verb	B2+
 anführen, führt an, führte an, hat angeführt	anführen, führt an, führte an, hat angeführt		verb	B2+
 Angabe	die Angabe, -n		die	B1
@@ -198,13 +204,13 @@ anhaben, hat an, hatte an, hat angehabt	anhaben, hat an, hatte an, hat angehabt	
 anhalten, hält an, hielt an, hat angehalten	anhalten, hält an, hielt an, hat angehalten		verb	B1
 anhand	anhand		prep	B1
 Anhang	der Anhang, -̈e		der	B2+
-anheben, hebt an, hob an, hat angehoben	anheben, hebt an, hob an, hat angehoben		verb	B2+
 Anhänger	der Anhänger, -		der	B2+
+anheben, hebt an, hob an, hat angehoben	anheben, hebt an, hob an, hat angehoben		verb	B2+
 anhören, hört an, hörte an, hat angehört	anhören, hört an, hörte an, hat angehört		verb	B1
 anklagen, klagt an, klagte an, hat angeklagt	anklagen, klagt an, klagte an, hat angeklagt		verb	B2+
 ankommen, kommt an, kam an, ist angekommen	ankommen, kommt an, kam an, ist angekommen		verb	A1
-Ankunft	die Ankunft, -̈e		die	A1
 ankündigen, kündigt an, kündigte an, hat angekündigt	ankündigen, kündigt an, kündigte an, hat angekündigt		verb	B1
+Ankunft	die Ankunft, -̈e		die	A1
 Anlage	die Anlage, -n		die	B1
 Anlass	der Anlass, -̈e		der	B1
 anlegen, legt an, legte an, hat angelegt	anlegen, legt an, legte an, hat angelegt		verb	B1
@@ -215,10 +221,10 @@ anmachen, macht an, machte an, hat angemacht	anmachen, macht an, machte an, hat 
 anmelden, meldet an, meldete an, hat angemeldet	anmelden, meldet an, meldete an, hat angemeldet		verb	A2
 anmerken, merkt an, merkte an, hat angemerkt	anmerken, merkt an, merkte an, hat angemerkt		verb	B2+
 Anmerkung	die Anmerkung, -en		die	B2+
-Annahme	die Annahme, -n		die	B1
-annehmen, nimmt an, nahm an, hat angenommen	annehmen, nimmt an, nahm an, hat angenommen		verb	B1
 annähern, nähert an, näherte an, hat angenähert	annähern, nähert an, näherte an, hat angenähert		verb	B2+
 Annäherung	die Annäherung, -en		die	B2+
+Annahme	die Annahme, -n		die	B1
+annehmen, nimmt an, nahm an, hat angenommen	annehmen, nimmt an, nahm an, hat angenommen		verb	B1
 anordnen, ordnet an, ordnete an, hat angeordnet	anordnen, ordnet an, ordnete an, hat angeordnet		verb	B2+
 Anordnung	die Anordnung, -en		die	B2+
 anorganisch	anorganisch		adj	B2+
@@ -300,6 +306,8 @@ Architekt	der Architekt, -en		der	B2+
 Architektur	die Architektur, -en		die	B2+
 Archiv	das Archiv, -e		das	B2+
 Argentinien	Argentinien		das	B2+
+Ärger	der Ärger		der	B2+
+ärgern, ärgert, ärgerte, hat geärgert	ärgern, ärgert, ärgerte, hat geärgert		verb	A2
 Argument	das Argument, -e		das	B1
 argumentieren, argumentiert, argumentierte, hat argumentiert	argumentieren, argumentiert, argumentierte, hat argumentiert		verb	B2+
 Arm	der Arm, -e		der	A1
@@ -313,11 +321,13 @@ Art	die Art, -en		die	A1
 Arterie	die Arterie, -n		die	B2+
 Artikel	der Artikel, -		der	A2
 Arzt	der Arzt, -Äe		der	A1
+ärztlich	ärztlich		adj	B2+
 asiatisch	asiatisch		adj	B2+
 Asien	Asien		das	B2+
 Aspekt	der Aspekt, -e		der	B1
 Assistent	der Assistent, -en		der	B2+
 Ast	der Ast, -Äe		der	B2+
+ästhetisch	ästhetisch		adj	B2+
 Asyl	das Asyl, -e		das	B2+
 Asylbewerber	der Asylbewerber, -		der	B2+
 asymmetrisch	asymmetrisch		adj	B2+
@@ -342,9 +352,9 @@ aufbringen, bringt auf, brachte auf, hat aufgebracht	aufbringen, bringt auf, bra
 aufeinander	aufeinander		adv	B2+
 Aufenthalt	der Aufenthalt, -e		der	B2+
 auffallen, fällt auf, fiel auf, ist aufgefallen	auffallen, fällt auf, fiel auf, ist aufgefallen		verb	B1
+auffällig	auffällig		adj	B2+
 Auffassung	die Auffassung, -en		die	B2+
 auffordern, fordert auf, forderte auf, hat aufgefordert	auffordern, fordert auf, forderte auf, hat aufgefordert		verb	B2+
-auffällig	auffällig		adj	B2+
 aufführen, führt auf, führte auf, hat aufgeführt	aufführen, führt auf, führte auf, hat aufgeführt		verb	B1
 Aufführung	die Aufführung, -en		die	B2+
 Aufgabe	die Aufgabe, -n		die	A1
@@ -439,17 +449,17 @@ auskennen, kennt aus, kannte aus, hat ausgekannt	auskennen, kennt aus, kannte au
 auskommen, kommt aus, kam aus, ist ausgekommen	auskommen, kommt aus, kam aus, ist ausgekommen		verb	B2+
 Auskunft	die Auskunft, -̈e		die	A1
 Ausland	das Ausland		das	A1
-auslaufen, läuft aus, lief aus, ist ausgelaufen	auslaufen, läuft aus, lief aus, ist ausgelaufen		verb	B2+
-auslegen, legt aus, legte aus, hat ausgelegt	auslegen, legt aus, legte aus, hat ausgelegt		verb	B2+
 Ausländer	der Ausländer, -		der	A1
 ausländisch	ausländisch		adj	A1
+auslaufen, läuft aus, lief aus, ist ausgelaufen	auslaufen, läuft aus, lief aus, ist ausgelaufen		verb	B2+
+auslegen, legt aus, legte aus, hat ausgelegt	auslegen, legt aus, legte aus, hat ausgelegt		verb	B2+
 auslösen, löst aus, löste aus, hat ausgelöst	auslösen, löst aus, löste aus, hat ausgelöst		verb	B1
 ausmachen, macht aus, machte aus, hat ausgemacht	ausmachen, macht aus, machte aus, hat ausgemacht		verb	A1
 Ausmaß	das Ausmaß, -e		das	B2+
 Ausnahme	die Ausnahme, -n		die	B1
 ausnutzen, nutzt aus, nutzte aus, hat ausgenutzt	ausnutzen, nutzt aus, nutzte aus, hat ausgenutzt		verb	B2+
-ausprobieren, probiert aus, probierte aus, hat ausprobiert	ausprobieren, probiert aus, probierte aus, hat ausprobiert		verb	B2+
 Ausprägung	die Ausprägung, -en		die	B2+
+ausprobieren, probiert aus, probierte aus, hat ausprobiert	ausprobieren, probiert aus, probierte aus, hat ausprobiert		verb	B2+
 ausreichen, reicht aus, reichte aus, hat ausgereicht	ausreichen, reicht aus, reichte aus, hat ausgereicht		verb	B1
 ausrichten, richtet aus, richtete aus, hat ausgerichtet	ausrichten, richtet aus, richtete aus, hat ausgerichtet		verb	B1
 Ausrichtung	die Ausrichtung, -en		die	B2+
@@ -463,6 +473,17 @@ ausschließlich	ausschließlich		adj	B1
 Ausschnitt	der Ausschnitt, -e		der	B2+
 Ausschuss	der Ausschuss, -̈e		der	B2+
 aussehen, sieht aus, sah aus, hat ausgesehen	aussehen, sieht aus, sah aus, hat ausgesehen		verb	A1
+außen	außen		adj	B1
+Außenminister	der Außenminister, -		der	B2+
+außer	außer		prep	A2
+außerdem	außerdem		adv	A2
+äußere	äußere (r, s)		adj	B1
+außergewöhnlich	außergewöhnlich		adj	B2+
+außerhalb	außerhalb		prep	A2
+äußern, äußert, äußerte, hat geäußert	äußern, äußert, äußerte, hat geäußert		verb	B1
+außerordentlich	außerordentlich		adj	B2+
+äußerst	äußerst		adv	B1
+Äußerung	die Äußerung, -en		die	B1
 aussetzen, setzt aus, setzte aus, hat ausgesetzt	aussetzen, setzt aus, setzte aus, hat ausgesetzt		verb	B1
 Aussicht	die Aussicht, -en		die	B1
 aussprechen, spricht aus, sprach aus, hat ausgesprochen	aussprechen, spricht aus, sprach aus, hat ausgesprochen		verb	A2
@@ -479,32 +500,25 @@ Austausch	der Austausch, -e		der	B2+
 austauschen, tauscht aus, tauschte aus, hat ausgetauscht	austauschen, tauscht aus, tauschte aus, hat ausgetauscht		verb	B2+
 Australien	Australien		das	B2+
 austreten, tritt aus, trat aus, ist ausgetreten	austreten, tritt aus, trat aus, ist ausgetreten		verb	B2+
+ausüben, übt aus, übte aus, hat ausgeübt	ausüben, übt aus, übte aus, hat ausgeübt		verb	B2+
 Auswahl	die Auswahl, -en		die	B1
+auswählen, wählt aus, wählte aus, hat ausgewählt	auswählen, wählt aus, wählte aus, hat ausgewählt		verb	B1
+auswärtig	auswärtig		adj	B2+
 ausweichen, weicht aus, wich aus, ist ausgewichen	ausweichen, weicht aus, wich aus, ist ausgewichen		verb	B2+
 ausweisen, weist aus, wies aus, hat ausgewiesen	ausweisen, weist aus, wies aus, hat ausgewiesen		verb	B2+
 auswerten, wertet aus, wertete aus, hat ausgewertet	auswerten, wertet aus, wertete aus, hat ausgewertet		verb	B2+
 Auswertung	die Auswertung, -en		die	B2+
 auswirken, wirkt aus, wirkte aus, hat ausgewirkt	auswirken (sich), wirkt aus, wirkte aus, hat ausgewirkt		verb	B2+
 Auswirkung	die Auswirkung, -en		die	B1
-auswählen, wählt aus, wählte aus, hat ausgewählt	auswählen, wählt aus, wählte aus, hat ausgewählt		verb	B1
-auswärtig	auswärtig		adj	B2+
 auszeichnen, zeichnet aus, zeichnete aus, hat ausgezeichnet	auszeichnen, zeichnet aus, zeichnete aus, hat ausgezeichnet		verb	B2+
 Auszeichnung	die Auszeichnung, -en		die	B2+
 ausziehen, zieht aus, zog aus, ist ausgezogen	ausziehen, zieht aus, zog aus, ist ausgezogen		verb	B1
-ausüben, übt aus, übte aus, hat ausgeübt	ausüben, übt aus, übte aus, hat ausgeübt		verb	B2+
 Auto	das Auto, -s		das	A1
 Autobahn	die Autobahn, -en		die	A1
 Autofahrer	der Autofahrer, -		der	B2+
 automatisch	automatisch		adj	A1
 autonom	autonom		adj	B2+
 Autor	der Autor, -en		der	B1
-außen	außen		adj	B1
-Außenminister	der Außenminister, -		der	B2+
-außer	außer		prep	A2
-außerdem	außerdem		adv	A2
-außergewöhnlich	außergewöhnlich		adj	B2+
-außerhalb	außerhalb		prep	A2
-außerordentlich	außerordentlich		adj	B2+
 Baby	das Baby, -s		das	A1
 backen, bäckt, buk, hat gebacken	backen, bäckt, buk, hat gebacken		verb	A2
 Bad	das Bad, -̈er		das	A1
@@ -519,6 +533,7 @@ Band	das Band, -̈er		der, die, das	A2
 Bande	die Bande, -n		die	B2+
 Bank	die Bank, -̈e		die	A1
 Bar	Bar		die	A1
+Bär	der Bär, -en		der	B2+
 bar	bar		adj	A1
 Bargeld	das Bargeld		das	B2+
 Baron	der Baron, -e		der	B2+
@@ -567,13 +582,13 @@ befassen, befasst, befasste, hat befasst	befassen (sich), befasst, befasste, hat
 Befehl	der Befehl, -e		der	B2+
 befestigen, befestigt, befestigte, hat befestigt	befestigen, befestigt, befestigte, hat befestigt		verb	B2+
 befinden, befindet, befand, hat befunden	befinden (sich), befindet, befand, hat befunden		verb	B1
+befördern, befördert, beförderte, hat befördert	befördern, befördert, beförderte, hat befördert		verb	B2+
 befragen, befragt, befragte, hat befragt	befragen, befragt, befragte, hat befragt		verb	B1
 Befragung	die Befragung, -en		die	B2+
 befreien, befreit, befreite, hat befreit	befreien, befreit, befreite, hat befreit		verb	B1
 Befreiung	die Befreiung, -en		die	B2+
 befriedigen, befriedigt, befriedigte, hat befriedigt	befriedigen, befriedigt, befriedigte, hat befriedigt		verb	B2+
 Befund	der Befund, -e		der	B2+
-befördern, befördert, beförderte, hat befördert	befördern, befördert, beförderte, hat befördert		verb	B2+
 befürchten, befürchtet, befürchtete, hat befürchtet	befürchten, befürchtet, befürchtete, hat befürchtet		verb	B1
 begeben, begibt, begab, hat begeben	begeben (sich), begibt, begab, hat begeben		verb	B2+
 begegnen, begegnet, begegnete, ist begegnet	begegnen, begegnet, begegnete, ist begegnet		verb	B1
@@ -611,16 +626,16 @@ beinahe	beinahe		adv	B1
 beinhalten, beinhaltet, beinhaltete, hat beinhaltet	beinhalten, beinhaltet, beinhaltete, hat beinhaltet		verb	B2+
 Beispiel	das Beispiel, -e		das	A1
 beispielsweise, bspw.	beispielsweise, bspw.		adv	A2
+beißen, beißt, biss, hat gebissen	beißen, beißt, biss, hat gebissen		verb	B1
 Beitrag	der Beitrag, -̈e		der	B1
 beitragen, trägt bei, trug bei, hat beigetragen	beitragen, trägt bei, trug bei, hat beigetragen		verb	B1
-beißen, beißt, biss, hat gebissen	beißen, beißt, biss, hat gebissen		verb	B1
+bekämpfen, bekämpft, bekämpfte, hat bekämpft	bekämpfen, bekämpft, bekämpfte, hat bekämpft		verb	B2+
+Bekämpfung	die Bekämpfung, -en		die	B2+
 bekannt	bekannt		adj	A1
 bekanntlich	bekanntlich		adv	B2+
 bekennen, bekennt, bekannte, hat bekannt	bekennen, bekennt, bekannte, hat bekannt		verb	B2+
 beklagen, beklagt, beklagte, hat beklagt	beklagen, beklagt, beklagte, hat beklagt		verb	B2+
 bekommen, bekommt, bekam, hat bekommen	bekommen, bekommt, bekam, hat bekommen		verb	A1
-bekämpfen, bekämpft, bekämpfte, hat bekämpft	bekämpfen, bekämpft, bekämpfte, hat bekämpft		verb	B2+
-Bekämpfung	die Bekämpfung, -en		die	B2+
 belasten, belastet, belastete, hat belastet	belasten, belastet, belastete, hat belastet		verb	B1
 Belastung	die Belastung, -en		die	B1
 Beleg	der Beleg, -e		der	B1
@@ -639,9 +654,9 @@ Bemühung	die Bemühung, -en		die	B2+
 benachbart	benachbart		adj	B2+
 benehmen, benimmt, benahm, hat benommen	benehmen, benimmt, benahm, hat benommen		verb	B2+
 benennen, benennt, benannte, hat benannt	benennen, benennt, benannte, hat benannt		verb	B1
+benötigen, benötigt, benötigte, hat benötigt	benötigen, benötigt, benötigte, hat benötigt		verb	B1
 benutzen, benutzt, benutzte, hat benutzt	benutzen, benutzt, benutzte, hat benutzt		verb	A1
 Benutzer	der Benutzer, -		der	B2+
-benötigen, benötigt, benötigte, hat benötigt	benötigen, benötigt, benötigte, hat benötigt		verb	B1
 beobachten, beobachtet, beobachtete, hat beobachtet	beobachten, beobachtet, beobachtete, hat beobachtet		verb	B1
 Beobachter	der Beobachter, -		der	B2+
 Beobachtung	die Beobachtung, -en		die	B1
@@ -662,20 +677,24 @@ Berg	der Berg, -e		der	A2
 bergen, birgt, barg, hat geborgen	bergen, birgt, barg, hat geborgen		verb	B2+
 Bericht	der Bericht, -e		der	B1
 berichten, berichtet, berichtete, hat berichtet	berichten, berichtet, berichtete, hat berichtet		verb	A2
-berliner	berliner		adj	B1
 Berliner	der Berliner, -		der	B2+
+berliner	berliner		adj	B1
+berücksichtigen, berücksichtigt, berücksichtigte, hat berücksichtigt	berücksichtigen, berücksichtigt, berücksichtigte, hat berücksichtigt		verb	B1
+Berücksichtigung	die Berücksichtigung, -en		die	B2+
 Beruf	der Beruf, -e		der	A1
 berufen, beruft, berief, hat berufen	berufen, beruft, berief, hat berufen		verb	B2+
 beruflich	beruflich		adj	B1
 Berufung	die Berufung, -en		die	B2+
 beruhen, beruht, beruhte, hat beruht	beruhen, beruht, beruhte, hat beruht		verb	B1
 beruhigen, beruhigt, beruhigte, hat beruhigt	beruhigen, beruhigt, beruhigte, hat beruhigt		verb	B1
-berücksichtigen, berücksichtigt, berücksichtigte, hat berücksichtigt	berücksichtigen, berücksichtigt, berücksichtigte, hat berücksichtigt		verb	B1
-Berücksichtigung	die Berücksichtigung, -en		die	B2+
 berühmt	berühmt		adj	A2
 berühren, berührt, berührte, hat berührt	berühren, berührt, berührte, hat berührt		verb	B1
 Berührung	die Berührung, -en		die	B2+
 besagen, besagt, besagte, hat besagt	besagen, besagt, besagte, hat besagt		verb	B2+
+beschädigen, beschädigt, beschädigte, hat beschädigt	beschädigen, beschädigt, beschädigte, hat beschädigt		verb	B1
+beschäftigen, beschäftigt, beschäftigte, hat beschäftigt	beschäftigen, beschäftigt, beschäftigte, hat beschäftigt		verb	B1
+Beschäftigte	die Beschäftigte		der, die	B2+
+Beschäftigung	die Beschäftigung, -en		die	B1
 Bescheid	der Bescheid, -e		der	A2
 bescheiden	bescheiden		adj	B2+
 bescheren, beschert, bescherte, hat beschert	bescheren, beschert, bescherte, hat beschert		verb	B2+
@@ -683,17 +702,13 @@ beschleunigen, beschleunigt, beschleunigte, hat beschleunigt	beschleunigen, besc
 Beschleunigung	die Beschleunigung, -en		die	B2+
 beschließen, beschließt, beschloss, hat beschlossen	beschließen, beschließt, beschloss, hat beschlossen		verb	B1
 Beschluss	der Beschluss, -̈e		der	B2+
-beschreiben, beschreibt, beschrieb, hat beschrieben	beschreiben, beschreibt, beschrieb, hat beschrieben		verb	A2
-Beschreibung	die Beschreibung, -en		die	B1
 beschränken, beschränkt, beschränkte, hat beschränkt	beschränken, beschränkt, beschränkte, hat beschränkt		verb	B1
 Beschränkung	die Beschränkung, -en		die	B2+
+beschreiben, beschreibt, beschrieb, hat beschrieben	beschreiben, beschreibt, beschrieb, hat beschrieben		verb	A2
+Beschreibung	die Beschreibung, -en		die	B1
 Beschwerde	die Beschwerde, -n		die	B2+
 beschweren, beschwert, beschwerte, hat beschwert	beschweren, beschwert, beschwerte, hat beschwert		verb	A2
 beschwören, beschwört, beschwor, hat beschworen	beschwören, beschwört, beschwor, hat beschworen		verb	B2+
-beschädigen, beschädigt, beschädigte, hat beschädigt	beschädigen, beschädigt, beschädigte, hat beschädigt		verb	B1
-beschäftigen, beschäftigt, beschäftigte, hat beschäftigt	beschäftigen, beschäftigt, beschäftigte, hat beschäftigt		verb	B1
-Beschäftigte	die Beschäftigte		der, die	B2+
-Beschäftigung	die Beschäftigung, -en		die	B1
 beseitigen, beseitigt, beseitigte, hat beseitigt	beseitigen, beseitigt, beseitigte, hat beseitigt		verb	B2+
 besetzen, besetzt, besetzte, hat besetzt	besetzen, besetzt, besetzte, hat besetzt		verb	B1
 Besetzung	die Besetzung, -en		die	B2+
@@ -710,6 +725,7 @@ besprechen, bespricht, besprach, hat besprochen	besprechen, bespricht, besprach,
 besser	besser		adj	A1
 Bestand	der Bestand, -̈e		der	B2+
 Bestandteil	der Bestandteil, -e		der	B1
+bestätigen, bestätigt, bestätigte, hat bestätigt	bestätigen, bestätigt, bestätigte, hat bestätigt		verb	A2
 beste	beste (r, s)		adj	A1
 bestehen, besteht, bestand, hat bestanden	bestehen, besteht, bestand, hat bestanden		verb	A2
 bestellen, bestellt, bestellte, hat bestellt	bestellen, bestellt, bestellte, hat bestellt		verb	A1
@@ -720,7 +736,6 @@ bestimmt	bestimmt		adj	B1
 Bestimmung	die Bestimmung, -en		die	B1
 bestrafen, bestraft, bestrafte, hat bestraft	bestrafen, bestraft, bestrafte, hat bestraft		verb	B1
 bestreiten, bestreitet, bestritt, hat bestritten	bestreiten, bestreitet, bestritt, hat bestritten		verb	B2+
-bestätigen, bestätigt, bestätigte, hat bestätigt	bestätigen, bestätigt, bestätigte, hat bestätigt		verb	A2
 Besuch	der Besuch, -e		der	A2
 besuchen, besucht, besuchte, hat besucht	besuchen, besucht, besuchte, hat besucht		verb	A1
 Besucher	der Besucher, -		der	B1
@@ -730,6 +745,7 @@ beten, betet, betete, hat gebetet	beten, betet, betete, hat gebetet		verb	B2+
 betonen, betont, betonte, hat betont	betonen, betont, betonte, hat betont		verb	A2
 betrachten, betrachtet, betrachtete, hat betrachtet	betrachten, betrachtet, betrachtete, hat betrachtet		verb	A2
 Betrachter	der Betrachter, -		der	B2+
+beträchtlich	beträchtlich		adj	B2+
 Betrachtung	die Betrachtung, -en		die	B2+
 Betrag	der Betrag, -̈e		der	B1
 betragen, beträgt, betrug, hat betragen	betragen, beträgt, betrug, hat betragen		verb	A2
@@ -742,17 +758,18 @@ Betrieb	der Betrieb, -e		der	B1
 betrieblich	betrieblich		adj	B2+
 Betriebswirtschaftslehre	die Betriebswirtschaftslehre		die	B1
 betrinken, betrinkt, betrank, hat betrunken	betrinken (sich), betrinkt, betrank, hat betrunken		verb	B2+
-beträchtlich	beträchtlich		adj	B2+
 Bett	das Bett, -en		das	A1
 beugen, beugt, beugte, hat gebeugt	beugen, beugt, beugte, hat gebeugt		verb	B2+
 beurteilen, beurteilt, beurteilte, hat beurteilt	beurteilen, beurteilt, beurteilte, hat beurteilt		verb	B1
 Beurteilung	die Beurteilung, -en		die	B2+
+Bevölkerung	die Bevölkerung, -en		die	B1
 bevor	bevor		conj	B1
 bevorstehen, steht bevor, stand bevor, hat bevorgestanden	bevorstehen, steht bevor, stand bevor, hat bevorgestanden		verb	B2+
 bevorzugen, bevorzugt, bevorzugte, hat bevorzugt	bevorzugen, bevorzugt, bevorzugte, hat bevorzugt		verb	B1
-Bevölkerung	die Bevölkerung, -en		die	B1
 bewaffnen, bewaffnet, bewaffnete, hat bewaffnet	bewaffnen, bewaffnet, bewaffnete, hat bewaffnet		verb	B2+
 bewahren, bewahrt, bewahrte, hat bewahrt	bewahren, bewahrt, bewahrte, hat bewahrt		verb	B1
+bewähren, bewährt, bewährte, hat bewährt	bewähren (sich), bewährt, bewährte, hat bewährt		verb	B2+
+bewältigen, bewältigt, bewältigte, hat bewältigt	bewältigen, bewältigt, bewältigte, hat bewältigt		verb	B2+
 bewegen, bewegt, bewegte, hat bewegt	bewegen, bewegt, bewegte, hat bewegt		verb	B1
 beweglich	beweglich		adj	B2+
 Bewegung	die Bewegung, -en		die	B1
@@ -767,8 +784,6 @@ Bewohner	der Bewohner, -		der	B1
 bewundern, bewundert, bewunderte, hat bewundert	bewundern, bewundert, bewunderte, hat bewundert		verb	B2+
 bewusst	bewusst		adj	A2
 Bewusstsein	das Bewusstsein, -e		das	B1
-bewähren, bewährt, bewährte, hat bewährt	bewähren (sich), bewährt, bewährte, hat bewährt		verb	B2+
-bewältigen, bewältigt, bewältigte, hat bewältigt	bewältigen, bewältigt, bewältigte, hat bewältigt		verb	B2+
 bezahlen, bezahlt, bezahlte, hat bezahlt	bezahlen, bezahlt, bezahlte, hat bezahlt		verb	A1
 bezeichnen, bezeichnet, bezeichnete, hat bezeichnet	bezeichnen, bezeichnet, bezeichnete, hat bezeichnet		verb	A2
 Bezeichnung	die Bezeichnung, -en		die	B1
@@ -801,14 +816,15 @@ bisher	bisher		adv	B1
 bisherig	bisherig		adj	B1
 bislang	bislang		adv	A2
 bisschen, bissel	bisschen, bissel		pron	A1
-bitte	bitte		adv	A1
 Bitte	die Bitte, -n		die	A1
+bitte	bitte		adv	A1
 bitten, bittet, bat, hat gebeten	bitten, bittet, bat, hat gebeten		verb	A1
 bitter	bitter		adj	A1
 Blase	die Blase, -n		die	B2+
 blasen, bläst, blies, hat geblasen	blasen, bläst, blies, hat geblasen		verb	B2+
 blass	blass		adj	B1
 Blatt	das Blatt, -̈er		das	A2
+blättern, blättert, blätterte, hat geblättert	blättern, blättert, blätterte, hat geblättert		verb	B2+
 blau	blau		adj	A2
 bleiben, bleibt, blieb, ist geblieben	bleiben, bleibt, blieb, ist geblieben		verb	A1
 Blick	der Blick, -e		der	A1
@@ -816,21 +832,22 @@ blicken, blickt, blickte, hat geblickt	blicken, blickt, blickte, hat geblickt		v
 blind	blind		adj	B1
 Block	der Block, -̈e		der	B2+
 blockieren, blockiert, blockierte, hat blockiert	blockieren, blockiert, blockierte, hat blockiert		verb	B2+
+blöd	blöd		adj	A2
 blond	blond		adj	A2
 bloß	bloß		adj, adv	B1
+blühen, blüht, blühte, hat geblüht	blühen, blüht, blühte, hat geblüht		verb	B1
 Blume	die Blume, -n		die	A1
 Blut	das Blut, -e		das	B1
 Blutdruck	der Blutdruck, -̈e		der	B2+
-blutig	blutig		adj	B2+
-blättern, blättert, blätterte, hat geblättert	blättern, blättert, blätterte, hat geblättert		verb	B2+
-blöd	blöd		adj	A2
-blühen, blüht, blühte, hat geblüht	blühen, blüht, blühte, hat geblüht		verb	B1
 Blüte	die Blüte, -n		die	B2+
+blutig	blutig		adj	B2+
 Boden	der Boden, -̈		der	B1
 Bogen	der Bogen, -		der	A1
 Bombe	die Bombe, -n		die	B2+
 Boot	das Boot, -e		das	B1
 Bord	das Bord, -e		der	B1
+Börse	die Börse, -n		die	B2+
+böse	böse		adj	A1
 Botschaft	die Botschaft, -en		die	B1
 Botschafter	der Botschafter, -		der	B2+
 Box	die Box, -en		die	B2+
@@ -856,18 +873,20 @@ Brite	der Brite, -n		der	B2+
 britisch	britisch		adj	B1
 Brot	das Brot, -e		das	A1
 Bruch	der Bruch, -̈e		der	B2+
+Brücke	die Brücke, -n		die	A2
 Bruder	der Bruder, -̈		der	A1
+brüllen, brüllt, brüllte, hat gebrüllt	brüllen, brüllt, brüllte, hat gebrüllt		verb	B2+
 Brust	die Brust, -̈e		die	B1
 brutal	brutal		adj	B2+
 Bruttoinlandsprodukt	das Bruttoinlandsprodukt, -e		das	B1
-Brücke	die Brücke, -n		die	A2
-brüllen, brüllt, brüllte, hat gebrüllt	brüllen, brüllt, brüllte, hat gebrüllt		verb	B2+
 Bube	der Bube, -n		der	B2+
 Buch	das Buch, -̈er		das	A1
 buchen	buchen		verb	A2
 Buchstabe	der Buchstabe, -n		der	A1
 Budget	das Budget, -s		das	B2+
+Bühne	die Bühne, -n		die	B1
 Bund	der Bund, -̈e		der	B1
+Bündel	das Bündel, -		das	B2+
 Bundesamt	das Bundesamt, -̈er		das	B2+
 Bundeskanzler	der Bundeskanzler, -		der	B1
 Bundesland	das Bundesland, -̈er		das	B1
@@ -879,22 +898,17 @@ Bundesstaat	der Bundesstaat, -en		der	B2+
 Bundestag	der Bundestag, -e		der	B1
 Bundeswehr	die Bundeswehr		die	B2+
 bundesweit	bundesweit		adj	B2+
+Bündnis	das Bündnis, -se		das	B2+
 bunt	bunt		adj	A2
 Burg	die Burg, -en		die	B1
-Bus	der Bus, -se		der	A1
-Business	das Business		das	B2+
-Butter	die Butter		die	A1
-Bär	der Bär, -en		der	B2+
-Börse	die Börse, -n		die	B2+
-böse	böse		adj	A1
-Bühne	die Bühne, -n		die	B1
-Bündel	das Bündel, -		das	B2+
-Bündnis	das Bündnis, -se		das	B2+
 Bürger	der Bürger, -		der	B1
 Bürgerkrieg	der Bürgerkrieg, -e		der	B2+
 bürgerlich	bürgerlich		adj	B2+
 Bürgermeister	der Bürgermeister, -		der	B1
 Büro	das Büro, -s		das	A2
+Bus	der Bus, -se		der	A1
+Business	das Business		das	B2+
+Butter	die Butter		die	A1
 Café	das Café, -s		das	A1
 Camp	das Camp, -s		das	B2+
 CD	die CD, -s		die	A1
@@ -941,8 +955,11 @@ damals	damals		pron	A2
 Dame	die Dame, -n		die	A1
 damit	damit		pron	B1
 damit	damit		conj	B1
+dämpfen, dämpft, dämpfte, hat gedämpft	dämpfen, dämpft, dämpfte, hat gedämpft		verb	B2+
 danach	danach		pron	B1
 daneben	daneben		pron	A1
+Dänemark	Dänemark		das	B2+
+dänisch	dänisch		adj, das	B2+
 Dank	der Dank		der	A1
 dankbar	dankbar		adj	B1
 danke	danke		adv	A1
@@ -956,9 +973,9 @@ darin, drin, drinnen	darin, drin, drinnen		pron	A1
 Darm	der Darm, -̈e		der	B2+
 darstellen, stellt dar, stellte dar, hat dargestellt	darstellen, stellt dar, stellte dar, hat dargestellt		verb	B1
 Darstellung	die Darstellung, -en		die	B1
+darüber, drüber	darüber, drüber		pron	A1
 darum	darum		pron	A2
 darunter	darunter		pron	B1
-darüber, drüber	darüber, drüber		pron	A1
 dass	dass		conj	A1
 dastehen, steht da, stand da, hat dagestanden	dastehen, steht da, stand da, hat dagestanden		verb	B2+
 Daten	Daten		die (pl)	B1
@@ -1080,24 +1097,24 @@ dorthin	dorthin		adv	B1
 Dose	die Dose, -n		die	B1
 Drama	das Drama, -en		das	B1
 dramatisch	dramatisch		adj	B1
+drängen, drängt, drängte, hat gedrängt	drängen, drängt, drängte, hat gedrängt		verb	B1
 drastisch	drastisch		adj	B2+
 draußen	draußen		adv	A1
 Dreck	der Dreck		der	B1
 drehen, dreht, drehte, hat gedreht	drehen, dreht, drehte, hat gedreht		verb	B1
 drei	drei		num	A1
 dreimal	dreimal		adv	B2+
-dreizehn	dreizehn		num	B2+
 dreißig	dreißig		num	B1
+dreizehn	dreizehn		num	B2+
 dringen, dringt, drang, ist gedrungen	dringen, dringt, drang, ist gedrungen		verb	B2+
 dringend	dringend		adj	A2
 Drittel	das Drittel, -		das	B1
 Droge	die Droge, -n		die	B1
 drohen, droht, drohte, hat gedroht	drohen, droht, drohte, hat gedroht		verb	A2
 Drohung	die Drohung, -en		die	B2+
+drüben	drüben		adv	A2
 Druck	der Druck, -̈e		der	B1
 drucken, druckt, druckte, hat gedruckt	drucken, druckt, druckte, hat gedruckt		verb	A1
-drängen, drängt, drängte, hat gedrängt	drängen, drängt, drängte, hat gedrängt		verb	B1
-drüben	drüben		adv	A2
 drücken, drückt, drückte, hat gedrückt	drücken, drückt, drückte, hat gedrückt		verb	A1
 du	du		pron	A1
 Duell	das Duell, -e		das	B2+
@@ -1106,6 +1123,7 @@ dulden, duldet, duldete, hat geduldet	dulden, duldet, duldete, hat geduldet		ver
 dumm	dumm		adj	A2
 dunkel	dunkel		adj	A2
 Dunkelheit	die Dunkelheit, -en		die	B2+
+dünn	dünn		adj	A2
 durch	durch		prep	A1
 durchaus	durchaus		adv	A2
 Durchbruch	der Durchbruch, -̈e		der	B2+
@@ -1118,17 +1136,12 @@ Durchschnitt	der Durchschnitt, -e		der	B1
 durchschnittlich	durchschnittlich		adj	B1
 durchsetzen, setzt durch, setzte durch, hat durchgesetzt	durchsetzen, setzt durch, setzte durch, hat durchgesetzt		verb	B1
 durchziehen, zieht durch, zog durch, hat durchgezogen	durchziehen, zieht durch, zog durch, hat durchgezogen		verb	B2+
+dürfen, darf, durfte, hat gedurft	dürfen, darf, durfte, hat gedurft		verb	A1
 Dusche	die Dusche, -n		die	A1
+düster	düster		adj	B2+
 Dutzend	das Dutzend, -e		das	B1
 Dynamik	die Dynamik, -en		die	B2+
 dynamisch	dynamisch		adj	B2+
-dämpfen, dämpft, dämpfte, hat gedämpft	dämpfen, dämpft, dämpfte, hat gedämpft		verb	B2+
-Dänemark	Dänemark		das	B2+
-dänisch	dänisch		adj, das	B2+
-dünn	dünn		adj	A2
-dürfen, darf, durfte, hat gedurft	dürfen, darf, durfte, hat gedurft		verb	A1
-düster	düster		adj	B2+
-E-Mail	die E-Mail, -s		die, das	A1
 eben, ebend	eben, ebend		adv, part	B1
 ebenda	ebenda		adv	B1
 Ebene	die Ebene, -n		die	A2
@@ -1210,22 +1223,22 @@ einmalig	einmalig		adj	B2+
 Einnahme	die Einnahme, -n		die	B1
 einnehmen, nimmt ein, nahm ein, hat eingenommen	einnehmen, nimmt ein, nahm ein, hat eingenommen		verb	B1
 einordnen, ordnet ein, ordnete ein, hat eingeordnet	einordnen, ordnet ein, ordnete ein, hat eingeordnet		verb	B2+
+einräumen, räumt ein, räumte ein, hat eingeräumt	einräumen, räumt ein, räumte ein, hat eingeräumt		verb	B2+
 einreichen, reicht ein, reichte ein, hat eingereicht	einreichen, reicht ein, reichte ein, hat eingereicht		verb	B2+
 einrichten, richtet ein, richtete ein, hat eingerichtet	einrichten, richtet ein, richtete ein, hat eingerichtet		verb	B1
 Einrichtung	die Einrichtung, -en		die	B1
-einräumen, räumt ein, räumte ein, hat eingeräumt	einräumen, räumt ein, räumte ein, hat eingeräumt		verb	B2+
 eins	eins		num	A2
 einsam	einsam		adj	B1
 Einsatz	der Einsatz, -̈e		der	A2
 einschalten, schaltet ein, schaltete ein, hat eingeschaltet	einschalten, schaltet ein, schaltete ein, hat eingeschaltet		verb	B1
+einschätzen, schätzt ein, schätzte ein, hat eingeschätzt	einschätzen, schätzt ein, schätzte ein, hat eingeschätzt		verb	B2+
+Einschätzung	die Einschätzung, -en		die	B2+
 einschlafen, schläft ein, schlief ein, ist eingeschlafen	einschlafen, schläft ein, schlief ein, ist eingeschlafen		verb	B2+
 einschlagen, schlägt ein, schlug ein, hat eingeschlagen	einschlagen, schlägt ein, schlug ein, hat eingeschlagen		verb	B2+
 einschließen, schließt ein, schloss ein, hat eingeschlossen	einschließen, schließt ein, schloss ein, hat eingeschlossen		verb	B2+
 einschließlich	einschließlich		prep	B1
 einschränken, schränkt ein, schränkte ein, hat eingeschränkt	einschränken, schränkt ein, schränkte ein, hat eingeschränkt		verb	B1
 Einschränkung	die Einschränkung, -en		die	B2+
-einschätzen, schätzt ein, schätzte ein, hat eingeschätzt	einschätzen, schätzt ein, schätzte ein, hat eingeschätzt		verb	B2+
-Einschätzung	die Einschätzung, -en		die	B2+
 einsehen, sieht ein, sah ein, hat eingesehen	einsehen, sieht ein, sah ein, hat eingesehen		verb	B2+
 einseitig	einseitig		adj	B2+
 einsetzen, setzt ein, setzte ein, hat eingesetzt	einsetzen, setzt ein, setzte ein, hat eingesetzt		verb	B1
@@ -1266,16 +1279,17 @@ Element	das Element, -e		das	A2
 elementar	elementar		adj	B2+
 elf	elf		num	A1
 Eltern	Eltern		die (pl)	A1
+E-Mail	die E-Mail, -s		die, das	A1
 Embryo	der Embryo, -ne		der	B2+
 Emotion	die Emotion, -en		die	B2+
 emotional	emotional		adj	B1
 Empfang	der Empfang, -̈e		der	B2+
 empfangen, empfängt, empfing, hat empfangen	empfangen, empfängt, empfing, hat empfangen		verb	B1
+Empfänger	der Empfänger, -		der	A1
 empfehlen, empfiehlt, empfahl, hat empfohlen	empfehlen, empfiehlt, empfahl, hat empfohlen		verb	A1
 Empfehlung	die Empfehlung, -en		die	B2+
 empfinden, empfindet, empfand, hat empfunden	empfinden, empfindet, empfand, hat empfunden		verb	B1
 empfindlich	empfindlich		adj	B2+
-Empfänger	der Empfänger, -		der	A1
 empirisch	empirisch		adj	B1
 Ende	das Ende, -n		das	A1
 enden, endet, endete, hat geendet	enden, endet, endete, hat geendet		verb	A1
@@ -1289,8 +1303,8 @@ Engagement	das Engagement, -s		das	B1
 engagieren, engagiert, engagierte, hat engagiert	engagieren, engagiert, engagierte, hat engagiert		verb	B1
 Engel	der Engel, -		der	B2+
 England	England		das	B1
-englisch	englisch		adj, das	A2
 Engländer	der Engländer, -		der	B2+
+englisch	englisch		adj, das	A2
 Enkel	der Enkel, -		der	B1
 enorm	enorm		adj	B1
 Ensemble	das Ensemble, -s		das	B2+
@@ -1352,21 +1366,21 @@ erforschen, erforscht, erforschte, hat erforscht	erforschen, erforscht, erforsch
 erfreuen, erfreut, erfreute, hat erfreut	erfreuen, erfreut, erfreute, hat erfreut		verb	B2+
 erfüllen, erfüllt, erfüllte, hat erfüllt	erfüllen, erfüllt, erfüllte, hat erfüllt		verb	B1
 Erfüllung	die Erfüllung, -en		die	B2+
+ergänzen, ergänzt, ergänzte, hat ergänzt	ergänzen, ergänzt, ergänzte, hat ergänzt		verb	B1
+Ergänzung	die Ergänzung, -en		die	B2+
 ergeben, ergibt, ergab, hat ergeben	ergeben, ergibt, ergab, hat ergeben		verb	A2
 Ergebnis	das Ergebnis, -se		das	A1
 ergehen, ergeht, erging, hat ergangen	ergehen, ergeht, erging, hat ergangen		verb	B2+
 ergreifen, ergreift, ergriff, hat ergriffen	ergreifen, ergreift, ergriff, hat ergriffen		verb	B2+
-ergänzen, ergänzt, ergänzte, hat ergänzt	ergänzen, ergänzt, ergänzte, hat ergänzt		verb	B1
-Ergänzung	die Ergänzung, -en		die	B2+
 erhalten, erhält, erhielt, hat erhalten	erhalten, erhält, erhielt, hat erhalten		verb	B1
 erheben, erhebt, erhob, hat erhoben	erheben, erhebt, erhob, hat erhoben		verb	B1
 erheblich	erheblich		adj	B1
 Erhebung	die Erhebung, -en		die	B2+
 erhitzen, erhitzt, erhitzte, hat erhitzt	erhitzen, erhitzt, erhitzte, hat erhitzt		verb	B2+
 erhoffen, erhofft, erhoffte, hat erhofft	erhoffen, erhofft, erhoffte, hat erhofft		verb	B2+
-erholen, erholt, erholte, hat erholt	erholen (sich), erholt, erholte, hat erholt		verb	B1
 erhöhen, erhöht, erhöhte, hat erhöht	erhöhen, erhöht, erhöhte, hat erhöht		verb	B1
 Erhöhung	die Erhöhung, -en		die	B1
+erholen, erholt, erholte, hat erholt	erholen (sich), erholt, erholte, hat erholt		verb	B1
 erinnern, erinnert, erinnerte, hat erinnert	erinnern, erinnert, erinnerte, hat erinnert		verb	A2
 Erinnerung	die Erinnerung, -en		die	B1
 erkennbar	erkennbar		adj	B2+
@@ -1380,6 +1394,7 @@ erkundigen, erkundigt, erkundigte, hat erkundigt	erkundigen (sich), erkundigt, e
 erlangen, erlangt, erlangte, hat erlangt	erlangen, erlangt, erlangte, hat erlangt		verb	B2+
 erlassen, erlässt, erließ, hat erlassen	erlassen, erlässt, erließ, hat erlassen		verb	B2+
 erlauben, erlaubt, erlaubte, hat erlaubt	erlauben, erlaubt, erlaubte, hat erlaubt		verb	A1
+erläutern, erläutert, erläuterte, hat erläutert	erläutern, erläutert, erläuterte, hat erläutert		verb	B1
 erleben, erlebt, erlebte, hat erlebt	erleben, erlebt, erlebte, hat erlebt		verb	B1
 Erlebnis	das Erlebnis, -se		das	B1
 erledigen, erledigt, erledigte, hat erledigt	erledigen, erledigt, erledigte, hat erledigt		verb	B1
@@ -1387,19 +1402,20 @@ erleichtern, erleichtert, erleichterte, hat erleichtert	erleichtern, erleichtert
 Erleichterung	die Erleichterung, -en		die	B2+
 erleiden, erleidet, erlitt, hat erlitten	erleiden, erleidet, erlitt, hat erlitten		verb	B2+
 erlernen, erlernt, erlernte, hat erlernt	erlernen, erlernt, erlernte, hat erlernt		verb	B2+
-erläutern, erläutert, erläuterte, hat erläutert	erläutern, erläutert, erläuterte, hat erläutert		verb	B1
 ermitteln, ermittelt, ermittelte, hat ermittelt	ermitteln, ermittelt, ermittelte, hat ermittelt		verb	B1
 Ermittler	der Ermittler, -		der	B2+
 Ermittlung	die Ermittlung, -en		die	B1
-ermorden, ermordet, ermordete, hat ermordet	ermorden, ermordet, ermordete, hat ermordet		verb	B2+
 ermöglichen, ermöglicht, ermöglichte, hat ermöglicht	ermöglichen, ermöglicht, ermöglichte, hat ermöglicht		verb	A2
+ermorden, ermordet, ermordete, hat ermordet	ermorden, ermordet, ermordete, hat ermordet		verb	B2+
+ernähren, ernährt, ernährte, hat ernährt	ernähren, ernährt, ernährte, hat ernährt		verb	B1
+Ernährung	die Ernährung, -en		die	B1
 erneut	erneut		adj	B1
 ernst	ernst		adj	B1
 ernsthaft	ernsthaft		adj	B2+
 ernten, erntet, erntete, hat geerntet	ernten, erntet, erntete, hat geerntet		verb	B2+
-ernähren, ernährt, ernährte, hat ernährt	ernähren, ernährt, ernährte, hat ernährt		verb	B1
-Ernährung	die Ernährung, -en		die	B1
 erobern, erobert, eroberte, hat erobert	erobern, erobert, eroberte, hat erobert		verb	B2+
+eröffnen, eröffnet, eröffnete, hat eröffnet	eröffnen, eröffnet, eröffnete, hat eröffnet		verb	B1
+Eröffnung	die Eröffnung, -en		die	B2+
 erregen, erregt, erregte, hat erregt	erregen, erregt, erregte, hat erregt		verb	B2+
 Erregung	die Erregung, -en		die	B2+
 erreichbar	erreichbar		adj	B2+
@@ -1410,17 +1426,17 @@ erscheinen, erscheint, erschien, ist erschienen	erscheinen, erscheint, erschien,
 Erscheinung	die Erscheinung, -en		die	B2+
 erschießen, erschießt, erschoss, hat erschossen	erschießen, erschießt, erschoss, hat erschossen		verb	B2+
 erschließen, erschließt, erschloss, hat erschlossen	erschließen, erschließt, erschloss, hat erschlossen		verb	B2+
-erschrecken, erschreckt, erschreckte, hat erschreckt	erschrecken, erschreckt, erschreckte, hat erschreckt		verb	B1
-erschweren, erschwert, erschwerte, hat erschwert	erschweren, erschwert, erschwerte, hat erschwert		verb	B2+
 erschöpfen, erschöpft, erschöpfte, hat erschöpft	erschöpfen, erschöpft, erschöpfte, hat erschöpft		verb	B2+
+erschrecken, erschreckt, erschreckte, hat erschreckt	erschrecken, erschreckt, erschreckte, hat erschreckt		verb	B1
 erschüttern, erschüttert, erschütterte, hat erschüttert	erschüttern, erschüttert, erschütterte, hat erschüttert		verb	B2+
+erschweren, erschwert, erschwerte, hat erschwert	erschweren, erschwert, erschwerte, hat erschwert		verb	B2+
 ersetzen, ersetzt, ersetzte, hat ersetzt	ersetzen, ersetzt, ersetzte, hat ersetzt		verb	B1
 ersparen, erspart, ersparte, hat erspart	ersparen, erspart, ersparte, hat erspart		verb	B2+
 erst	erst		adv, part	A1
 erstaunen, erstaunt, erstaunte, ist erstaunt	erstaunen, erstaunt, erstaunte, ist erstaunt		verb	B2+
 erstaunlich	erstaunlich		adj	B1
-erste	erste (r, s)		adj	A1
 Erste	die Erste		der, die	A1
+erste	erste (r, s)		adj	A1
 erstellen, erstellt, erstellte, hat erstellt	erstellen, erstellt, erstellte, hat erstellt		verb	B1
 Erstellung	die Erstellung, -en		die	B2+
 erstmals	erstmals		adv	B1
@@ -1431,6 +1447,7 @@ ertragen, erträgt, ertrug, hat ertragen	ertragen, erträgt, ertrug, hat ertrage
 erwachen, erwacht, erwachte, ist erwacht	erwachen, erwacht, erwachte, ist erwacht		verb	B2+
 erwachsen	erwachsen		adj	B2+
 Erwachsene	die Erwachsene		der, die	A1
+erwähnen, erwähnt, erwähnte, hat erwähnt	erwähnen, erwähnt, erwähnte, hat erwähnt		verb	B1
 erwarten, erwartet, erwartete, hat erwartet	erwarten, erwartet, erwartete, hat erwartet		verb	A1
 Erwartung	die Erwartung, -en		die	B1
 erwecken, erweckt, erweckte, hat erweckt	erwecken, erweckt, erweckte, hat erweckt		verb	B2+
@@ -1441,15 +1458,12 @@ Erwerb	der Erwerb, -e		der	B2+
 erwerben, erwirbt, erwarb, hat erworben	erwerben, erwirbt, erwarb, hat erworben		verb	B1
 erwidern, erwidert, erwiderte, hat erwidert	erwidern, erwidert, erwiderte, hat erwidert		verb	B1
 erwischen, erwischt, erwischte, hat erwischt	erwischen, erwischt, erwischte, hat erwischt		verb	B2+
-erwähnen, erwähnt, erwähnte, hat erwähnt	erwähnen, erwähnt, erwähnte, hat erwähnt		verb	B1
-erzeugen, erzeugt, erzeugte, hat erzeugt	erzeugen, erzeugt, erzeugte, hat erzeugt		verb	B1
-Erziehung	die Erziehung		die	B2+
-erzielen, erzielt, erzielte, hat erzielt	erzielen, erzielt, erzielte, hat erzielt		verb	B1
 erzählen, erzählt, erzählte, hat erzählt	erzählen, erzählt, erzählte, hat erzählt		verb	A1
 Erzähler	der Erzähler, -		der	B1
 Erzählung	die Erzählung, -en		die	B1
-eröffnen, eröffnet, eröffnete, hat eröffnet	eröffnen, eröffnet, eröffnete, hat eröffnet		verb	B1
-Eröffnung	die Eröffnung, -en		die	B2+
+erzeugen, erzeugt, erzeugte, hat erzeugt	erzeugen, erzeugt, erzeugte, hat erzeugt		verb	B1
+Erziehung	die Erziehung		die	B2+
+erzielen, erzielt, erzielte, hat erzielt	erzielen, erzielt, erzielte, hat erzielt		verb	B1
 es	es		pron	A1
 essen, isst, aß, hat gegessen	essen, isst, aß, hat gegessen		verb	A1
 etablieren, etabliert, etablierte, hat etabliert	etablieren, etabliert, etablierte, hat etabliert		verb	B2+
@@ -1460,9 +1474,9 @@ etliche	etliche		pron	B2+
 etwa	etwa		adv, part	B1
 etwas	etwas		pron	A2
 EU	EU (Europäische Union)		die	A2
-EU-Kommission	die EU-Kommission		die	B2+
 euch	euch		pron	A1
 euer	euer		pron	A1
+EU-Kommission	die EU-Kommission		die	B2+
 Euro	der Euro, -s		der	A1
 Europa	Europa		das	A1
 Europäer	der Europäer, -		der	B2+
@@ -1494,6 +1508,8 @@ Fachhochschule	die Fachhochschule, -n		die	B2+
 fachlich	fachlich		adj	B2+
 Fachsprache	die Fachsprache, -n		die	B2+
 Faden	der Faden, -̈		der	B2+
+fähig	fähig		adj	B2+
+Fähigkeit	die Fähigkeit, -en		die	B1
 Fahne	die Fahne, -n		die	B2+
 fahren, fährt, fuhr, ist gefahren	fahren, fährt, fuhr, ist gefahren		verb	A1
 Fahrer	der Fahrer, -		der	A1
@@ -1509,11 +1525,12 @@ Falle	die Falle, -n		die	B1
 fallen, fällt, fiel, ist gefallen	fallen, fällt, fiel, ist gefallen		verb	A2
 falls	falls		conj	B1
 falsch	falsch		adj	A1
-Familie	die Familie, -n		die	A1
 familiär	familiär		adj	B2+
+Familie	die Familie, -n		die	A1
 Fan	der Fan, -s		der	A2
 fangen, fängt, fing, hat gefangen	fangen, fängt, fing, hat gefangen		verb	B1
 Farbe	die Farbe, -n		die	A1
+färben, färbt, färbte, hat gefärbt	färben, färbt, färbte, hat gefärbt		verb	B2+
 Faser	die Faser, -n		die	B2+
 Fass	das Fass, -̈er		das	B2+
 Fassade	die Fassade, -n		die	B2+
@@ -1544,8 +1561,8 @@ Fernsehen	das Fernsehen		das	A1
 Fernseher	der Fernseher, -		der	A2
 Ferse	die Ferse, -n		die	A2
 fertigen, fertigt, fertigte, hat gefertigt	fertigen, fertigt, fertigte, hat gefertigt		verb	B2+
-fest	fest		adj	A2
 Fest	das Fest, -e		das	A2
+fest	fest		adj	A2
 festhalten, hält fest, hielt fest, hat festgehalten	festhalten, hält fest, hielt fest, hat festgehalten		verb	B1
 Festival	das Festival, -s		das	A2
 festlegen, legt fest, legte fest, hat festgelegt	festlegen, legt fest, legte fest, hat festgelegt		verb	B1
@@ -1581,6 +1598,7 @@ fit	fit		adj	B2+
 fix	fix		adj	B2+
 fixieren, fixiert, fixierte, hat fixiert	fixieren, fixiert, fixierte, hat fixiert		verb	B2+
 flach	flach		adj	B1
+Fläche	die Fläche, -n		die	B1
 Flamme	die Flamme, -n		die	B2+
 Flasche	die Flasche, -n		die	A1
 Fleck	der Fleck, -e		der	B1
@@ -1592,19 +1610,18 @@ fliehen, flieht, floh, ist geflohen	fliehen, flieht, floh, ist geflohen		verb	B1
 fließen, fließt, floss, ist geflossen	fließen, fließt, floss, ist geflossen		verb	B1
 fließend	fließend		adj	B1
 Flucht	die Flucht, -en		die	B1
-Flug	der Flug, -̈e		der	A2
-Fluggesellschaft	die Fluggesellschaft, -en		die	B2+
-Flughafen	der Flughafen, -̈		der	A1
-Flugzeug	das Flugzeug, -e		das	A1
-Flur	der Flur, -e		der	B1
-Fluss	der Fluss, -̈e		der	A2
-Fläche	die Fläche, -n		die	B1
 flüchten, flüchtet, flüchtete, ist geflüchtet	flüchten, flüchtet, flüchtete, ist geflüchtet		verb	B2+
 flüchtig	flüchtig		adj	B2+
 Flüchtling	der Flüchtling, -e		der	A2
 Flüchtlingskrise	die Flüchtlingskrise, -n		die	B2+
 Flüchtlingspolitik	die Flüchtlingspolitik		die	B2+
+Flug	der Flug, -̈e		der	A2
 Flügel	der Flügel, -		der	B2+
+Fluggesellschaft	die Fluggesellschaft, -en		die	B2+
+Flughafen	der Flughafen, -̈		der	A1
+Flugzeug	das Flugzeug, -e		das	A1
+Flur	der Flur, -e		der	B1
+Fluss	der Fluss, -̈e		der	A2
 flüssig	flüssig		adj	B2+
 Flüssigkeit	die Flüssigkeit, -en		die	B1
 flüstern, flüstert, flüsterte, hat geflüstert	flüstern, flüstert, flüsterte, hat geflüstert		verb	B1
@@ -1615,7 +1632,9 @@ folglich	folglich		adv	B2+
 Folie	die Folie, -n		die	A2
 Fond	der Fond, -s		der	B2+
 fordern, fordert, forderte, hat gefordert	fordern, fordert, forderte, hat gefordert		verb	B1
+fördern, fördert, förderte, hat gefördert	fördern, fördert, förderte, hat gefördert		verb	B1
 Forderung	die Forderung, -en		die	B1
+Förderung	die Förderung, -en		die	B1
 Form	die Form, -en		die	B1
 formal	formal		adj	B2+
 Format	das Format, -e		das	B2+
@@ -1647,6 +1666,7 @@ Frankreich	Frankreich		das	A2
 Franzose	der Franzose, -n		der	B1
 französisch	französisch		adj, das	A2
 Frau	die Frau, -en		die	A1
+Fräulein	das Fräulein, -		das	B2+
 frei	frei		adj	A1
 Freiheit	die Freiheit, -en		die	B1
 freilich	freilich		adv	B1
@@ -1670,34 +1690,16 @@ friedlich	friedlich		adj	B1
 frisch	frisch		adj	A2
 Frist	die Frist, -en		die	B1
 froh	froh		adj	A2
+fröhlich	fröhlich		adj	B1
 Front	die Front, -en		die	B2+
 Frosch	der Frosch, -̈e		der	B2+
 Frucht	die Frucht, -̈e		die	B1
-Fräulein	das Fräulein, -		das	B2+
-fröhlich	fröhlich		adj	B1
 früh	früh		adj	A2
 früher	früher		adv	A1
 Frühjahr	das Frühjahr, -e		das	B2+
 Frühling	der Frühling, -e		der	B2+
 Frühstück	das Frühstück, -e		das	A1
 frühzeitig	frühzeitig		adj	B2+
-Fund	der Fund, -e		der	B2+
-fundamental	fundamental		adj	B2+
-Funke	der Funke, -n		der	B2+
-Funktion	die Funktion, -en		die	A2
-funktional	funktional		adj	B2+
-funktionell	funktionell		adj	B2+
-funktionieren, funktioniert, funktionierte, hat funktioniert	funktionieren, funktioniert, funktionierte, hat funktioniert		verb	B1
-Furcht	die Furcht		die	B2+
-furchtbar	furchtbar		adj	A2
-Fusion	die Fusion, -en		die	B2+
-Fuß	der Fuß, -̈e		der	A1
-Fußball	der Fußball, -̈e		der	A1
-fähig	fähig		adj	B2+
-Fähigkeit	die Fähigkeit, -en		die	B1
-färben, färbt, färbte, hat gefärbt	färben, färbt, färbte, hat gefärbt		verb	B2+
-fördern, fördert, förderte, hat gefördert	fördern, fördert, förderte, hat gefördert		verb	B1
-Förderung	die Förderung, -en		die	B1
 fügen, fügt, fügte, hat gefügt	fügen (sich), fügt, fügte, hat gefügt		verb	B2+
 fühlen, fühlt, fühlte, hat gefühlt	fühlen, fühlt, fühlte, hat gefühlt		verb	A2
 führen, führt, führte, hat geführt	führen, führt, führte, hat geführt		verb	B1
@@ -1705,17 +1707,31 @@ führend	führend		adj	B2+
 Führer	der Führer, -		der	B2+
 Führung	die Führung, -en		die	A1
 füllen, füllt, füllte, hat gefüllt	füllen, füllt, füllte, hat gefüllt		verb	B1
+Fund	der Fund, -e		der	B2+
+fundamental	fundamental		adj	B2+
 fünf	fünf		num	A1
 fünfzehn	fünfzehn		num	B2+
 fünfzig	fünfzig		num	B1
+Funke	der Funke, -n		der	B2+
+Funktion	die Funktion, -en		die	A2
+funktional	funktional		adj	B2+
+funktionell	funktionell		adj	B2+
+funktionieren, funktioniert, funktionierte, hat funktioniert	funktionieren, funktioniert, funktionierte, hat funktioniert		verb	B1
 für	für		prep	A1
+Furcht	die Furcht		die	B2+
+furchtbar	furchtbar		adj	A2
 fürchten, fürchtet, fürchtete, hat gefürchtet	fürchten, fürchtet, fürchtete, hat gefürchtet		verb	B1
 fürchterlich	fürchterlich		adj	B2+
 Fürst	der Fürst, -en		der	B2+
+Fusion	die Fusion, -en		die	B2+
+Fuß	der Fuß, -̈e		der	A1
+Fußball	der Fußball, -̈e		der	A1
 füttern, füttert, fütterte, hat gefüttert	füttern, füttert, fütterte, hat gefüttert		verb	B1
 Galerie	die Galerie, -n		die	B1
 Gang	der Gang, -̈e		der	B1
+gängig	gängig		adj	B2+
 ganz	ganz		adj, part	A2
+gänzlich	gänzlich		adj	B2+
 gar	gar		adv	A1
 garantieren, garantiert, garantierte, hat garantiert	garantieren, garantiert, garantierte, hat garantiert		verb	B1
 Garten	der Garten, -̈		der	A1
@@ -1723,22 +1739,22 @@ Gas	das Gas, -e		das	B1
 Gasse	die Gasse, -n		die	B2+
 Gast	der Gast, -̈e		der	A1
 Gastgeber	der Gastgeber, -		der	B2+
+Gebäude	das Gebäude, -		das	B1
 geben, gibt, gab, hat gegeben	geben, gibt, gab, hat gegeben		verb	A1
 Gebiet	das Gebiet, -e		das	B1
 geboren	geboren		adj	A1
 Gebrauch	der Gebrauch, -̈e		der	B1
 Geburt	die Geburt, -en		die	B1
 Geburtstag	der Geburtstag, -e		der	A1
-Gebäude	das Gebäude, -		das	B1
+Gedächtnis	das Gedächtnis, -se		das	B2+
 Gedanke	der Gedanke, -n		der	B1
 Gedicht	das Gedicht, -e		das	B1
 Geduld	die Geduld		die	B1
-Gedächtnis	das Gedächtnis, -se		das	B2+
 Gefahr	die Gefahr, -en		die	B1
-gefallen, gefällt, gefiel, hat gefallen	gefallen, gefällt, gefiel, hat gefallen		verb	A1
-gefangen	gefangen		adj	B2+
 gefährden, gefährdet, gefährdete, hat gefährdet	gefährden, gefährdet, gefährdete, hat gefährdet		verb	B1
 gefährlich	gefährlich		adj	A2
+gefallen, gefällt, gefiel, hat gefallen	gefallen, gefällt, gefiel, hat gefallen		verb	A1
+gefangen	gefangen		adj	B2+
 Gefängnis	das Gefängnis, -se		das	B1
 Gefäß	das Gefäß, -e		das	B1
 Gefühl	das Gefühl, -e		das	B1
@@ -1749,10 +1765,10 @@ Gegensatz	der Gegensatz, -̈e		der	B1
 gegenseitig	gegenseitig		adj	B1
 Gegenstand	der Gegenstand, -̈e		der	B1
 Gegenteil	das Gegenteil, -e		das	A2
-Gegenwart	die Gegenwart		die	B1
-gegenwärtig	gegenwärtig		adj	B1
 gegenüber	gegenüber		prep	A2
 gegenüberstehen, steht gegenüber, stand gegenüber, hat gegenübergestanden	gegenüberstehen, steht gegenüber, stand gegenüber, hat gegenübergestanden		verb	B2+
+Gegenwart	die Gegenwart		die	B1
+gegenwärtig	gegenwärtig		adj	B1
 Gegner	der Gegner, -		der	B1
 Gehalt	der Gehalt, -e		das, der	A2
 geheim	geheim		adj	B1
@@ -1764,6 +1780,7 @@ gehören, gehört, gehörte, hat gehört	gehören, gehört, gehörte, hat gehör
 gehörlos	gehörlos		adj	B2+
 Geist	der Geist, -er		der	B1
 geistig	geistig		adj	B1
+Gelände	das Gelände, -		das	B2+
 gelangen, gelangt, gelangte, ist gelangt	gelangen, gelangt, gelangte, ist gelangt		verb	B1
 gelassen	gelassen		adj	B2+
 gelb	gelb		adj	B1
@@ -1776,14 +1793,13 @@ Gelenk	das Gelenk, -e		das	B2+
 Geliebte	die Geliebte		der, die	B2+
 gelingen, gelingt, gelang, ist gelungen	gelingen, gelingt, gelang, ist gelungen		verb	B1
 gelten, gilt, galt, hat gegolten	gelten, gilt, galt, hat gegolten		verb	B1
-Gelände	das Gelände, -		das	B2+
+Gemälde	das Gemälde, -		das	B2+
+gemäß	gemäß		prep	B1
 Gemeinde	die Gemeinde, -n		die	B1
 gemeinsam	gemeinsam		adj	B1
 Gemeinsamkeit	die Gemeinsamkeit, -en		die	B2+
 Gemeinschaft	die Gemeinschaft, -en		die	B1
 Gemisch	das Gemisch, -e		das	B2+
-Gemälde	das Gemälde, -		das	B2+
-gemäß	gemäß		prep	B1
 Gemüse	das Gemüse, -		das	A1
 gemütlich	gemütlich		adj	B1
 Gen	das Gen, -e		das	B1
@@ -1804,18 +1820,21 @@ geometrisch	geometrisch		adj	B2+
 Gepäck	das Gepäck, -e		das	A1
 gerade	gerade		adj, adv	A1
 geradezu	geradezu		adv	B1
+Gerät	das Gerät, -e		das	A2
 geraten, gerät, geriet, ist geraten	geraten, gerät, geriet, ist geraten		verb	A2
+Geräusch	das Geräusch, -e		das	B1
 gerecht	gerecht		adj	B1
 Gerechtigkeit	die Gerechtigkeit, -en		die	B2+
 Gericht	das Gericht, -e		das	A2
 gering	gering		adj	B1
 gern, gerne	gern, gerne		adv	A1
 Geruch	der Geruch, -̈e		der	B1
-Gerät	das Gerät, -e		das	A2
-Geräusch	das Geräusch, -e		das	B1
 Gerücht	das Gerücht, -e		das	B2+
 gesamt	gesamt		adj	B1
 Gesang	der Gesang, -̈e		der	B2+
+Geschäft	das Geschäft, -e		das	A1
+Geschäftsführer	der Geschäftsführer, -		der	B2+
+Geschäftsjahr	das Geschäftsjahr, -e		das	B2+
 geschehen, geschieht, geschah, ist geschehen	geschehen, geschieht, geschah, ist geschehen		verb	B1
 Geschenk	das Geschenk, -e		das	A1
 Geschichte	die Geschichte, -n		die	A2
@@ -1824,9 +1843,6 @@ Geschlecht	das Geschlecht, -er		das	B1
 Geschmack	der Geschmack, -̈e		der	B1
 Geschwindigkeit	die Geschwindigkeit, -en		die	B1
 Geschwister	Geschwister		die (pl)	A1
-Geschäft	das Geschäft, -e		das	A1
-Geschäftsführer	der Geschäftsführer, -		der	B2+
-Geschäftsjahr	das Geschäftsjahr, -e		das	B2+
 Gesellschaft	die Gesellschaft, -en		die	B1
 Gesellschafter	der Gesellschafter, -		der	B1
 gesellschaftlich	gesellschaftlich		adj	B1
@@ -1847,8 +1863,10 @@ gestern	gestern		adv	A1
 gesund	gesund		adj	A2
 Gesundheit	die Gesundheit		die	A2
 gesundheitlich	gesundheitlich		adj	B2+
-Getreide	das Getreide, -		das	B2+
 Getränk	das Getränk, -e		das	A1
+Getreide	das Getreide, -		das	B2+
+gewähren, gewährt, gewährte, hat gewährt	gewähren, gewährt, gewährte, hat gewährt		verb	B2+
+gewährleisten, gewährleistet, gewährleistete, hat gewährleistet	gewährleisten, gewährleistet, gewährleistete, hat gewährleistet		verb	B2+
 Gewalt	die Gewalt, -en		die	B1
 gewaltig	gewaltig		adj	B1
 Gewebe	das Gewebe, -		das	B2+
@@ -1860,8 +1878,6 @@ gewinnen, gewinnt, gewann, hat gewonnen	gewinnen, gewinnt, gewann, hat gewonnen	
 gewiss	gewiss		adj	A2
 Gewissen	das Gewissen, -		das	B1
 gewissermaßen	gewissermaßen		adv	B2+
-gewähren, gewährt, gewährte, hat gewährt	gewähren, gewährt, gewährte, hat gewährt		verb	B2+
-gewährleisten, gewährleistet, gewährleistete, hat gewährleistet	gewährleisten, gewährleistet, gewährleistete, hat gewährleistet		verb	B2+
 gewöhnen, gewöhnt, gewöhnte, hat gewöhnt	gewöhnen, gewöhnt, gewöhnte, hat gewöhnt		verb	B1
 gewöhnlich	gewöhnlich		adj	B1
 gezielt	gezielt		adj	B1
@@ -1870,9 +1886,13 @@ Gift	das Gift, -e		das	B1
 giftig	giftig		adj	B1
 gigantisch	gigantisch		adj	B2+
 Gipfel	der Gipfel, -		der	B1
+glänzen, glänzt, glänzte, hat geglänzt	glänzen, glänzt, glänzte, hat geglänzt		verb	B2+
+glänzend	glänzend		adj	B2+
 Glas	das Glas, -̈er		das	A1
 glatt	glatt		adj	B1
 glauben, glaubt, glaubte, hat geglaubt	glauben, glaubt, glaubte, hat geglaubt		verb	A1
+gläubig	gläubig		adj	B2+
+Gläubiger	der Gläubiger, -		der	B2+
 gleich	gleich		adj	A1
 gleichen, gleicht, glich, hat geglichen	gleichen, gleicht, glich, hat geglichen		verb	B2+
 gleichermaßen	gleichermaßen		adv	B2+
@@ -1887,10 +1907,6 @@ Gliederung	die Gliederung, -en		die	B2+
 global	global		adj	B1
 Globalisierung	die Globalisierung, -en		die	B2+
 Glocke	die Glocke, -n		die	B2+
-glänzen, glänzt, glänzte, hat geglänzt	glänzen, glänzt, glänzte, hat geglänzt		verb	B2+
-glänzend	glänzend		adj	B2+
-gläubig	gläubig		adj	B2+
-Gläubiger	der Gläubiger, -		der	B2+
 Glück	das Glück		das	A1
 glücklich	glücklich		adj	A1
 glühen, glüht, glühte, hat geglüht	glühen, glüht, glühte, hat geglüht		verb	B2+
@@ -1918,40 +1934,38 @@ grob	grob		adj	B2+
 groß	groß		adj	A1
 großartig	großartig		adj	B1
 Großbritannien	Großbritannien		das	B1
+Größe	die Größe, -n		die	A1
+Größenordnung	die Größenordnung, -en		die	B2+
 Großmutter	die Großmutter, -̈		die	A1
 Großstadt	die Großstadt, -̈e		die	B2+
 Großteil	der Großteil, -e		der	B2+
 Großvater	der Großvater, -̈		der	A1
 großzügig	großzügig		adj	B2+
+grün	grün		adj	A2
 Grund	der Grund, -̈e		der	B1
 Grundeinkommen	das Grundeinkommen		das	B2+
+gründen, gründet, gründete, hat gegründet	gründen, gründet, gründete, hat gegründet		verb	B1
+Gründer	der Gründer, -		der	B2+
 Grundgesetz	das Grundgesetz, -e		das	B2+
 Grundlage	die Grundlage, -n		die	A2
 grundlegend	grundlegend		adj	B1
+gründlich	gründlich		adj	B1
 Grundrecht	das Grundrecht, -e		das	B2+
 Grundsatz	der Grundsatz, -̈e		der	B2+
-Grundstück	das Grundstück, -e		das	B1
 grundsätzlich	grundsätzlich		adj	A2
-Gruppe	die Gruppe, -n		die	A1
-Gruß	der Gruß, -̈e		der	A1
-Größe	die Größe, -n		die	A1
-Größenordnung	die Größenordnung, -en		die	B2+
-grün	grün		adj	A2
-gründen, gründet, gründete, hat gegründet	gründen, gründet, gründete, hat gegründet		verb	B1
-Gründer	der Gründer, -		der	B2+
-gründlich	gründlich		adj	B1
+Grundstück	das Grundstück, -e		das	B1
 Gründung	die Gründung, -en		die	B2+
 Grüne	das Grüne		die	B1
+Gruppe	die Gruppe, -n		die	A1
+Gruß	der Gruß, -̈e		der	A1
 grüßen, grüßt, grüßte, hat gegrüßt	grüßen, grüßt, grüßte, hat gegrüßt		verb	B1
 gucken, guckt, guckte, hat geguckt	gucken, guckt, guckte, hat geguckt (kucken)		verb	B1
-gut	gut		adj	A1
-Gut	das Gut, -̈er		das	A1
-Gutachten	das Gutachten, -		das	B2+
-Gymnasium	das Gymnasium, -en		das	B2+
-gängig	gängig		adj	B2+
-gänzlich	gänzlich		adj	B2+
 gültig	gültig		adj	A1
 günstig	günstig		adj	A1
+Gut	das Gut, -̈er		das	A1
+gut	gut		adj	A1
+Gutachten	das Gutachten, -		das	B2+
+Gymnasium	das Gymnasium, -en		das	B2+
 ha	ha		interj	B2+
 Haar	das Haar, -e		das	A1
 haben, hat, hatte, hat gehabt	haben, hat, hatte, hat gehabt		verb, aux	A1
@@ -1963,34 +1977,40 @@ halb	halb		adj	B1
 Halbfinale	das Halbfinale, -		das	B2+
 halbwegs	halbwegs		adv	B2+
 Halbzeit	die Halbzeit, -en		die	B2+
+Hälfte	die Hälfte, -n		die	A2
 Halle	die Halle, -n		die	A1
 hallo	hallo		part	A1
 Hals	der Hals, -̈e		der	A2
-halt	halt		part	A2
 Halt	der Halt, -e		der	B2+
+halt	halt		part	A2
 halten, hält, hielt, hat gehalten	halten, hält, hielt, hat gehalten		verb	A1
 Haltung	die Haltung, -en		die	B1
 Hamburger	der Hamburger, -		adj, der	A2
 Hand	die Hand, -̈e		die	A1
 Handel	der Handel, -̈		der	B1
 handeln, handelt, handelte, hat gehandelt	handeln, handelt, handelte, hat gehandelt		verb	A1
+Händler	der Händler, -		der	B1
 Handlung	die Handlung, -en		die	B1
 Handschrift	die Handschrift, -en		die	B2+
 Handwerk	das Handwerk, -e		das	B2+
 Handy	das Handy, -s		das	A1
 Hang	der Hang, -̈e		der	B2+
+hängen, hängt, hängte, hat gehängt	hängen, hängt, hängte, hat gehängt		verb	A2
 harmlos	harmlos		adj	B2+
 harmonisch	harmonisch		adj	B2+
 hart	hart		adj	A2
 Hase	der Hase, -n		der	B2+
 Hass	der Hass		der	B2+
 hassen, hasst, hasste, hat gehasst	hassen, hasst, hasste, hat gehasst		verb	B1
+hässlich	hässlich		adj	A2
 Hast	die Hast		die	B2+
 hauen, haut, haute, hat gehauen	hauen, haut, haute, hat gehauen		verb	B2+
 Haufen	der Haufen, -		der	B2+
+häufig	häufig		adj	B1
+Häufigkeit	die Häufigkeit, -en		die	B1
 Hauptsache	die Hauptsache, -n		die	B2+
-Hauptstadt	die Hauptstadt, -̈e		die	A2
 hauptsächlich	hauptsächlich		adj	B1
+Hauptstadt	die Hauptstadt, -̈e		die	A2
 Haus	das Haus, -̈er		das	A1
 Haushalt	der Haushalt, -e		der	A2
 Haustür	die Haustür, -en		die	B2+
@@ -2102,20 +2122,31 @@ Hitze	die Hitze, -n		die	B1
 Hobby	das Hobby, -s		das	A1
 hoch	hoch		adj	A1
 Hochschule	die Hochschule, -n		die	B1
+höchstens	höchstens		adv	B1
 Hochzeit	die Hochzeit, -en		die	A1
 hocken, hockt, hockte, hat gehockt	hocken, hockt, hockte, hat gehockt		verb	B2+
 Hof	der Hof, -̈e		der	B1
 hoffen, hofft, hoffte, hat gehofft	hoffen, hofft, hoffte, hat gehofft		verb	A2
 hoffentlich	hoffentlich		adv	A2
 Hoffnung	die Hoffnung, -en		die	B1
+höflich	höflich		adj	B1
+Höhe	die Höhe, -n		die	B1
+Höhepunkt	der Höhepunkt, -e		der	B2+
+Höhle	die Höhle, -n		die	B2+
 holen, holt, holte, hat geholt	holen, holt, holte, hat geholt		verb	A1
+Hölle	die Hölle, -n		die	B2+
 Holz	das Holz, -̈er		das	B1
 homogen	homogen		adj	B2+
+hören, hört, hörte, hat gehört	hören, hört, hörte, hat gehört		verb	A1
+Hörer	der Hörer, -		der	B1
 Horizont	der Horizont, -e		der	B2+
 horizontal	horizontal		adj	B2+
 Hormon	das Hormon, -e		das	B1
 Hose	die Hose, -n		die	A2
 Hotel	das Hotel, -s		das	A1
+hübsch	hübsch		adj	B1
+Hüfte	die Hüfte, -n		die	B2+
+Hügel	der Hügel, -		der	B1
 Huhn	das Huhn, -̈er		das	B2+
 humanitär	humanitär		adj	B2+
 Humor	der Humor, -e		der	B1
@@ -2125,25 +2156,8 @@ Hunderte	Hunderte		(pl)	B2+
 hunderttausend	hunderttausend		num	B2+
 Hunger	der Hunger		der	A1
 Hut	der Hut, -̈e		der, die	B1
-Hypothese	die Hypothese, -n		die	B2+
-Hälfte	die Hälfte, -n		die	A2
-Händler	der Händler, -		der	B1
-hängen, hängt, hängte, hat gehängt	hängen, hängt, hängte, hat gehängt		verb	A2
-hässlich	hässlich		adj	A2
-häufig	häufig		adj	B1
-Häufigkeit	die Häufigkeit, -en		die	B1
-höchstens	höchstens		adv	B1
-höflich	höflich		adj	B1
-Höhe	die Höhe, -n		die	B1
-Höhepunkt	der Höhepunkt, -e		der	B2+
-Höhle	die Höhle, -n		die	B2+
-Hölle	die Hölle, -n		die	B2+
-hören, hört, hörte, hat gehört	hören, hört, hörte, hat gehört		verb	A1
-Hörer	der Hörer, -		der	B1
-hübsch	hübsch		adj	B1
-Hüfte	die Hüfte, -n		die	B2+
-Hügel	der Hügel, -		der	B1
 Hütte	die Hütte, -n		die	B1
+Hypothese	die Hypothese, -n		die	B2+
 ich	ich		pron	A1
 ideal	ideal		adj	B1
 Idee	die Idee, -n		die	A2
@@ -2264,10 +2278,13 @@ ja	ja		part	A1
 Jacke	die Jacke, -n		die	A1
 Jagd	die Jagd, -en		die	B2+
 jagen, jagt, jagte, hat gejagt	jagen, jagt, jagte, hat gejagt		verb	B2+
+Jäger	der Jäger, -		der	B2+
 Jahr	das Jahr, -e		das	A1
 jahrelang	jahrelang		adj	B1
 Jahreszeit	die Jahreszeit, -en		die	B2+
 Jahrhundert	das Jahrhundert, -e		das	A2
+-jährig	-jährig		adj	B1
+jährlich	jährlich		adj	B1
 Jahrzehnt	das Jahrzehnt, -e		das	B1
 Januar	der Januar, -e		der	B1
 Japan	Japan		das	B1
@@ -2290,6 +2307,7 @@ jeweils	jeweils		adv	B1
 Job	der Job, -s		der	A1
 Journalist	der Journalist, -en		der	B1
 Jude	der Jude, -n		der	B1
+jüdisch	jüdisch		adj	B1
 Jugend	die Jugend		die	B1
 jugendlich	jugendlich		adj	B2+
 Jugendliche	die Jugendliche		der, die	A1
@@ -2297,23 +2315,23 @@ Juli	der Juli, -s		der	B1
 jung	jung		adj	A1
 Junge	der Junge, -n		der	A1
 Jungfrau	die Jungfrau, -en		die	B2+
+jüngst	jüngst		adv	B2+
 Juni	der Juni, -s		der	B1
 Jurist	der Jurist, -en		der	B2+
 juristisch	juristisch		adj	B2+
 Jury	die Jury, -s		die	B2+
 Justiz	die Justiz		die	B2+
-Jäger	der Jäger, -		der	B2+
-jährlich	jährlich		adj	B1
-jüdisch	jüdisch		adj	B1
-jüngst	jüngst		adv	B2+
 Kabine	die Kabine, -n		die	B1
 Kaffee	der Kaffee, -s		der	A1
 Kaiser	der Kaiser, -		der	B2+
 kalt	kalt		adj	A2
+Kälte	die Kälte		die	B1
 Kamera	die Kamera, -s		die	A2
 Kammer	die Kammer, -n		die	B2+
 Kampagne	die Kampagne, -n		die	B2+
 Kampf	der Kampf, -̈e		der	B1
+kämpfen, kämpft, kämpfte, hat gekämpft	kämpfen, kämpft, kämpfte, hat gekämpft		verb	B1
+Kämpfer	der Kämpfer, -		der	B2+
 Kanada	Kanada		das	B2+
 Kanal	der Kanal, -̈e		der	B1
 Kandidat	der Kandidat, -en		der	B1
@@ -2322,12 +2340,13 @@ Kanton	der Kanton, -e		der	B2+
 Kanzler	der Kanzler, -		der	B1
 Kapazität	die Kapazität, -en		die	B2+
 Kapital	das Kapital, -e		das	B1
-Kapitel	das Kapitel, -		das	B1
 Kapitän	der Kapitän, -e		der	B2+
+Kapitel	das Kapitel, -		das	B1
 kaputt	kaputt		adj	A1
 Karriere	die Karriere, -n		die	B1
 Karte	die Karte, -n		die	A1
 Kartoffel	die Kartoffel, -n		die	A1
+Käse	der Käse, -		der	A2
 Kasse	die Kasse, -n		die	A1
 kassieren, kassiert, kassierte, hat kassiert	kassieren, kassiert, kassierte, hat kassiert		verb	B2+
 Kasten	der Kasten, -̈		der	B1
@@ -2338,6 +2357,7 @@ katholisch	katholisch		adj	B2+
 Katze	die Katze, -n		die	A2
 Kauf	der Kauf, -̈e		der	B1
 kaufen, kauft, kaufte, hat gekauft	kaufen, kauft, kaufte, hat gekauft		verb	A1
+Käufer	der Käufer, -		der	B1
 kaum	kaum		adv	B1
 kehren, kehrt, kehrte, hat gekehrt	kehren, kehrt, kehrte, hat gekehrt		verb	B2+
 kein	kein		pron	A1
@@ -2371,6 +2391,7 @@ klagen, klagt, klagte, hat geklagt	klagen, klagt, klagte, hat geklagt		verb	B1
 Klang	der Klang, -̈e		der	B2+
 klappen, klappt, klappte, hat geklappt	klappen, klappt, klappte, hat geklappt		verb	A2
 klar	klar		adj	A1
+klären, klärt, klärte, hat geklärt	klären, klärt, klärte, hat geklärt		verb	B1
 Klasse	die Klasse, -n		die	A1
 klassisch	klassisch		adj	A2
 klatschen, klatscht, klatschte, hat geklatscht	klatschen, klatscht, klatschte, hat geklatscht		verb	B2+
@@ -2393,7 +2414,6 @@ Klo	das Klo, -s		das	B2+
 klopfen, klopft, klopfte, hat geklopft	klopfen, klopft, klopfte, hat geklopft		verb	B1
 Kloster	das Kloster, -̈		das	B2+
 klug	klug		adj	A2
-klären, klärt, klärte, hat geklärt	klären, klärt, klärte, hat geklärt		verb	B1
 knacken, knackt, knackte, hat geknackt	knacken, knackt, knackte, hat geknackt		verb	B2+
 Knall	der Knall, -e		der	B2+
 knapp	knapp		adj	B1
@@ -2412,6 +2432,7 @@ Kohlenstoff	der Kohlenstoff		das	B2+
 Kohlenstoffdioxid	das Kohlenstoffdioxid		das	B1
 Kollege	der Kollege, -n		der	A1
 kollektiv	kollektiv		adj	B2+
+Kölner	Kölner		adj	B2+
 Kombination	die Kombination, -en		die	B1
 kombinieren, kombiniert, kombinierte, hat kombiniert	kombinieren, kombiniert, kombinierte, hat kombiniert		verb	B2+
 komisch	komisch		adj	A2
@@ -2426,8 +2447,8 @@ kommunikativ	kommunikativ		adj	B2+
 kommunizieren, kommuniziert, kommunizierte, hat kommuniziert	kommunizieren, kommuniziert, kommunizierte, hat kommuniziert		verb	B2+
 Kompetenz	die Kompetenz, -en		die	B2+
 komplett	komplett		adj	B1
-komplex	komplex		adj	A2
 Komplex	der Komplex, -e		der	B2+
+komplex	komplex		adj	A2
 kompliziert	kompliziert		adj	B1
 Komponente	die Komponente, -n		die	B1
 Komponist	der Komponist, -en		der	B2+
@@ -2436,10 +2457,13 @@ Konferenz	die Konferenz, -en		die	B1
 Konflikt	der Konflikt, -e		der	B1
 konfrontieren, konfrontiert, konfrontierte, hat konfrontiert	konfrontieren, konfrontiert, konfrontierte, hat konfrontiert		verb	B2+
 Kongress	der Kongress, -e		der	B2+
+König	der König, -e		der	B1
+königlich	königlich		adj	B2+
 Konjunktur	die Konjunktur, -en		die	B2+
 konkret	konkret		adj	A2
 Konkurrent	der Konkurrent, -en		der	B2+
 Konkurrenz	die Konkurrenz, -en		die	B1
+können, kann, konnte, hat können	können, kann, konnte, hat können		verb	A1
 konsequent	konsequent		adj	B2+
 Konsequenz	die Konsequenz, -en		die	B1
 konservativ	konservativ		adj	B2+
@@ -2470,6 +2494,8 @@ Kopf	der Kopf, -̈e		der	A1
 Kopie	die Kopie, -n		die	B1
 koppeln, koppelt, koppelte, hat gekoppelt	koppeln, koppelt, koppelte, hat gekoppelt		verb	B2+
 Korb	der Korb, -̈e		der	B2+
+Körper	der Körper, -		der	A2
+körperlich	körperlich		adj	B1
 korrekt	korrekt		adj	B1
 Korrektur	die Korrektur, -en		die	B2+
 korrigieren, korrigiert, korrigierte, hat korrigiert	korrigieren, korrigiert, korrigierte, hat korrigiert		verb	B1
@@ -2477,6 +2503,7 @@ Kosten	Kosten		die (pl)	A1
 kosten, kostet, kostete, hat gekostet	kosten, kostet, kostete, hat gekostet		verb	A1
 kostenlos	kostenlos		adj	A2
 Kraft	die Kraft, -̈e		die	B1
+kräftig	kräftig		adj	B1
 Kraftwerk	das Kraftwerk, -e		das	B1
 krank	krank		adj	A1
 Krankenhaus	das Krankenhaus, -̈er		das	A2
@@ -2503,50 +2530,40 @@ Kritiker	der Kritiker, -		der	B2+
 kritisch	kritisch		adj	B1
 kritisieren, kritisiert, kritisierte, hat kritisiert	kritisieren, kritisiert, kritisierte, hat kritisiert		verb	B1
 Krone	die Krone, -n		die	B2+
-kräftig	kräftig		adj	B1
 Kuba	Kuba		das	B2+
+Küche	die Küche, -n		die	A1
 Kuchen	der Kuchen, -		der	A1
 Kugel	die Kugel, -n		die	B1
 Kuh	die Kuh, -̈e		die	B2+
+kühl	kühl		adj	A2
+Kühlschrank	der Kühlschrank, -̈e		der	A1
 Kulisse	die Kulisse, -n		die	B2+
 Kultur	die Kultur, -en		die	A2
 kulturell	kulturell		adj	A1
 Kulturstaatsminister	der Kulturstaatsminister, -		der	B2+
+kümmern, kümmert, kümmerte, hat gekümmert	kümmern (sich), kümmert, kümmerte, hat gekümmert		verb	A1
 Kumpel	der Kumpel, -		der	B2+
 Kunde	der Kunde, -n		der	A1
+kündigen, kündigt, kündigte, hat gekündigt	kündigen, kündigt, kündigte, hat gekündigt		verb	A2
+Kündigung	die Kündigung, -en		die	B1
+künftig	künftig		adj	A2
 Kunst	die Kunst, -̈e		die	A2
+Künstler	der Künstler, -		der	B1
+künstlerisch	künstlerisch		adj	B1
+künstlich	künstlich		adj	B1
 Kunstwerk	das Kunstwerk, -e		das	B2+
 Kupfer	das Kupfer, -		das	B2+
 Kurs	der Kurs, -e		der	A1
 Kurve	die Kurve, -n		die	B1
 kurz	kurz		adj	A1
 kurzfristig	kurzfristig		adj	B1
-Kälte	die Kälte		die	B1
-kämpfen, kämpft, kämpfte, hat gekämpft	kämpfen, kämpft, kämpfte, hat gekämpft		verb	B1
-Kämpfer	der Kämpfer, -		der	B2+
-Käse	der Käse, -		der	A2
-Käufer	der Käufer, -		der	B1
-Kölner	Kölner		adj	B2+
-König	der König, -e		der	B1
-königlich	königlich		adj	B2+
-können, kann, konnte, hat können	können, kann, konnte, hat können		verb	A1
-Körper	der Körper, -		der	A2
-körperlich	körperlich		adj	B1
-Küche	die Küche, -n		die	A1
-kühl	kühl		adj	A2
-Kühlschrank	der Kühlschrank, -̈e		der	A1
-kümmern, kümmert, kümmerte, hat gekümmert	kümmern (sich), kümmert, kümmerte, hat gekümmert		verb	A1
-kündigen, kündigt, kündigte, hat gekündigt	kündigen, kündigt, kündigte, hat gekündigt		verb	A2
-Kündigung	die Kündigung, -en		die	B1
-künftig	künftig		adj	A2
-Künstler	der Künstler, -		der	B1
-künstlerisch	künstlerisch		adj	B1
-künstlich	künstlich		adj	B1
 kürzlich	kürzlich		adv	B1
 küssen, küsst, küsste, hat geküsst	küssen, küsst, küsste, hat geküsst		verb	B1
 Küste	die Küste, -n		die	B1
 Labor	das Labor, -e		das	B2+
+lächeln, lächelt, lächelte, hat gelächelt	lächeln, lächelt, lächelte, hat gelächelt		verb, das	B1
 lachen, lacht, lachte, hat gelacht	lachen, lacht, lachte, hat gelacht		verb	A1
+lächerlich	lächerlich		adj	B2+
 Laden	der Laden, -̈		der	A1
 laden, lädt, lud, hat geladen	laden, lädt, lud, hat geladen		verb	A1
 Ladung	die Ladung, -en		die	B1
@@ -2558,18 +2575,22 @@ Land	das Land, -̈er		das	A1
 landen, landet, landete, ist gelandet	landen, landet, landete, ist gelandet		verb	B1
 Landesregierung	die Landesregierung, -en		die	B2+
 Landkreis	der Landkreis, -e		der	B2+
+ländlich	ländlich		adj	B2+
 Landschaft	die Landschaft, -en		die	A2
 Landsmann	der Landsmann, -̈er		der	B2+
 Landtag	der Landtag, -e		der	B1
 Landwirt	der Landwirt, -e		der	B2+
 Landwirtschaft	die Landwirtschaft, -en		die	B1
 lang	lang		adj, adv	A1
+Länge	die Länge, -n		die	B1
 langfristig	langfristig		adj	B1
 langjährig	langjährig		adj	B2+
 langsam	langsam		adj	A1
+längst	längst		adv	B1
 langweilen, langweilt, langweilte, hat gelangweilt	langweilen, langweilt, langweilte, hat gelangweilt		verb	B1
 langweilig	langweilig		adj	A2
 Laptop	der Laptop, -s		der, das	A2
+Lärm	der Lärm		der	B1
 lassen, lässt, ließ, hat gelassen	lassen, lässt, ließ, hat gelassen		verb	A2
 Last	die Last, -en		die	B2+
 Lastwagen	der Lastwagen, -		der	B2+
@@ -2579,10 +2600,11 @@ laufen, läuft, lief, ist gelaufen	laufen, läuft, lief, ist gelaufen		verb	A1
 Laufzeit	die Laufzeit, -en		die	B2+
 Laune	die Laune, -n		die	B1
 lauschen, lauscht, lauschte, hat gelauscht	lauschen, lauscht, lauschte, hat gelauscht		verb	B2+
+Laut	der Laut, -e		der	A1
 laut	laut		prep	A1
 laut	laut		adj	A1
-Laut	der Laut, -e		der	A1
 lauten, lautet, lautete, hat gelautet	lauten, lautet, lautete, hat gelautet		verb	B1
+läuten, läutet, läutete, hat geläutet	läuten, läutet, läutete, hat geläutet		verb	B2+
 lauter	lauter		adv	B2+
 leben, lebt, lebte, hat gelebt	leben, lebt, lebte, hat gelebt		verb	A1
 lebendig	lebendig		adj	B1
@@ -2595,8 +2617,8 @@ leer	leer		adj	A2
 Leere	die Leere		die	B2+
 legal	legal		adj	B2+
 legen, legt, legte, hat gelegt	legen, legt, legte, hat gelegt		verb	A1
-Legende	die Legende, -n		die	B2+
 legendär	legendär		adj	B2+
+Legende	die Legende, -n		die	B2+
 lehnen, lehnt, lehnte, hat gelehnt	lehnen, lehnt, lehnte, hat gelehnt		verb	B2+
 Lehrbuch	das Lehrbuch, -̈er		das	B2+
 Lehre	die Lehre, -n		die	B1
@@ -2641,8 +2663,8 @@ liegen, liegt, lag, hat gelegen	liegen, liegt, lag, hat gelegen		verb	A1
 Liga	die Liga, -en		die	B1
 linear	linear		adj	B1
 Linie	die Linie, -n		die	B1
-linke	linke (r, s)		adj	A2
 Linke	die Linke		die	B2+
+linke	linke (r, s)		adj	A2
 links	links		adv	A1
 Linse	die Linse, -n		die	B2+
 Lippe	die Lippe, -n		die	B1
@@ -2661,34 +2683,29 @@ Logik	die Logik, -en		die	B2+
 logisch	logisch		adj	B2+
 Lohn	der Lohn, -̈e		der	B1
 lohnen, lohnt, lohnte, hat gelohnt	lohnen (sich), lohnt, lohnte, hat gelohnt		verb	B1
-lokal	lokal		adj	A1
 Lokal	das Lokal, -e		das	A1
+lokal	lokal		adj	A1
 los	los		adv	B1
+löschen, löscht, löschte, hat gelöscht	löschen, löscht, löschte, hat gelöscht		verb	B1
+lösen, löst, löste, hat gelöst	lösen, löst, löste, hat gelöst		verb	B1
 losfahren, fährt los, fuhr los, ist losgefahren	losfahren, fährt los, fuhr los, ist losgefahren		verb	B1
 losgehen, geht los, ging los, ist losgegangen	losgehen, geht los, ging los, ist losgegangen		verb	B2+
 loslassen, lässt los, ließ los, hat losgelassen	loslassen, lässt los, ließ los, hat losgelassen		verb	B2+
+Lösung	die Lösung, -en		die	A1
+Lösungsmittel	das Lösungsmittel, -		das	B2+
 loswerden, wird los, wurde los, ist losgeworden	loswerden, wird los, wurde los, ist losgeworden		verb	B2+
+Löwe	der Löwe, -n		der	B2+
+Lücke	die Lücke, -n		die	B2+
 Luft	die Luft, -̈e		die	B1
+Lüge	die Lüge, -n		die	A2
+lügen, lügt, log, hat gelogen	lügen, lügt, log, hat gelogen		verb	A2
 Lunge	die Lunge, -n		die	B2+
 Lust	die Lust, -̈e		die	A2
 lustig	lustig		adj	A1
-lächeln, lächelt, lächelte, hat gelächelt	lächeln, lächelt, lächelte, hat gelächelt		verb, das	B1
-lächerlich	lächerlich		adj	B2+
-ländlich	ländlich		adj	B2+
-Länge	die Länge, -n		die	B1
-längst	längst		adv	B1
-Lärm	der Lärm		der	B1
-läuten, läutet, läutete, hat geläutet	läuten, läutet, läutete, hat geläutet		verb	B2+
-löschen, löscht, löschte, hat gelöscht	löschen, löscht, löschte, hat gelöscht		verb	B1
-lösen, löst, löste, hat gelöst	lösen, löst, löste, hat gelöst		verb	B1
-Lösung	die Lösung, -en		die	A1
-Lösungsmittel	das Lösungsmittel, -		das	B2+
-Löwe	der Löwe, -n		der	B2+
-Lücke	die Lücke, -n		die	B2+
-Lüge	die Lüge, -n		die	A2
-lügen, lügt, log, hat gelogen	lügen, lügt, log, hat gelogen		verb	A2
 machen, macht, machte, hat gemacht	machen, macht, machte, hat gemacht		verb	A1
 Macht	die Macht, -̈e		die	B1
+mächtig	mächtig		adj	B1
+Mädchen	das Mädchen, -		das	A1
 Magazin	das Magazin, -e		das	B1
 Magen	der Magen, -̈		der	A2
 magisch	magisch		adj	B2+
@@ -2710,9 +2727,11 @@ manchmal	manchmal		adv	A2
 Mangel	der Mangel, -̈		der	B1
 mangeln, mangelt, mangelte, hat gemangelt	mangeln, mangelt, mangelte, hat gemangelt		verb	B2+
 Mann	der Mann, -̈er		der	A1
+männlich	männlich		adj	A1
 Mannschaft	die Mannschaft, -en		die	A2
 Mantel	der Mantel, -̈		der	A2
 Manuskript	das Manuskript, -e		das	B2+
+Märchen	das Märchen, -		das	B2+
 Mark	die Mark, -		die	B1
 Marke	die Marke, -n		die	B1
 Marketing	das Marketing		das	B1
@@ -2722,10 +2741,15 @@ Marktanteil	der Marktanteil, -e		der	B2+
 Marktwirtschaft	die Marktwirtschaft, -en		die	B2+
 Mars	der Mars		der	B2+
 marschieren, marschiert, marschierte, ist marschiert	marschieren, marschiert, marschierte, ist marschiert		verb	B2+
+März	der März, -e		der	A2
 Maschine	die Maschine, -n		die	A1
 Maske	die Maske, -n		die	B2+
+Maß	das Maß, -e		das	B1
 Masse	die Masse, -n		die	B1
+maßgeblich	maßgeblich		adj	B2+
 massiv	massiv		adj	B1
+Maßnahme	die Maßnahme, -n		die	B1
+Maßstab	der Maßstab, -̈e		der	B2+
 Material	das Material, -ien		das	B1
 Materie	die Materie, -n		die	B2+
 materiell	materiell		adj	B2+
@@ -2737,10 +2761,6 @@ Maul	das Maul, -̈er		das	B2+
 Maus	die Maus, -̈e		die	B2+
 maximal	maximal		adj	B1
 Maximum, Maxima	das Maximum, die Maxima		das	B2+
-Maß	das Maß, -e		das	B1
-maßgeblich	maßgeblich		adj	B2+
-Maßnahme	die Maßnahme, -n		die	B1
-Maßstab	der Maßstab, -̈e		der	B2+
 Mechanik	die Mechanik, -en		die	B2+
 mechanisch	mechanisch		adj	B2+
 Mechanismus	der Mechanismus, -en		der	B1
@@ -2847,6 +2867,7 @@ mittlerweile	mittlerweile		adv	B1
 Mittwoch	der Mittwoch, -e		der	B1
 mitunter	mitunter		adv	B2+
 mmh	mmh		interj	B2+
+Möbel	das Möbel, -		das	A1
 mobil	mobil		adj	B1
 Mode	die Mode, -n		die	A2
 Modell	das Modell, -e		das	B1
@@ -2854,8 +2875,12 @@ Moderator	der Moderator, -en		der	B2+
 modern	modern		adj	A2
 Moderne	die Moderne		die	B2+
 Modul	das Modul, -e		das	B2+
-molekular	molekular		adj	B2+
+mögen, mag, mochte, hat gemocht	mögen, mag, mochte, hat gemocht		verb	A1
+möglich	möglich		adj, adv	A1
+möglicherweise	möglicherweise		adv	B1
+Möglichkeit	die Möglichkeit, -en		die	B1
 Molekül	das Molekül, -e		das	A2
+molekular	molekular		adj	B2+
 Moment	der Moment, -e		der	A1
 momentan	momentan		adv	B2+
 Monat	der Monat, -e		der	A1
@@ -2865,6 +2890,7 @@ Montag	der Montag, -e		der	B1
 Moral	die Moral, -en		die	B2+
 moralisch	moralisch		adj	B1
 Mord	der Mord, -e		der	B1
+Mörder	der Mörder, -		der	B2+
 Morgen	der Morgen, -		der, adv	A1
 morgen	morgen		adv	A1
 Moslem	der Moslem, -s		der	B2+
@@ -2875,7 +2901,15 @@ Motor	der Motor, -en		der	A2
 motorisch	motorisch		adj	B2+
 Motorrad	das Motorrad, -̈er		das	B1
 Motto	das Motto, -s		das	B2+
+müde	müde		adj	A1
+Mühe	die Mühe, -n		die	B1
+mühsam	mühsam		adj	B2+
+Müll	der Müll		der	A2
+Münchner	Münchner		adj	B2+
 Mund	der Mund, -̈er		der	A1
+münden, mündet, mündete, hat gemündet	münden, mündet, mündete, hat gemündet		verb	B2+
+mündlich	mündlich		adj	B1
+Münze	die Münze, -n		die	B1
 murmeln, murmelt, murmelte, hat gemurmelt	murmeln, murmelt, murmelte, hat gemurmelt		verb	B2+
 Museum	das Museum, -en		das	A2
 Musik	die Musik, -en		die	A2
@@ -2884,6 +2918,7 @@ Musiker	der Musiker, -		der	B1
 Muskel	der Muskel, -n		der	B1
 Muskulatur	die Muskulatur, -en		die	B2+
 muslimisch	muslimisch		adj	B2+
+müssen, muss, musste, hat gemusst	müssen, muss, musste, hat gemusst		verb	A1
 Muster	das Muster, -		das	B2+
 mustern, mustert, musterte, hat gemustert	mustern, mustert, musterte, hat gemustert		verb	B2+
 Mut	der Mut		der	B1
@@ -2891,28 +2926,8 @@ Mutation	die Mutation, -en		die	B2+
 mutig	mutig		adj	B1
 mutmaßlich	mutmaßlich		adj	B2+
 Mutter	die Mutter, -̈		die	A1
-Mythos	der Mythos, -en		der	B2+
-mächtig	mächtig		adj	B1
-Mädchen	das Mädchen, -		das	A1
-männlich	männlich		adj	A1
-Märchen	das Märchen, -		das	B2+
-März	der März, -e		der	A2
-Möbel	das Möbel, -		das	A1
-mögen, mag, mochte, hat gemocht	mögen, mag, mochte, hat gemocht		verb	A1
-möglich	möglich		adj, adv	A1
-möglicherweise	möglicherweise		adv	B1
-Möglichkeit	die Möglichkeit, -en		die	B1
-Mörder	der Mörder, -		der	B2+
-müde	müde		adj	A1
-Mühe	die Mühe, -n		die	B1
-mühsam	mühsam		adj	B2+
-Müll	der Müll		der	A2
-Münchner	Münchner		adj	B2+
-münden, mündet, mündete, hat gemündet	münden, mündet, mündete, hat gemündet		verb	B2+
-mündlich	mündlich		adj	B1
-Münze	die Münze, -n		die	B1
-müssen, muss, musste, hat gemusst	müssen, muss, musste, hat gemusst		verb	A1
 Mütze	die Mütze, -n		die	A2
+Mythos	der Mythos, -en		der	B2+
 na	na		part	A1
 nach	nach		prep	A1
 Nachbar	der Nachbar, -n		der	A2
@@ -2935,8 +2950,10 @@ nachlassen, lässt nach, ließ nach, hat nachgelassen	nachlassen, lässt nach, l
 Nachmittag	der Nachmittag, -e		der	B1
 Nachricht	die Nachricht, -en		die	A2
 Nachrichtenagentur	die Nachrichtenagentur, -en		die	B2+
+nächste	nächste (r, s)		adj	A2
 Nacht	die Nacht, -̈e		die, adv	A1
 Nachteil	der Nachteil, -e		der	B1
+nächtlich	nächtlich		adj	B2+
 nachträglich	nachträglich		adj	B2+
 nachvollziehbar	nachvollziehbar		adj	B2+
 nachvollziehen, vollzieht nach, vollzog nach, hat nachvollzogen	nachvollziehen, vollzieht nach, vollzog nach, hat nachvollzogen		verb	B2+
@@ -2945,8 +2962,10 @@ nachweisen, weist nach, wies nach, hat nachgewiesen	nachweisen, weist nach, wies
 Nachwuchs	der Nachwuchs		der	B1
 Nacken	der Nacken, -		der	B2+
 nackt	nackt		adj	B1
+Nähe	die Nähe		die	A2
 nahe, nah	nahe, nah		adj, prep	A2
 nahelegen, legt nahe, legte nahe, hat nahegelegt	nahelegen, legt nahe, legte nahe, hat nahegelegt		verb	B2+
+nähern, nähert, näherte, hat genähert	nähern (sich), nähert, näherte, hat genähert		verb	B1
 nahezu	nahezu		adv	B1
 Nahrung	die Nahrung, -en		die	B2+
 Nahrungsmittel	das Nahrungsmittel, -		das	B1
@@ -2954,6 +2973,7 @@ naiv	naiv		adj	B2+
 naja	naja		part	B1
 Name	der Name, -n		der	A1
 namens	namens		adv	B2+
+nämlich	nämlich		part	B1
 Nase	die Nase, -n		die	B1
 nass	nass		adj	A2
 Nation	die Nation, -en		die	B1
@@ -2962,9 +2982,9 @@ Nationalpark	der Nationalpark, -s		der	B2+
 Nationalsozialist	der Nationalsozialist, -en (Nazi)		der	B2+
 NATO	die NATO		die	B2+
 Natur	die Natur, -en		die	A2
+natürlich	natürlich		adj, adv	A2
 Naturwissenschaft	die Naturwissenschaft, -en		die	B2+
 naturwissenschaftlich	naturwissenschaftlich		adj	B2+
-natürlich	natürlich		adj, adv	A2
 Nebel	der Nebel, -		der	B1
 neben	neben		prep	A2
 nebenan	nebenan		adv	A2
@@ -3017,6 +3037,7 @@ nochmals	nochmals		adv	B1
 nominal	nominal		adj	B2+
 Norden, Nord-	Norden, Nord-		der	B1
 Nordkorea	Nordkorea		das	B2+
+nördlich	nördlich		adj	B2+
 Nordrhein-Westfalen	Nordrhein-Westfalen		das	B2+
 Norm	die Norm, -en		die	B2+
 normal	normal		adj	A1
@@ -3026,10 +3047,12 @@ norwegisch	norwegisch		adj	B2+
 Not	die Not, -̈e		die	B1
 Note	die Note, -n		die	A2
 notieren, notiert, notierte, hat notiert	notieren, notiert, notierte, hat notiert		verb	A2
+nötig	nötig		adj	B1
 Notiz	die Notiz, -en		die	A2
 notwendig	notwendig		adj	A2
 Notwendigkeit	die Notwendigkeit, -en		die	B2+
 November	der November, -		der	B1
+nüchtern	nüchtern		adj	B2+
 null	null		num	A1
 Nummer	die Nummer, -n		die	A1
 nun, nu	nun, nu		adv	A1
@@ -3038,16 +3061,8 @@ nur	nur		adv	A1
 Nutzen	der Nutzen, -		der	B1
 nutzen, nutzt, nutzte, hat genutzt	nutzen, nutzt, nutzte, hat genutzt		verb	B1
 Nutzer	der Nutzer, -		der	B2+
-Nutzung	die Nutzung, -en		die	B1
-nächste	nächste (r, s)		adj	A2
-nächtlich	nächtlich		adj	B2+
-Nähe	die Nähe		die	A2
-nähern, nähert, näherte, hat genähert	nähern (sich), nähert, näherte, hat genähert		verb	B1
-nämlich	nämlich		part	B1
-nördlich	nördlich		adj	B2+
-nötig	nötig		adj	B1
-nüchtern	nüchtern		adj	B2+
 nützlich	nützlich		adj	A2
+Nutzung	die Nutzung, -en		die	B1
 ob	ob		conj	B1
 oben	oben		adv	A1
 Oberbürgermeister	der Oberbürgermeister, -		der	B2+
@@ -3068,16 +3083,26 @@ offenbar	offenbar		adj	B1
 offenbaren, offenbart, offenbarte, hat offenbart	offenbaren, offenbart, offenbarte, hat offenbart		verb	B2+
 Offenheit	die Offenheit		die	B2+
 offensichtlich	offensichtlich		adj	B1
+öffentlich	öffentlich		adj	B1
+Öffentlichkeit	die Öffentlichkeit, -en		die	B1
 offiziell	offiziell		adj	B1
 Offizier	der Offizier, -e		der	B2+
+öffnen, öffnet, öffnete, hat geöffnet	öffnen, öffnet, öffnete, hat geöffnet		verb	A1
+Öffnung	die Öffnung, -en		die	B2+
 oft	oft		adv	A1
 oftmals	oftmals		adv	B2+
 oh	oh		part	A1
+öh	öh		interj	B2+
 ohne	ohne		prep, conj	A1
 ohnehin	ohnehin		adv	B1
 Ohr	das Ohr, -en		das	A2
 okay	okay		adj, das	A2
+ökologisch	ökologisch		adj	B2+
+Ökonom	der Ökonom, -en		der	B2+
+Ökonomie	die Ökonomie, -n		die	B2+
+ökonomisch	ökonomisch		adj	B1
 Oktober	der Oktober, -		der	B1
+Öl	das Öl, -e		das	A2
 olympisch	olympisch		adj	B1
 Oma	die Oma, -s		die	A1
 Onkel	der Onkel, -		der	B1
@@ -3108,10 +3133,17 @@ orientieren, orientiert, orientierte, hat orientiert	orientieren, orientiert, or
 Orientierung	die Orientierung, -en		die	B2+
 Original	das Original, -e		das	B1
 Ort	der Ort, -e		der	A1
+örtlich	örtlich		adj	B2+
 Osten, Ost-	Osten, Ost-		der	B1
+Österreich	Österreich		das	A2
+Österreicher	der Österreicher, -		der	B2+
+österreichisch	österreichisch		adj	B1
+östlich	östlich		adj	B2+
+ÖVP	ÖVP (Österreichische Volkspartei)		die	B2+
 Ozean	der Ozean, -e		der	B1
 Paar	das Paar, -e		das, pron	A2
 packen, packt, packte, hat gepackt	packen, packt, packte, hat gepackt		verb	A2
+pädagogisch	pädagogisch		adj	B2+
 Paket	das Paket, -e		das	A2
 Pakistan	Pakistan		das	B2+
 Panik	die Panik, -en		die	B2+
@@ -3149,9 +3181,9 @@ Periode	die Periode, -n		die	B1
 permanent	permanent		adj	B2+
 Person	die Person, -en		die	A2
 Personal	das Personal		das	B1
-Perspektive	die Perspektive, -n		die	B1
 persönlich	persönlich		adj	B1
 Persönlichkeit	die Persönlichkeit, -en		die	B2+
+Perspektive	die Perspektive, -n		die	B1
 Pfad	der Pfad, -e		der	B2+
 Pfarrer	der Pfarrer, -		der	B2+
 pfeifen, pfeift, pfiff, hat gepfiffen	pfeifen, pfeift, pfiff, hat gepfiffen		verb	B2+
@@ -3162,6 +3194,7 @@ Pflege	die Pflege		die	B2+
 pflegen, pflegt, pflegte, hat gepflegt	pflegen, pflegt, pflegte, hat gepflegt		verb	B1
 Pflicht	die Pflicht, -en		die	B1
 Pfund	das Pfund, -e		das	B2+
+Phänomen	das Phänomen, -e		das	B1
 Phantasie	die Phantasie, -n		die	B1
 Phase	die Phase, -n		die	A2
 Philosoph	der Philosoph, -en		der	B2+
@@ -3172,11 +3205,11 @@ physikalisch	physikalisch		adj	B1
 Physiologie	die Physiologie		die	B2+
 physiologisch	physiologisch		adj	B2+
 physisch	physisch		adj	B2+
-Phänomen	das Phänomen, -e		das	B1
 Pilot	der Pilot, -en		der	B2+
 Pilz	der Pilz, -e		der	B1
 Piste	die Piste, -n		die	B2+
 Pistole	die Pistole, -n		die	B2+
+plädieren, plädiert, plädierte, hat plädiert	plädieren, plädiert, plädierte, hat plädiert		verb	B2+
 Plakat	das Plakat, -e		das	A2
 Plan	der Plan, -̈e		der	A1
 planen, plant, plante, hat geplant	planen, plant, plante, hat geplant		verb	A2
@@ -3187,9 +3220,8 @@ Plattform	die Plattform, -en		die	B2+
 Platz	der Platz, -̈e		der	A1
 platzen, platzt, platzte, ist geplatzt	platzen, platzt, platzte, ist geplatzt		verb	B2+
 plausibel	plausibel		adj	B2+
-Plus	das Plus, -		das, adv, conj	B1
-plädieren, plädiert, plädierte, hat plädiert	plädieren, plädiert, plädierte, hat plädiert		verb	B2+
 plötzlich	plötzlich		adv	A2
+Plus	das Plus, -		das, adv, conj	B1
 Pole	der Pole, -n		der	B2+
 Polen	Polen		das	B1
 Politik	die Politik, -en		die	B1
@@ -3198,8 +3230,8 @@ politisch	politisch		adj	B1
 Polizei	die Polizei, -en		die	A1
 Polizist	der Polizist, -en		der	B1
 polnisch	polnisch		adj, das	B2+
-Population	die Population, -en		die	B2+
 populär	populär		adj	B1
+Population	die Population, -en		die	B2+
 Porträt	das Porträt, -s		das	B2+
 Portugal	Portugal		das	B2+
 Position	die Position, -en		die	A2
@@ -3208,9 +3240,18 @@ Post	die Post, -en		die	A1
 Posten	der Posten, -		der	B2+
 Potenzial	das Potenzial, -e		das	B1
 potenziell	potenziell		adj	B1
+Präferenz	die Präferenz, -en		die	B2+
+prägen, prägt, prägte, hat geprägt	prägen, prägt, prägte, hat geprägt		verb	B1
 Praktikum, Praktika	das Praktikum, die Praktika		das	A1
 praktisch	praktisch		adj	A2
+Präparat	das Präparat, -e		das	B2+
+präsent	präsent		adj	B2+
+Präsentation	die Präsentation, -en		die	B1
+präsentieren, präsentiert, präsentierte, hat präsentiert	präsentieren, präsentiert, präsentierte, hat präsentiert		verb	B1
+Präsident	der Präsident, -en		der	A2
+Prävention	die Prävention, -en		die	B2+
 Praxis	die Praxis, -en		die	A1
+präzise	präzise		adj	B2+
 Preis	der Preis, -e		der	A1
 Premier	der Premier, -s		der	B2+
 Premiere	die Premiere, -n		die	B2+
@@ -3254,15 +3295,6 @@ Proton	das Proton, -en		das	B2+
 Provinz	die Provinz, -en		die	B2+
 Prozent	das Prozent, -e		das	A1
 Prozess	der Prozess, -e		der	B1
-Präferenz	die Präferenz, -en		die	B2+
-prägen, prägt, prägte, hat geprägt	prägen, prägt, prägte, hat geprägt		verb	B1
-Präparat	das Präparat, -e		das	B2+
-präsent	präsent		adj	B2+
-Präsentation	die Präsentation, -en		die	B1
-präsentieren, präsentiert, präsentierte, hat präsentiert	präsentieren, präsentiert, präsentierte, hat präsentiert		verb	B1
-Präsident	der Präsident, -en		der	A2
-Prävention	die Prävention, -en		die	B2+
-präzise	präzise		adj	B2+
 prüfen, prüft, prüfte, hat geprüft	prüfen, prüft, prüfte, hat geprüft		verb	A2
 Prüfung	die Prüfung, -en		die	A1
 psychisch	psychisch		adj	B2+
@@ -3271,16 +3303,16 @@ Psychologie	die Psychologie, -n		die	B2+
 psychologisch	psychologisch		adj	B2+
 Publikum, Publika	das Publikum, die Publika		das	B1
 Punkt	der Punkt, -e		der	B1
+pünktlich	pünktlich		adj	A1
 Puppe	die Puppe, -n		die	B1
 putzen, putzt, putzte, hat geputzt	putzen, putzt, putzte, hat geputzt		verb	A2
-pädagogisch	pädagogisch		adj	B2+
-pünktlich	pünktlich		adj	A1
 quadratisch	quadratisch		adj	B2+
 Quadratmeter	der Quadratmeter, -		der	B2+
+quälen, quält, quälte, hat gequält	quälen, quält, quälte, hat gequält		verb	B2+
 Qualifikation	die Qualifikation, -en		die	B1
 qualifizieren, qualifiziert, qualifizierte, hat qualifiziert	qualifizieren, qualifiziert, qualifizierte, hat qualifiziert		verb	B2+
-qualitativ	qualitativ		adj	B2+
 Qualität	die Qualität, -en		die	A2
+qualitativ	qualitativ		adj	B2+
 quantitativ	quantitativ		adj	B2+
 Quartal	das Quartal, -e		das	B2+
 Quartier	das Quartier, -e		das	B1
@@ -3289,7 +3321,6 @@ Quatsch	der Quatsch		der	B2+
 Quelle	die Quelle, -n		die	B1
 quer	quer		adj	B2+
 Quote	die Quote, -n		die	B2+
-quälen, quält, quälte, hat gequält	quälen, quält, quälte, hat gequält		verb	B2+
 Rad	das Rad, -̈er		das	B1
 radikal	radikal		adj	B2+
 Radio	das Radio, -s		das	A2
@@ -3307,10 +3338,13 @@ Rat	der Rat, -̈e		der	B1
 raten, rät, riet, hat geraten	raten, rät, riet, hat geraten		verb	A2
 Rathaus	das Rathaus, -̈er		das	A2
 rational	rational		adj	B2+
+Rätsel	das Rätsel, -		das	A2
 Ratte	die Ratte, -n		die	B2+
 Rauch	der Rauch, -e		der	B2+
 rauchen, raucht, rauchte, hat geraucht	rauchen, raucht, rauchte, hat geraucht		verb	A1
 Raum	der Raum, -̈e		der	A1
+räumen, räumt, räumte, hat geräumt	räumen, räumt, räumte, hat geräumt		verb	B2+
+räumlich	räumlich		adj	B1
 rauschen, rauscht, rauschte, hat gerauscht	rauschen, rauscht, rauschte, hat gerauscht		verb	B2+
 reagieren, reagiert, reagierte, hat reagiert	reagieren, reagiert, reagierte, hat reagiert		verb	B1
 Reaktion	die Reaktion, -en		die	B1
@@ -3357,12 +3391,12 @@ regional	regional		adj	B1
 Regisseur	der Regisseur, -e		der	B2+
 registrieren, registriert, registrierte, hat registriert	registrieren, registriert, registrierte, hat registriert		verb	B2+
 regnen, regnet, regnete, hat geregnet	regnen, regnet, regnete, hat geregnet		verb	A1
+regulär	regulär		adj	B2+
 Regulation	die Regulation, -en		die	B2+
 regulieren, reguliert, regulierte, hat reguliert	regulieren, reguliert, regulierte, hat reguliert		verb	B2+
-regulär	regulär		adj	B2+
 reiben, reibt, rieb, hat gerieben	reiben, reibt, rieb, hat gerieben		verb	B2+
-reich	reich		adj	A2
 Reich	das Reich, -e		das	A2
+reich	reich		adj	A2
 Reiche	die Reiche		der, die	B2+
 reichen, reicht, reichte, hat gereicht	reichen, reicht, reichte, hat gereicht		verb	B1
 reichlich	reichlich		adj	B2+
@@ -3374,11 +3408,11 @@ Reihenfolge	die Reihenfolge, -n		die	B1
 rein	rein		adj	A2
 Reise	die Reise, -n		die	A1
 reisen, reist, reiste, ist gereist	reisen, reist, reiste, ist gereist		verb	A1
+reißen, reißt, riss, hat gerissen	reißen, reißt, riss, hat gerissen		verb	B1
 reiten, reitet, ritt, ist geritten	reiten, reitet, ritt, ist geritten		verb	A2
 Reiter	der Reiter, -		der	B2+
 Reiz	der Reiz, -e		der	B2+
 reizen, reizt, reizte, hat gereizt	reizen, reizt, reizte, hat gereizt		verb	B2+
-reißen, reißt, riss, hat gerissen	reißen, reißt, riss, hat gerissen		verb	B1
 Rekord	der Rekord, -e		der	B1
 Relation	die Relation, -en		die	B2+
 relativ	relativ		adj	B1
@@ -3428,16 +3462,27 @@ Rolle	die Rolle, -n		die	B1
 rollen, rollt, rollte, hat gerollt	rollen, rollt, rollte, hat gerollt		verb	B1
 Roman	der Roman, -e		der	B1
 romantisch	romantisch		adj	A2
+Römer	der Römer, -		der	B2+
+römisch	römisch		adj	B2+
 Rose	die Rose, -n		die	A2
 rot	rot		adj	A2
 Rotation	die Rotation, -en		die	B2+
 Route	die Route, -n		die	B2+
+Rücken	der Rücken, -		der	A2
+rücken, rückt, rückte, hat gerückt	rücken, rückt, rückte, hat gerückt		verb	A2
+Rückgang	der Rückgang, -̈e		der	B2+
+Rückkehr	die Rückkehr		die	B1
 Rucksack	der Rucksack, -̈e		der	A2
+Rücksicht	die Rücksicht, -en		die	B1
+Rückstand	der Rückstand, -̈e		der	B2+
+Rücktritt	der Rücktritt, -e		der	B2+
+Rückzug	der Rückzug, -̈e		der	B2+
 Ruf	der Ruf, -e		der	B1
 rufen, ruft, rief, hat gerufen	rufen, ruft, rief, hat gerufen		verb	A2
 Ruhe	die Ruhe		die	A2
 ruhen, ruht, ruhte, hat geruht	ruhen, ruht, ruhte, hat geruht		verb	B2+
 ruhig	ruhig		adj, part	A1
+rühren, rührt, rührte, hat gerührt	rühren, rührt, rührte, hat gerührt		verb	B1
 Ruine	die Ruine, -n		die	B2+
 rund	rund		adj, adv	A2
 Runde	die Runde, -n		die	B1
@@ -3446,25 +3491,12 @@ Russe	der Russe, -n		der	B1
 russisch	russisch		adj, das	A2
 Russland	Russland		das	A2
 rutschen, rutscht, rutschte, ist gerutscht	rutschen, rutscht, rutschte, ist gerutscht		verb	B2+
-Rätsel	das Rätsel, -		das	A2
-räumen, räumt, räumte, hat geräumt	räumen, räumt, räumte, hat geräumt		verb	B2+
-räumlich	räumlich		adj	B1
-Römer	der Römer, -		der	B2+
-römisch	römisch		adj	B2+
-Rücken	der Rücken, -		der	A2
-rücken, rückt, rückte, hat gerückt	rücken, rückt, rückte, hat gerückt		verb	A2
-Rückgang	der Rückgang, -̈e		der	B2+
-Rückkehr	die Rückkehr		die	B1
-Rücksicht	die Rücksicht, -en		die	B1
-Rückstand	der Rückstand, -̈e		der	B2+
-Rücktritt	der Rücktritt, -e		der	B2+
-Rückzug	der Rückzug, -̈e		der	B2+
-rühren, rührt, rührte, hat gerührt	rühren, rührt, rührte, hat gerührt		verb	B1
 Saal	der Saal, -̈le		der	B1
 Sache	die Sache, -n		die	A2
 sachlich	sachlich		adj	B2+
 Sachsen	Sachsen		das	B2+
 Sachsen-Anhalt	Sachsen-Anhalt		das	B2+
+sächsisch	sächsisch		adj	B2+
 Sachverhalt	der Sachverhalt, -e		der	B2+
 Sack	der Sack, -̈e		der	B1
 Saga	die Saga, -s		die	B1
@@ -3475,8 +3507,10 @@ sammeln, sammelt, sammelte, hat gesammelt	sammeln, sammelt, sammelte, hat gesamm
 Sammlung	die Sammlung, -en		die	B2+
 Samstag	der Samstag, -e		der	B1
 samt	samt		prep	B2+
+sämtlich	sämtlich		adj	B1
 Sand	der Sand, -e		der	B1
 sanft	sanft		adj	B2+
+Sänger	der Sänger, -		der	B1
 Sanktion	die Sanktion, -en		die	B2+
 satt	satt		adj	B1
 Satz	der Satz, -̈e		der	A1
@@ -3484,17 +3518,24 @@ sauber	sauber		adj	A2
 Saudi-Arabien	Saudi-Arabien		das	B2+
 sauer	sauer		adj	A2
 Sauerstoff	der Sauerstoff		der	B1
+Säule	die Säule, -n		die	B2+
+Säure	die Säure, -n		die	B1
 schade	schade		adv	A2
+Schädel	der Schädel, -		der	B2+
 Schaden	der Schaden, -̈		der	B1
 schaden, schadet, schadete, hat geschadet	schaden, schadet, schadete, hat geschadet		verb	B1
 Schadenersatz	der Schadenersatz		der	B2+
+schädigen, schädigt, schädigte, hat geschädigt	schädigen, schädigt, schädigte, hat geschädigt		verb	B2+
 Schaf	das Schaf, -e		das	B2+
 schaffen, schafft, schuf, hat geschaffen	schaffen, schafft, schuf, hat geschaffen		verb	A2
 Schale	die Schale, -n		die	B2+
 schalten, schaltet, schaltete, hat geschaltet	schalten, schaltet, schaltete, hat geschaltet		verb	B1
+schämen, schämt, schämte, hat geschämt	schämen (sich), schämt, schämte, hat geschämt		verb	B2+
 scharf	scharf		adj	A2
 Schatten	der Schatten, -		der	B1
 Schatz	der Schatz, -̈e		der	B2+
+schätzen, schätzt, schätzte, hat geschätzt	schätzen, schätzt, schätzte, hat geschätzt		verb	B1
+Schätzung	die Schätzung, -en		die	B2+
 Schau	die Schau, -en		die	B2+
 schauen, schaut, schaute, hat geschaut	schauen, schaut, schaute, hat geschaut		verb	B1
 Schauspieler	der Schauspieler, -		der	B1
@@ -3503,9 +3544,9 @@ scheiden, scheidet, schied, hat geschieden	scheiden, scheidet, schied, hat gesch
 Schein	der Schein, -e		der	B1
 scheinbar	scheinbar		adj	B2+
 scheinen, scheint, schien, hat geschienen	scheinen, scheint, schien, hat geschienen		verb	A1
-scheitern, scheitert, scheiterte, ist gescheitert	scheitern, scheitert, scheiterte, ist gescheitert		verb	B1
 Scheiße	die Scheiße		die	B1
 scheißen, scheißt, schiss, hat geschissen	scheißen, scheißt, schiss, hat geschissen		verb	B2+
+scheitern, scheitert, scheiterte, ist gescheitert	scheitern, scheitert, scheiterte, ist gescheitert		verb	B1
 Schema	das Schema, -s		das	B2+
 schenken, schenkt, schenkte, hat geschenkt	schenken, schenkt, schenkte, hat geschenkt		verb	A2
 Schicht	die Schicht, -en		die	B1
@@ -3551,7 +3592,10 @@ Schnitt	der Schnitt, -e		der	B1
 Schock	der Schock, -e		der	B2+
 Schokolade	die Schokolade, -n		die	A2
 schon	schon		adv, part	A1
+schön	schön		adj	A1
+Schönheit	die Schönheit, -en		die	B2+
 Schoß	der Schoß, -̈e		der	B2+
+schräg	schräg		adj	B2+
 Schrank	der Schrank, -̈e		der	A1
 Schreck	der Schreck, -e		der	B1
 schrecklich	schrecklich		adj	A2
@@ -3565,7 +3609,6 @@ schriftlich	schriftlich		adj	A2
 Schriftsteller	der Schriftsteller, -		der	B1
 Schritt	der Schritt, -e		der	B1
 schrumpfen, schrumpft, schrumpfte, ist geschrumpft	schrumpfen, schrumpft, schrumpfte, ist geschrumpft		verb	B2+
-schräg	schräg		adj	B2+
 Schublade	die Schublade, -n		die	B2+
 Schuh	der Schuh, -e		der	A1
 Schuld	die Schuld, -en		die, adj	B1
@@ -3573,10 +3616,14 @@ Schulden	Schulden		die (pl)	B1
 schuldig	schuldig		adj	B1
 Schuldner	der Schuldner, -		der	B2+
 Schule	die Schule, -n		die	A1
+Schüler	der Schüler, -		der	A1
 Schulter	die Schulter, -n		die	B1
 Schuss	der Schuss, -̈e		der	B1
+schütteln, schüttelt, schüttelte, hat geschüttelt	schütteln, schüttelt, schüttelte, hat geschüttelt		verb	B1
 Schutz	der Schutz, -e		der	B1
+schützen, schützt, schützte, hat geschützt	schützen, schützt, schützte, hat geschützt		verb	B1
 schwach	schwach		adj	A2
+Schwäche	die Schwäche, -n		die	B2+
 schwanger	schwanger		adj	A2
 Schwangerschaft	die Schwangerschaft, -en		die	B1
 schwanken, schwankt, schwankte, ist geschwankt	schwanken, schwankt, schwankte, ist geschwankt		verb	B2+
@@ -3586,10 +3633,10 @@ Schweden	Schweden		das	B1
 schwedisch	schwedisch		adj, das	B2+
 schweigen, schweigt, schwieg, hat geschwiegen	schweigen, schweigt, schwieg, hat geschwiegen		verb, das	B1
 Schwein	das Schwein, -e		das	A2
+Schweiß	der Schweiß, -e		der	B2+
 Schweiz	die Schweiz, -en		die	A2
 Schweizer	Schweizer		adj	B1
 Schweizer	Schweizer		der	B2+
-Schweiß	der Schweiß, -e		der	B2+
 schwer	schwer		adj	A1
 Schwerpunkt	der Schwerpunkt, -e		der	B1
 Schwester	die Schwester, -n		die	A1
@@ -3598,19 +3645,8 @@ Schwierigkeit	die Schwierigkeit, -en		die	B1
 schwimmen, schwimmt, schwamm, ist geschwommen	schwimmen, schwimmt, schwamm, ist geschwommen		verb	A1
 schwingen, schwingt, schwang, hat geschwungen	schwingen, schwingt, schwang, hat geschwungen		verb	B2+
 Schwingung	die Schwingung, -en		die	B1
-schwul	schwul		adj	B2+
-Schwäche	die Schwäche, -n		die	B2+
 schwören, schwört, schwor, hat geschworen	schwören, schwört, schwor, hat geschworen		verb	B2+
-Schädel	der Schädel, -		der	B2+
-schädigen, schädigt, schädigte, hat geschädigt	schädigen, schädigt, schädigte, hat geschädigt		verb	B2+
-schämen, schämt, schämte, hat geschämt	schämen (sich), schämt, schämte, hat geschämt		verb	B2+
-schätzen, schätzt, schätzte, hat geschätzt	schätzen, schätzt, schätzte, hat geschätzt		verb	B1
-Schätzung	die Schätzung, -en		die	B2+
-schön	schön		adj	A1
-Schönheit	die Schönheit, -en		die	B2+
-Schüler	der Schüler, -		der	A1
-schütteln, schüttelt, schüttelte, hat geschüttelt	schütteln, schüttelt, schüttelte, hat geschüttelt		verb	B1
-schützen, schützt, schützte, hat geschützt	schützen, schützt, schützte, hat geschützt		verb	B1
+schwul	schwul		adj	B2+
 sechs	sechs		num	A1
 sechzehn	sechzehn		num	B2+
 sechzig	sechzig		num	B1
@@ -3633,8 +3669,8 @@ seither	seither		adv	B2+
 seitlich	seitlich		adj	B2+
 Sekretär	der Sekretär, -e		der	B1
 Sektor	der Sektor, -en		der	B2+
-Sekunde	die Sekunde, -n		die	A2
 sekundär	sekundär		adj	B2+
+Sekunde	die Sekunde, -n		die	A2
 selbe	selbe (r, s)		pron	B1
 selbst, selber	selbst, selber		pron, part	A2
 selbstbewusst	selbstbewusst		adj	B2+
@@ -3759,9 +3795,11 @@ spannen, spannt, spannte, hat gespannt	spannen, spannt, spannte, hat gespannt		v
 spannend	spannend		adj	A2
 Spannung	die Spannung, -en		die	B1
 sparen, spart, sparte, hat gespart	sparen, spart, sparte, hat gespart		verb	A2
+Spaß	der Spaß, -̈e		der	A2
+spät	spät		adj, adj	A1
+spätestens	spätestens		adv	B1
 spazieren, spaziert, spazierte, ist spaziert	spazieren, spaziert, spazierte, ist spaziert		verb	B2+
 Spaziergang	der Spaziergang, -̈e		der	A2
-Spaß	der Spaß, -̈e		der	A2
 SPD	SPD (Sozialdemokratische Partei Deutschlands)		die	A2
 Specht	der Specht, -e		der	B2+
 speichern, speichert, speicherte, hat gespeichert	speichern, speichert, speicherte, hat gespeichert		verb	A2
@@ -3782,6 +3820,7 @@ Spielraum	der Spielraum, -̈e		der	B2+
 spinnen, spinnt, spann, hat gesponnen	spinnen, spinnt, spann, hat gesponnen		verb	B2+
 spitz	spitz		adj	B1
 Spitze	die Spitze, -n		die	B1
+SPÖ	SPÖ (Sozialdemokratische Partei Österreichs)		die	B2+
 Sponsor	der Sponsor, -en		der	B2+
 spontan	spontan		adj	B2+
 Sport	der Sport, -e		der	A1
@@ -3797,9 +3836,6 @@ springen, springt, sprang, ist gesprungen	springen, springt, sprang, ist gesprun
 Spruch	der Spruch, -̈e		der	B2+
 Sprung	der Sprung, -̈e		der	B2+
 Spur	die Spur, -en		die	B1
-spät	spät		adj, adj	A1
-spätestens	spätestens		adv	B1
-SPÖ	SPÖ (Sozialdemokratische Partei Österreichs)		die	B2+
 spürbar	spürbar		adj	B2+
 spüren, spürt, spürte, hat gespürt	spüren, spürt, spürte, hat gespürt		verb	B1
 Staat	der Staat, -en		der	A1
@@ -3813,6 +3849,7 @@ Stabilität	die Stabilität		die	B2+
 Stadion	das Stadion, -e		das	B1
 Stadium	das Stadium, -en		das	B2+
 Stadt	die Stadt, -̈e		die	A1
+städtisch	städtisch		adj	B1
 Stadtrat	der Stadtrat, -̈e		der	B2+
 Stadtteil	der Stadtteil, -e		der	B2+
 Stall	der Stall, -̈e		der	B2+
@@ -3820,9 +3857,12 @@ Stamm	der Stamm, -̈e		der	B2+
 stammen, stammt, stammte, hat gestammt	stammen, stammt, stammte, hat gestammt		verb	B1
 Stand	der Stand, -̈e		der	B1
 Standard	der Standard, -s		der	B1
+ständig	ständig		adj	B1
 Standort	der Standort, -e		der	B1
 Star	der Star, -e		der	A2
 stark	stark		adj	A2
+Stärke	die Stärke, -n		die	B1
+stärken, stärkt, stärkte, hat gestärkt	stärken, stärkt, stärkte, hat gestärkt		verb	B1
 starr	starr		adj	B2+
 starren, starrt, starrte, hat gestarrt	starren, starrt, starrte, hat gestarrt		verb	B1
 Start	der Start, -s		der	B1
@@ -3879,9 +3919,11 @@ Stockwerk	das Stockwerk, -e		das	A2
 Stoff	der Stoff, -e		der	B1
 Stoffwechsel	der Stoffwechsel, -		der	B2+
 stolpern, stolpert, stolperte, ist gestolpert	stolpern, stolpert, stolperte, ist gestolpert		verb	B2+
-stolz	stolz		adj	B1
 Stolz	der Stolz		der	B1
+stolz	stolz		adj	B1
 stoppen, stoppt, stoppte, hat gestoppt	stoppen, stoppt, stoppte, hat gestoppt		verb	B1
+stören, stört, störte, hat gestört	stören, stört, störte, hat gestört		verb	A2
+Störung	die Störung, -en		die	B1
 Stoß	der Stoß, -̈e		der	B2+
 stoßen, stößt, stieß, hat gestoßen	stoßen, stößt, stieß, hat gestoßen		verb	B1
 Strafe	die Strafe, -n		die	B1
@@ -3889,10 +3931,10 @@ Strahl	der Strahl, -en		der	B2+
 strahlen, strahlt, strahlte, hat gestrahlt	strahlen, strahlt, strahlte, hat gestrahlt		verb	B2+
 Strahlung	die Strahlung, -en		die	B2+
 Strand	der Strand, -̈e		der	A2
+Straße	die Straße, -n		die	A1
 Strategie	die Strategie, -n		die	B1
 strategisch	strategisch		adj	B1
 Strauß	der Strauß, -̈e		der	B2+
-Straße	die Straße, -n		die	A1
 streben, strebt, strebte, hat gestrebt	streben, strebt, strebte, hat gestrebt		verb	B2+
 Strecke	die Strecke, -n		die	B1
 strecken, streckt, streckte, hat gestreckt	strecken, streckt, streckte, hat gestreckt		verb	B2+
@@ -3906,11 +3948,12 @@ Stress	der Stress, -e		der	A2
 Strich	der Strich, -e		der	B2+
 strikt	strikt		adj	B2+
 Strom	der Strom, -̈e		der	B1
+strömen, strömt, strömte, ist geströmt	strömen, strömt, strömte, ist geströmt		verb	B2+
+Strömung	die Strömung, -en		die	B2+
 Struktur	die Struktur, -en		die	A2
 strukturell	strukturell		adj	B2+
 strukturieren, strukturiert, strukturierte, hat strukturiert	strukturieren, strukturiert, strukturierte, hat strukturiert		verb	B2+
-strömen, strömt, strömte, ist geströmt	strömen, strömt, strömte, ist geströmt		verb	B2+
-Strömung	die Strömung, -en		die	B2+
+Stück	das Stück, -e		das	A2
 Student	der Student, -en		der	A1
 Studie	die Studie, -n		die	B1
 Studiengang	der Studiengang, -̈e		der	B2+
@@ -3924,13 +3967,6 @@ Stunde	die Stunde, -n		die	A1
 stundenlang	stundenlang		adj	B2+
 Sturm	der Sturm, -̈e		der	B1
 Sturz	der Sturz, -̈e		der	B2+
-städtisch	städtisch		adj	B1
-ständig	ständig		adj	B1
-Stärke	die Stärke, -n		die	B1
-stärken, stärkt, stärkte, hat gestärkt	stärken, stärkt, stärkte, hat gestärkt		verb	B1
-stören, stört, störte, hat gestört	stören, stört, störte, hat gestört		verb	A2
-Störung	die Störung, -en		die	B1
-Stück	das Stück, -e		das	A2
 stürzen, stürzt, stürzte, ist gestürzt	stürzen, stürzt, stürzte, ist gestürzt		verb	B1
 stützen, stützt, stützte, hat gestützt	stützen, stützt, stützte, hat gestützt		verb	B1
 Subjekt	das Subjekt, -e		das	B2+
@@ -3941,10 +3977,13 @@ Substitution	die Substitution, -en		die	B2+
 Substrat	das Substrat, -e		das	B2+
 Suche	die Suche, -n		die	B1
 suchen, sucht, suchte, hat gesucht	suchen, sucht, suchte, hat gesucht		verb	A1
+Süden, Süd-	Süden, Süd-		der	B1
+südlich	südlich		adj	B2+
 Suizid	der Suizid, -e		der	B2+
 Summe	die Summe, -n		die	B1
 super	super		adj	A2
 Supermarkt	der Supermarkt, -̈e		der	A2
+süß	süß		adj	A2
 Symbol	das Symbol, -e		das	B1
 symbolisch	symbolisch		adj	B2+
 Symmetrie	die Symmetrie, -n		die	B2+
@@ -3958,21 +3997,13 @@ syrisch	syrisch		adj	B2+
 System	das System, -e		das	B1
 systematisch	systematisch		adj	B1
 Szene	die Szene, -n		die	B1
-sächsisch	sächsisch		adj	B2+
-sämtlich	sämtlich		adj	B1
-Sänger	der Sänger, -		der	B1
-Säule	die Säule, -n		die	B2+
-Säure	die Säure, -n		die	B1
-Süden, Süd-	Süden, Süd-		der	B1
-südlich	südlich		adj	B2+
-süß	süß		adj	A2
-T-Shirt	das T-Shirt, -s		das	A2
 Tabelle	die Tabelle, -n		die	B1
 Tablette	die Tablette, -n		die	A2
 Tafel	die Tafel, -n		die	A2
 Tag	der Tag, -e		der	A1
 Tagebuch	das Tagebuch, -̈er		das	B2+
 Tageszeitung	die Tageszeitung, -en		die	B2+
+täglich	täglich		adj	B1
 tagsüber	tagsüber		adv	B2+
 Tal	das Tal, -̈er		das	B1
 Talent	das Talent, -e		das	B1
@@ -3984,11 +4015,15 @@ Tasche	die Tasche, -n		die	A1
 Tasse	die Tasse, -n		die	A2
 tasten, tastet, tastete, hat getastet	tasten, tastet, tastete, hat getastet		verb	B2+
 Tat	die Tat, -en		die	B1
+Täter	der Täter, -		der	B1
+tätig	tätig		adj	B1
+Tätigkeit	die Tätigkeit, -en		die	B1
 Tatort	der Tatort, -e		der	B2+
 Tatsache	die Tatsache, -n		die	B1
 tatsächlich	tatsächlich		adj	B1
 tauchen, taucht, tauchte, ist getaucht	tauchen, taucht, tauchte, ist getaucht		verb	B1
 tauschen, tauscht, tauschte, hat getauscht	tauschen, tauscht, tauschte, hat getauscht		verb	B1
+täuschen, täuscht, täuschte, hat getäuscht	täuschen, täuscht, täuschte, hat getäuscht		verb	B2+
 tausend	tausend		num	A1
 Taxi	das Taxi, -s		das	A1
 Team	das Team, -s		das	A2
@@ -4053,6 +4088,7 @@ Titel	der Titel, -		der	A2
 tja	tja		interj	B2+
 Tochter	die Tochter, -̈		die	A1
 Tod	der Tod, -e		der	B1
+tödlich	tödlich		adj	B1
 Toilette	die Toilette, -n		die	A1
 Toleranz	die Toleranz, -en		die	B2+
 toll	toll		adj	A2
@@ -4062,6 +4098,7 @@ Topf	der Topf, -̈e		der	A2
 Tor	das Tor, -e		das	B1
 tot	tot		adj	A1
 total	total		adj	A2
+töten, tötet, tötete, hat getötet	töten, tötet, tötete, hat getötet		verb	B1
 Tour	die Tour, -en		die	A2
 Tourismus	der Tourismus		der	B1
 Tourist	der Tourist, -en		der	A2
@@ -4069,11 +4106,13 @@ touristisch	touristisch		adj	B2+
 Tradition	die Tradition, -en		die	B1
 traditionell	traditionell		adj	B1
 tragen, trägt, trug, hat getragen	tragen, trägt, trug, hat getragen		verb	A2
+Träger	der Träger, -		der	B2+
 tragisch	tragisch		adj	B2+
 Tragödie	die Tragödie, -n		die	B2+
 Trainer	der Trainer, -		der	B1
 trainieren, trainiert, trainierte, hat trainiert	trainieren, trainiert, trainierte, hat trainiert		verb	A2
 Training	das Training, -s		das	A2
+Träne	die Träne, -n		die	B1
 Transfer	der Transfer, -s		der	B2+
 Transformation	die Transformation, -en		die	B2+
 Transparenz	die Transparenz, -en		die	B2+
@@ -4082,6 +4121,7 @@ transportieren, transportiert, transportierte, hat transportiert	transportieren,
 trauen, traut, traute, hat getraut	trauen, traut, traute, hat getraut		verb	B1
 Trauer	die Trauer		die	B2+
 Traum	der Traum, -̈e		der	A2
+träumen, träumt, träumte, hat geträumt	träumen, träumt, träumte, hat geträumt		verb	A2
 traurig	traurig		adj	A2
 treffen, trifft, traf, hat getroffen	treffen, trifft, traf, hat getroffen		verb	A2
 Treffer	der Treffer, -		der	B2+
@@ -4101,33 +4141,75 @@ trocken	trocken		adj	A2
 trocknen, trocknet, trocknete, hat getrocknet	trocknen, trocknet, trocknete, hat getrocknet		verb	B1
 Tropfen	der Tropfen, -		der	B1
 Trost	der Trost		der	B2+
+trösten, tröstet, tröstete, hat getröstet	trösten, tröstet, tröstete, hat getröstet		verb	B2+
 trotz	trotz		prep	B1
 trotzdem	trotzdem		adv	B1
 Truppe	die Truppe, -n		die	B2+
-Träger	der Träger, -		der	B2+
-Träne	die Träne, -n		die	B1
-träumen, träumt, träumte, hat geträumt	träumen, träumt, träumte, hat geträumt		verb	A2
-trösten, tröstet, tröstete, hat getröstet	trösten, tröstet, tröstete, hat getröstet		verb	B2+
 tschüss	tschüss		interj	A1
+T-Shirt	das T-Shirt, -s		das	A2
 Tuch	das Tuch, -̈er		das	B1
 tun, tut, tat, hat getan	tun, tut, tat, hat getan		verb	A1
 Tunnel	der Tunnel, -		der	B2+
+Tür	die Tür, -en		die	A2
+Türke	der Türke, -n		der	B2+
+Türkei	die Türkei		die	A2
+türkisch	türkisch		adj, das	B1
 Turm	der Turm, -̈e		der	B1
 Turnier	das Turnier, -e		das	B2+
 TV	das TV, -s		das	B2+
 Typ	der Typ, -en		der	B1
 typisch	typisch		adj	A2
-täglich	täglich		adj	B1
-Täter	der Täter, -		der	B1
-tätig	tätig		adj	B1
-Tätigkeit	die Tätigkeit, -en		die	B1
-täuschen, täuscht, täuschte, hat getäuscht	täuschen, täuscht, täuschte, hat getäuscht		verb	B2+
-tödlich	tödlich		adj	B1
-töten, tötet, tötete, hat getötet	töten, tötet, tötete, hat getötet		verb	B1
-Tür	die Tür, -en		die	A2
-Türke	der Türke, -n		der	B2+
-Türkei	die Türkei		die	A2
-türkisch	türkisch		adj, das	B1
+übel	übel		adj	B2+
+üben, übt, übte, hat geübt	üben, übt, übte, hat geübt		verb	A2
+über	über		prep	A1
+überall	überall		adv	A2
+Überblick	der Überblick, -e		der	B2+
+übereinstimmen, stimmt überein, stimmte überein, hat übereingestimmt	übereinstimmen, stimmt überein, stimmte überein, hat übereingestimmt		verb	B2+
+Übereinstimmung	die Übereinstimmung, -en		die	B2+
+überflüssig	überflüssig		adj	B2+
+überfordern, überfordert, überforderte, hat überfordert	überfordern, überfordert, überforderte, hat überfordert		verb	B2+
+überführen, überführt, überführte, hat überführt	überführen, überführt, überführte, hat überführt		verb	B2+
+Übergang	der Übergang, -̈e		der	B1
+übergeben, übergibt, übergab, hat übergeben	übergeben, übergibt, übergab, hat übergeben		verb	B2+
+übergehen, geht über, ging über, ist übergegangen	übergehen, geht über, ging über, ist übergegangen		verb	B2+
+überhaupt	überhaupt		adv	B1
+überholen, überholt, überholte, hat überholt	überholen, überholt, überholte, hat überholt		verb	B1
+überlassen, überlässt, überließ, hat überlassen	überlassen, überlässt, überließ, hat überlassen		verb	B1
+überleben, überlebt, überlebte, hat überlebt	überleben, überlebt, überlebte, hat überlebt		verb	B1
+überlegen	überlegen		verb	B1
+überlegen	überlegen		adj	B1
+Überlegung	die Überlegung, -en		die	B1
+übernachten, übernachtet, übernachtete, hat übernachtet	übernachten, übernachtet, übernachtete, hat übernachtet		verb	A1
+Übernahme	die Übernahme, -n		die	B2+
+übernehmen, übernimmt, übernahm, hat übernommen	übernehmen, übernimmt, übernahm, hat übernommen		verb	B1
+überprüfen, überprüft, überprüfte, hat überprüft	überprüfen, überprüft, überprüfte, hat überprüft		verb	B1
+Überprüfung	die Überprüfung, -en		die	B2+
+überqueren, überquert, überquerte, hat überquert	überqueren, überquert, überquerte, hat überquert		verb	B1
+überraschen, überrascht, überraschte, hat überrascht	überraschen, überrascht, überraschte, hat überrascht		verb	B1
+Überraschung	die Überraschung, -en		die	B1
+überschreiten, überschreitet, überschritt, hat überschritten	überschreiten, überschreitet, überschritt, hat überschritten		verb	B2+
+übersehen, übersieht, übersah, hat übersehen	übersehen, übersieht, übersah, hat übersehen		verb	B2+
+übersetzen, übersetzt, übersetzte, hat übersetzt	übersetzen, übersetzt, übersetzte, hat übersetzt		verb	A2
+Übersetzer	der Übersetzer, -		der	B1
+Übersetzung	die Übersetzung, -en		die	A2
+Übersicht	die Übersicht, -en		die	B2+
+überstehen, übersteht, überstand, hat überstanden	überstehen, übersteht, überstand, hat überstanden		verb	B2+
+übertragen	übertragen		verb	B1
+Übertragung	die Übertragung, -en		die	B2+
+übertreiben, übertreibt, übertrieb, hat übertrieben	übertreiben, übertreibt, übertrieb, hat übertrieben		verb	B1
+überwachen, überwacht, überwachte, hat überwacht	überwachen, überwacht, überwachte, hat überwacht		verb	B2+
+Überwachung	die Überwachung, -en		die	B2+
+überwältigen, überwältigt, überwältigte, hat überwältigt	überwältigen, überwältigt, überwältigte, hat überwältigt		verb	B2+
+überwiegen, überwiegt, überwog, hat überwogen	überwiegen, überwiegt, überwog, hat überwogen		verb	B1
+überwinden, überwindet, überwand, hat überwunden	überwinden, überwindet, überwand, hat überwunden		verb	B2+
+überzeugen, überzeugt, überzeugte, hat überzeugt	überzeugen, überzeugt, überzeugte, hat überzeugt		verb	A2
+Überzeugung	die Überzeugung, -en		die	B1
+überziehen, zieht über, zog über, hat übergezogen	überziehen, zieht über, zog über, hat übergezogen		verb	B2+
+üblich	üblich		adj	B1
+üblicherweise	üblicherweise		adv	B2+
+übrig	übrig		adj	B1
+übrigens	übrigens		adv	B1
+Übung	die Übung, -en		die	B1
 Ufer	das Ufer, -		das	B1
 Uhr	die Uhr, -en		die	A1
 Ukraine	die Ukraine		die	B1
@@ -4221,13 +4303,13 @@ Unternehmer	der Unternehmer, -		der	B1
 Unternehmung	die Unternehmung, -en		die	B2+
 Unterricht	der Unterricht, -e		der	A1
 unterrichten, unterrichtet, unterrichtete, hat unterrichtet	unterrichten, unterrichtet, unterrichtete, hat unterrichtet		verb	B1
+unterschätzen, unterschätzt, unterschätzte, hat unterschätzt	unterschätzen, unterschätzt, unterschätzte, hat unterschätzt		verb	B2+
 unterscheiden, unterscheidet, unterschied, hat unterschieden	unterscheiden, unterscheidet, unterschied, hat unterschieden		verb	B1
 Unterscheidung	die Unterscheidung, -en		die	B2+
 Unterschied	der Unterschied, -e		der	A2
 unterschiedlich	unterschiedlich		adj	B1
 unterschreiben, unterschreibt, unterschrieb, hat unterschrieben	unterschreiben, unterschreibt, unterschrieb, hat unterschrieben		verb	A1
 Unterschrift	die Unterschrift, -en		die	A1
-unterschätzen, unterschätzt, unterschätzte, hat unterschätzt	unterschätzen, unterschätzt, unterschätzte, hat unterschätzt		verb	B2+
 unterstellen, unterstellt, unterstellte, hat unterstellt	unterstellen, unterstellt, unterstellte, hat unterstellt		verb	B2+
 unterstreichen, unterstreicht, unterstrich, hat unterstrichen	unterstreichen, unterstreicht, unterstrich, hat unterstrichen		verb	B1
 unterstützen, unterstützt, unterstützte, hat unterstützt	unterstützen, unterstützt, unterstützte, hat unterstützt		verb	B1
@@ -4259,6 +4341,8 @@ Vektor	der Vektor, -en		der	B1
 Vene	die Vene, -n		die	B2+
 verabreden, verabredet, verabredete, hat verabredet	verabreden, verabredet, verabredete, hat verabredet		verb	B2+
 verabschieden, verabschiedet, verabschiedete, hat verabschiedet	verabschieden, verabschiedet, verabschiedete, hat verabschiedet		verb	B1
+verändern, verändert, veränderte, hat verändert	verändern, verändert, veränderte, hat verändert		verb	A2
+Veränderung	die Veränderung, -en		die	A2
 verankern, verankert, verankerte, hat verankert	verankern, verankert, verankerte, hat verankert		verb	B2+
 veranlassen, veranlasst, veranlasste, hat veranlasst	veranlassen, veranlasst, veranlasste, hat veranlasst		verb	B2+
 veranstalten, veranstaltet, veranstaltete, hat veranstaltet	veranstalten, veranstaltet, veranstaltete, hat veranstaltet		verb	B2+
@@ -4289,6 +4373,7 @@ Verbreitung	die Verbreitung, -en		die	B2+
 verbrennen, verbrennt, verbrannte, ist verbrannt	verbrennen, verbrennt, verbrannte, ist verbrannt		verb	B2+
 verbringen, verbringt, verbrachte, hat verbracht	verbringen, verbringt, verbrachte, hat verbracht		verb	B1
 Verdacht	der Verdacht, -e		der	B1
+verdächtig	verdächtig		adj	B1
 verdammt	verdammt		adj	B1
 verdanken, verdankt, verdankte, hat verdankt	verdanken, verdankt, verdankte, hat verdankt		verb	B2+
 verdecken, verdeckt, verdeckte, hat verdeckt	verdecken, verdeckt, verdeckte, hat verdeckt		verb	B2+
@@ -4296,7 +4381,6 @@ verdeutlichen, verdeutlicht, verdeutlichte, hat verdeutlicht	verdeutlichen, verd
 verdienen, verdient, verdiente, hat verdient	verdienen, verdient, verdiente, hat verdient		verb	A1
 verdoppeln, verdoppelt, verdoppelte, hat verdoppelt	verdoppeln, verdoppelt, verdoppelte, hat verdoppelt		verb	B2+
 verdrängen, verdrängt, verdrängte, hat verdrängt	verdrängen, verdrängt, verdrängte, hat verdrängt		verb	B2+
-verdächtig	verdächtig		adj	B1
 verehrt	verehrt		adj	B2+
 Verein	der Verein, -e		der	A1
 vereinbaren, vereinbart, vereinbarte, hat vereinbart	vereinbaren, vereinbart, vereinbarte, hat vereinbart		verb	A2
@@ -4327,24 +4411,27 @@ vergrößern, vergrößert, vergrößerte, hat vergrößert	vergrößern, vergr�
 verhaften, verhaftet, verhaftete, hat verhaftet	verhaften, verhaftet, verhaftete, hat verhaftet		verb	B1
 verhalten	verhalten		verb, das	B1
 Verhaltensweise	die Verhaltensweise, -n		die	B2+
+Verhältnis	das Verhältnis, -se		das	B1
 verhandeln, verhandelt, verhandelte, hat verhandelt	verhandeln, verhandelt, verhandelte, hat verhandelt		verb	B2+
 Verhandlung	die Verhandlung, -en		die	B1
+verhängen, verhängt, verhängte, hat verhängt	verhängen, verhängt, verhängte, hat verhängt		verb	B2+
 verheiratet	verheiratet		adj	A1
 verhindern, verhindert, verhinderte, hat verhindert	verhindern, verhindert, verhinderte, hat verhindert		verb	B1
-Verhältnis	das Verhältnis, -se		das	B1
-verhängen, verhängt, verhängte, hat verhängt	verhängen, verhängt, verhängte, hat verhängt		verb	B2+
 Verkauf	der Verkauf, -̈e		der	B1
 verkaufen, verkauft, verkaufte, hat verkauft	verkaufen, verkauft, verkaufte, hat verkauft		verb	A1
+Verkäufer	der Verkäufer, -		der	A1
 Verkehr	der Verkehr, -e		der	A2
 verkehren, verkehrt, verkehrte, hat verkehrt	verkehren, verkehrt, verkehrte, hat verkehrt		verb	B2+
 verknüpfen, verknüpft, verknüpfte, hat verknüpft	verknüpfen, verknüpft, verknüpfte, hat verknüpft		verb	B2+
 Verknüpfung	die Verknüpfung, -en		die	B2+
-Verkäufer	der Verkäufer, -		der	A1
 verkünden, verkündet, verkündete, hat verkündet	verkünden, verkündet, verkündete, hat verkündet		verb	B2+
 verkürzen, verkürzt, verkürzte, hat verkürzt	verkürzen, verkürzt, verkürzte, hat verkürzt		verb	B2+
 Verlag	der Verlag, -e		der	B1
 verlangen, verlangt, verlangte, hat verlangt	verlangen, verlangt, verlangte, hat verlangt		verb	B1
+verlängern, verlängert, verlängerte, hat verlängert	verlängern, verlängert, verlängerte, hat verlängert		verb	B1
+Verlängerung	die Verlängerung, -en		die	B2+
 verlassen, verlässt, verließ, hat verlassen	verlassen, verlässt, verließ, hat verlassen		verb	B1
+verlässlich	verlässlich		adj	B2+
 Verlauf	der Verlauf, -̈e		der	B1
 verlaufen, verläuft, verlief, ist verlaufen	verlaufen, verläuft, verlief, ist verlaufen		verb	B1
 verlegen, verlegt, verlegte, hat verlegt	verlegen, verlegt, verlegte, hat verlegt		verb	B2+
@@ -4355,9 +4442,6 @@ Verletzung	die Verletzung, -en		die	B1
 verlieben, verliebt, verliebte, hat verliebt	verlieben (sich), verliebt, verliebte, hat verliebt		verb	A2
 verlieren, verliert, verlor, hat verloren	verlieren, verliert, verlor, hat verloren		verb	A2
 Verlust	der Verlust, -e		der	B1
-verlängern, verlängert, verlängerte, hat verlängert	verlängern, verlängert, verlängerte, hat verlängert		verb	B1
-Verlängerung	die Verlängerung, -en		die	B2+
-verlässlich	verlässlich		adj	B2+
 vermehrt	vermehrt		adj	B2+
 vermeiden, vermeidet, vermied, hat vermieden	vermeiden, vermeidet, vermied, hat vermieden		verb	B1
 vermeintlich	vermeintlich		adj	B2+
@@ -4365,17 +4449,19 @@ vermindern, vermindert, verminderte, hat vermindert	vermindern, vermindert, verm
 vermissen, vermisst, vermisste, hat vermisst	vermissen, vermisst, vermisste, hat vermisst		verb	B1
 vermitteln, vermittelt, vermittelte, hat vermittelt	vermitteln, vermittelt, vermittelte, hat vermittelt		verb	B1
 Vermittlung	die Vermittlung, -en		die	B1
+Vermögen	das Vermögen, -		das	B1
+vermögen, vermag, vermochte, hat vermocht	vermögen, vermag, vermochte, hat vermocht		verb	B2+
 vermuten, vermutet, vermutete, hat vermutet	vermuten, vermutet, vermutete, hat vermutet		verb	B1
 vermutlich	vermutlich		adv	B1
 Vermutung	die Vermutung, -en		die	B2+
-Vermögen	das Vermögen, -		das	B1
-vermögen, vermag, vermochte, hat vermocht	vermögen, vermag, vermochte, hat vermocht		verb	B2+
 vernachlässigen, vernachlässigt, vernachlässigte, hat vernachlässigt	vernachlässigen, vernachlässigt, vernachlässigte, hat vernachlässigt		verb	B2+
 vernehmen, vernimmt, vernahm, hat vernommen	vernehmen, vernimmt, vernahm, hat vernommen		verb	B2+
 vernetzen, vernetzt, vernetzte, hat vernetzt	vernetzen, vernetzt, vernetzte, hat vernetzt		verb	B2+
 vernichten, vernichtet, vernichtete, hat vernichtet	vernichten, vernichtet, vernichtete, hat vernichtet		verb	B2+
 Vernunft	die Vernunft		die	B2+
 vernünftig	vernünftig		adj	B1
+veröffentlichen, veröffentlicht, veröffentlichte, hat veröffentlicht	veröffentlichen, veröffentlicht, veröffentlichte, hat veröffentlicht		verb	B1
+Veröffentlichung	die Veröffentlichung, -en		die	B2+
 verpassen, verpasst, verpasste, hat verpasst	verpassen, verpasst, verpasste, hat verpasst		verb	A2
 verpflichten, verpflichtet, verpflichtete, hat verpflichtet	verpflichten, verpflichtet, verpflichtete, hat verpflichtet		verb	B1
 Verpflichtung	die Verpflichtung, -en		die	B2+
@@ -4385,12 +4471,12 @@ verrückt	verrückt		adj	B1
 versagen, versagt, versagte, hat versagt	versagen, versagt, versagte, hat versagt		verb	B2+
 versammeln, versammelt, versammelte, hat versammelt	versammeln, versammelt, versammelte, hat versammelt		verb	B2+
 verschaffen, verschafft, verschaffte, hat verschafft	verschaffen, verschafft, verschaffte, hat verschafft		verb	B2+
+verschärfen, verschärft, verschärfte, hat verschärft	verschärfen, verschärft, verschärfte, hat verschärft		verb	B2+
 verschieben, verschiebt, verschob, hat verschoben	verschieben, verschiebt, verschob, hat verschoben		verb	A2
 Verschiebung	die Verschiebung, -en		die	B2+
 verschieden	verschieden		adj	A2
 verschließen, verschließt, verschloss, hat verschlossen	verschließen, verschließt, verschloss, hat verschlossen		verb	B2+
 verschwinden, verschwindet, verschwand, ist verschwunden	verschwinden, verschwindet, verschwand, ist verschwunden		verb	B1
-verschärfen, verschärft, verschärfte, hat verschärft	verschärfen, verschärft, verschärfte, hat verschärft		verb	B2+
 versehen, versieht, versah, hat versehen	versehen, versieht, versah, hat versehen		verb	B2+
 versetzen, versetzt, versetzte, hat versetzt	versetzen, versetzt, versetzte, hat versetzt		verb	B1
 versichern, versichert, versicherte, hat versichert	versichern, versichert, versicherte, hat versichert		verb	B1
@@ -4402,17 +4488,17 @@ Versorgung	die Versorgung, -en		die	B2+
 Versprechen	das Versprechen, -		das	B1
 versprechen, verspricht, versprach, hat versprochen	versprechen, verspricht, versprach, hat versprochen		verb	B1
 Verstand	der Verstand		der	B2+
+verständigen, verständigt, verständigte, hat verständigt	verständigen (sich), verständigt, verständigte, hat verständigt		verb	B2+
+verständlich	verständlich		adj	B1
+Verständnis	das Verständnis, -se		das	B1
+verstärken, verstärkt, verstärkte, hat verstärkt	verstärken, verstärkt, verstärkte, hat verstärkt		verb	B1
+Verstärkung	die Verstärkung, -en		die	B2+
 verstecken, versteckt, versteckte, hat versteckt	verstecken, versteckt, versteckte, hat versteckt		verb	B1
 verstehen, versteht, verstand, hat verstanden	verstehen, versteht, verstand, hat verstanden		verb	A1
 versterben, verstirbt, verstarb, ist verstorben	versterben, verstirbt, verstarb, ist verstorben		verb	B2+
 Verstoß	der Verstoß, -̈e		der	B2+
 verstoßen, verstößt, verstieß, hat verstoßen	verstoßen, verstößt, verstieß, hat verstoßen		verb	B2+
 verstummen, verstummt, verstummte, ist verstummt	verstummen, verstummt, verstummte, ist verstummt		verb	B2+
-verständigen, verständigt, verständigte, hat verständigt	verständigen (sich), verständigt, verständigte, hat verständigt		verb	B2+
-verständlich	verständlich		adj	B1
-Verständnis	das Verständnis, -se		das	B1
-verstärken, verstärkt, verstärkte, hat verstärkt	verstärken, verstärkt, verstärkte, hat verstärkt		verb	B1
-Verstärkung	die Verstärkung, -en		die	B2+
 Versuch	der Versuch, -e		der	B1
 versuchen, versucht, versuchte, hat versucht	versuchen, versucht, versuchte, hat versucht		verb	A2
 Versuchsperson	die Versuchsperson, -en		die	B2+
@@ -4450,13 +4536,9 @@ verzeichnen, verzeichnet, verzeichnete, hat verzeichnet	verzeichnen, verzeichnet
 verzeihen, verzeiht, verzieh, hat verziehen	verzeihen, verzeiht, verzieh, hat verziehen		verb	B1
 verzichten, verzichtet, verzichtete, hat verzichtet	verzichten, verzichtet, verzichtete, hat verzichtet		verb	B1
 verziehen, verzieht, verzog, hat verzogen	verziehen, verzieht, verzog, hat verzogen		verb	B2+
+verzögern, verzögert, verzögerte, hat verzögert	verzögern, verzögert, verzögerte, hat verzögert		verb	B2+
 verzweifeln, verzweifelt, verzweifelte, ist verzweifelt	verzweifeln, verzweifelt, verzweifelte, ist verzweifelt		verb	B2+
 Verzweiflung	die Verzweiflung, -en		die	B2+
-verzögern, verzögert, verzögerte, hat verzögert	verzögern, verzögert, verzögerte, hat verzögert		verb	B2+
-verändern, verändert, veränderte, hat verändert	verändern, verändert, veränderte, hat verändert		verb	A2
-Veränderung	die Veränderung, -en		die	A2
-veröffentlichen, veröffentlicht, veröffentlichte, hat veröffentlicht	veröffentlichen, veröffentlicht, veröffentlichte, hat veröffentlicht		verb	B1
-Veröffentlichung	die Veröffentlichung, -en		die	B2+
 via	via		prep	B2+
 Video	das Video, -s		das	B1
 viel	viel		pron	A1
@@ -4482,6 +4564,7 @@ Vokabular	das Vokabular, -e		das	B2+
 Volk	das Volk, -̈er		das	B1
 Volkswirtschaft	die Volkswirtschaft, -en		die	B2+
 voll	voll		adj	A2
+völlig	völlig		adj	B1
 vollkommen	vollkommen		adj	B1
 vollständig	vollständig		adj	B1
 vollziehen, vollzieht, vollzog, hat vollzogen	vollziehen, vollzieht, vollzog, hat vollzogen		verb	B2+
@@ -4508,11 +4591,11 @@ Vorfall	der Vorfall, -̈e		der	B2+
 Vorfeld	das Vorfeld, -er		das	B2+
 Vorgabe	die Vorgabe, -n		die	B2+
 Vorgang	der Vorgang, -̈e		der	B1
+Vorgänger	der Vorgänger, -		der	B2+
 vorgeben, gibt vor, gab vor, hat vorgegeben	vorgeben, gibt vor, gab vor, hat vorgegeben		verb	B1
 Vorgehen	das Vorgehen		das	B2+
 vorgehen, geht vor, ging vor, ist vorgegangen	vorgehen, geht vor, ging vor, ist vorgegangen		verb	B1
 Vorgehensweise	die Vorgehensweise, -n		die	B2+
-Vorgänger	der Vorgänger, -		der	B2+
 Vorhaben	das Vorhaben, -		das	B1
 vorhaben, hat vor, hatte vor, hat vorgehabt	vorhaben, hat vor, hatte vor, hat vorgehabt		verb	B1
 vorhanden	vorhanden		adj	B1
@@ -4523,11 +4606,11 @@ vorig	vorig		adj	B2+
 Vorjahr	das Vorjahr, -e		das	B1
 vorkommen, kommt vor, kam vor, ist vorgekommen	vorkommen, kommt vor, kam vor, ist vorgekommen		verb	B1
 Vorlage	die Vorlage, -n		die	B2+
+vorläufig	vorläufig		adj	B1
 vorlegen, legt vor, legte vor, hat vorgelegt	vorlegen, legt vor, legte vor, hat vorgelegt		verb	B1
 vorlesen, liest vor, las vor, hat vorgelesen	vorlesen, liest vor, las vor, hat vorgelesen		verb	B1
 Vorlesung	die Vorlesung, -en		die	A2
 vorliegen, liegt vor, lag vor, hat vorgelegen	vorliegen, liegt vor, lag vor, hat vorgelegen		verb	A2
-vorläufig	vorläufig		adj	B1
 Vormittag	der Vormittag, -e		der	B2+
 Vorname	der Vorname, -n		der	A1
 vorne, vorn	vorne, vorn		adv	A2
@@ -4548,6 +4631,7 @@ Vorstellung	die Vorstellung, -en		die	B1
 Vorteil	der Vorteil, -e		der	B1
 Vortrag	der Vortrag, -̈e		der	B1
 vortragen, trägt vor, trug vor, hat vorgetragen	vortragen, trägt vor, trug vor, hat vorgetragen		verb	B2+
+vorübergehen, geht vorüber, ging vorüber, ist vorübergegangen	vorübergehen, geht vorüber, ging vorüber, ist vorübergegangen		verb, adj	B2+
 Vorurteil	das Vorurteil, -e		das	B2+
 vorwerfen, wirft vor, warf vor, hat vorgeworfen	vorwerfen, wirft vor, warf vor, hat vorgeworfen		verb	B1
 vorwiegend	vorwiegend		adv	B2+
@@ -4555,9 +4639,7 @@ Vorwurf	der Vorwurf, -̈e		der	B1
 Vorzeichen	das Vorzeichen, -		das	B2+
 vorzeitig	vorzeitig		adj	B2+
 vorziehen, zieht vor, zog vor, hat vorgezogen	vorziehen, zieht vor, zog vor, hat vorgezogen		verb	B2+
-vorübergehen, geht vorüber, ging vorüber, ist vorübergegangen	vorübergehen, geht vorüber, ging vorüber, ist vorübergegangen		verb, adj	B2+
 VWL	VWL (Volkswirtschaftslehre)		die	B1
-völlig	völlig		adj	B1
 wach	wach		adj	A2
 wachsen, wächst, wuchs, ist gewachsen	wachsen, wächst, wuchs, ist gewachsen		verb	B1
 Wachstum	das Wachstum		das	B1
@@ -4566,16 +4648,20 @@ Waffe	die Waffe, -n		die	B1
 Wagen	der Wagen, -		der	A2
 wagen, wagt, wagte, hat gewagt	wagen, wagt, wagte, hat gewagt		verb	A2
 Wahl	die Wahl, -en		die	B1
+wählen, wählt, wählte, hat gewählt	wählen, wählt, wählte, hat gewählt		verb	A2
+Wähler	der Wähler, -		der	B2+
 Wahlkampf	der Wahlkampf, -̈e		der	B2+
 Wahlperiode	die Wahlperiode, -n		die	B2+
 Wahnsinn	der Wahnsinn		der	B2+
 wahnsinnig	wahnsinnig		adj	B1
 wahr	wahr		adj	A2
+während	während		prep, conj	B1
 Wahrheit	die Wahrheit, -en		die	B1
 wahrnehmen, nimmt wahr, nahm wahr, hat wahrgenommen	wahrnehmen, nimmt wahr, nahm wahr, hat wahrgenommen		verb	B1
 Wahrnehmung	die Wahrnehmung, -en		die	B1
 wahrscheinlich	wahrscheinlich		adj, adv	A2
 Wahrscheinlichkeit	die Wahrscheinlichkeit, -en		die	B1
+Währung	die Währung, -en		die	B2+
 Wald	der Wald, -̈er		der	A2
 Wand	die Wand, -̈e		die	B1
 Wandel	der Wandel, -		der	B2+
@@ -4586,6 +4672,7 @@ Wange	die Wange, -n		die	B2+
 wann	wann		pron	A1
 Ware	die Ware, -n		die	B1
 warm	warm		adj	A2
+Wärme	die Wärme		die	B1
 warnen, warnt, warnte, hat gewarnt	warnen, warnt, warnte, hat gewarnt		verb	B1
 Warnung	die Warnung, -en		die	B2+
 warten, wartet, wartete, hat gewartet	warten, wartet, wartete, hat gewartet		verb	A1
@@ -4621,6 +4708,7 @@ Wein	der Wein, -e		der	A1
 weinen, weint, weinte, hat geweint	weinen, weint, weinte, hat geweint		verb	A2
 Weise	die Weise, -n		die	A2
 weisen, weist, wies, hat gewiesen	weisen, weist, wies, hat gewiesen		verb	B1
+weiß	weiß		adj	A2
 weit	weit		adj	A1
 weitaus	weitaus		adv	B2+
 weiter	weiter		adv	A1
@@ -4632,7 +4720,6 @@ weitergehen, geht weiter, ging weiter, ist weitergegangen	weitergehen, geht weit
 weiterhin	weiterhin		adv	A2
 weitermachen, macht weiter, machte weiter, hat weitergemacht	weitermachen, macht weiter, machte weiter, hat weitergemacht		verb	B2+
 weitgehend	weitgehend		adj	B1
-weiß	weiß		adj	A2
 welch	welch, -e, -er, -es		pron	A1
 Welle	die Welle, -n		die	B1
 Wellenlänge	die Wellenlänge, -n		die	B2+
@@ -4721,8 +4808,8 @@ wodurch	wodurch		pron	B2+
 wofür	wofür		pron	B2+
 woher	woher		pron	A1
 wohin	wohin		pron	A1
-wohl	wohl		adv, part	B1
 Wohl	das Wohl		das	B1
+wohl	wohl		adv, part	B1
 Wohlstand	der Wohlstand		der	B2+
 wohnen, wohnt, wohnte, hat gewohnt	wohnen, wohnt, wohnte, hat gewohnt		verb	A1
 Wohnung	die Wohnung, -en		die	A1
@@ -4735,8 +4822,9 @@ wonach	wonach		pron	B2+
 woran	woran		pron	B2+
 worauf	worauf		pron	B1
 Wort	das Wort, -̈er		das	A1
-worum	worum		pron	B1
+wörtlich	wörtlich		adj	B2+
 worüber	worüber		pron	B1
+worum	worum		pron	B1
 wovon	wovon		pron	B2+
 wozu	wozu		pron	B2+
 Wunde	die Wunde, -n		die	B1
@@ -4745,21 +4833,17 @@ wunderbar	wunderbar		adj	A1
 wundern, wundert, wunderte, hat gewundert	wundern (sich), wundert, wunderte, hat gewundert		verb	B1
 wunderschön	wunderschön		adj	B1
 Wunsch	der Wunsch, -̈e		der	A2
-Wurst	die Wurst, -̈e		die	A2
-Wurzel	die Wurzel, -n		die	B2+
-Wut	die Wut		die	B2+
-wählen, wählt, wählte, hat gewählt	wählen, wählt, wählte, hat gewählt		verb	A2
-Wähler	der Wähler, -		der	B2+
-während	während		prep, conj	B1
-Währung	die Währung, -en		die	B2+
-Wärme	die Wärme		die	B1
-wörtlich	wörtlich		adj	B2+
 wünschen, wünscht, wünschte, hat gewünscht	wünschen, wünscht, wünschte, hat gewünscht		verb	A2
 würdigen, würdigt, würdigte, hat gewürdigt	würdigen, würdigt, würdigte, hat gewürdigt		verb	B2+
+Wurst	die Wurst, -̈e		die	A2
+Wurzel	die Wurzel, -n		die	B2+
 Wüste	die Wüste, -n		die	B2+
+Wut	die Wut		die	B2+
 wütend	wütend		adj	B1
 Zahl	die Zahl, -en		die	A2
 zahlen, zahlt, zahlte, hat gezahlt	zahlen, zahlt, zahlte, hat gezahlt		verb	A1
+zählen, zählt, zählte, hat gezählt	zählen, zählt, zählte, hat gezählt		verb	B1
+Zähler	der Zähler, -		der	B2+
 zahlreich	zahlreich		adj	B1
 Zahlung	die Zahlung, -en		die	B1
 Zahn	der Zahn, -̈e		der	A2
@@ -4813,6 +4897,7 @@ Zitat	das Zitat, -e		das	B2+
 zitieren, zitiert, zitierte, hat zitiert	zitieren, zitiert, zitierte, hat zitiert		verb	B1
 zittern, zittert, zitterte, hat gezittert	zittern, zittert, zitterte, hat gezittert		verb	B1
 Zivilisation	die Zivilisation, -en		die	B2+
+zögern, zögert, zögerte, hat gezögert	zögern, zögert, zögerte, hat gezögert		verb	B2+
 Zone	die Zone, -n		die	B1
 Zorn	der Zorn		der	B2+
 zu	zu		part, prep, part	A1
@@ -4822,12 +4907,13 @@ zudem	zudem		adv	A2
 zueinander	zueinander		adv	B2+
 zuerst	zuerst		adv	A2
 Zufall	der Zufall, -̈e		der	B1
+zufällig	zufällig		adj	B1
 zufolge	zufolge		prep	B1
 zufrieden	zufrieden		adj	A1
-zufällig	zufällig		adj	B1
 zuführen, führt zu, führte zu, hat zugeführt	zuführen, führt zu, führte zu, hat zugeführt		verb	B2+
 Zug	der Zug, -̈e		der	A1
 Zugang	der Zugang, -̈e		der	B1
+zugänglich	zugänglich		adj	B1
 zugeben, gibt zu, gab zu, hat zugegeben	zugeben, gibt zu, gab zu, hat zugegeben		verb	B1
 zugehen, geht zu, ging zu, ist zugegangen	zugehen, geht zu, ging zu, ist zugegangen		verb	B1
 zugehörig	zugehörig		adj	B2+
@@ -4835,7 +4921,6 @@ zugleich	zugleich		adv	A2
 Zugriff	der Zugriff, -e		der	B2+
 zugrunde	zugrunde		adv	B2+
 zugunsten	zugunsten		prep	B2+
-zugänglich	zugänglich		adj	B1
 Zuhause	das Zuhause		das, adv	B1
 zuhören, hört zu, hörte zu, hat zugehört	zuhören, hört zu, hörte zu, hat zugehört		verb	A2
 Zuhörer	der Zuhörer, -		der	B1
@@ -4843,20 +4928,20 @@ zukommen, kommt zu, kam zu, ist zugekommen	zukommen, kommt zu, kam zu, ist zugek
 Zukunft	die Zukunft, -̈e		die	B1
 zukünftig	zukünftig		adj	B1
 zulassen, lässt zu, ließ zu, hat zugelassen	zulassen, lässt zu, ließ zu, hat zugelassen		verb	B1
+zulässig	zulässig		adj	B2+
 zulegen, legt zu, legte zu, hat zugelegt	zulegen, legt zu, legte zu, hat zugelegt		verb	B2+
 zuletzt	zuletzt		adv	A2
-zulässig	zulässig		adj	B2+
 zumachen, macht zu, machte zu, hat zugemacht	zumachen, macht zu, machte zu, hat zugemacht		verb	A2
 zumal	zumal		conj	B1
 zumeist	zumeist		adv	B2+
 zumindest	zumindest		adv	B1
+zunächst	zunächst		adv	B1
 Zunahme	die Zunahme, -n		die	B2+
 zunehmen, nimmt zu, nahm zu, hat zugenommen	zunehmen, nimmt zu, nahm zu, hat zugenommen		verb	B1
 Zunge	die Zunge, -n		die	B2+
-zunächst	zunächst		adv	B1
 zuordnen, ordnet zu, ordnete zu, hat zugeordnet	zuordnen, ordnet zu, ordnete zu, hat zugeordnet		verb	B1
 Zuordnung	die Zuordnung, -en		die	B2+
-zurzeit	zurzeit		adv	A1
+Zürcher	Zürcher		adj	B2+
 zurück	zurück		adv	A1
 zurückbleiben, bleibt zurück, blieb zurück, ist zurückgeblieben	zurückbleiben, bleibt zurück, blieb zurück, ist zurückgeblieben		verb	B2+
 zurückführen, führt zurück, führte zurück, hat zurückgeführt	zurückführen, führt zurück, führte zurück, hat zurückgeführt		verb	B1
@@ -4872,6 +4957,7 @@ zurückliegen, liegt zurück, lag zurück, hat zurückgelegen	zurückliegen, lie
 zurücktreten, tritt zurück, trat zurück, ist zurückgetreten	zurücktreten, tritt zurück, trat zurück, ist zurückgetreten		verb	B2+
 zurückweisen, weist zurück, wies zurück, hat zurückgewiesen	zurückweisen, weist zurück, wies zurück, hat zurückgewiesen		verb	B2+
 zurückziehen, zieht zurück, zog zurück, hat zurückgezogen	zurückziehen, zieht zurück, zog zurück, hat zurückgezogen		verb	B1
+zurzeit	zurzeit		adv	A1
 zusagen, sagt zu, sagte zu, hat zugesagt	zusagen, sagt zu, sagte zu, hat zugesagt		verb	B1
 zusammen	zusammen		adv	A1
 Zusammenarbeit	die Zusammenarbeit		die	B1
@@ -4886,6 +4972,7 @@ zusammenkommen, kommt zusammen, kam zusammen, ist zusammengekommen	zusammenkomme
 zusammenleben, lebt zusammen, lebte zusammen, hat zusammengelebt	zusammenleben, lebt zusammen, lebte zusammen, hat zusammengelebt		verb	B2+
 zusammensetzen, setzt zusammen, setzte zusammen, hat zusammengesetzt	zusammensetzen, setzt zusammen, setzte zusammen, hat zusammengesetzt		verb	B2+
 Zusammensetzung	die Zusammensetzung, -en		die	B2+
+zusätzlich	zusätzlich		adj	B1
 zuschauen, schaut zu, schaute zu, hat zugeschaut	zuschauen, schaut zu, schaute zu, hat zugeschaut		verb	B1
 Zuschauer	der Zuschauer, -		der	B1
 zuschlagen, schlägt zu, schlug zu, hat zugeschlagen	zuschlagen, schlägt zu, schlug zu, hat zugeschlagen		verb	B2+
@@ -4893,11 +4980,10 @@ zuschreiben, schreibt zu, schrieb zu, hat zugeschrieben	zuschreiben, schreibt zu
 zusehen, sieht zu, sah zu, hat zugesehen	zusehen, sieht zu, sah zu, hat zugesehen		verb	B1
 Zustand	der Zustand, -̈e		der	B1
 zustande	zustande		adv	B2+
+zuständig	zuständig		adj	B1
 zustehen, steht zu, stand zu, hat zugestanden	zustehen, steht zu, stand zu, hat zugestanden		verb	B2+
 zustimmen, stimmt zu, stimmte zu, hat zugestimmt	zustimmen, stimmt zu, stimmte zu, hat zugestimmt		verb	B1
 Zustimmung	die Zustimmung, -en		die	B1
-zuständig	zuständig		adj	B1
-zusätzlich	zusätzlich		adj	B1
 zutrauen, traut zu, traute zu, hat zugetraut	zutrauen, traut zu, traute zu, hat zugetraut		verb	B2+
 zutreffen, trifft zu, traf zu, hat zugetroffen	zutreffen, trifft zu, traf zu, hat zugetroffen		verb	B1
 zuverlässig	zuverlässig		adj	B1
@@ -4922,89 +5008,3 @@ zwischen	zwischen		prep	A1
 zwischendurch	zwischendurch		adv	B2+
 zwölf	zwölf		num	A1
 Zyklus	der Zyklus, -en		der	B2+
-zählen, zählt, zählte, hat gezählt	zählen, zählt, zählte, hat gezählt		verb	B1
-Zähler	der Zähler, -		der	B2+
-zögern, zögert, zögerte, hat gezögert	zögern, zögert, zögerte, hat gezögert		verb	B2+
-Zürcher	Zürcher		adj	B2+
-Ägypten	Ägypten		das	B2+
-äh	äh		part	B1
-ähneln, ähnelt, ähnelte, hat geähnelt	ähneln, ähnelt, ähnelte, hat geähnelt		verb	B2+
-ähnlich	ähnlich		adj	B1
-Ähnlichkeit	die Ähnlichkeit, -en		die	B2+
-ändern, ändert, änderte, hat geändert	ändern, ändert, änderte, hat geändert		verb	A2
-Änderung	die Änderung, -en		die	B1
-Ärger	der Ärger		der	B2+
-ärgern, ärgert, ärgerte, hat geärgert	ärgern, ärgert, ärgerte, hat geärgert		verb	A2
-ärztlich	ärztlich		adj	B2+
-ästhetisch	ästhetisch		adj	B2+
-äußere	äußere (r, s)		adj	B1
-äußern, äußert, äußerte, hat geäußert	äußern, äußert, äußerte, hat geäußert		verb	B1
-äußerst	äußerst		adv	B1
-Äußerung	die Äußerung, -en		die	B1
-öffentlich	öffentlich		adj	B1
-Öffentlichkeit	die Öffentlichkeit, -en		die	B1
-öffnen, öffnet, öffnete, hat geöffnet	öffnen, öffnet, öffnete, hat geöffnet		verb	A1
-Öffnung	die Öffnung, -en		die	B2+
-öh	öh		interj	B2+
-ökologisch	ökologisch		adj	B2+
-Ökonom	der Ökonom, -en		der	B2+
-Ökonomie	die Ökonomie, -n		die	B2+
-ökonomisch	ökonomisch		adj	B1
-Öl	das Öl, -e		das	A2
-örtlich	örtlich		adj	B2+
-Österreich	Österreich		das	A2
-Österreicher	der Österreicher, -		der	B2+
-österreichisch	österreichisch		adj	B1
-östlich	östlich		adj	B2+
-ÖVP	ÖVP (Österreichische Volkspartei)		die	B2+
-übel	übel		adj	B2+
-üben, übt, übte, hat geübt	üben, übt, übte, hat geübt		verb	A2
-über	über		prep	A1
-überall	überall		adv	A2
-Überblick	der Überblick, -e		der	B2+
-übereinstimmen, stimmt überein, stimmte überein, hat übereingestimmt	übereinstimmen, stimmt überein, stimmte überein, hat übereingestimmt		verb	B2+
-Übereinstimmung	die Übereinstimmung, -en		die	B2+
-überflüssig	überflüssig		adj	B2+
-überfordern, überfordert, überforderte, hat überfordert	überfordern, überfordert, überforderte, hat überfordert		verb	B2+
-überführen, überführt, überführte, hat überführt	überführen, überführt, überführte, hat überführt		verb	B2+
-Übergang	der Übergang, -̈e		der	B1
-übergeben, übergibt, übergab, hat übergeben	übergeben, übergibt, übergab, hat übergeben		verb	B2+
-übergehen, geht über, ging über, ist übergegangen	übergehen, geht über, ging über, ist übergegangen		verb	B2+
-überhaupt	überhaupt		adv	B1
-überholen, überholt, überholte, hat überholt	überholen, überholt, überholte, hat überholt		verb	B1
-überlassen, überlässt, überließ, hat überlassen	überlassen, überlässt, überließ, hat überlassen		verb	B1
-überleben, überlebt, überlebte, hat überlebt	überleben, überlebt, überlebte, hat überlebt		verb	B1
-überlegen	überlegen		verb	B1
-überlegen	überlegen		adj	B1
-Überlegung	die Überlegung, -en		die	B1
-übernachten, übernachtet, übernachtete, hat übernachtet	übernachten, übernachtet, übernachtete, hat übernachtet		verb	A1
-Übernahme	die Übernahme, -n		die	B2+
-übernehmen, übernimmt, übernahm, hat übernommen	übernehmen, übernimmt, übernahm, hat übernommen		verb	B1
-überprüfen, überprüft, überprüfte, hat überprüft	überprüfen, überprüft, überprüfte, hat überprüft		verb	B1
-Überprüfung	die Überprüfung, -en		die	B2+
-überqueren, überquert, überquerte, hat überquert	überqueren, überquert, überquerte, hat überquert		verb	B1
-überraschen, überrascht, überraschte, hat überrascht	überraschen, überrascht, überraschte, hat überrascht		verb	B1
-Überraschung	die Überraschung, -en		die	B1
-überschreiten, überschreitet, überschritt, hat überschritten	überschreiten, überschreitet, überschritt, hat überschritten		verb	B2+
-übersehen, übersieht, übersah, hat übersehen	übersehen, übersieht, übersah, hat übersehen		verb	B2+
-übersetzen, übersetzt, übersetzte, hat übersetzt	übersetzen, übersetzt, übersetzte, hat übersetzt		verb	A2
-Übersetzer	der Übersetzer, -		der	B1
-Übersetzung	die Übersetzung, -en		die	A2
-Übersicht	die Übersicht, -en		die	B2+
-überstehen, übersteht, überstand, hat überstanden	überstehen, übersteht, überstand, hat überstanden		verb	B2+
-übertragen	übertragen		verb	B1
-Übertragung	die Übertragung, -en		die	B2+
-übertreiben, übertreibt, übertrieb, hat übertrieben	übertreiben, übertreibt, übertrieb, hat übertrieben		verb	B1
-überwachen, überwacht, überwachte, hat überwacht	überwachen, überwacht, überwachte, hat überwacht		verb	B2+
-Überwachung	die Überwachung, -en		die	B2+
-überwiegen, überwiegt, überwog, hat überwogen	überwiegen, überwiegt, überwog, hat überwogen		verb	B1
-überwinden, überwindet, überwand, hat überwunden	überwinden, überwindet, überwand, hat überwunden		verb	B2+
-überwältigen, überwältigt, überwältigte, hat überwältigt	überwältigen, überwältigt, überwältigte, hat überwältigt		verb	B2+
-überzeugen, überzeugt, überzeugte, hat überzeugt	überzeugen, überzeugt, überzeugte, hat überzeugt		verb	A2
-Überzeugung	die Überzeugung, -en		die	B1
-überziehen, zieht über, zog über, hat übergezogen	überziehen, zieht über, zog über, hat übergezogen		verb	B2+
-üblich	üblich		adj	B1
-üblicherweise	üblicherweise		adv	B2+
-übrig	übrig		adj	B1
-übrigens	übrigens		adv	B1
-Übung	die Übung, -en		die	B1

@@ -97,6 +97,7 @@ def load_classification_dictionaries(classify_args):
             with open(path, "r", encoding="utf-8") as f:
                 reader = csv.reader(f, delimiter="\t")
                 first_row = True
+                is_oxford = "oxford" in path.lower()
                 for row in reader:
                     if not row:
                         continue
@@ -107,10 +108,26 @@ def load_classification_dictionaries(classify_args):
                     
                     if len(row) >= 1:
                         raw_lemma = row[0].strip().lower()
-                        if len(row) > 1:
-                            val = row[-1].strip()
+                        
+                        val = ""
+                        if is_oxford:
+                            for cell in reversed(row[1:]):
+                                cell_str = cell.strip()
+                                if cell_str:
+                                    levels = re.findall(r"\b[a-cA-C][1-2]\b", cell_str)
+                                    if levels:
+                                        val = ", ".join(levels).upper()
+                                        break
+                            if not val:
+                                continue
                         else:
-                            val = "1"
+                            for cell in reversed(row[1:]):
+                                cell_str = cell.strip()
+                                if cell_str:
+                                    val = cell_str
+                                    break
+                            if not val:
+                                val = "1"
                         
                         if prefix:
                             val = f"{prefix}:{val}"

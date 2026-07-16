@@ -120,4 +120,4 @@ enabled = true
 ; Comma-separated list of classifications (name=path) relative to kardenwort_workspace
 ; Example: oxford=data/en/oxford.tsv, cambridge=data/en/cambridge.tsv
 dictionaries_en = oxford=3k:data/en/20260715160822-oxford-3000.en.tsv, oxford=5k:data/en/20260715165539-oxford-5000-expanded.en.tsv
-dictionaries_de = goethe=5k:data/de/20260716200932-english-deutsch.de.tsv
+dictionaries_de = goethe=data/de/20260716200932-english-deutsch.de.tsv

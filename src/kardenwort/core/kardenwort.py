@@ -1998,7 +1998,9 @@ def main():
         cfg = configparser.ConfigParser(allow_no_value=True)
         cfg.read(config_path_classify, encoding='utf-8')
         if cfg.has_section('classification') and cfg.getboolean('classification', 'enabled', fallback=False):
-            dicts = cfg.get('classification', 'dictionaries', fallback='')
+            dicts = cfg.get('classification', f'dictionaries_{args.language}', fallback='')
+            if not dicts:
+                dicts = cfg.get('classification', 'dictionaries', fallback='')
             if dicts:
                 if args.classify is None:
                     args.classify = []

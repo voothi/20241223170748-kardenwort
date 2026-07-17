@@ -114,11 +114,9 @@ class IntegrationTester:
         for i, (gen_row, ref_row) in enumerate(zip(gen_rows, ref_rows)):
             if i == 0: continue # Skip header
             
-            # Slice gen_row to match ref_row columns count
-            gen_row_norm = list(gen_row[:len(ref_row)])
-            ref_row_norm = list(ref_row)
-            gen_row_norm[-1] = re.sub(r'\d{14}-', '', gen_row_norm[-1])
-            ref_row_norm[-1] = re.sub(r'\d{14}-', '', ref_row_norm[-1])
+            # Slice gen_row to match ref_row columns count and strip timestamps from all columns
+            gen_row_norm = [re.sub(r'\d{14}-', '', col) for col in gen_row[:len(ref_row)]]
+            ref_row_norm = [re.sub(r'\d{14}-', '', col) for col in ref_row]
             
             # Compare rows
             assert gen_row_norm == ref_row_norm, f"Content mismatch at row {i+1} in {latest_tsv}"

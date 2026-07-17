@@ -70,10 +70,30 @@ def parse_prefix_and_path(raw_val):
             return prefix, parts[1].strip()
     return "", raw_val
 
+class CaseAwareClassificationDict(dict):
+    def __init__(self, exact_dict, lower_dict):
+        super().__init__(exact_dict)
+        self.lower_dict = lower_dict
+
+    def __getitem__(self, key):
+        try:
+            return super().__getitem__(key)
+        except KeyError:
+            return self.lower_dict[key.lower()]
+
+    def __contains__(self, key):
+        return super().__contains__(key) or key.lower() in self.lower_dict
+
+    def get(self, key, default=None):
+        try:
+            return self[key]
+        except KeyError:
+            return default
+
 def load_classification_dictionaries(classify_args):
     """
     Parses --classify name=path arguments, loads TSV files, skipping headers,
-    and returns a nested dict: {classification_name: {lemma_lower: classification_value}}
+    and returns a nested dict of CaseAwareClassificationDicts.
     """
     classifications = {}
     if not classify_args:
@@ -89,7 +109,7 @@ def load_classification_dictionaries(classify_args):
         prefix_path = prefix_path.strip()
         
         if name not in classifications:
-            classifications[name] = {}
+            classifications[name] = ( {}, {} ) # (exact_dict, lower_dict)
             
         prefix, path = parse_prefix_and_path(prefix_path)
 
@@ -107,7 +127,7 @@ def load_classification_dictionaries(classify_args):
                             continue
                     
                     if len(row) >= 1:
-                        raw_lemma = row[0].strip().lower()
+                        raw_lemma = row[0].strip()
                         
                         val = ""
                         if is_oxford:
@@ -136,18 +156,31 @@ def load_classification_dictionaries(classify_args):
                         # Strip any parenthetical annotations like "(money)" or "(not heavy)"
                         lemmas = [re.sub(r"\(.*?\)", "", x).strip() for x in raw_lemma.split(",")]
                         lemmas = [x for x in lemmas if x]
+                        
+                        exact_dict, lower_dict = classifications[name]
                         for lemma in lemmas:
-                            if lemma in classifications[name]:
-                                # Keep 3k if it already exists to prioritize core list
-                                if classifications[name][lemma].startswith("3k:"):
+                            # 1. Exact case dictionary
+                            if lemma in exact_dict:
+                                if exact_dict[lemma].startswith("3k:"):
                                     continue
-                            classifications[name][lemma] = val
+                            exact_dict[lemma] = val
+                            
+                            # 2. Lowercase fallback dictionary
+                            lemma_lower = lemma.lower()
+                            if lemma_lower in lower_dict:
+                                if lower_dict[lemma_lower].startswith("3k:"):
+                                    continue
+                            lower_dict[lemma_lower] = val
         except FileNotFoundError:
             print(f"Classification dictionary file not found: {path}", file=sys.stderr)
         except Exception as e:
             print(f"Error reading classification dictionary file {path}: {e}", file=sys.stderr)
             
-    return classifications
+    # Wrap in CaseAwareClassificationDict
+    wrapped_classifications = {}
+    for name, (exact_dict, lower_dict) in classifications.items():
+        wrapped_classifications[name] = CaseAwareClassificationDict(exact_dict, lower_dict)
+    return wrapped_classifications
 
 def load_lemma_override_rules(file_path):
     override_rules = {
@@ -532,10 +565,10 @@ def prepare_row_data(args, **kwargs):
         row_data[f'tts_dest_{args.tts_destination_lang}'] = "1"
         
     classifications = kwargs.get('classifications', {})
-    lemma_lower = row_data['lemma'].lower()
+    lemma = row_data['lemma']
     for c_name, c_dict in classifications.items():
-        if lemma_lower in c_dict:
-            row_data[c_name] = c_dict[lemma_lower]
+        if lemma in c_dict:
+            row_data[c_name] = c_dict[lemma]
             
     return row_data
 

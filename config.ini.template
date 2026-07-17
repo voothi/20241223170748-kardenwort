@@ -121,3 +121,13 @@ enabled = true
 ; Example: oxford=data/en/oxford.tsv, cambridge=data/en/cambridge.tsv
 dictionaries_en = oxford=3k:data/en/20260715160822-oxford-3000.en.tsv, oxford=5k:data/en/20260715165539-oxford-5000-expanded.en.tsv
 dictionaries_de = goethe=data/de/20260716200932-english-deutsch.de.tsv
+
+[case_sensitivity]
+; Control case-sensitivity for frequency index lookup and level-based classification lookup.
+; English (en): frequency is case-insensitive, classification is case-sensitive
+frequency_en = false
+classification_en = true
+
+; German (de): frequency is case-sensitive, classification is case-sensitive
+frequency_de = true
+classification_de = true

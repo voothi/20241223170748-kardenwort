@@ -90,7 +90,7 @@ class CaseAwareClassificationDict(dict):
         except KeyError:
             return default
 
-def load_classification_dictionaries(classify_args):
+def load_classification_dictionaries(classify_args, case_sensitive=True):
     """
     Parses --classify name=path arguments, loads TSV files, skipping headers,
     and returns a nested dict of CaseAwareClassificationDicts.
@@ -128,6 +128,8 @@ def load_classification_dictionaries(classify_args):
                     
                     if len(row) >= 1:
                         raw_lemma = row[0].strip()
+                        if not case_sensitive:
+                            raw_lemma = raw_lemma.lower()
                         
                         val = ""
                         if is_oxford:
@@ -419,26 +421,29 @@ def load_lemma_frequency_index(file_path):
         return {}
     return lemma_index
 
-def get_lemma_sort_key(word, lemma_index, language="en"):
+def get_lemma_sort_key(word, lemma_index, language="en", case_sensitive=None):
     language = language or "en"
+    if case_sensitive is None:
+        case_sensitive = (language == "de")
+        
     # 1. Normalize punctuation for lookup
     def get_variations(w):
         vars_set = []
         w_clean = w.strip()
         vars_set.append(w_clean)
-        if language != "de":
+        if not case_sensitive:
             vars_set.append(w_clean.lower())
         
         # Replace curly apostrophe with straight, and vice-versa
         w_straight = w_clean.replace("’", "'")
         vars_set.append(w_straight)
-        if language != "de":
+        if not case_sensitive:
             vars_set.append(w_straight.lower())
         
         # Remove apostrophes and backticks entirely
         w_no_apo = w_clean.replace("’", "").replace("'", "").replace("`", "")
         vars_set.append(w_no_apo)
-        if language != "de":
+        if not case_sensitive:
             vars_set.append(w_no_apo.lower())
         
         seen = set()
@@ -566,9 +571,11 @@ def prepare_row_data(args, **kwargs):
         
     classifications = kwargs.get('classifications', {})
     lemma = row_data['lemma']
+    case_sensitive = kwargs.get('classification_case_sensitive', True)
     for c_name, c_dict in classifications.items():
-        if lemma in c_dict:
-            row_data[c_name] = c_dict[lemma]
+        lookup_lemma = lemma if case_sensitive else lemma.lower()
+        if lookup_lemma in c_dict:
+            row_data[c_name] = c_dict[lookup_lemma]
             
     return row_data
 
@@ -2091,12 +2098,26 @@ def main():
 
     args = parser.parse_args()
     
-    # Load Classifications from Config
+    # Initialize defaults
+    args.frequency_case_sensitive = (args.language == 'de')
+    args.classification_case_sensitive = True
+
+    # Load Classifications and Case Sensitivity from Config
     config_path_classify = Path(__file__).resolve().parent.parent.parent.parent / 'config.ini'
     if config_path_classify.exists() and not args.disable_classification:
         import configparser
         cfg = configparser.ConfigParser(allow_no_value=True)
         cfg.read(config_path_classify, encoding='utf-8')
+        
+        # Load case sensitivity settings
+        if cfg.has_section('case_sensitivity'):
+            freq_opt = f'frequency_{args.language}'
+            class_opt = f'classification_{args.language}'
+            if cfg.has_option('case_sensitivity', freq_opt):
+                args.frequency_case_sensitive = cfg.getboolean('case_sensitivity', freq_opt)
+            if cfg.has_option('case_sensitivity', class_opt):
+                args.classification_case_sensitive = cfg.getboolean('case_sensitivity', class_opt)
+                
         if cfg.has_section('classification') and cfg.getboolean('classification', 'enabled', fallback=False):
             if cfg.has_option('classification', f'dictionaries_{args.language}'):
                 dicts = cfg.get('classification', f'dictionaries_{args.language}', fallback='')
@@ -2219,7 +2240,10 @@ def main():
                 print(f"Error loading GCS dictionary: {e}", file=sys.stderr); exit(1)
 
     lemma_index = load_lemma_frequency_index(args.lemma_index_file)
-    classifications = load_classification_dictionaries(getattr(args, 'classify', None))
+    classifications = load_classification_dictionaries(
+        getattr(args, 'classify', None),
+        case_sensitive=getattr(args, 'classification_case_sensitive', True)
+    )
     processed_output_file = None
     final_output_path = args.output_file
     
@@ -2315,6 +2339,7 @@ def main():
             'de_gcs_mask_unknown_parts': args.de_gcs_mask_unknown_parts,
             'de_gcs_preserve_compound_word': args.de_gcs_preserve_compound_word,
             'de_gcs_skip_merge_fractions': args.de_gcs_skip_merge_fractions,
+            'classification_case_sensitive': getattr(args, 'classification_case_sensitive', True),
         }
         
         if args.text2_file:
@@ -2358,6 +2383,7 @@ def main():
             'de_gcs_mask_unknown_parts': args.de_gcs_mask_unknown_parts,
             'de_gcs_preserve_compound_word': args.de_gcs_preserve_compound_word,
             'de_gcs_skip_merge_fractions': args.de_gcs_skip_merge_fractions,
+            'classification_case_sensitive': getattr(args, 'classification_case_sensitive', True),
         }
         processed_output_file = process_parallel_sentences_to_csv(
             args.language, lemma_index, args.text1_file, args.text2_file, args.text3_file,

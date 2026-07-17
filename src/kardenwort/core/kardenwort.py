@@ -373,11 +373,11 @@ def find_separable_verb_particle_pairs(document):
 def load_lemma_frequency_index(file_path):
     lemma_index = {}
     try:
-        with open(file_path, "r", newline="", encoding="utf-8") as csvfile:
-            csv_reader = csv.reader(csvfile)
-            for line_number, row in enumerate(csv_reader):
-                if row and row[0] not in lemma_index:
-                    lemma_index[row[0]] = line_number
+        with open(file_path, "r", encoding="utf-8") as file:
+            for line_number, line in enumerate(file):
+                word = line.strip()
+                if word and word not in lemma_index:
+                    lemma_index[word] = line_number
     except FileNotFoundError:
         print(f"File not found: {file_path}", file=sys.stderr)
         return {}
@@ -385,6 +385,73 @@ def load_lemma_frequency_index(file_path):
         print(f"Error reading file {file_path}: {e}", file=sys.stderr)
         return {}
     return lemma_index
+
+def get_lemma_sort_key(word, lemma_index, language="en"):
+    language = language or "en"
+    # 1. Normalize punctuation for lookup
+    def get_variations(w):
+        vars_set = []
+        w_clean = w.strip()
+        vars_set.append(w_clean)
+        if language != "de":
+            vars_set.append(w_clean.lower())
+        
+        # Replace curly apostrophe with straight, and vice-versa
+        w_straight = w_clean.replace("’", "'")
+        vars_set.append(w_straight)
+        if language != "de":
+            vars_set.append(w_straight.lower())
+        
+        # Remove apostrophes and backticks entirely
+        w_no_apo = w_clean.replace("’", "").replace("'", "").replace("`", "")
+        vars_set.append(w_no_apo)
+        if language != "de":
+            vars_set.append(w_no_apo.lower())
+        
+        seen = set()
+        res = []
+        for v in vars_set:
+            if v not in seen:
+                seen.add(v)
+                res.append(v)
+        return res
+
+    # Check variations of the whole word first
+    for var in get_variations(word):
+        if var in lemma_index:
+            return (False, lemma_index[var], word.lower())
+
+    # 2. Handle subparts by comma, slash, space, or hyphen
+    parts = []
+    if ',' in word:
+        parts = [p.strip() for p in word.split(',') if p.strip()]
+    elif '/' in word:
+        parts = [p.strip() for p in word.split('/') if p.strip()]
+    elif language != "de":
+        # Only split by spaces or hyphens for non-German languages
+        if ' ' in word:
+            parts = [p.strip() for p in word.split(' ') if p.strip()]
+        elif '-' in word:
+            parts = [p.strip() for p in word.split('-') if p.strip()]
+
+    if parts:
+        found_indices = []
+        for p in parts:
+            for var in get_variations(p):
+                if var in lemma_index:
+                    found_indices.append(lemma_index[var])
+                    break
+        if found_indices:
+            # Use min rank (highest freq) for alternatives (comma/slash),
+            # and max rank (lowest freq component) for phrases (space/hyphen).
+            if ',' in word or '/' in word:
+                val = min(found_indices)
+            else:
+                val = max(found_indices)
+            return (False, val, word.lower())
+            
+    # 3. Fallback if not found
+    return (True, 0, word.lower())
 
 def read_text_from_file(file_path):
     try:
@@ -676,7 +743,7 @@ def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, de_
         for lemma in deduplicated_lemmas:
             final_lemmas.add(lemma)
 
-    return sorted(list(final_lemmas), key=lambda x: (x not in lemma_sort_index, lemma_sort_index.get(x, 0), x.lower()))
+    return sorted(list(final_lemmas), key=lambda x: get_lemma_sort_key(x, lemma_sort_index, getattr(args, 'language', 'en')))
 
 def _write_deck_metadata(args, output_file_path, source_text_content, target_text_content=None, tertiary_text_content=None, subdeck_content_map=None):
     if not args.anki_deck_content:
@@ -1041,9 +1108,9 @@ def process_parallel_text_files(
 
     sorted_items = []
     if args.deduplication_scope == 'global':
-        sorted_items = sorted(list(lemma_data['lemmas'].keys()), key=lambda word: (word not in lemma_sort_index, lemma_sort_index.get(word, 0), word.lower()))
+        sorted_items = sorted(list(lemma_data['lemmas'].keys()), key=lambda word: get_lemma_sort_key(word, lemma_sort_index, getattr(args, 'language', 'en')))
     else:
-        sorted_items = sorted(lemma_data, key=lambda x: (x['lemma'] not in lemma_sort_index, lemma_sort_index.get(x['lemma'], 0), x['lemma'].lower()))
+        sorted_items = sorted(lemma_data, key=lambda x: get_lemma_sort_key(x['lemma'], lemma_sort_index, getattr(args, 'language', 'en')))
 
     if output_file_path:
         full_deck_name = ""
@@ -1412,9 +1479,9 @@ def process_single_text(
 
     sorted_items = []
     if args.deduplication_scope == 'global':
-        sorted_items = sorted(list(lemma_data['lemmas'].keys()), key=lambda word: (word not in lemma_sort_index, lemma_sort_index.get(word, 0), word.lower()))
+        sorted_items = sorted(list(lemma_data['lemmas'].keys()), key=lambda word: get_lemma_sort_key(word, lemma_sort_index, getattr(args, 'language', 'en')))
     else:
-        sorted_items = sorted(lemma_data, key=lambda x: (x['lemma'] not in lemma_sort_index, lemma_sort_index.get(x['lemma'], 0), x['lemma'].lower()))
+        sorted_items = sorted(lemma_data, key=lambda x: get_lemma_sort_key(x['lemma'], lemma_sort_index, getattr(args, 'language', 'en')))
     
     sentence_lemmas_cache = {}
 
@@ -2025,7 +2092,7 @@ def main():
                 input_words.append(word)
         sorted_words = sorted(
             input_words,
-            key=lambda w: (w not in lemma_index, lemma_index.get(w, 0), w.lower())
+            key=lambda w: get_lemma_sort_key(w, lemma_index, getattr(args, 'language', 'en'))
         )
         for w in sorted_words:
             print(w)

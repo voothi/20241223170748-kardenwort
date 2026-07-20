@@ -13,15 +13,15 @@ import configparser
 
 SHORTCUTS = [
     {
-        "name": "Kardenwort Vocab",
+        "name": "Kardenwort Extract Vocab",
         "description": "Extracts vocabulary from sent files and imports them to Anki",
     },
     {
-        "name": "IntelliFiller Fill",
+        "name": "Kardenwort Fill Vocab",
         "description": "Enrich vocabulary TSV using headless IntelliFiller AI",
     },
     {
-        "name": "Kardenwort Import",
+        "name": "Kardenwort Import All",
         "description": "Imports an existing vocabulary TSV directly into Anki",
     }
 ]
@@ -126,7 +126,7 @@ def main(argv=None):
     headless_entrypoint_path = os.path.join(intellifiller_workspace, "IntelliFiller", "headless_entrypoint.py")
 
     # Clean legacy shortcuts
-    for legacy in ("Kardenwort Vocab Processor",):
+    for legacy in ("Kardenwort Vocab Processor", "Kardenwort Vocab", "IntelliFiller Fill", "Kardenwort Import"):
         old_path = os.path.join(sendto_dir, f"{legacy}.lnk")
         if os.path.exists(old_path):
             try:
@@ -134,27 +134,27 @@ def main(argv=None):
             except Exception:
                 pass
 
-    # Register Kardenwort Vocab
+    # Register Kardenwort Extract Vocab
     create_shortcut(
-        "Kardenwort Vocab",
+        "Kardenwort Extract Vocab",
         python_path,
         f'"{sendto_vocab_path}" --sendto --pause',
         "Extracts vocabulary from sent files and imports them to Anki",
         sendto_dir
     )
 
-    # Register IntelliFiller Fill
+    # Register Kardenwort Fill Vocab
     create_shortcut(
-        "IntelliFiller Fill",
+        "Kardenwort Fill Vocab",
         python_path,
         f'"{headless_entrypoint_path}" --prompt "English Vocabulary Analysis and Translation (JSON)" --tsv',
         "Enrich vocabulary TSV using headless IntelliFiller AI",
         sendto_dir
     )
 
-    # Register Kardenwort Import
+    # Register Kardenwort Import All
     create_shortcut(
-        "Kardenwort Import",
+        "Kardenwort Import All",
         python_path,
         f'"{runner_path}" --import-only --tsv',
         "Imports an existing vocabulary TSV directly into Anki",

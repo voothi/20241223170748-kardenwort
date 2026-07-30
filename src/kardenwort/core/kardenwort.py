@@ -715,12 +715,8 @@ def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, de_
             default_lemma = format_lemma_capitalization(token, spacy_lemma, args)
             if getattr(args, 'use_simplemma_correction', False):
                 default_lemma = simplemma.lemmatize(token.text, lang=getattr(args, 'language', 'en'))
-                if token.pos_ in ["NOUN", "PROPN"] and not (token.like_url or token.like_email):
-                    default_lemma = default_lemma.capitalize()
+                default_lemma = format_lemma_capitalization(token, default_lemma, args)
         base_lemma = get_overridden_lemma_for_word(default_lemma, source_word_form, lemma_override_rules, sentence_text)
-        
-        with open('debug.log', 'a') as f:
-            f.write(f"DEBUG TOKEN: {token.text}, default_lemma={default_lemma}, base_lemma={base_lemma}, pos={token.pos_}, spacy_lemma={spacy_lemma}\n")
         
         was_split = False
         is_special_token = token.like_url or token.like_email
@@ -1059,8 +1055,7 @@ def process_parallel_text_files(
                     default_lemma = format_lemma_capitalization(token, spacy_lemma, args)
                     if getattr(args, 'use_simplemma_correction', False):
                         default_lemma = simplemma.lemmatize(token.text, lang=getattr(args, 'language', 'en'))
-                        if token.pos_ in ["NOUN", "PROPN"] and not (token.like_url or token.like_email):
-                            default_lemma = default_lemma.capitalize()
+                        default_lemma = format_lemma_capitalization(token, default_lemma, args)
                 base_lemma = get_overridden_lemma_for_word(default_lemma, source_word_form, lemma_override_rules, source_sentence)
 
                 was_split = False
@@ -1437,8 +1432,7 @@ def process_single_text(
                     default_lemma = format_lemma_capitalization(token, spacy_lemma, args)
                     if getattr(args, 'use_simplemma_correction', False):
                         default_lemma = simplemma.lemmatize(token.text, lang=getattr(args, 'language', 'en'))
-                        if token.pos_ in ["NOUN", "PROPN"] and not (token.like_url or token.like_email):
-                            default_lemma = default_lemma.capitalize()
+                        default_lemma = format_lemma_capitalization(token, default_lemma, args)
                 base_lemma = get_overridden_lemma_for_word(default_lemma, source_word_form, lemma_override_rules, unit_text)
                 
                 was_split = False

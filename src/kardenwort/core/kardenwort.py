@@ -628,9 +628,6 @@ def format_lemma_capitalization(token, initial_lemma, args):
         if token.pos_ == "PROPN":
             return initial_lemma.capitalize()
 
-    if token.is_sent_start and token.pos_ not in ["NOUN", "PROPN"]:
-        return initial_lemma.lower()
-
     return initial_lemma
 
 def deduplicate_lemmas(candidate_lemmas):

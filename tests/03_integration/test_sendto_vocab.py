@@ -716,9 +716,10 @@ def test_install_script(tmp_path, monkeypatch):
     # 1. Legacy shortcut should be deleted
     assert not legacy_shortcut.exists()
     
-    # 2. New shortcut should be created by the OS's PowerShell COM script
-    new_shortcut = temp_sendto / "Kardenwort Vocab.lnk"
-    assert new_shortcut.exists()
+    # 2. New shortcuts should be created by the OS's PowerShell COM script
+    assert (temp_sendto / "Kardenwort Extract Vocab.lnk").exists()
+    assert (temp_sendto / "Kardenwort Fill Vocab.lnk").exists()
+    assert (temp_sendto / "Kardenwort Import All.lnk").exists()
 
 # ==============================================================================
 # SRT TIMESTAMP PARSING TESTS

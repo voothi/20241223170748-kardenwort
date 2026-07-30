@@ -9,6 +9,7 @@ import io
 import json
 import tempfile
 import atexit
+import simplemma
 
 try:
     from german_compound_splitter import comp_split
@@ -354,7 +355,7 @@ def get_overridden_lemma_for_compound_part(initial_lemma, part, original_word, o
             
     return initial_lemma
 
-def lemmatize_compound_part(part, nlp_model, de_dictionary):
+def lemmatize_compound_part(part, nlp_model, de_dictionary, args=None):
     if not part:
         return ""
 
@@ -371,9 +372,15 @@ def lemmatize_compound_part(part, nlp_model, de_dictionary):
     token = part_document[0]
     
     if token.pos_ not in ["NOUN", "PROPN"]:
-        return token.lemma_
+        spacy_lemma = token.lemma_
+        if args and getattr(args, 'use_simplemma_correction', False):
+            return simplemma.lemmatize(part, lang=getattr(args, 'language', 'en'))
+        return spacy_lemma
     
     spacy_lemma = token.lemma_.capitalize()
+    if args and getattr(args, 'use_simplemma_correction', False):
+        spacy_lemma = simplemma.lemmatize(part, lang=getattr(args, 'language', 'en')).capitalize()
+
     capitalized_part = part.capitalize()
 
     if spacy_lemma in de_dictionary:
@@ -698,11 +705,18 @@ def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, de_
         base_lemma = ""
         if token.i in separable_verb_map:
             particle = separable_verb_map[token.i]
-            default_lemma = f"{particle.text.lower()}{token.lemma_}".lower()
+            base_verb_lemma = token.lemma_
+            if getattr(args, 'use_simplemma_correction', False):
+                base_verb_lemma = simplemma.lemmatize(token.text, lang=getattr(args, 'language', 'en'))
+            default_lemma = f"{particle.text.lower()}{base_verb_lemma}".lower()
             source_word_form = f"{token.text} {particle.text}"
         else:
             spacy_lemma = correct_spacy_lemma(token, de_dictionary, de_fix_genitive)
             default_lemma = format_lemma_capitalization(token, spacy_lemma, args)
+            if getattr(args, 'use_simplemma_correction', False):
+                default_lemma = simplemma.lemmatize(token.text, lang=getattr(args, 'language', 'en'))
+                if token.pos_ in ["NOUN", "PROPN"] and not (token.like_url or token.like_email):
+                    default_lemma = default_lemma.capitalize()
         base_lemma = get_overridden_lemma_for_word(default_lemma, source_word_form, lemma_override_rules, sentence_text)
         
         was_split = False
@@ -719,7 +733,7 @@ def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, de_
                 part = part.strip()
                 if not part or len(part) <= 1: continue
 
-                initial_part_lemma = lemmatize_compound_part(part, nlp_model, de_dictionary)
+                initial_part_lemma = lemmatize_compound_part(part, nlp_model, de_dictionary, args)
                 processed_part_lemma = get_overridden_lemma_for_compound_part(initial_part_lemma, part, token.text, lemma_override_rules, sentence_text)
                 if processed_part_lemma:
                     lemmas_for_current_token.append(processed_part_lemma)
@@ -768,7 +782,7 @@ def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, de_
                         component = raw_component.strip('-')
                         if not component or len(component) < 3: continue
                         
-                        initial_part_lemma = lemmatize_compound_part(component, nlp_model, de_dictionary)
+                        initial_part_lemma = lemmatize_compound_part(component, nlp_model, de_dictionary, args)
                         overridden_part_lemma = get_overridden_lemma_for_compound_part(initial_part_lemma, component, token.text, lemma_override_rules, sentence_text)
                         processed_part_lemma = _format_gcs_component_case(overridden_part_lemma)
 
@@ -1990,6 +2004,8 @@ def main():
     data_files_group.add_argument("--de-dictionary-file", default="german.dic", help="Path to the dictionary file for German-specific operations.")
     data_files_group.add_argument("--classify", action="append", help="Classification dictionary in format name=path.tsv. Can be specified multiple times.")
     data_files_group.add_argument("--disable-classification", action="store_true", help="Disable loading classifications from config.ini.")
+    
+    parser.add_argument("--use-simplemma-correction", action="store_true", help="Apply simplemma as an unconditional override after SpaCy processing.")
 
     filename_group = parser.add_argument_group('Output Filename Generation')
     filename_group.add_argument("--basename-add-timestamp", action="store_true", help="Prepend the output filename with a 'YYYYMMDDHHMMSS' timestamp.")

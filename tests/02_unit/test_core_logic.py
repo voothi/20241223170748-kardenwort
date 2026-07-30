@@ -362,6 +362,66 @@ def test_extract_lemmas_from_sentence():
         kardenwort.nlp = original_nlp
 
 
+def test_extract_lemmas_with_simplemma():
+    from kardenwort.core.kardenwort import extract_lemmas_from_sentence
+    
+    class MockMorph:
+        def __init__(self, data): self.data = data
+        def get(self, key, default=None): return self.data.get(key, default)
+        
+    class MockToken:
+        def __init__(self, text, lemma, pos, i, dep, head_i=None, is_alpha=True, like_url=False, like_email=False, is_sent_start=False):
+            self.text = text
+            self.lemma_ = lemma
+            self.pos_ = pos
+            self.i = i
+            self.dep_ = dep
+            self.head = MagicMock()
+            self.head.i = head_i
+            self.is_alpha = is_alpha
+            self.like_url = like_url
+            self.like_email = like_email
+            self.is_sent_start = is_sent_start
+            self.morph = MockMorph({})
+
+    # Mock token where SpaCy fails to lemmatize properly (gegangen -> gegangen)
+    t0 = MockToken("gegangen", "gegangen", "VERB", 0, "ROOT")
+    
+    doc = [t0]
+    
+    class MockNLP:
+        lang = 'de'
+        def __call__(self, text):
+            return doc
+    
+    class MockArgs:
+        language = 'de'
+        de_force_noun_capitalization = True
+        force_proper_noun_capitalization = True
+        de_gcs_part_singularization = 'none'
+        use_simplemma_correction = True
+
+    from kardenwort.core import kardenwort
+    original_nlp = getattr(kardenwort, 'nlp', None)
+    kardenwort.nlp = MockNLP()
+    
+    try:
+        lemmas = extract_lemmas_from_sentence(
+            "gegangen",
+            lemma_sort_index={},
+            nlp_model=MockNLP(),
+            de_dictionary=set(),
+            lemma_override_rules={},
+            de_gcs_pos_tags=["NOUN", "PROPN"],
+            args=MockArgs()
+        )
+        
+        # simplemma should correct "gegangen" to "gehen"
+        assert "gehen" in lemmas
+        assert "gegangen" not in lemmas
+    finally:
+        kardenwort.nlp = original_nlp
+
 def test_load_lemma_override_rules_regex(tmp_path):
     o_file = tmp_path / "regex_override.tsv"
     content = [

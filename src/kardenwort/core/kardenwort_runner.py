@@ -144,6 +144,9 @@ def get_script_args(args, python_path, workspace_path, config, anki_mapping):
     if args.multi_text:
         base_args.append("--multi-text")
 
+    if getattr(args, 'use_simplemma_correction', False):
+        base_args.append("--use-simplemma-correction")
+
     if args.prefer_shortest_form:
         base_args.append("--prefer-shortest-form")
 
@@ -381,6 +384,7 @@ def main():
         description="A wrapper script to extract and process words or sentences from text files and import them into Anki."
     )
     parser.add_argument("--play-sound-on-completion", action="store_true", help="Play a system beep sound upon successful completion.")
+    parser.add_argument("--use-simplemma-correction", action="store_true", help="Apply simplemma as an unconditional override after SpaCy processing.")
     parser.add_argument("--show-success-message", action="store_true", help="Display a user-friendly success message on stdout. Useful for interactive tools like GoldenDict.")
     parser.add_argument("--type", type=str, choices=["word", "sentence"], help="Type of processing: 'word' for word extraction, 'sentence' for parallel sentences. Not required for 'mixed-triple' mode.")
     parser.add_argument("--mode", type=str, choices=["single", "dual", "triple", "mixed-triple"], help="Processing mode: single, dual, triple, or mixed-triple (runs sentence and word modes sequentially).")

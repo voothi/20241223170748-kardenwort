@@ -628,7 +628,7 @@ def format_lemma_capitalization(token, initial_lemma, args):
             return initial_lemma.capitalize()
 
     if token.is_sent_start and token.pos_ not in ["NOUN", "PROPN"]:
-        return initial_lemma
+        return initial_lemma.lower()
 
     return initial_lemma
 

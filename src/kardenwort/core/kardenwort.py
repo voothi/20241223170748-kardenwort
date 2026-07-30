@@ -494,7 +494,8 @@ def get_lemma_sort_key(word, lemma_index, language="en", case_sensitive=None):
 def read_text_from_file(file_path):
     try:
         with open(file_path, "r", encoding="utf-8") as file:
-            return file.read()
+            content = file.read()
+            return content.replace('\u200b', '').replace('\u200c', '').replace('\u200d', '').replace('\ufeff', '')
     except FileNotFoundError:
         print(f"File not found: {file_path}", file=sys.stderr); exit(1)
     except Exception as e:
@@ -2098,6 +2099,9 @@ def main():
 
     args = parser.parse_args()
     
+    if hasattr(args, 'text') and args.text:
+        args.text = args.text.replace('\u200b', '').replace('\u200c', '').replace('\u200d', '').replace('\ufeff', '')
+        
     # Initialize defaults
     args.frequency_case_sensitive = (args.language == 'de')
     args.classification_case_sensitive = True

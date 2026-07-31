@@ -1063,7 +1063,7 @@ def process_parallel_text_files(
         lemma_data = []
 
     order_cfg = getattr(args, 'combine_source_words_order', 'contractions_first')
-    apo_cfg = tuple(c.strip() for c in getattr(args, 'apostrophe_chars', "', ’, ‘, `, ´, ʼ").strip('\'"').split(',') if c.strip())
+    apo_cfg = tuple(c.strip() for c in getattr(args, 'apostrophe_chars', "', ’, ‘, `, ´, ʼ").strip('"').split(',') if c.strip())
 
     subdeck_content_map = {}
     deck_stack = []
@@ -1572,7 +1572,7 @@ def process_single_text(
         lemma_data = []
 
     order_cfg = getattr(args, 'combine_source_words_order', 'contractions_first')
-    apo_cfg = tuple(c.strip() for c in getattr(args, 'apostrophe_chars', "', ’, ‘, `, ´, ʼ").strip('\'"').split(',') if c.strip())
+    apo_cfg = tuple(c.strip() for c in getattr(args, 'apostrophe_chars', "', ’, ‘, `, ´, ʼ").strip('"').split(',') if c.strip())
 
     doc_cache = {}
 
@@ -2426,9 +2426,9 @@ def main():
 
         if getattr(args, 'strip_garbage_characters', None) is None:
             if cfg.has_section('lemmatization') and cfg.has_option('lemmatization', 'strip_garbage_characters'):
-                args.strip_garbage_characters = cfg.get('lemmatization', 'strip_garbage_characters').strip('\'"')
+                args.strip_garbage_characters = cfg.get('lemmatization', 'strip_garbage_characters').strip('"')
             elif cfg.has_section('settings') and cfg.has_option('settings', 'strip_garbage_characters'):
-                args.strip_garbage_characters = cfg.get('settings', 'strip_garbage_characters').strip('\'"')
+                args.strip_garbage_characters = cfg.get('settings', 'strip_garbage_characters').strip('"')
             else:
                 args.strip_garbage_characters = ''
                 
@@ -2444,25 +2444,27 @@ def main():
 
         if getattr(args, 'disable_token_mappings', False):
             args.token_mappings_enabled = False
-        elif cfg.has_section('token_mappings') and cfg.getboolean('token_mappings', 'enabled', fallback=False):
-            if not args.token_mappings_enabled:
+        else:
+            if cfg.has_section('token_mappings') and cfg.getboolean('token_mappings', 'enabled', fallback=False):
                 args.token_mappings_enabled = True
 
-            args.token_mappings_case_sensitive = cfg.getboolean('token_mappings', 'case_sensitive', fallback=False)
-            args.token_mappings_normalize_apostrophes = cfg.getboolean('token_mappings', 'normalize_apostrophes', fallback=True)
-            args.token_mappings_normalize_spaces = cfg.getboolean('token_mappings', 'normalize_spaces', fallback=True)
-            args.token_mappings_enable_context_disambiguation = cfg.getboolean('token_mappings', 'enable_context_disambiguation', fallback=True)
-            if not getattr(args, 'token_mappings_lemmatize_cli', False):
-                args.token_mappings_lemmatize = cfg.getboolean('token_mappings', 'lemmatize_mapped_tokens', fallback=False)
-            
-            mappings_files = cfg.get('token_mappings', args.language, fallback='')
-            if mappings_files:
-                for mf in mappings_files.split(','):
-                    mf = mf.strip()
-                    if not mf: continue
-                    kw_ws = cfg.get('environment', 'kardenwort_workspace', fallback='./')
-                    ws_path = (config_path_classify.parent / kw_ws).resolve()
-                    args.token_mappings_files.append(str(ws_path / mf))
+        if getattr(args, 'token_mappings_enabled', False):
+            if cfg.has_section('token_mappings'):
+                args.token_mappings_case_sensitive = cfg.getboolean('token_mappings', 'case_sensitive', fallback=False)
+                args.token_mappings_normalize_apostrophes = cfg.getboolean('token_mappings', 'normalize_apostrophes', fallback=True)
+                args.token_mappings_normalize_spaces = cfg.getboolean('token_mappings', 'normalize_spaces', fallback=True)
+                args.token_mappings_enable_context_disambiguation = cfg.getboolean('token_mappings', 'enable_context_disambiguation', fallback=True)
+                if not getattr(args, 'token_mappings_lemmatize_cli', False):
+                    args.token_mappings_lemmatize = cfg.getboolean('token_mappings', 'lemmatize_mapped_tokens', fallback=False)
+                
+                mappings_files = cfg.get('token_mappings', args.language, fallback='')
+                if mappings_files:
+                    for mf in mappings_files.split(','):
+                        mf = mf.strip()
+                        if not mf: continue
+                        kw_ws = cfg.get('environment', 'kardenwort_workspace', fallback='./')
+                        ws_path = (config_path_classify.parent / kw_ws).resolve()
+                        args.token_mappings_files.append(str(ws_path / mf))
 
     if args.type == "sort-frequency":
         lemma_index = load_lemma_frequency_index(args.lemma_index_file)

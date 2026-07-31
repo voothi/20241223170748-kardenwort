@@ -740,6 +740,26 @@ def deduplicate_lemmas(candidate_lemmas):
             
     return final_lemmas
 
+def _lemmatize_mapped_tokens(mapped_lemmas, nlp_model, de_dictionary, lemma_override_rules, args, sentence_text, de_fix_genitive=False):
+    if not getattr(args, 'token_mappings_lemmatize', False):
+        return mapped_lemmas
+        
+    result = []
+    for l in mapped_lemmas:
+        doc = nlp_model(l)
+        if len(doc) > 0:
+            ltok = doc[0]
+            spacy_lemma = correct_spacy_lemma(ltok, de_dictionary, de_fix_genitive)
+            default_lemma = format_lemma_capitalization(ltok, spacy_lemma, args)
+            if getattr(args, 'use_simplemma_correction', False):
+                default_lemma = simplemma.lemmatize(ltok.text, lang=getattr(args, 'language', 'en'))
+                default_lemma = format_lemma_capitalization(ltok, default_lemma, args)
+            final_lemma = get_overridden_lemma_for_word(default_lemma, l, lemma_override_rules, sentence_text)
+            result.append(final_lemma)
+        else:
+            result.append(l)
+    return result
+
 def parse_markdown_for_branch_headers(all_lines):
     branch_header_indices = set()
     last_header_level = 0
@@ -782,7 +802,9 @@ def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, de_
         if token.i in mapped_tokens:
             if token.i in token_mappings_matches:
                 match = token_mappings_matches[token.i]
-                lemmas_for_current_token = match['lemmas']
+                lemmas_for_current_token = _lemmatize_mapped_tokens(
+                    match['lemmas'], nlp_model, de_dictionary, lemma_override_rules, args, sentence_text, de_fix_genitive
+                )
                 skip_standard_extraction = True
             else:
                 continue
@@ -1137,7 +1159,9 @@ def process_parallel_text_files(
                 if token.i in token_mappings_matches:
                     match = token_mappings_matches[token.i]
                     source_word_form = match['source_word']
-                    lemmas_for_current_token = match['lemmas']
+                    lemmas_for_current_token = _lemmatize_mapped_tokens(
+                        match['lemmas'], nlp, de_dictionary, lemma_override_rules, args, source_sentence, de_fix_genitive
+                    )
                     skip_standard_extraction = True
                 else:
                     continue
@@ -1531,7 +1555,9 @@ def process_single_text(
                 if token.i in token_mappings_matches:
                     match = token_mappings_matches[token.i]
                     source_word_form = match['source_word']
-                    lemmas_for_current_token = match['lemmas']
+                    lemmas_for_current_token = _lemmatize_mapped_tokens(
+                        match['lemmas'], nlp, de_dictionary, lemma_override_rules, args, unit_text, de_fix_genitive
+                    )
                     skip_standard_extraction = True
                 else:
                     continue
@@ -2260,6 +2286,7 @@ def main():
     args.token_mappings_normalize_apostrophes = True
     args.token_mappings_normalize_spaces = True
     args.token_mappings_enable_context_disambiguation = True
+    args.token_mappings_lemmatize = False
     args.token_mappings_files = []
 
     # Load Classifications and Case Sensitivity from Config
@@ -2304,6 +2331,7 @@ def main():
             args.token_mappings_normalize_apostrophes = cfg.getboolean('token_mappings', 'normalize_apostrophes', fallback=True)
             args.token_mappings_normalize_spaces = cfg.getboolean('token_mappings', 'normalize_spaces', fallback=True)
             args.token_mappings_enable_context_disambiguation = cfg.getboolean('token_mappings', 'enable_context_disambiguation', fallback=True)
+            args.token_mappings_lemmatize = cfg.getboolean('token_mappings', 'lemmatize_mapped_tokens', fallback=False)
             
             mappings_files = cfg.get('token_mappings', args.language, fallback='')
             if mappings_files:

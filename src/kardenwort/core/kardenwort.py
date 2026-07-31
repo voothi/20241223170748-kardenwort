@@ -1266,8 +1266,9 @@ def process_parallel_text_files(
                             lemma_data['info'][lemma] = (content_line_idx, source_sentence, final_deck)
 
                     elif args.deduplication_scope == 'sentence':
-                        if lemma not in lemmas_in_sentence or len(source_word_form) < len(lemmas_in_sentence[lemma]['source_word']):
-                            lemmas_in_sentence[lemma] = data_entry
+                        dedup_key = (lemma, source_word_form.lower())
+                        if dedup_key not in lemmas_in_sentence:
+                            lemmas_in_sentence[dedup_key] = data_entry
                     elif args.deduplication_scope == 'none':
                         lemma_data.append(data_entry)
 
@@ -1656,8 +1657,9 @@ def process_single_text(
                             lemma_data['info'][lemma] = (unit_index, unit_text, current_deck)
                             
                     elif args.deduplication_scope == 'sentence':
-                        if lemma not in lemmas_in_sentence or len(source_word_form) < len(lemmas_in_sentence[lemma]['source_word']):
-                            lemmas_in_sentence[lemma] = data_entry
+                        dedup_key = (lemma, source_word_form.lower())
+                        if dedup_key not in lemmas_in_sentence:
+                            lemmas_in_sentence[dedup_key] = data_entry
                     elif args.deduplication_scope == 'none':
                         lemma_data.append(data_entry)
 

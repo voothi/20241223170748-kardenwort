@@ -2565,7 +2565,7 @@ def main():
     )
     processed_output_file = None
     final_output_path = args.output_file
-    
+
     source_text_for_filename = ""
     if args.text1_file:
         try:

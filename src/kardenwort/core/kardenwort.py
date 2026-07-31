@@ -2243,7 +2243,9 @@ def main():
     
     token_mappings_group = parser.add_argument_group('Token Mappings Control')
     token_mappings_group.add_argument("--token-mappings-enabled", action="store_true", help="Enable token mappings overriding config.")
+    token_mappings_group.add_argument("--disable-token-mappings", action="store_true", help="Disable token mappings overriding config.")
     token_mappings_group.add_argument("--lemmatize-mapped-tokens", action="store_true", dest="token_mappings_lemmatize_cli", help="Lemmatize mapped tokens overriding config.")
+
     
     de_group = parser.add_argument_group('German Language Specific Arguments')
     de_group.add_argument("--de-fix-genitive", action="store_true", help="[German] Corrects genitive noun lemmas (e.g., 'Hauses' -> 'Haus') by checking against the dictionary.")
@@ -2364,9 +2366,12 @@ def main():
             elif cfg.has_section('settings') and cfg.has_option('settings', 'combine_source_words'):
                 args.combine_source_words = cfg.getboolean('settings', 'combine_source_words')
 
-        if cfg.has_section('token_mappings') and cfg.getboolean('token_mappings', 'enabled', fallback=False):
+        if getattr(args, 'disable_token_mappings', False):
+            args.token_mappings_enabled = False
+        elif cfg.has_section('token_mappings') and cfg.getboolean('token_mappings', 'enabled', fallback=False):
             if not args.token_mappings_enabled:
                 args.token_mappings_enabled = True
+
             args.token_mappings_case_sensitive = cfg.getboolean('token_mappings', 'case_sensitive', fallback=False)
             args.token_mappings_normalize_apostrophes = cfg.getboolean('token_mappings', 'normalize_apostrophes', fallback=True)
             args.token_mappings_normalize_spaces = cfg.getboolean('token_mappings', 'normalize_spaces', fallback=True)

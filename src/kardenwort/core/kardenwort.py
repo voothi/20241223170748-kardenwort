@@ -802,6 +802,7 @@ def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, de_
         if token.i in mapped_tokens:
             if token.i in token_mappings_matches:
                 match = token_mappings_matches[token.i]
+                source_word_form = match['source_word']
                 lemmas_for_current_token = _lemmatize_mapped_tokens(
                     match['lemmas'], nlp_model, de_dictionary, lemma_override_rules, args, sentence_text, de_fix_genitive
                 )

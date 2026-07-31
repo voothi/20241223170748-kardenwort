@@ -1625,6 +1625,14 @@ def process_single_text(
                         default_lemma = format_lemma_capitalization(token, default_lemma, args)
                 base_lemma = get_overridden_lemma_for_word(default_lemma, source_word_form, lemma_override_rules, unit_text)
                 
+                if not skip_standard_extraction:
+                    strip_chars = getattr(args, 'strip_garbage_characters', '-')
+                    if strip_chars:
+                        source_word_form = source_word_form.strip(strip_chars)
+                        base_lemma = base_lemma.strip(strip_chars)
+                    if not source_word_form or not base_lemma:
+                        continue
+                
                 was_split = False
                 is_special_token = token.like_url or token.like_email
 
@@ -2278,7 +2286,7 @@ def main():
     lemmatization_group.add_argument("--combine-source-words", action="store_true", help="When deduplicating globally, combine different source word forms for the same lemma by separating them with a comma. Default is to keep only one.")
     lemmatization_group.add_argument("--combine-source-words-order", choices=['contractions_first', 'occurrence', 'alphabetical'], default=None, help="Set order for combined inflected forms when --combine-source-words is enabled.")
     lemmatization_group.add_argument("--apostrophe-chars", default="', ’, ‘, `, ´, ʼ", help="Comma-separated list of apostrophe characters for complex form detection.")
-
+    lemmatization_group.add_argument("--strip-garbage-characters", default=None, help="Characters to strip from the beginning and end of extracted source words (e.g., garbage hyphens).")
 
     
     token_mappings_group = parser.add_argument_group('Token Mappings Control')
@@ -2415,6 +2423,14 @@ def main():
                 args.combine_source_words_order = cfg.get('settings', 'combine_source_words_order').strip().lower()
             else:
                 args.combine_source_words_order = 'contractions_first'
+
+        if getattr(args, 'strip_garbage_characters', None) is None:
+            if cfg.has_section('lemmatization') and cfg.has_option('lemmatization', 'strip_garbage_characters'):
+                args.strip_garbage_characters = cfg.get('lemmatization', 'strip_garbage_characters').strip('\'"')
+            elif cfg.has_section('settings') and cfg.has_option('settings', 'strip_garbage_characters'):
+                args.strip_garbage_characters = cfg.get('settings', 'strip_garbage_characters').strip('\'"')
+            else:
+                args.strip_garbage_characters = '-'
                 
         if '--apostrophe-chars' not in sys.argv:
             if cfg.has_section('token_mappings') and cfg.has_option('token_mappings', 'apostrophe_chars'):

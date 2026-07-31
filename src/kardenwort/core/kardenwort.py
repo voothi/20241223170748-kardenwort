@@ -1062,6 +1062,9 @@ def process_parallel_text_files(
     else:
         lemma_data = []
 
+    order_cfg = getattr(args, 'combine_source_words_order', 'contractions_first')
+    apo_cfg = tuple(c.strip() for c in getattr(args, 'apostrophe_chars', "', ’, ‘, `, ´, ʼ").split(',') if c.strip())
+
     subdeck_content_map = {}
     deck_stack = []
     level_stack = []
@@ -1309,8 +1312,6 @@ def process_parallel_text_files(
                             existing_forms = [s.strip() for s in lemma_data['lemmas'][lemma].split(',') if s.strip()]
                             if source_word_form not in existing_forms:
                                 existing_forms.append(source_word_form)
-                            order_cfg = getattr(args, 'combine_source_words_order', 'contractions_first')
-                            apo_cfg = tuple(c.strip() for c in getattr(args, 'apostrophe_chars', "', ’, ‘, `, ´, ʼ").split(',') if c.strip())
                             lemma_data['lemmas'][lemma] = ", ".join(sort_inflected_forms(existing_forms, apo_cfg, order_cfg))
                         elif args.prefer_shortest_form and len(source_word_form) < len(lemma_data['lemmas'][lemma]):
                             lemma_data['lemmas'][lemma] = source_word_form
@@ -1324,8 +1325,6 @@ def process_parallel_text_files(
                                 existing_forms = [s.strip() for s in lemmas_in_sentence[lemma]['source_word'].split(',') if s.strip()]
                                 if source_word_form not in existing_forms:
                                     existing_forms.append(source_word_form)
-                                order_cfg = getattr(args, 'combine_source_words_order', 'contractions_first')
-                                apo_cfg = tuple(c.strip() for c in getattr(args, 'apostrophe_chars', "', ’, ‘, `, ´, ʼ").split(',') if c.strip())
                                 lemmas_in_sentence[lemma]['source_word'] = ", ".join(sort_inflected_forms(existing_forms, apo_cfg, order_cfg))
 
 
@@ -1572,6 +1571,9 @@ def process_single_text(
     else:
         lemma_data = []
 
+    order_cfg = getattr(args, 'combine_source_words_order', 'contractions_first')
+    apo_cfg = tuple(c.strip() for c in getattr(args, 'apostrophe_chars', "', ’, ‘, `, ´, ʼ").split(',') if c.strip())
+
     doc_cache = {}
 
     for unit_index, unit_text in enumerate(text_units):
@@ -1723,8 +1725,6 @@ def process_single_text(
                             existing_forms = [s.strip() for s in lemma_data['lemmas'][lemma].split(',') if s.strip()]
                             if source_word_form not in existing_forms:
                                 existing_forms.append(source_word_form)
-                            order_cfg = getattr(args, 'combine_source_words_order', 'contractions_first')
-                            apo_cfg = tuple(c.strip() for c in getattr(args, 'apostrophe_chars', "', ’, ‘, `, ´, ʼ").split(',') if c.strip())
                             lemma_data['lemmas'][lemma] = ", ".join(sort_inflected_forms(existing_forms, apo_cfg, order_cfg))
                         elif args.prefer_shortest_form and len(source_word_form) < len(lemma_data['lemmas'][lemma]):
                             lemma_data['lemmas'][lemma] = source_word_form
@@ -1738,9 +1738,7 @@ def process_single_text(
                                 existing_forms = [s.strip() for s in lemmas_in_sentence[lemma]['source_word'].split(',') if s.strip()]
                                 if source_word_form not in existing_forms:
                                     existing_forms.append(source_word_form)
-                                order_cfg = getattr(args, 'combine_source_words_order', 'contractions_first')
-                                apo_cfg = tuple(c.strip() for c in getattr(args, 'apostrophe_chars', "', ’, ‘, `, ´, ʼ").split(',') if c.strip())
-                                lemmas_in_sentence[lemma]['source_word'] = ", ".join(sort_inflected_forms(existing_forms, apo_cfg, order_cfg))
+                                lemma_data['lemmas'][lemma] = ", ".join(sort_inflected_forms(existing_forms, apo_cfg, order_cfg))
 
 
 

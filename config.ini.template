@@ -81,7 +81,7 @@ case_sensitive = false
 combine_source_words_order = contractions_first
 
 ; List of characters considered as apostrophes for sorting and normalization
-apostrophe_chars = ', ’, ‘, `, ´, ʼ, '
+apostrophe_chars = ', ’, ‘, `, ´, ʼ
 
 ; Normalizes typographic characters (e.g. ’ to ')
 normalize_apostrophes = true
@@ -103,7 +103,7 @@ de = data/de/lemma_abbreviations_de.tsv, data/de/lemma_contractions_de.tsv
 
 [lemmatization]
 ; When deduplicating globally, combine different source word forms for the same lemma by separating them with a comma
-combine_source_words = true
+combine_source_words = false
 
 [anki_importer_settings]
 ; Settings for the Anki CSV Importer script

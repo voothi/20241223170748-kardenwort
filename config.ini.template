@@ -90,6 +90,7 @@ enable_context_disambiguation = true
 ; Run token mapping output through the lemmatizer (e.g. isn't -> is -> be)
 lemmatize_mapped_tokens = true
 
+[lemmatization]
 ; When deduplicating globally, combine different source word forms for the same lemma by separating them with a comma
 combine_source_words = true
 

@@ -2240,6 +2240,10 @@ def main():
     lemmatization_group.add_argument("--prefer-shortest-form", action="store_true", help="When deduplicating globally, prefer the shortest word form of a lemma, even if it appears later in the text. Default is to keep the first occurrence.")
     lemmatization_group.add_argument("--combine-source-words", action="store_true", help="When deduplicating globally, combine different source word forms for the same lemma by separating them with a comma. Default is to keep only one.")
     
+    token_mappings_group = parser.add_argument_group('Token Mappings Control')
+    token_mappings_group.add_argument("--token-mappings-enabled", action="store_true", help="Enable token mappings overriding config.")
+    token_mappings_group.add_argument("--lemmatize-mapped-tokens", action="store_true", dest="token_mappings_lemmatize_cli", help="Lemmatize mapped tokens overriding config.")
+    
     de_group = parser.add_argument_group('German Language Specific Arguments')
     de_group.add_argument("--de-fix-genitive", action="store_true", help="[German] Corrects genitive noun lemmas (e.g., 'Hauses' -> 'Haus') by checking against the dictionary.")
     de_group.add_argument("--de-force-noun-capitalization", action="store_true", help="[German only] Force capitalization of all noun lemmas (NOUN, PROPN) as per German orthography rules. Overrides --force-proper-noun-capitalization for German.")
@@ -2307,12 +2311,13 @@ def main():
     # Initialize defaults
     args.frequency_case_sensitive = (args.language == 'de')
     args.classification_case_sensitive = True
-    args.token_mappings_enabled = False
+    if not hasattr(args, 'token_mappings_enabled'):
+        args.token_mappings_enabled = False
     args.token_mappings_case_sensitive = False
     args.token_mappings_normalize_apostrophes = True
     args.token_mappings_normalize_spaces = True
     args.token_mappings_enable_context_disambiguation = True
-    args.token_mappings_lemmatize = False
+    args.token_mappings_lemmatize = getattr(args, 'token_mappings_lemmatize_cli', False)
     args.token_mappings_files = []
 
     # Load Classifications and Case Sensitivity from Config
@@ -2351,16 +2356,22 @@ def main():
                         classify_val = f"{prefix}:{full_path}" if prefix else str(full_path)
                         args.classify.append(f"{name.strip()}={classify_val}")
                         
+        # Read combine_source_words from [lemmatization] or [settings]
+        if not args.combine_source_words:
+            if cfg.has_section('lemmatization') and cfg.has_option('lemmatization', 'combine_source_words'):
+                args.combine_source_words = cfg.getboolean('lemmatization', 'combine_source_words')
+            elif cfg.has_section('settings') and cfg.has_option('settings', 'combine_source_words'):
+                args.combine_source_words = cfg.getboolean('settings', 'combine_source_words')
+
         if cfg.has_section('token_mappings') and cfg.getboolean('token_mappings', 'enabled', fallback=False):
-            args.token_mappings_enabled = True
+            if not args.token_mappings_enabled:
+                args.token_mappings_enabled = True
             args.token_mappings_case_sensitive = cfg.getboolean('token_mappings', 'case_sensitive', fallback=False)
             args.token_mappings_normalize_apostrophes = cfg.getboolean('token_mappings', 'normalize_apostrophes', fallback=True)
             args.token_mappings_normalize_spaces = cfg.getboolean('token_mappings', 'normalize_spaces', fallback=True)
             args.token_mappings_enable_context_disambiguation = cfg.getboolean('token_mappings', 'enable_context_disambiguation', fallback=True)
-            args.token_mappings_lemmatize = cfg.getboolean('token_mappings', 'lemmatize_mapped_tokens', fallback=False)
-            
-            if cfg.has_option('token_mappings', 'combine_source_words'):
-                args.combine_source_words = cfg.getboolean('token_mappings', 'combine_source_words')
+            if not getattr(args, 'token_mappings_lemmatize_cli', False):
+                args.token_mappings_lemmatize = cfg.getboolean('token_mappings', 'lemmatize_mapped_tokens', fallback=False)
             
             mappings_files = cfg.get('token_mappings', args.language, fallback='')
             if mappings_files:

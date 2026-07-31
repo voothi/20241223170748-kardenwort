@@ -77,8 +77,12 @@ enabled = true
 ; Whether matching against the TSV entries is case-sensitive
 case_sensitive = false
 
+; Order for combined inflected forms when combine_source_words is true ('contractions_first', 'occurrence', 'alphabetical')
+combine_source_words_order = contractions_first
+
 ; Normalizes typographic characters (e.g. ’ to ')
 normalize_apostrophes = true
+
 
 ; Treat internal spaces flexibly (e.g. match 'z.B.' and 'z. B.' equally)
 normalize_spaces = true

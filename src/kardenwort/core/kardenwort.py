@@ -286,6 +286,19 @@ def load_token_mappings(file_paths, case_sensitive=False, normalize_apostrophes=
             print(f"Error reading token mapping file {file_path}: {e}", file=sys.stderr)
     return mappings
 
+def sort_inflected_forms(forms, order='contractions_first'):
+    unique_forms = []
+    for f in forms:
+        f_clean = f.strip()
+        if f_clean and f_clean not in unique_forms:
+            unique_forms.append(f_clean)
+    if order == 'contractions_first':
+        unique_forms.sort(key=lambda f: (not ("'" in f or "’" in f or "-" in f or " " in f), -len(f), f.lower()))
+    elif order == 'alphabetical':
+        unique_forms.sort(key=lambda f: f.lower())
+    return unique_forms
+
+
 def find_token_mappings_in_text(sentence_text, doc, token_mappings, args):
     if not getattr(args, 'token_mappings_enabled', False) or not token_mappings:
         return [], []
@@ -1289,7 +1302,9 @@ def process_parallel_text_files(
                         elif getattr(args, 'combine_source_words', False):
                             existing_forms = [s.strip() for s in lemma_data['lemmas'][lemma].split(',') if s.strip()]
                             if source_word_form not in existing_forms:
-                                lemma_data['lemmas'][lemma] += f", {source_word_form}"
+                                existing_forms.append(source_word_form)
+                            order_cfg = getattr(args, 'combine_source_words_order', 'contractions_first')
+                            lemma_data['lemmas'][lemma] = ", ".join(sort_inflected_forms(existing_forms, order_cfg))
                         elif args.prefer_shortest_form and len(source_word_form) < len(lemma_data['lemmas'][lemma]):
                             lemma_data['lemmas'][lemma] = source_word_form
                             lemma_data['info'][lemma] = (content_line_idx, source_sentence, final_deck)
@@ -1301,7 +1316,10 @@ def process_parallel_text_files(
                             else:
                                 existing_forms = [s.strip() for s in lemmas_in_sentence[lemma]['source_word'].split(',') if s.strip()]
                                 if source_word_form not in existing_forms:
-                                    lemmas_in_sentence[lemma]['source_word'] += f", {source_word_form}"
+                                    existing_forms.append(source_word_form)
+                                order_cfg = getattr(args, 'combine_source_words_order', 'contractions_first')
+                                lemmas_in_sentence[lemma]['source_word'] = ", ".join(sort_inflected_forms(existing_forms, order_cfg))
+
 
 
                         else:
@@ -1696,7 +1714,9 @@ def process_single_text(
                         elif getattr(args, 'combine_source_words', False):
                             existing_forms = [s.strip() for s in lemma_data['lemmas'][lemma].split(',') if s.strip()]
                             if source_word_form not in existing_forms:
-                                lemma_data['lemmas'][lemma] += f", {source_word_form}"
+                                existing_forms.append(source_word_form)
+                            order_cfg = getattr(args, 'combine_source_words_order', 'contractions_first')
+                            lemma_data['lemmas'][lemma] = ", ".join(sort_inflected_forms(existing_forms, order_cfg))
                         elif args.prefer_shortest_form and len(source_word_form) < len(lemma_data['lemmas'][lemma]):
                             lemma_data['lemmas'][lemma] = source_word_form
                             lemma_data['info'][lemma] = (unit_index, unit_text, current_deck)
@@ -1708,7 +1728,10 @@ def process_single_text(
                             else:
                                 existing_forms = [s.strip() for s in lemmas_in_sentence[lemma]['source_word'].split(',') if s.strip()]
                                 if source_word_form not in existing_forms:
-                                    lemmas_in_sentence[lemma]['source_word'] += f", {source_word_form}"
+                                    existing_forms.append(source_word_form)
+                                order_cfg = getattr(args, 'combine_source_words_order', 'contractions_first')
+                                lemmas_in_sentence[lemma]['source_word'] = ", ".join(sort_inflected_forms(existing_forms, order_cfg))
+
 
 
                         else:
@@ -2244,6 +2267,8 @@ def main():
     lemmatization_group.add_argument("--deduplication-scope", choices=['global', 'sentence', 'none'], default='global', help="Set the scope for lemma deduplication. 'global': unique lemmas across the entire text. 'sentence': unique lemmas within each sentence. 'none': no duplication, one entry per word occurrence.")
     lemmatization_group.add_argument("--prefer-shortest-form", action="store_true", help="When deduplicating globally, prefer the shortest word form of a lemma, even if it appears later in the text. Default is to keep the first occurrence.")
     lemmatization_group.add_argument("--combine-source-words", action="store_true", help="When deduplicating globally, combine different source word forms for the same lemma by separating them with a comma. Default is to keep only one.")
+    lemmatization_group.add_argument("--combine-source-words-order", choices=['contractions_first', 'occurrence', 'alphabetical'], default=None, help="Set order for combined inflected forms when --combine-source-words is enabled.")
+
     
     token_mappings_group = parser.add_argument_group('Token Mappings Control')
     token_mappings_group.add_argument("--token-mappings-enabled", action="store_true", help="Enable token mappings overriding config.")
@@ -2363,12 +2388,23 @@ def main():
                         classify_val = f"{prefix}:{full_path}" if prefix else str(full_path)
                         args.classify.append(f"{name.strip()}={classify_val}")
                         
-        # Read combine_source_words from [lemmatization] or [settings]
+        # Read combine_source_words and combine_source_words_order
         if not args.combine_source_words:
             if cfg.has_section('lemmatization') and cfg.has_option('lemmatization', 'combine_source_words'):
                 args.combine_source_words = cfg.getboolean('lemmatization', 'combine_source_words')
             elif cfg.has_section('settings') and cfg.has_option('settings', 'combine_source_words'):
                 args.combine_source_words = cfg.getboolean('settings', 'combine_source_words')
+
+        if not getattr(args, 'combine_source_words_order', None):
+            if cfg.has_section('token_mappings') and cfg.has_option('token_mappings', 'combine_source_words_order'):
+                args.combine_source_words_order = cfg.get('token_mappings', 'combine_source_words_order').strip().lower()
+            elif cfg.has_section('lemmatization') and cfg.has_option('lemmatization', 'combine_source_words_order'):
+                args.combine_source_words_order = cfg.get('lemmatization', 'combine_source_words_order').strip().lower()
+            elif cfg.has_section('settings') and cfg.has_option('settings', 'combine_source_words_order'):
+                args.combine_source_words_order = cfg.get('settings', 'combine_source_words_order').strip().lower()
+            else:
+                args.combine_source_words_order = 'contractions_first'
+
 
         if getattr(args, 'disable_token_mappings', False):
             args.token_mappings_enabled = False

@@ -20,7 +20,6 @@ kardenwort_workspace = ./
 importer_workspace = ../20250401192017-anki-csv-importer
 intellifiller_workspace = ../20251206123938-intellifiller-ai-addon-for-anki
 
-
 ; --- Linux/macOS Example ---
 ; python_executable = /path/to/your/venv/bin/python
 ; kardenwort_workspace = ./
@@ -106,7 +105,6 @@ note_type = Basic 20240218092126
 ; Automatically redirect to the lightweight script (sub-100ms) when the input is a single word.
 ; If the input contains multiple words, normal heavy mode (spaCy) is used.
 auto_lite_mode = True
-
 
 [sendto]
 ; --- Windows "Send to" integration settings ---

@@ -1289,9 +1289,7 @@ def process_parallel_text_files(
                         elif getattr(args, 'combine_source_words', False):
                             existing_forms = [s.strip() for s in lemma_data['lemmas'][lemma].split(',') if s.strip()]
                             if source_word_form not in existing_forms:
-                                existing_forms.append(source_word_form)
-                            existing_forms.sort(key=lambda f: (not ("'" in f or "-" in f or " " in f), -len(f), f.lower()))
-                            lemma_data['lemmas'][lemma] = ", ".join(existing_forms)
+                                lemma_data['lemmas'][lemma] += f", {source_word_form}"
                         elif args.prefer_shortest_form and len(source_word_form) < len(lemma_data['lemmas'][lemma]):
                             lemma_data['lemmas'][lemma] = source_word_form
                             lemma_data['info'][lemma] = (content_line_idx, source_sentence, final_deck)
@@ -1303,9 +1301,8 @@ def process_parallel_text_files(
                             else:
                                 existing_forms = [s.strip() for s in lemmas_in_sentence[lemma]['source_word'].split(',') if s.strip()]
                                 if source_word_form not in existing_forms:
-                                    existing_forms.append(source_word_form)
-                                existing_forms.sort(key=lambda f: (not ("'" in f or "-" in f or " " in f), -len(f), f.lower()))
-                                lemmas_in_sentence[lemma]['source_word'] = ", ".join(existing_forms)
+                                    lemmas_in_sentence[lemma]['source_word'] += f", {source_word_form}"
+
 
                         else:
                             dedup_key = (lemma, source_word_form.lower())
@@ -1699,9 +1696,7 @@ def process_single_text(
                         elif getattr(args, 'combine_source_words', False):
                             existing_forms = [s.strip() for s in lemma_data['lemmas'][lemma].split(',') if s.strip()]
                             if source_word_form not in existing_forms:
-                                existing_forms.append(source_word_form)
-                            existing_forms.sort(key=lambda f: (not ("'" in f or "-" in f or " " in f), -len(f), f.lower()))
-                            lemma_data['lemmas'][lemma] = ", ".join(existing_forms)
+                                lemma_data['lemmas'][lemma] += f", {source_word_form}"
                         elif args.prefer_shortest_form and len(source_word_form) < len(lemma_data['lemmas'][lemma]):
                             lemma_data['lemmas'][lemma] = source_word_form
                             lemma_data['info'][lemma] = (unit_index, unit_text, current_deck)
@@ -1713,9 +1708,8 @@ def process_single_text(
                             else:
                                 existing_forms = [s.strip() for s in lemmas_in_sentence[lemma]['source_word'].split(',') if s.strip()]
                                 if source_word_form not in existing_forms:
-                                    existing_forms.append(source_word_form)
-                                existing_forms.sort(key=lambda f: (not ("'" in f or "-" in f or " " in f), -len(f), f.lower()))
-                                lemmas_in_sentence[lemma]['source_word'] = ", ".join(existing_forms)
+                                    lemmas_in_sentence[lemma]['source_word'] += f", {source_word_form}"
+
 
                         else:
                             dedup_key = (lemma, source_word_form.lower())

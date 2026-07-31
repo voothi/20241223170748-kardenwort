@@ -257,6 +257,86 @@ def load_lemma_override_rules(file_path):
         print(f"Error reading lemma override file {file_path}: {e}", file=sys.stderr)
     return override_rules
 
+def load_token_mappings(file_paths, case_sensitive=False, normalize_apostrophes=True, normalize_spaces=True):
+    mappings = {}
+    for file_path in file_paths:
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                reader = csv.reader(f, delimiter="\t")
+                for i, row in enumerate(reader):
+                    if not row or row[0].startswith('#'):
+                        continue
+                    if len(row) < 2:
+                        continue
+                    
+                    source_word = row[0].strip()
+                    if normalize_apostrophes:
+                        source_word = source_word.replace('’', "'").replace('‘', "'").replace('`', "'")
+                    if normalize_spaces:
+                        source_word = re.sub(r'\s+', '', source_word)
+                        
+                    if not case_sensitive:
+                        source_word = source_word.lower()
+                    
+                    target_tokens = [t.strip() for t in row[1:] if t.strip()]
+                    mappings[source_word] = target_tokens
+        except FileNotFoundError:
+            print(f"Warning: Token mapping file not found: {file_path}", file=sys.stderr)
+        except Exception as e:
+            print(f"Error reading token mapping file {file_path}: {e}", file=sys.stderr)
+    return mappings
+
+def find_token_mappings_in_text(sentence_text, doc, token_mappings, args):
+    if not getattr(args, 'token_mappings_enabled', False) or not token_mappings:
+        return [], []
+        
+    mapped_tokens = set()
+    results = {} # key: start_token_i, value: match dict
+    
+    for start_i in range(len(doc)):
+        if start_i in mapped_tokens:
+            continue
+            
+        best_match = None
+        best_match_end_i = -1
+        
+        current_text = ""
+        for end_i in range(start_i, min(start_i + 5, len(doc))):
+            current_text += doc[end_i].text + doc[end_i].whitespace_
+            
+            candidate = current_text.strip()
+            if getattr(args, 'token_mappings_normalize_apostrophes', True):
+                candidate = candidate.replace('’', "'").replace('‘', "'").replace('`', "'")
+            if getattr(args, 'token_mappings_normalize_spaces', True):
+                candidate = re.sub(r'\s+', '', candidate)
+            if not getattr(args, 'token_mappings_case_sensitive', False):
+                candidate = candidate.lower()
+                
+            if candidate in token_mappings:
+                is_valid = True
+                if getattr(args, 'token_mappings_enable_context_disambiguation', True) and len(candidate) <= 2 and candidate.endswith('.'):
+                    if end_i + 1 < len(doc):
+                        next_tok = doc[end_i+1]
+                        if next_tok.text and (next_tok.text[0].isupper() or next_tok.text in ['.', '!', '?']):
+                            is_valid = False
+                            
+                if is_valid:
+                    best_match = token_mappings[candidate]
+                    best_match_end_i = end_i
+                
+        if best_match:
+            source_word_form = sentence_text[doc[start_i].idx : doc[best_match_end_i].idx + len(doc[best_match_end_i].text)]
+            results[start_i] = {
+                'start_token_i': start_i,
+                'end_token_i': best_match_end_i,
+                'source_word': source_word_form,
+                'lemmas': best_match
+            }
+            for i in range(start_i, best_match_end_i + 1):
+                mapped_tokens.add(i)
+                
+    return results, mapped_tokens
+
 def find_matching_override_in_context(rules, context_sentence):
     if not rules:
         return None
@@ -692,17 +772,29 @@ def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, de_
     separable_verb_map = find_separable_verb_particle_pairs(sentence_doc)
     processed_particle_indices = {p.i for p in separable_verb_map.values()}
 
+    token_mappings_matches, mapped_tokens = find_token_mappings_in_text(sentence_text, sentence_doc, kwargs.get('token_mappings', {}), args)
+
     for token in sentence_doc:
         if token.i in processed_particle_indices:
             continue
 
-        if not (token.is_alpha or ('-' in token.text and token.text.strip('-'))):
+        skip_standard_extraction = False
+        if token.i in mapped_tokens:
+            if token.i in token_mappings_matches:
+                match = token_mappings_matches[token.i]
+                lemmas_for_current_token = match['lemmas']
+                skip_standard_extraction = True
+            else:
+                continue
+
+        if not skip_standard_extraction and not (token.is_alpha or ('-' in token.text and token.text.strip('-'))):
             continue
 
-        lemmas_for_current_token = []
-        
-        source_word_form = token.text
-        base_lemma = ""
+        if not skip_standard_extraction:
+            lemmas_for_current_token = []
+            
+            source_word_form = token.text
+            base_lemma = ""
         if token.i in separable_verb_map:
             particle = separable_verb_map[token.i]
             base_verb_lemma = token.lemma_
@@ -790,8 +882,9 @@ def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, de_
             except Exception:
                 was_split = False
         
-        if not was_split:
-            lemmas_for_current_token.append(base_lemma)
+        if not skip_standard_extraction:
+            if not was_split:
+                lemmas_for_current_token.append(base_lemma)
 
         deduplicated_lemmas = deduplicate_lemmas(lemmas_for_current_token)
         for lemma in deduplicated_lemmas:
@@ -1033,12 +1126,26 @@ def process_parallel_text_files(
         
         separable_verb_map = find_separable_verb_particle_pairs(doc)
         processed_particle_indices = {p.i for p in separable_verb_map.values()}
+        token_mappings_matches, mapped_tokens = find_token_mappings_in_text(source_sentence, doc, kwargs.get('token_mappings', {}), args)
 
         for token in doc:
             if token.i in processed_particle_indices:
                 continue
 
-            if (token.is_alpha or '-' in token.text):
+            skip_standard_extraction = False
+            if token.i in mapped_tokens:
+                if token.i in token_mappings_matches:
+                    match = token_mappings_matches[token.i]
+                    source_word_form = match['source_word']
+                    lemmas_for_current_token = match['lemmas']
+                    skip_standard_extraction = True
+                else:
+                    continue
+            else:
+                if not skip_standard_extraction and not (token.is_alpha or '-' in token.text):
+                    continue
+
+            if not skip_standard_extraction:
                 lemmas_for_current_token = []
                 
                 source_word_form = token.text
@@ -1131,8 +1238,9 @@ def process_parallel_text_files(
                     except Exception:
                         was_split = False
                 
-                if not was_split:
-                    lemmas_for_current_token.append(base_lemma)
+                if not skip_standard_extraction:
+                    if not was_split:
+                        lemmas_for_current_token.append(base_lemma)
 
                 deduplicated_lemmas = deduplicate_lemmas(lemmas_for_current_token)
 
@@ -1411,15 +1519,27 @@ def process_single_text(
         separable_verb_map = find_separable_verb_particle_pairs(unit_doc)
         processed_particle_indices = {p.i for p in separable_verb_map.values()}
 
+        token_mappings_matches, mapped_tokens = find_token_mappings_in_text(unit_text, unit_doc, kwargs.get('token_mappings', {}), args)
+
         for token in unit_doc:
             if token.i in processed_particle_indices:
                 continue
 
-            if (token.is_alpha or '-' in token.text):
-                lemmas_for_current_token = []
+            skip_standard_extraction = False
+            if token.i in mapped_tokens:
+                if token.i in token_mappings_matches:
+                    match = token_mappings_matches[token.i]
+                    source_word_form = match['source_word']
+                    lemmas_for_current_token = match['lemmas']
+                    skip_standard_extraction = True
+                else:
+                    continue
 
-                source_word_form = token.text
-                base_lemma = ""
+            if skip_standard_extraction or (token.is_alpha or '-' in token.text):
+                if not skip_standard_extraction:
+                    lemmas_for_current_token = []
+                    source_word_form = token.text
+                    base_lemma = ""
                 if token.i in separable_verb_map:
                     particle = separable_verb_map[token.i]
                     base_verb_lemma = token.lemma_
@@ -1508,8 +1628,9 @@ def process_single_text(
                     except Exception:
                         was_split = False
 
-                if not was_split:
-                    lemmas_for_current_token.append(base_lemma)
+                if not skip_standard_extraction:
+                    if not was_split:
+                        lemmas_for_current_token.append(base_lemma)
 
                 deduplicated_lemmas = deduplicate_lemmas(lemmas_for_current_token)
 
@@ -2132,6 +2253,12 @@ def main():
     # Initialize defaults
     args.frequency_case_sensitive = (args.language == 'de')
     args.classification_case_sensitive = True
+    args.token_mappings_enabled = False
+    args.token_mappings_case_sensitive = False
+    args.token_mappings_normalize_apostrophes = True
+    args.token_mappings_normalize_spaces = True
+    args.token_mappings_enable_context_disambiguation = True
+    args.token_mappings_files = []
 
     # Load Classifications and Case Sensitivity from Config
     config_path_classify = Path(__file__).resolve().parent.parent.parent.parent / 'config.ini'
@@ -2168,6 +2295,23 @@ def main():
                         full_path = ws_path / rel_path.strip()
                         classify_val = f"{prefix}:{full_path}" if prefix else str(full_path)
                         args.classify.append(f"{name.strip()}={classify_val}")
+                        
+        if cfg.has_section('token_mappings') and cfg.getboolean('token_mappings', 'enabled', fallback=False):
+            args.token_mappings_enabled = True
+            args.token_mappings_case_sensitive = cfg.getboolean('token_mappings', 'case_sensitive', fallback=False)
+            args.token_mappings_normalize_apostrophes = cfg.getboolean('token_mappings', 'normalize_apostrophes', fallback=True)
+            args.token_mappings_normalize_spaces = cfg.getboolean('token_mappings', 'normalize_spaces', fallback=True)
+            args.token_mappings_enable_context_disambiguation = cfg.getboolean('token_mappings', 'enable_context_disambiguation', fallback=True)
+            
+            mappings_files = cfg.get('token_mappings', args.language, fallback='')
+            if mappings_files:
+                for mf in mappings_files.split(','):
+                    mf = mf.strip()
+                    if not mf: continue
+                    kw_ws = cfg.get('environment', 'kardenwort_workspace', fallback='./')
+                    ws_path = (config_path_classify.parent / kw_ws).resolve()
+                    args.token_mappings_files.append(str(ws_path / mf))
+
     if args.type == "sort-frequency":
         lemma_index = load_lemma_frequency_index(args.lemma_index_file)
         input_words = []
@@ -2250,6 +2394,14 @@ def main():
     nlp = spacy.load("de_core_news_lg" if args.language == "de" else "en_core_web_lg")
 
     lemma_override_rules = load_lemma_override_rules(args.lemma_override_file) if args.lemma_override_file else {}
+    token_mappings = {}
+    if getattr(args, 'token_mappings_enabled', False) and getattr(args, 'token_mappings_files', None):
+        token_mappings = load_token_mappings(
+            args.token_mappings_files,
+            case_sensitive=getattr(args, 'token_mappings_case_sensitive', False),
+            normalize_apostrophes=getattr(args, 'token_mappings_normalize_apostrophes', True),
+            normalize_spaces=getattr(args, 'token_mappings_normalize_spaces', True)
+        )
 
     gcs_automaton = None
     global de_dictionary
@@ -2364,6 +2516,7 @@ def main():
             print("Error: No input provided. Use --text, --text1-file, environment variable, or pipe data via stdin.", file=sys.stderr); exit(1)
 
         processing_options = {
+            'token_mappings': token_mappings,
             'de_gcs_only_nouns': (args.de_gcs_split_mode == 'only-nouns'),
             'de_gcs_combine_noun_modes': (args.de_gcs_split_mode == 'combined'),
             'de_fix_genitive': args.de_fix_genitive,
@@ -2404,6 +2557,7 @@ def main():
             print("Error: --text1-file and --text2-file must be specified for sentence mode.", file=sys.stderr); exit(1)
         
         processing_options = {
+            'token_mappings': token_mappings,
             'lemma_override_rules': lemma_override_rules,
             'de_gcs': args.de_gcs,
             'gcs_automaton': gcs_automaton,

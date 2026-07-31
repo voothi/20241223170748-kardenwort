@@ -63,13 +63,33 @@ add_header = True
 [language_resources]
 ; Language-specific data files (relative to data_dir)
 ; Language: English
-lemma_file_en = en/en-news-2023-1m-words.csv
+lemma_file_en = en/english-word-freq-list-370k.csv
 override_file_en = en/lemma_override_en.tsv
 
 ; Language: German
 lemma_file_de = de/deu-mixed-typical-2011-1m-words.csv
 override_file_de = de/lemma_override_de.tsv
 dictionary_file_de = de/german.dic
+
+[token_mappings]
+; Global toggle for easy testing and backward compatibility
+enabled = true
+
+; Whether matching against the TSV entries is case-sensitive
+case_sensitive = false
+
+; Normalizes typographic characters (e.g. ’ to ')
+normalize_apostrophes = true
+
+; Treat internal spaces flexibly (e.g. match 'z.B.' and 'z. B.' equally)
+normalize_spaces = true
+
+; Inspect surrounding tokens/capitalization to prevent sentence-boundary false positives
+enable_context_disambiguation = true
+
+; Language-specific mapping files
+en = data/en/lemma_contractions_en.tsv, data/en/lemma_abbreviations_en.tsv
+de = data/de/lemma_abbreviations_de.tsv, data/de/lemma_contractions_de.tsv
 
 [anki_importer_settings]
 ; Settings for the Anki CSV Importer script

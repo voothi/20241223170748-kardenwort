@@ -507,3 +507,61 @@ def test_accountant_zettelkasten_sentence(tmp_path):
             assert row_data.get("oxford") == expected_val
         else:
             assert "oxford" not in row_data
+
+def test_load_token_mappings(tmp_path):
+    import kardenwort.core.kardenwort as kw
+    mapping_file = tmp_path / "mappings.tsv"
+    mapping_file.write_text("isn't\tis\tnot\nz. B.\tzum\tBeispiel\n# comment\ninvalid\n", encoding="utf-8")
+    
+    mappings = kw.load_token_mappings([str(mapping_file)], case_sensitive=False, normalize_apostrophes=True, normalize_spaces=True)
+    assert "isn't" in mappings
+    assert mappings["isn't"] == ["is", "not"]
+    assert "z.b." in mappings
+    assert mappings["z.b."] == ["zum", "Beispiel"]
+
+def test_find_token_mappings_in_text():
+    import kardenwort.core.kardenwort as kw
+    
+    class MockArgs:
+        token_mappings_enabled = True
+        token_mappings_case_sensitive = False
+        token_mappings_normalize_apostrophes = True
+        token_mappings_normalize_spaces = True
+        token_mappings_enable_context_disambiguation = True
+        
+    class MockToken:
+        def __init__(self, text, whitespace, idx):
+            self.text = text
+            self.whitespace_ = whitespace
+            self.idx = idx
+            
+    args = MockArgs()
+    text = "He isn't going to the z. B. park."
+    doc = [
+        MockToken("He", " ", 0),
+        MockToken("is", "", 3),
+        MockToken("n't", " ", 5),
+        MockToken("going", " ", 9),
+        MockToken("to", " ", 15),
+        MockToken("the", " ", 18),
+        MockToken("z", "", 22),
+        MockToken(".", " ", 23),
+        MockToken("B", "", 25),
+        MockToken(".", " ", 26),
+        MockToken("park", "", 28),
+        MockToken(".", "", 32)
+    ]
+    
+    mappings = {
+        "isn't": ["is", "not"],
+        "z.b.": ["zum", "Beispiel"]
+    }
+    
+    matches, mapped_tokens = kw.find_token_mappings_in_text(text, doc, mappings, args)
+    assert len(matches) == 2
+    
+    # check isn't
+    assert "isn't" in [m['source_word'] for m in matches.values()]
+    
+    # check z. B.
+    assert "z. B." in [m['source_word'] for m in matches.values()]

@@ -1285,6 +1285,10 @@ def process_parallel_text_files(
                         if is_new:
                             lemma_data['lemmas'][lemma] = source_word_form
                             lemma_data['info'][lemma] = (content_line_idx, source_sentence, final_deck)
+                        elif getattr(args, 'combine_source_words', False):
+                            existing_forms = [s.strip() for s in lemma_data['lemmas'][lemma].split(',')]
+                            if source_word_form not in existing_forms:
+                                lemma_data['lemmas'][lemma] += f", {source_word_form}"
                         elif args.prefer_shortest_form and len(source_word_form) < len(lemma_data['lemmas'][lemma]):
                             lemma_data['lemmas'][lemma] = source_word_form
                             lemma_data['info'][lemma] = (content_line_idx, source_sentence, final_deck)
@@ -1678,6 +1682,10 @@ def process_single_text(
                         if is_new:
                             lemma_data['lemmas'][lemma] = source_word_form
                             lemma_data['info'][lemma] = (unit_index, unit_text, current_deck)
+                        elif getattr(args, 'combine_source_words', False):
+                            existing_forms = [s.strip() for s in lemma_data['lemmas'][lemma].split(',')]
+                            if source_word_form not in existing_forms:
+                                lemma_data['lemmas'][lemma] += f", {source_word_form}"
                         elif args.prefer_shortest_form and len(source_word_form) < len(lemma_data['lemmas'][lemma]):
                             lemma_data['lemmas'][lemma] = source_word_form
                             lemma_data['info'][lemma] = (unit_index, unit_text, current_deck)
@@ -2214,6 +2222,8 @@ def main():
     lemmatization_group.add_argument("--force-proper-noun-capitalization", action="store_true", help="Force capitalization of proper noun lemmas (PROPN).")
     lemmatization_group.add_argument("--deduplication-scope", choices=['global', 'sentence', 'none'], default='global', help="Set the scope for lemma deduplication. 'global': unique lemmas across the entire text. 'sentence': unique lemmas within each sentence. 'none': no duplication, one entry per word occurrence.")
     lemmatization_group.add_argument("--prefer-shortest-form", action="store_true", help="When deduplicating globally, prefer the shortest word form of a lemma, even if it appears later in the text. Default is to keep the first occurrence.")
+    lemmatization_group.add_argument("--combine-source-words", action="store_true", help="When deduplicating globally, combine different source word forms for the same lemma by separating them with a comma. Default is to keep only one.")
+    
     de_group = parser.add_argument_group('German Language Specific Arguments')
     de_group.add_argument("--de-fix-genitive", action="store_true", help="[German] Corrects genitive noun lemmas (e.g., 'Hauses' -> 'Haus') by checking against the dictionary.")
     de_group.add_argument("--de-force-noun-capitalization", action="store_true", help="[German only] Force capitalization of all noun lemmas (NOUN, PROPN) as per German orthography rules. Overrides --force-proper-noun-capitalization for German.")
@@ -2332,6 +2342,9 @@ def main():
             args.token_mappings_normalize_spaces = cfg.getboolean('token_mappings', 'normalize_spaces', fallback=True)
             args.token_mappings_enable_context_disambiguation = cfg.getboolean('token_mappings', 'enable_context_disambiguation', fallback=True)
             args.token_mappings_lemmatize = cfg.getboolean('token_mappings', 'lemmatize_mapped_tokens', fallback=False)
+            
+            if cfg.has_option('token_mappings', 'combine_source_words'):
+                args.combine_source_words = cfg.getboolean('token_mappings', 'combine_source_words')
             
             mappings_files = cfg.get('token_mappings', args.language, fallback='')
             if mappings_files:

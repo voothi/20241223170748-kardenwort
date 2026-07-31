@@ -1738,7 +1738,7 @@ def process_single_text(
                                 existing_forms = [s.strip() for s in lemmas_in_sentence[lemma]['source_word'].split(',') if s.strip()]
                                 if source_word_form not in existing_forms:
                                     existing_forms.append(source_word_form)
-                                lemma_data['lemmas'][lemma] = ", ".join(sort_inflected_forms(existing_forms, apo_cfg, order_cfg))
+                                lemmas_in_sentence[lemma]['source_word'] = ", ".join(sort_inflected_forms(existing_forms, apo_cfg, order_cfg))
 
 
 

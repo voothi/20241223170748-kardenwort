@@ -286,21 +286,19 @@ def load_token_mappings(file_paths, case_sensitive=False, normalize_apostrophes=
             print(f"Error reading token mapping file {file_path}: {e}", file=sys.stderr)
     return mappings
 
-APOSTROPHE_CHARS = ("'", "’", "‘", "`", "´", "ʼ")
-
-def is_complex_inflected_form(form):
-    if any(c in form for c in APOSTROPHE_CHARS) or '-' in form or ' ' in form:
+def is_complex_inflected_form(form, apostrophe_chars):
+    if any(c in form for c in apostrophe_chars) or '-' in form or ' ' in form:
         return True
     return any(not c.isalnum() for c in form)
 
-def sort_inflected_forms(forms, order='contractions_first'):
+def sort_inflected_forms(forms, apostrophe_chars, order='contractions_first'):
     unique_forms = []
     for f in forms:
         f_clean = f.strip()
         if f_clean and f_clean not in unique_forms:
             unique_forms.append(f_clean)
     if order == 'contractions_first':
-        unique_forms.sort(key=lambda f: (not is_complex_inflected_form(f), -len(f), f.lower()))
+        unique_forms.sort(key=lambda f: (not is_complex_inflected_form(f, apostrophe_chars), -len(f), f.lower()))
     elif order == 'alphabetical':
         unique_forms.sort(key=lambda f: f.lower())
     return unique_forms
@@ -1312,7 +1310,8 @@ def process_parallel_text_files(
                             if source_word_form not in existing_forms:
                                 existing_forms.append(source_word_form)
                             order_cfg = getattr(args, 'combine_source_words_order', 'contractions_first')
-                            lemma_data['lemmas'][lemma] = ", ".join(sort_inflected_forms(existing_forms, order_cfg))
+                            apo_cfg = tuple(c.strip() for c in getattr(args, 'apostrophe_chars', "', ’, ‘, `, ´, ʼ").split(',') if c.strip())
+                            lemma_data['lemmas'][lemma] = ", ".join(sort_inflected_forms(existing_forms, apo_cfg, order_cfg))
                         elif args.prefer_shortest_form and len(source_word_form) < len(lemma_data['lemmas'][lemma]):
                             lemma_data['lemmas'][lemma] = source_word_form
                             lemma_data['info'][lemma] = (content_line_idx, source_sentence, final_deck)
@@ -1326,7 +1325,8 @@ def process_parallel_text_files(
                                 if source_word_form not in existing_forms:
                                     existing_forms.append(source_word_form)
                                 order_cfg = getattr(args, 'combine_source_words_order', 'contractions_first')
-                                lemmas_in_sentence[lemma]['source_word'] = ", ".join(sort_inflected_forms(existing_forms, order_cfg))
+                                apo_cfg = tuple(c.strip() for c in getattr(args, 'apostrophe_chars', "', ’, ‘, `, ´, ʼ").split(',') if c.strip())
+                                lemmas_in_sentence[lemma]['source_word'] = ", ".join(sort_inflected_forms(existing_forms, apo_cfg, order_cfg))
 
 
 
@@ -1724,7 +1724,8 @@ def process_single_text(
                             if source_word_form not in existing_forms:
                                 existing_forms.append(source_word_form)
                             order_cfg = getattr(args, 'combine_source_words_order', 'contractions_first')
-                            lemma_data['lemmas'][lemma] = ", ".join(sort_inflected_forms(existing_forms, order_cfg))
+                            apo_cfg = tuple(c.strip() for c in getattr(args, 'apostrophe_chars', "', ’, ‘, `, ´, ʼ").split(',') if c.strip())
+                            lemma_data['lemmas'][lemma] = ", ".join(sort_inflected_forms(existing_forms, apo_cfg, order_cfg))
                         elif args.prefer_shortest_form and len(source_word_form) < len(lemma_data['lemmas'][lemma]):
                             lemma_data['lemmas'][lemma] = source_word_form
                             lemma_data['info'][lemma] = (unit_index, unit_text, current_deck)
@@ -1738,7 +1739,9 @@ def process_single_text(
                                 if source_word_form not in existing_forms:
                                     existing_forms.append(source_word_form)
                                 order_cfg = getattr(args, 'combine_source_words_order', 'contractions_first')
-                                lemmas_in_sentence[lemma]['source_word'] = ", ".join(sort_inflected_forms(existing_forms, order_cfg))
+                                apo_cfg = tuple(c.strip() for c in getattr(args, 'apostrophe_chars', "', ’, ‘, `, ´, ʼ").split(',') if c.strip())
+                                lemmas_in_sentence[lemma]['source_word'] = ", ".join(sort_inflected_forms(existing_forms, apo_cfg, order_cfg))
+
 
 
 
@@ -2276,6 +2279,8 @@ def main():
     lemmatization_group.add_argument("--prefer-shortest-form", action="store_true", help="When deduplicating globally, prefer the shortest word form of a lemma, even if it appears later in the text. Default is to keep the first occurrence.")
     lemmatization_group.add_argument("--combine-source-words", action="store_true", help="When deduplicating globally, combine different source word forms for the same lemma by separating them with a comma. Default is to keep only one.")
     lemmatization_group.add_argument("--combine-source-words-order", choices=['contractions_first', 'occurrence', 'alphabetical'], default=None, help="Set order for combined inflected forms when --combine-source-words is enabled.")
+    lemmatization_group.add_argument("--apostrophe-chars", default="', ’, ‘, `, ´, ʼ", help="Comma-separated list of apostrophe characters for complex form detection.")
+
 
     
     token_mappings_group = parser.add_argument_group('Token Mappings Control')
@@ -2412,6 +2417,15 @@ def main():
                 args.combine_source_words_order = cfg.get('settings', 'combine_source_words_order').strip().lower()
             else:
                 args.combine_source_words_order = 'contractions_first'
+                
+        if '--apostrophe-chars' not in sys.argv:
+            if cfg.has_section('token_mappings') and cfg.has_option('token_mappings', 'apostrophe_chars'):
+                args.apostrophe_chars = cfg.get('token_mappings', 'apostrophe_chars')
+            elif cfg.has_section('lemmatization') and cfg.has_option('lemmatization', 'apostrophe_chars'):
+                args.apostrophe_chars = cfg.get('lemmatization', 'apostrophe_chars')
+            elif cfg.has_section('settings') and cfg.has_option('settings', 'apostrophe_chars'):
+                args.apostrophe_chars = cfg.get('settings', 'apostrophe_chars')
+
 
 
         if getattr(args, 'disable_token_mappings', False):

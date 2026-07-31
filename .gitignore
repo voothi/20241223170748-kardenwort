@@ -138,7 +138,7 @@ old_kardenwort.py
 # App-specific directories and config
 .kiro
 .qoder
-config.ini
+# config.ini
 
 coverage.json
 check_cov.py

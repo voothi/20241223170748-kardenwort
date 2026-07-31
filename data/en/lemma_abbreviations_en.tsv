@@ -10,3 +10,34 @@ dr.	doctor
 mr.	mister
 mrs.	missus
 ms.	miss
+cf.	compare
+ibid.	in	the	same	place
+viz.	namely
+N. B.	note	well
+P. S.	postscript
+ca.	circa
+ed.	editor
+vol.	volume
+pp.	pages
+repo	repository
+config	configuration
+param	parameter
+params	parameters
+spec	specification
+specs	specifications
+info	information
+dev	developer
+env	environment
+docs	documentation
+doc	document
+app	application
+sync	synchronization
+async	asynchronous
+auth	authentication
+I/O	input	output
+UI	user	interface
+UX	user	experience
+PR	pull	request
+CLI	command	line	interface
+GUI	graphical	user	interface
+API	application	programming	interface

@@ -90,13 +90,13 @@ enable_context_disambiguation = true
 ; Run token mapping output through the lemmatizer (e.g. isn't -> is -> be)
 lemmatize_mapped_tokens = true
 
-[lemmatization]
-; When deduplicating globally, combine different source word forms for the same lemma by separating them with a comma
-combine_source_words = true
-
 ; Language-specific mapping files
 en = data/en/lemma_contractions_en.tsv, data/en/lemma_abbreviations_en.tsv
 de = data/de/lemma_abbreviations_de.tsv, data/de/lemma_contractions_de.tsv
+
+[lemmatization]
+; When deduplicating globally, combine different source word forms for the same lemma by separating them with a comma
+combine_source_words = true
 
 [anki_importer_settings]
 ; Settings for the Anki CSV Importer script

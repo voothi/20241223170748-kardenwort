@@ -63,7 +63,7 @@ add_header = True
 [language_resources]
 ; Language-specific data files (relative to data_dir)
 ; Language: English
-lemma_file_en = en/english-word-freq-list-370k.csv
+lemma_file_en = en/20260717113656-english-word-freq-list-370k.csv
 override_file_en = en/lemma_override_en.tsv
 
 ; Language: German
@@ -101,7 +101,6 @@ combine_source_words = true
 [anki_importer_settings]
 ; Settings for the Anki CSV Importer script
 note_type = Basic 20240218092126
-
 
 [optimization]
 ; Automatically redirect to the lightweight script (sub-100ms) when the input is a single word.

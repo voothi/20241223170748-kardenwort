@@ -2430,7 +2430,7 @@ def main():
             elif cfg.has_section('settings') and cfg.has_option('settings', 'strip_garbage_characters'):
                 args.strip_garbage_characters = cfg.get('settings', 'strip_garbage_characters').strip('\'"')
             else:
-                args.strip_garbage_characters = '-'
+                args.strip_garbage_characters = ''
                 
         if '--apostrophe-chars' not in sys.argv:
             if cfg.has_section('token_mappings') and cfg.has_option('token_mappings', 'apostrophe_chars'):

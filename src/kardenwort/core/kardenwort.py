@@ -1063,7 +1063,7 @@ def process_parallel_text_files(
         lemma_data = []
 
     order_cfg = getattr(args, 'combine_source_words_order', 'contractions_first')
-    apo_cfg = tuple(c.strip() for c in getattr(args, 'apostrophe_chars', "', ’, ‘, `, ´, ʼ").split(',') if c.strip())
+    apo_cfg = tuple(c.strip() for c in getattr(args, 'apostrophe_chars', "', ’, ‘, `, ´, ʼ").strip('\'"').split(',') if c.strip())
 
     subdeck_content_map = {}
     deck_stack = []
@@ -1572,7 +1572,7 @@ def process_single_text(
         lemma_data = []
 
     order_cfg = getattr(args, 'combine_source_words_order', 'contractions_first')
-    apo_cfg = tuple(c.strip() for c in getattr(args, 'apostrophe_chars', "', ’, ‘, `, ´, ʼ").split(',') if c.strip())
+    apo_cfg = tuple(c.strip() for c in getattr(args, 'apostrophe_chars', "', ’, ‘, `, ´, ʼ").strip('\'"').split(',') if c.strip())
 
     doc_cache = {}
 

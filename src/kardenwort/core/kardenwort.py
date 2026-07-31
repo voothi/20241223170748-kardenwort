@@ -1294,9 +1294,17 @@ def process_parallel_text_files(
                             lemma_data['info'][lemma] = (content_line_idx, source_sentence, final_deck)
 
                     elif args.deduplication_scope == 'sentence':
-                        dedup_key = (lemma, source_word_form.lower())
-                        if dedup_key not in lemmas_in_sentence:
-                            lemmas_in_sentence[dedup_key] = data_entry
+                        if getattr(args, 'combine_source_words', False):
+                            if lemma not in lemmas_in_sentence:
+                                lemmas_in_sentence[lemma] = data_entry
+                            else:
+                                existing_forms = [s.strip() for s in lemmas_in_sentence[lemma]['source_word'].split(',')]
+                                if source_word_form not in existing_forms:
+                                    lemmas_in_sentence[lemma]['source_word'] += f", {source_word_form}"
+                        else:
+                            dedup_key = (lemma, source_word_form.lower())
+                            if dedup_key not in lemmas_in_sentence:
+                                lemmas_in_sentence[dedup_key] = data_entry
                     elif args.deduplication_scope == 'none':
                         lemma_data.append(data_entry)
 
@@ -1691,9 +1699,17 @@ def process_single_text(
                             lemma_data['info'][lemma] = (unit_index, unit_text, current_deck)
                             
                     elif args.deduplication_scope == 'sentence':
-                        dedup_key = (lemma, source_word_form.lower())
-                        if dedup_key not in lemmas_in_sentence:
-                            lemmas_in_sentence[dedup_key] = data_entry
+                        if getattr(args, 'combine_source_words', False):
+                            if lemma not in lemmas_in_sentence:
+                                lemmas_in_sentence[lemma] = data_entry
+                            else:
+                                existing_forms = [s.strip() for s in lemmas_in_sentence[lemma]['source_word'].split(',')]
+                                if source_word_form not in existing_forms:
+                                    lemmas_in_sentence[lemma]['source_word'] += f", {source_word_form}"
+                        else:
+                            dedup_key = (lemma, source_word_form.lower())
+                            if dedup_key not in lemmas_in_sentence:
+                                lemmas_in_sentence[dedup_key] = data_entry
                     elif args.deduplication_scope == 'none':
                         lemma_data.append(data_entry)
 

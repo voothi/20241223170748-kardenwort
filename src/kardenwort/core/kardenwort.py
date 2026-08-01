@@ -303,6 +303,7 @@ def sort_inflected_forms(forms, apostrophe_chars, order='contractions_first', pr
             if f_lower not in unique_forms_dict:
                 unique_forms_dict[f_lower] = f_clean
             elif f_clean == f_lower:
+                # If we have an uppercase version, override it with the lowercase version!
                 unique_forms_dict[f_lower] = f_clean
         else:
             if f_clean not in unique_forms_dict:
@@ -314,7 +315,6 @@ def sort_inflected_forms(forms, apostrophe_chars, order='contractions_first', pr
     elif order == 'alphabetical':
         unique_forms.sort(key=lambda f: f.lower())
     return unique_forms
-
 
 
 def find_token_mappings_in_text(sentence_text, doc, token_mappings, args):

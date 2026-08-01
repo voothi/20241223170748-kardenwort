@@ -2157,10 +2157,10 @@ def main():
 
         if input_text:
             cleaned = input_text.strip()
-            # Intercept only if it's a single word, no file output is requested, and GCS is not requested
+            # Intercept only if it's a single word, no file output is requested, and GCS/Simplemma are not requested
             if (cleaned and " " not in cleaned and "\n" not in cleaned and "\t" not in cleaned and 
                 "--output-file" not in sys.argv and "--stdout-print-output-basename" not in sys.argv and
-                "--de-gcs" not in sys.argv):
+                "--de-gcs" not in sys.argv and "--use-simplemma-correction" not in sys.argv):
                 lang = ""
                 if "--language" in sys.argv:
                     lang_idx = sys.argv.index("--language")
@@ -2406,6 +2406,13 @@ def main():
                 args.combine_source_words = cfg.getboolean('lemmatization', 'combine_source_words')
             elif cfg.has_section('settings') and cfg.has_option('settings', 'combine_source_words'):
                 args.combine_source_words = cfg.getboolean('settings', 'combine_source_words')
+
+        # Read use_simplemma_correction from config
+        if not getattr(args, 'use_simplemma_correction', False):
+            if cfg.has_section('settings') and cfg.has_option('settings', 'use_simplemma_correction'):
+                args.use_simplemma_correction = cfg.getboolean('settings', 'use_simplemma_correction')
+            elif cfg.has_section('lemmatization') and cfg.has_option('lemmatization', 'use_simplemma_correction'):
+                args.use_simplemma_correction = cfg.getboolean('lemmatization', 'use_simplemma_correction')
 
         if not getattr(args, 'combine_source_words_order', None):
             if cfg.has_section('token_mappings') and cfg.has_option('token_mappings', 'combine_source_words_order'):

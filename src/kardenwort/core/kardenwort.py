@@ -1181,11 +1181,8 @@ def process_parallel_text_files(
                         raw_mapped_lemmas, nlp, de_dictionary, lemma_override_rules, args, source_sentence, de_fix_genitive
                     )
                     skip_standard_extraction = True
-                    for idx, lem in enumerate(lemmas_for_current_token):
-                        if idx == 0:
-                            mapped_lemma_sources[lem] = source_word_form
-                        else:
-                            mapped_lemma_sources[lem] = raw_mapped_lemmas[idx] if idx < len(raw_mapped_lemmas) else lem
+                    for lem in lemmas_for_current_token:
+                        mapped_lemma_sources[lem] = source_word_form
                 else:
                     continue
             else:
@@ -1599,11 +1596,8 @@ def process_single_text(
                         raw_mapped_lemmas, nlp, de_dictionary, lemma_override_rules, args, unit_text, de_fix_genitive
                     )
                     skip_standard_extraction = True
-                    for idx, lem in enumerate(lemmas_for_current_token):
-                        if idx == 0:
-                            mapped_lemma_sources[lem] = source_word_form
-                        else:
-                            mapped_lemma_sources[lem] = raw_mapped_lemmas[idx] if idx < len(raw_mapped_lemmas) else lem
+                    for lem in lemmas_for_current_token:
+                        mapped_lemma_sources[lem] = source_word_form
                 else:
                     continue
 

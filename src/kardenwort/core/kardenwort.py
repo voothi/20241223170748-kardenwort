@@ -2179,7 +2179,6 @@ def main():
                 sys.argv.append(cleaned)
                 
                 try:
-                    import io
                     import contextlib
                     import kardenwort_lite
                     

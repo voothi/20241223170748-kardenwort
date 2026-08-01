@@ -291,12 +291,24 @@ def is_complex_inflected_form(form, apostrophe_chars):
         return True
     return any(not c.isalnum() for c in form)
 
-def sort_inflected_forms(forms, apostrophe_chars, order='contractions_first'):
-    unique_forms = []
+def sort_inflected_forms(forms, apostrophe_chars, order='contractions_first', prefer_lowercase=True):
+    unique_forms_dict = {}
     for f in forms:
         f_clean = f.strip()
-        if f_clean and f_clean not in unique_forms:
-            unique_forms.append(f_clean)
+        if not f_clean:
+            continue
+            
+        if prefer_lowercase:
+            f_lower = f_clean.lower()
+            if f_lower not in unique_forms_dict:
+                unique_forms_dict[f_lower] = f_clean
+            elif f_clean == f_lower:
+                unique_forms_dict[f_lower] = f_clean
+        else:
+            if f_clean not in unique_forms_dict:
+                unique_forms_dict[f_clean] = f_clean
+
+    unique_forms = list(unique_forms_dict.values())
     if order == 'contractions_first':
         unique_forms.sort(key=lambda f: (not is_complex_inflected_form(f, apostrophe_chars), -len(f), f.lower()))
     elif order == 'alphabetical':
@@ -1089,6 +1101,7 @@ def process_parallel_text_files(
         lemma_data = []
 
     order_cfg = getattr(args, 'combine_source_words_order', 'contractions_first')
+    prefer_lowercase_cfg = getattr(args, 'combine_source_words_prefer_lowercase', True)
     apo_cfg = tuple(c.strip() for c in getattr(args, 'apostrophe_chars', "', ’, ‘, `, ´, ʼ").strip('"').split(',') if c.strip())
 
     subdeck_content_map = {}
@@ -1251,7 +1264,7 @@ def process_parallel_text_files(
                         existing_forms = [s.strip() for s in lemma_data['lemmas'][lemma].split(',') if s.strip()]
                         if cur_source_word not in existing_forms:
                             existing_forms.append(cur_source_word)
-                        lemma_data['lemmas'][lemma] = ", ".join(sort_inflected_forms(existing_forms, apo_cfg, order_cfg))
+                        lemma_data['lemmas'][lemma] = ", ".join(sort_inflected_forms(existing_forms, apo_cfg, order_cfg, prefer_lowercase_cfg))
                     elif args.prefer_shortest_form and len(cur_source_word) < len(lemma_data['lemmas'][lemma]):
                         lemma_data['lemmas'][lemma] = cur_source_word
                         lemma_data['info'][lemma] = (content_line_idx, source_sentence, final_deck)
@@ -1264,7 +1277,7 @@ def process_parallel_text_files(
                             existing_forms = [s.strip() for s in lemmas_in_sentence[lemma]['source_word'].split(',') if s.strip()]
                             if cur_source_word not in existing_forms:
                                 existing_forms.append(cur_source_word)
-                            lemmas_in_sentence[lemma]['source_word'] = ", ".join(sort_inflected_forms(existing_forms, apo_cfg, order_cfg))
+                            lemmas_in_sentence[lemma]['source_word'] = ", ".join(sort_inflected_forms(existing_forms, apo_cfg, order_cfg, prefer_lowercase_cfg))
                     else:
                         dedup_key = (lemma, cur_source_word.lower())
                         if dedup_key not in lemmas_in_sentence:
@@ -1508,6 +1521,7 @@ def process_single_text(
         lemma_data = []
 
     order_cfg = getattr(args, 'combine_source_words_order', 'contractions_first')
+    prefer_lowercase_cfg = getattr(args, 'combine_source_words_prefer_lowercase', True)
     apo_cfg = tuple(c.strip() for c in getattr(args, 'apostrophe_chars', "', ’, ‘, `, ´, ʼ").strip('"').split(',') if c.strip())
 
     doc_cache = {}
@@ -1577,7 +1591,7 @@ def process_single_text(
                         existing_forms = [s.strip() for s in lemma_data['lemmas'][lemma].split(',') if s.strip()]
                         if cur_source_word not in existing_forms:
                             existing_forms.append(cur_source_word)
-                        lemma_data['lemmas'][lemma] = ", ".join(sort_inflected_forms(existing_forms, apo_cfg, order_cfg))
+                        lemma_data['lemmas'][lemma] = ", ".join(sort_inflected_forms(existing_forms, apo_cfg, order_cfg, prefer_lowercase_cfg))
                     elif args.prefer_shortest_form and len(cur_source_word) < len(lemma_data['lemmas'][lemma]):
                         lemma_data['lemmas'][lemma] = cur_source_word
                         lemma_data['info'][lemma] = (unit_index, unit_text, current_deck)
@@ -1590,7 +1604,7 @@ def process_single_text(
                             existing_forms = [s.strip() for s in lemmas_in_sentence[lemma]['source_word'].split(',') if s.strip()]
                             if cur_source_word not in existing_forms:
                                 existing_forms.append(cur_source_word)
-                            lemmas_in_sentence[lemma]['source_word'] = ", ".join(sort_inflected_forms(existing_forms, apo_cfg, order_cfg))
+                            lemmas_in_sentence[lemma]['source_word'] = ", ".join(sort_inflected_forms(existing_forms, apo_cfg, order_cfg, prefer_lowercase_cfg))
 
 
 
@@ -2280,6 +2294,16 @@ def main():
                 args.combine_source_words_order = cfg.get('settings', 'combine_source_words_order').strip().lower()
             else:
                 args.combine_source_words_order = 'contractions_first'
+
+        if getattr(args, 'combine_source_words_prefer_lowercase', None) is None:
+            if cfg.has_section('token_mappings') and cfg.has_option('token_mappings', 'combine_source_words_prefer_lowercase'):
+                args.combine_source_words_prefer_lowercase = cfg.getboolean('token_mappings', 'combine_source_words_prefer_lowercase')
+            elif cfg.has_section('lemmatization') and cfg.has_option('lemmatization', 'combine_source_words_prefer_lowercase'):
+                args.combine_source_words_prefer_lowercase = cfg.getboolean('lemmatization', 'combine_source_words_prefer_lowercase')
+            elif cfg.has_section('settings') and cfg.has_option('settings', 'combine_source_words_prefer_lowercase'):
+                args.combine_source_words_prefer_lowercase = cfg.getboolean('settings', 'combine_source_words_prefer_lowercase')
+            else:
+                args.combine_source_words_prefer_lowercase = True
 
         if getattr(args, 'strip_garbage_characters', None) is None:
             if cfg.has_section('lemmatization') and cfg.has_option('lemmatization', 'strip_garbage_characters'):

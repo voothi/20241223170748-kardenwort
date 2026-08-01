@@ -1605,10 +1605,6 @@ def process_single_text(
                             if cur_source_word not in existing_forms:
                                 existing_forms.append(cur_source_word)
                             lemmas_in_sentence[lemma]['source_word'] = ", ".join(sort_inflected_forms(existing_forms, apo_cfg, order_cfg, prefer_lowercase_cfg))
-
-
-
-
                     else:
                         dedup_key = (lemma, cur_source_word.lower())
                         if dedup_key not in lemmas_in_sentence:

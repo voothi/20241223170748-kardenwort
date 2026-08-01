@@ -791,6 +791,125 @@ def parse_markdown_for_branch_headers(all_lines):
             last_header_index = i
     return branch_header_indices
 
+
+def _extract_mapped_token(match, nlp_model, de_dictionary, lemma_override_rules, args, sentence_text, de_fix_genitive):
+    lemmas = _lemmatize_mapped_tokens(
+        match['lemmas'], nlp_model, de_dictionary, lemma_override_rules, args, sentence_text, de_fix_genitive
+    )
+    mapped_sources = {lem: match['source_word'] for lem in lemmas}
+    return lemmas, mapped_sources
+
+def _extract_standard_token(
+    token, nlp_model, de_dictionary, lemma_override_rules, sentence_text, de_fix_genitive, 
+    de_gcs, gcs_automaton, de_gcs_pos_tags, args, separable_verb_map, 
+    de_gcs_add_parts_to_wordlist=False,
+    de_gcs_only_nouns=True,
+    de_gcs_combine_noun_modes=False,
+    de_gcs_mask_unknown_parts=False,
+    de_gcs_preserve_compound_word=False,
+    de_gcs_skip_merge_fractions=False
+):
+
+    lemmas_for_current_token = []
+    source_word_form = token.text
+    base_lemma = ""
+    
+    if token.i in separable_verb_map:
+        particle = separable_verb_map[token.i]
+        base_verb_lemma = token.lemma_
+        if getattr(args, 'use_simplemma_correction', False):
+            base_verb_lemma = simplemma.lemmatize(token.text, lang=getattr(args, 'language', 'en'))
+        default_lemma = f"{particle.text.lower()}{base_verb_lemma}".lower()
+        source_word_form = f"{token.text} {particle.text}"
+    else:
+        spacy_lemma = correct_spacy_lemma(token, de_dictionary, de_fix_genitive, override_lemma=simplemma.lemmatize(token.text, lang=getattr(args, 'language', 'en')) if getattr(args, 'use_simplemma_correction', False) else None)
+        default_lemma = format_lemma_capitalization(token, spacy_lemma, args)
+        
+    base_lemma = get_overridden_lemma_for_word(default_lemma, source_word_form, lemma_override_rules, sentence_text)
+
+    was_split = False
+    is_special_token = token.like_url or token.like_email
+
+    if de_gcs and '-' in token.text and not is_special_token:
+        was_split = True
+        hyphenated_parts = token.text.split('-')
+
+        if de_gcs_preserve_compound_word:
+            lemmas_for_current_token.append(base_lemma)
+
+        for part in hyphenated_parts:
+            part = part.strip()
+            if not part or len(part) <= 1: continue
+
+            initial_part_lemma = lemmatize_compound_part(part, nlp_model, de_dictionary, args)
+            processed_part_lemma = get_overridden_lemma_for_compound_part(initial_part_lemma, part, token.text, lemma_override_rules, sentence_text)
+            if processed_part_lemma:
+                lemmas_for_current_token.append(processed_part_lemma)
+
+    elif de_gcs and gcs_automaton and getattr(args, 'language', 'en') == 'de' and not is_special_token and len(token.text) > 3 and (token.pos_ in de_gcs_pos_tags):
+        try:
+            word_to_split = token.text
+            if getattr(args, 'de_gcs_part_singularization', 'only-nouns') == 'none':
+                make_singular_flag = False
+            elif getattr(args, 'de_gcs_part_singularization', 'only-nouns') == 'all':
+                make_singular_flag = True
+            else:
+                make_singular_flag = (token.pos_ in ['NOUN', 'PROPN'])
+
+            split_components = []
+            if de_gcs_combine_noun_modes:
+                with redirect_stdout(io.StringIO()):
+                    dissection1 = comp_split.dissect(word_to_split, gcs_automaton, make_singular=make_singular_flag, only_nouns=True, mask_unknown=de_gcs_mask_unknown_parts)
+                split_components.extend(comp_split.merge_fractions(dissection1))
+                with redirect_stdout(io.StringIO()):
+                    dissection2 = comp_split.dissect(word_to_split, gcs_automaton, make_singular=make_singular_flag, only_nouns=False, mask_unknown=de_gcs_mask_unknown_parts)
+                split_components.extend(comp_split.merge_fractions(dissection2))
+
+                if de_gcs_skip_merge_fractions:
+                    split_components.extend(dissection1)
+                    split_components.extend(dissection2)
+                else:
+                    split_components.extend(comp_split.merge_fractions(dissection1))
+                    split_components.extend(comp_split.merge_fractions(dissection2))
+
+            else:
+                with redirect_stdout(io.StringIO()):
+                    dissection = comp_split.dissect(word_to_split, gcs_automaton, make_singular=make_singular_flag, only_nouns=de_gcs_only_nouns, mask_unknown=de_gcs_mask_unknown_parts)
+
+                if de_gcs_skip_merge_fractions:
+                    split_components = dissection
+                else:
+                    split_components = comp_split.merge_fractions(dissection)
+
+            if len(split_components) > 1:
+                was_split = True
+                if de_gcs_preserve_compound_word:
+                    lemmas_for_current_token.append(base_lemma)
+
+                for raw_component in set(split_components):
+                    component = raw_component.strip('-')
+                    if not component or len(component) < 3: continue
+
+                    initial_part_lemma = lemmatize_compound_part(component, nlp_model, de_dictionary, args)
+                    overridden_part_lemma = get_overridden_lemma_for_compound_part(initial_part_lemma, component, token.text, lemma_override_rules, sentence_text)
+                    processed_part_lemma = _format_gcs_component_case(overridden_part_lemma)
+
+                    if processed_part_lemma:
+                        lemmas_for_current_token.append(processed_part_lemma)
+                        
+        except Exception as e:
+            print(f"Warning: GCS processing failed for '{token.text}': {e}", file=sys.stderr)
+
+    if not was_split:
+        lemmas_for_current_token.append(base_lemma)
+
+    mapped_sources = {}
+    for lem in lemmas_for_current_token:
+        # In the original code for compound splitting, it used the component part as lemma, but mapped to original word form
+        # We just map all to source_word_form since that's what process_parallel_text_files does:
+        mapped_sources[lem] = source_word_form
+    return lemmas_for_current_token, mapped_sources
+
 def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, de_dictionary, lemma_override_rules, de_gcs_pos_tags, args, **kwargs):
     de_gcs = kwargs.get('de_gcs', False)
     gcs_automaton = kwargs.get('gcs_automaton', None)
@@ -814,112 +933,26 @@ def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, de_
         if token.i in processed_particle_indices:
             continue
 
-        skip_standard_extraction = False
         if token.i in mapped_tokens:
             if token.i in token_mappings_matches:
-                match = token_mappings_matches[token.i]
-                source_word_form = match['source_word']
-                lemmas_for_current_token = _lemmatize_mapped_tokens(
-                    match['lemmas'], nlp_model, de_dictionary, lemma_override_rules, args, sentence_text, de_fix_genitive
+                lemmas_for_current_token, _ = _extract_mapped_token(
+                    token_mappings_matches[token.i], nlp_model, de_dictionary, lemma_override_rules, args, sentence_text, de_fix_genitive
                 )
-                skip_standard_extraction = True
             else:
                 continue
-
-        if not skip_standard_extraction and not (token.is_alpha or ('-' in token.text and token.text.strip('-'))):
-            continue
-
-        if not skip_standard_extraction:
-            lemmas_for_current_token = []
-            
-            source_word_form = token.text
-            base_lemma = ""
-            if token.i in separable_verb_map:
-                particle = separable_verb_map[token.i]
-                base_verb_lemma = token.lemma_
-                if getattr(args, 'use_simplemma_correction', False):
-                    base_verb_lemma = simplemma.lemmatize(token.text, lang=getattr(args, 'language', 'en'))
-                default_lemma = f"{particle.text.lower()}{base_verb_lemma}".lower()
-                source_word_form = f"{token.text} {particle.text}"
-            else:
-                spacy_lemma = correct_spacy_lemma(token, de_dictionary, de_fix_genitive, override_lemma=simplemma.lemmatize(token.text, lang=getattr(args, 'language', 'en')) if getattr(args, 'use_simplemma_correction', False) else None)
-                default_lemma = format_lemma_capitalization(token, spacy_lemma, args)
-            base_lemma = get_overridden_lemma_for_word(default_lemma, source_word_form, lemma_override_rules, sentence_text)
-        
-            was_split = False
-            is_special_token = token.like_url or token.like_email
-
-            if de_gcs and '-' in token.text and not is_special_token:
-                was_split = True
-                hyphenated_parts = token.text.split('-')
-            
-                if de_gcs_preserve_compound_word:
-                    lemmas_for_current_token.append(base_lemma)
-
-                for part in hyphenated_parts:
-                    part = part.strip()
-                    if not part or len(part) <= 1: continue
-
-                    initial_part_lemma = lemmatize_compound_part(part, nlp_model, de_dictionary, args)
-                    processed_part_lemma = get_overridden_lemma_for_compound_part(initial_part_lemma, part, token.text, lemma_override_rules, sentence_text)
-                    if processed_part_lemma:
-                        lemmas_for_current_token.append(processed_part_lemma)
-
-            elif de_gcs and gcs_automaton and nlp.lang == 'de' and not is_special_token and len(token.text) > 3 and (token.pos_ in de_gcs_pos_tags):
-                try:
-                    word_to_split = token.text
-                    if args.de_gcs_part_singularization == 'none':
-                        make_singular_flag = False
-                    elif args.de_gcs_part_singularization == 'all':
-                        make_singular_flag = True
-                    else: 
-                        make_singular_flag = (token.pos_ in ['NOUN', 'PROPN'])
-
-                    split_components = []
-                    if de_gcs_combine_noun_modes:
-                        with redirect_stdout(io.StringIO()):
-                            dissection1 = comp_split.dissect(word_to_split, gcs_automaton, make_singular=make_singular_flag, only_nouns=True, mask_unknown=de_gcs_mask_unknown_parts)
-                        split_components.extend(comp_split.merge_fractions(dissection1))
-                        with redirect_stdout(io.StringIO()):
-                            dissection2 = comp_split.dissect(word_to_split, gcs_automaton, make_singular=make_singular_flag, only_nouns=False, mask_unknown=de_gcs_mask_unknown_parts)
-                        split_components.extend(comp_split.merge_fractions(dissection2))
-
-                        if de_gcs_skip_merge_fractions:
-                            split_components.extend(dissection1)
-                            split_components.extend(dissection2)
-                        else:
-                            split_components.extend(comp_split.merge_fractions(dissection1))
-                            split_components.extend(comp_split.merge_fractions(dissection2))
-
-                    else:
-                        with redirect_stdout(io.StringIO()):
-                            dissection = comp_split.dissect(word_to_split, gcs_automaton, make_singular=make_singular_flag, only_nouns=de_gcs_only_nouns, mask_unknown=de_gcs_mask_unknown_parts)
-                    
-                        if de_gcs_skip_merge_fractions:
-                            split_components = dissection
-                        else:
-                            split_components = comp_split.merge_fractions(dissection)
-
-                    if len(split_components) > 1:
-                        was_split = True
-                        if de_gcs_preserve_compound_word:
-                            lemmas_for_current_token.append(base_lemma)
-                        
-                        for raw_component in set(split_components):
-                            component = raw_component.strip('-')
-                            if not component or len(component) < 3: continue
-                        
-                            initial_part_lemma = lemmatize_compound_part(component, nlp_model, de_dictionary, args)
-                            overridden_part_lemma = get_overridden_lemma_for_compound_part(initial_part_lemma, component, token.text, lemma_override_rules, sentence_text)
-                            processed_part_lemma = _format_gcs_component_case(overridden_part_lemma)
-
-                            if processed_part_lemma:
-                                lemmas_for_current_token.append(processed_part_lemma)
-                except Exception:
-                    was_split = False
-        
-            if not was_split:
-                lemmas_for_current_token.append(base_lemma)
+        else:
+            if not (token.is_alpha or ('-' in token.text and token.text.strip('-'))):
+                continue
+            lemmas_for_current_token, _ = _extract_standard_token(
+                token, nlp_model, de_dictionary, lemma_override_rules, sentence_text, de_fix_genitive, 
+                de_gcs, gcs_automaton, de_gcs_pos_tags, args, separable_verb_map, 
+                de_gcs_add_parts_to_wordlist=de_gcs_add_parts_to_wordlist,
+                de_gcs_only_nouns=de_gcs_only_nouns,
+                de_gcs_combine_noun_modes=de_gcs_combine_noun_modes,
+                de_gcs_mask_unknown_parts=de_gcs_mask_unknown_parts,
+                de_gcs_preserve_compound_word=de_gcs_preserve_compound_word,
+                de_gcs_skip_merge_fractions=de_gcs_skip_merge_fractions
+            )
 
         deduplicated_lemmas = deduplicate_lemmas(lemmas_for_current_token)
         for lemma in deduplicated_lemmas:
@@ -1170,117 +1203,29 @@ def process_parallel_text_files(
             if token.i in processed_particle_indices:
                 continue
 
-            skip_standard_extraction = False
             mapped_lemma_sources = {}
             if token.i in mapped_tokens:
                 if token.i in token_mappings_matches:
-                    match = token_mappings_matches[token.i]
-                    source_word_form = match['source_word']
-                    raw_mapped_lemmas = match['lemmas']
-                    lemmas_for_current_token = _lemmatize_mapped_tokens(
-                        raw_mapped_lemmas, nlp, de_dictionary, lemma_override_rules, args, source_sentence, de_fix_genitive
+                    lemmas_for_current_token, mapped_sources = _extract_mapped_token(
+                        token_mappings_matches[token.i], nlp, de_dictionary, lemma_override_rules, args, source_sentence, de_fix_genitive
                     )
-                    skip_standard_extraction = True
-                    for lem in lemmas_for_current_token:
-                        mapped_lemma_sources[lem] = source_word_form
+                    mapped_lemma_sources.update(mapped_sources)
                 else:
                     continue
             else:
-                if not skip_standard_extraction and not (token.is_alpha or '-' in token.text):
+                if not (token.is_alpha or '-' in token.text):
                     continue
-
-            if not skip_standard_extraction:
-                lemmas_for_current_token = []
-                
-                source_word_form = token.text
-                base_lemma = ""
-                if token.i in separable_verb_map:
-                    particle = separable_verb_map[token.i]
-                    base_verb_lemma = token.lemma_
-                    if getattr(args, 'use_simplemma_correction', False):
-                        base_verb_lemma = simplemma.lemmatize(token.text, lang=getattr(args, 'language', 'en'))
-                    default_lemma = f"{particle.text.lower()}{base_verb_lemma}".lower()
-                    source_word_form = f"{token.text} {particle.text}"
-                else:
-                    spacy_lemma = correct_spacy_lemma(token, de_dictionary, de_fix_genitive, override_lemma=simplemma.lemmatize(token.text, lang=getattr(args, 'language', 'en')) if getattr(args, 'use_simplemma_correction', False) else None)
-                    default_lemma = format_lemma_capitalization(token, spacy_lemma, args)
-                base_lemma = get_overridden_lemma_for_word(default_lemma, source_word_form, lemma_override_rules, source_sentence)
-
-                was_split = False
-                is_special_token = token.like_url or token.like_email
-
-                if de_gcs and '-' in token.text and not is_special_token:
-                    was_split = True
-                    hyphenated_parts = token.text.split('-')
-                    
-                    if de_gcs_preserve_compound_word:
-                        lemmas_for_current_token.append(base_lemma)
-
-                    for part in hyphenated_parts:
-                        part = part.strip()
-                        if not part or len(part) <= 1: continue
-
-                        initial_part_lemma = lemmatize_compound_part(part, nlp, de_dictionary)
-                        processed_part_lemma = get_overridden_lemma_for_compound_part(initial_part_lemma, part, token.text, lemma_override_rules, source_sentence)
-                        if processed_part_lemma:
-                            lemmas_for_current_token.append(processed_part_lemma)
-                
-                elif de_gcs and gcs_automaton and language == 'de' and not is_special_token and len(token.text) > 3 and (token.pos_ in de_gcs_pos_tags):
-                    try:
-                        word_to_split = token.text
-                        if args.de_gcs_part_singularization == 'none':
-                            make_singular_flag = False
-                        elif args.de_gcs_part_singularization == 'all':
-                            make_singular_flag = True
-                        else:
-                            make_singular_flag = (token.pos_ in ['NOUN', 'PROPN'])
-
-                        split_components = []
-                        if de_gcs_combine_noun_modes:
-                            with redirect_stdout(io.StringIO()):
-                                dissection1 = comp_split.dissect(word_to_split, gcs_automaton, make_singular=make_singular_flag, only_nouns=True, mask_unknown=de_gcs_mask_unknown_parts)
-                            split_components.extend(comp_split.merge_fractions(dissection1))
-                            with redirect_stdout(io.StringIO()):
-                                dissection2 = comp_split.dissect(word_to_split, gcs_automaton, make_singular=make_singular_flag, only_nouns=False, mask_unknown=de_gcs_mask_unknown_parts)
-                            split_components.extend(comp_split.merge_fractions(dissection2))
-
-                            if de_gcs_skip_merge_fractions:
-                                split_components.extend(dissection1)
-                                split_components.extend(dissection2)
-                            else:
-                                split_components.extend(comp_split.merge_fractions(dissection1))
-                                split_components.extend(comp_split.merge_fractions(dissection2))
-
-                        else:
-                            with redirect_stdout(io.StringIO()):
-                                dissection = comp_split.dissect(word_to_split, gcs_automaton, make_singular=make_singular_flag, only_nouns=de_gcs_only_nouns, mask_unknown=de_gcs_mask_unknown_parts)
-                            
-                            if de_gcs_skip_merge_fractions:
-                                split_components = dissection
-                            else:
-                                split_components = comp_split.merge_fractions(dissection)
-
-                        if len(split_components) > 1:
-                            was_split = True
-                            if de_gcs_preserve_compound_word:
-                                lemmas_for_current_token.append(base_lemma)
-
-                            for raw_component in set(split_components):
-                                component = raw_component.strip('-')
-                                if not component: continue
-                                if len(component) < 3: continue
-
-                                initial_part_lemma = lemmatize_compound_part(component, nlp, de_dictionary)
-                                overridden_part_lemma = get_overridden_lemma_for_compound_part(initial_part_lemma, component, token.text, lemma_override_rules, source_sentence)
-                                processed_part_lemma = _format_gcs_component_case(overridden_part_lemma)
-                                
-                                if processed_part_lemma:
-                                    lemmas_for_current_token.append(processed_part_lemma)
-                    except Exception:
-                        was_split = False
-                
-                if not was_split:
-                    lemmas_for_current_token.append(base_lemma)
+                lemmas_for_current_token, mapped_sources = _extract_standard_token(
+                    token, nlp, de_dictionary, lemma_override_rules, source_sentence, de_fix_genitive, 
+                    de_gcs, gcs_automaton, de_gcs_pos_tags, args, separable_verb_map, 
+                    de_gcs_add_parts_to_wordlist=kwargs.get('de_gcs_add_parts_to_wordlist', False),
+                    de_gcs_only_nouns=de_gcs_only_nouns,
+                    de_gcs_combine_noun_modes=de_gcs_combine_noun_modes,
+                    de_gcs_mask_unknown_parts=de_gcs_mask_unknown_parts,
+                    de_gcs_preserve_compound_word=de_gcs_preserve_compound_word,
+                    de_gcs_skip_merge_fractions=de_gcs_skip_merge_fractions
+                )
+                mapped_lemma_sources.update(mapped_sources)
 
             deduplicated_lemmas = deduplicate_lemmas(lemmas_for_current_token)
 
@@ -1288,7 +1233,7 @@ def process_parallel_text_files(
                 if not lemma:
                     continue
                 
-                cur_source_word = mapped_lemma_sources.get(lemma, source_word_form) if skip_standard_extraction else source_word_form
+                cur_source_word = mapped_lemma_sources.get(lemma, token.text)
                 
                 data_entry = {
                     'lemma': lemma,
@@ -1451,7 +1396,7 @@ def process_single_text(
     is_multiline_from_file = '\n' in source_text.strip()
     source_lines = source_text.splitlines() if is_multiline_from_file else []
 
-    text_units = []
+    unit_texts = []
     deck_map = {}
     subdeck_content_map = {}
     header_counter = 1
@@ -1534,20 +1479,20 @@ def process_single_text(
                 subdeck_content_map[final_deck]['source_lines'].append(line_raw)
 
             if args.anki_sentence_subdecks:
-                sentence_prefix = str(len(text_units) + 1).zfill(6)
+                sentence_prefix = str(len(unit_texts) + 1).zfill(6)
                 sentence_slug = generate_filename_prefix_from_text(line, 4)
                 if sentence_slug:
                     sentence_deck_name = f"{final_deck}::{sentence_prefix}-{sentence_slug}"
                     final_deck = sentence_deck_name
 
-            deck_map[len(text_units)] = final_deck
-            text_units.append(line)
+            deck_map[len(unit_texts)] = final_deck
+            unit_texts.append(line)
     else:
         if is_multiline_from_file:
-            text_units = [line.strip() for line in source_lines if line.strip()]
+            unit_texts = [line.strip() for line in source_lines if line.strip()]
         else:
             doc = nlp(source_text)
-            text_units = [sent.text for sent in doc.sents]
+            unit_texts = [sent.text for sent in doc.sents]
 
     strip_config = {'source': False, 'translations': False}
     if args.strip_headers is not None:
@@ -1555,7 +1500,7 @@ def process_single_text(
         if 'all' in targets or 'source' in targets:
             strip_config['source'] = True
 
-    display_text_units = [_strip_markdown_header(unit) for unit in text_units] if strip_config['source'] else text_units
+    display_unit_texts = [_strip_markdown_header(unit) for unit in unit_texts] if strip_config['source'] else unit_texts
 
     lemma_data = {}
     if args.deduplication_scope == 'global':
@@ -1568,7 +1513,7 @@ def process_single_text(
 
     doc_cache = {}
 
-    for unit_index, unit_text in enumerate(text_units):
+    for unit_index, unit_text in enumerate(unit_texts):
         lemmas_in_sentence = {}
         if unit_text not in doc_cache:
             doc_cache[unit_text] = nlp(unit_text)
@@ -1585,171 +1530,79 @@ def process_single_text(
             if token.i in processed_particle_indices:
                 continue
 
-            skip_standard_extraction = False
             mapped_lemma_sources = {}
             if token.i in mapped_tokens:
                 if token.i in token_mappings_matches:
-                    match = token_mappings_matches[token.i]
-                    source_word_form = match['source_word']
-                    raw_mapped_lemmas = match['lemmas']
-                    lemmas_for_current_token = _lemmatize_mapped_tokens(
-                        raw_mapped_lemmas, nlp, de_dictionary, lemma_override_rules, args, unit_text, de_fix_genitive
+                    lemmas_for_current_token, mapped_sources = _extract_mapped_token(
+                        token_mappings_matches[token.i], nlp, de_dictionary, lemma_override_rules, args, unit_text, de_fix_genitive
                     )
-                    skip_standard_extraction = True
-                    for lem in lemmas_for_current_token:
-                        mapped_lemma_sources[lem] = source_word_form
+                    mapped_lemma_sources.update(mapped_sources)
                 else:
                     continue
+            else:
+                if not (token.is_alpha or '-' in token.text):
+                    continue
+                lemmas_for_current_token, mapped_sources = _extract_standard_token(
+                    token, nlp, de_dictionary, lemma_override_rules, unit_text, de_fix_genitive, 
+                    de_gcs, gcs_automaton, de_gcs_pos_tags, args, separable_verb_map, 
+                    de_gcs_add_parts_to_wordlist=kwargs.get('de_gcs_add_parts_to_wordlist', False),
+                    de_gcs_only_nouns=de_gcs_only_nouns,
+                    de_gcs_combine_noun_modes=de_gcs_combine_noun_modes,
+                    de_gcs_mask_unknown_parts=de_gcs_mask_unknown_parts,
+                    de_gcs_preserve_compound_word=de_gcs_preserve_compound_word,
+                    de_gcs_skip_merge_fractions=de_gcs_skip_merge_fractions
+                )
+                mapped_lemma_sources.update(mapped_sources)
 
-            if skip_standard_extraction or (token.is_alpha or '-' in token.text):
-                if not skip_standard_extraction:
-                    lemmas_for_current_token = []
-                    source_word_form = token.text
-                    base_lemma = ""
-                    if token.i in separable_verb_map:
-                        particle = separable_verb_map[token.i]
-                        base_verb_lemma = token.lemma_
-                        if getattr(args, 'use_simplemma_correction', False):
-                            base_verb_lemma = simplemma.lemmatize(token.text, lang=getattr(args, 'language', 'en'))
-                        default_lemma = f"{particle.text.lower()}{base_verb_lemma}".lower()
-                        source_word_form = f"{token.text} {particle.text}"
-                    else:
-                        spacy_lemma = correct_spacy_lemma(token, de_dictionary, de_fix_genitive, override_lemma=simplemma.lemmatize(token.text, lang=getattr(args, 'language', 'en')) if getattr(args, 'use_simplemma_correction', False) else None)
-                        default_lemma = format_lemma_capitalization(token, spacy_lemma, args)
-                    base_lemma = get_overridden_lemma_for_word(default_lemma, source_word_form, lemma_override_rules, unit_text)
-                
-                    strip_chars = getattr(args, 'strip_garbage_characters', '-')
-                    if strip_chars:
-                        source_word_form = source_word_form.strip(strip_chars)
-                        base_lemma = base_lemma.strip(strip_chars)
-                    if not source_word_form or not base_lemma:
-                        continue
-                
-                    was_split = False
-                    is_special_token = token.like_url or token.like_email
+            deduplicated_lemmas = deduplicate_lemmas(lemmas_for_current_token)
 
-                    if de_gcs and '-' in token.text and not is_special_token:
-                        was_split = True
-                        hyphenated_parts = token.text.split('-')
-                    
-                        if de_gcs_preserve_compound_word:
-                            lemmas_for_current_token.append(base_lemma)
+            for lemma in deduplicated_lemmas:
+                if not lemma:
+                    continue
 
-                        for part in hyphenated_parts:
-                            part = part.strip()
-                            if not part or len(part) <= 1: continue
+                cur_source_word = mapped_lemma_sources.get(lemma, token.text)
 
-                            initial_part_lemma = lemmatize_compound_part(part, nlp, de_dictionary)
-                            processed_part_lemma = get_overridden_lemma_for_compound_part(initial_part_lemma, part, token.text, lemma_override_rules, unit_text)
-                            if processed_part_lemma:
-                                lemmas_for_current_token.append(processed_part_lemma)
-                
-                    elif de_gcs and gcs_automaton and language == 'de' and not is_special_token and len(token.text) > 3 and (token.pos_ in de_gcs_pos_tags):
-                        try:
-                            word_to_split = token.text
-                            if args.de_gcs_part_singularization == 'none':
-                                make_singular_flag = False
-                            elif args.de_gcs_part_singularization == 'all':
-                                make_singular_flag = True
-                            else:
-                                make_singular_flag = (token.pos_ in ['NOUN', 'PROPN'])
-                            
-                            split_components = []
-                            if de_gcs_combine_noun_modes:
-                                with redirect_stdout(io.StringIO()):
-                                    dissection1 = comp_split.dissect(word_to_split, gcs_automaton, make_singular=make_singular_flag, only_nouns=True, mask_unknown=de_gcs_mask_unknown_parts)
-                                split_components.extend(comp_split.merge_fractions(dissection1))
-                                with redirect_stdout(io.StringIO()):
-                                    dissection2 = comp_split.dissect(word_to_split, gcs_automaton, make_singular=make_singular_flag, only_nouns=False, mask_unknown=de_gcs_mask_unknown_parts)
-                                split_components.extend(comp_split.merge_fractions(dissection2))
+                data_entry = {
+                    'lemma': lemma,
+                    'source_word': cur_source_word,
+                    'sentence_index': unit_index,
+                    'source_sentence': unit_text,
+                    'deck_name': current_deck
+                }
 
-                                if de_gcs_skip_merge_fractions:
-                                    split_components.extend(dissection1)
-                                    split_components.extend(dissection2)
-                                else:
-                                    split_components.extend(comp_split.merge_fractions(dissection1))
-                                    split_components.extend(comp_split.merge_fractions(dissection2))
-
-                            else:
-                                with redirect_stdout(io.StringIO()):
-                                    dissection = comp_split.dissect(word_to_split, gcs_automaton, make_singular=make_singular_flag, only_nouns=de_gcs_only_nouns, mask_unknown=de_gcs_mask_unknown_parts)
-                            
-                                if de_gcs_skip_merge_fractions:
-                                    split_components = dissection
-                                else:
-                                    split_components = comp_split.merge_fractions(dissection)
-
-                            if len(split_components) > 1:
-                                was_split = True
-                                if de_gcs_preserve_compound_word:
-                                    lemmas_for_current_token.append(base_lemma)
-                            
-                                for raw_component in set(split_components):
-                                    component = raw_component.strip('-')
-                                    if not component: continue
-                                    if len(component) < 3: continue
-
-                                    initial_part_lemma = lemmatize_compound_part(component, nlp, de_dictionary)
-                                    overridden_part_lemma = get_overridden_lemma_for_compound_part(initial_part_lemma, component, token.text, lemma_override_rules, unit_text)
-                                    processed_part_lemma = _format_gcs_component_case(overridden_part_lemma)
-
-                                    if processed_part_lemma:
-                                        lemmas_for_current_token.append(processed_part_lemma)
-                        except Exception:
-                            was_split = False
-
-                    if not was_split:
-                        lemmas_for_current_token.append(base_lemma)
-
-                deduplicated_lemmas = deduplicate_lemmas(lemmas_for_current_token)
-
-                for lemma in deduplicated_lemmas:
-                    if not lemma:
-                        continue
+                if args.deduplication_scope == 'global':
+                    is_new = lemma not in lemma_data['lemmas']
+                    if is_new:
+                        lemma_data['lemmas'][lemma] = cur_source_word
+                        lemma_data['info'][lemma] = (unit_index, unit_text, current_deck)
+                    elif getattr(args, 'combine_source_words', False):
+                        existing_forms = [s.strip() for s in lemma_data['lemmas'][lemma].split(',') if s.strip()]
+                        if cur_source_word not in existing_forms:
+                            existing_forms.append(cur_source_word)
+                        lemma_data['lemmas'][lemma] = ", ".join(sort_inflected_forms(existing_forms, apo_cfg, order_cfg))
+                    elif args.prefer_shortest_form and len(cur_source_word) < len(lemma_data['lemmas'][lemma]):
+                        lemma_data['lemmas'][lemma] = cur_source_word
+                        lemma_data['info'][lemma] = (unit_index, unit_text, current_deck)
                         
-                    cur_source_word = mapped_lemma_sources.get(lemma, source_word_form) if skip_standard_extraction else source_word_form
-
-                    data_entry = {
-                        'lemma': lemma,
-                        'source_word': cur_source_word,
-                        'sentence_index': unit_index,
-                        'source_sentence': unit_text,
-                        'deck_name': current_deck
-                    }
-
-                    if args.deduplication_scope == 'global':
-                        is_new = lemma not in lemma_data['lemmas']
-                        if is_new:
-                            lemma_data['lemmas'][lemma] = cur_source_word
-                            lemma_data['info'][lemma] = (unit_index, unit_text, current_deck)
-                        elif getattr(args, 'combine_source_words', False):
-                            existing_forms = [s.strip() for s in lemma_data['lemmas'][lemma].split(',') if s.strip()]
+                elif args.deduplication_scope == 'sentence':
+                    if getattr(args, 'combine_source_words', False):
+                        if lemma not in lemmas_in_sentence:
+                            lemmas_in_sentence[lemma] = data_entry
+                        else:
+                            existing_forms = [s.strip() for s in lemmas_in_sentence[lemma]['source_word'].split(',') if s.strip()]
                             if cur_source_word not in existing_forms:
                                 existing_forms.append(cur_source_word)
-                            lemma_data['lemmas'][lemma] = ", ".join(sort_inflected_forms(existing_forms, apo_cfg, order_cfg))
-                        elif args.prefer_shortest_form and len(cur_source_word) < len(lemma_data['lemmas'][lemma]):
-                            lemma_data['lemmas'][lemma] = cur_source_word
-                            lemma_data['info'][lemma] = (unit_index, unit_text, current_deck)
-                            
-                    elif args.deduplication_scope == 'sentence':
-                        if getattr(args, 'combine_source_words', False):
-                            if lemma not in lemmas_in_sentence:
-                                lemmas_in_sentence[lemma] = data_entry
-                            else:
-                                existing_forms = [s.strip() for s in lemmas_in_sentence[lemma]['source_word'].split(',') if s.strip()]
-                                if cur_source_word not in existing_forms:
-                                    existing_forms.append(cur_source_word)
-                                lemmas_in_sentence[lemma]['source_word'] = ", ".join(sort_inflected_forms(existing_forms, apo_cfg, order_cfg))
+                            lemmas_in_sentence[lemma]['source_word'] = ", ".join(sort_inflected_forms(existing_forms, apo_cfg, order_cfg))
 
 
 
 
-                        else:
-                            dedup_key = (lemma, cur_source_word.lower())
-                            if dedup_key not in lemmas_in_sentence:
-                                lemmas_in_sentence[dedup_key] = data_entry
-                    elif args.deduplication_scope == 'none':
-                        lemma_data.append(data_entry)
+                    else:
+                        dedup_key = (lemma, cur_source_word.lower())
+                        if dedup_key not in lemmas_in_sentence:
+                            lemmas_in_sentence[dedup_key] = data_entry
+                elif args.deduplication_scope == 'none':
+                    lemma_data.append(data_entry)
 
         if args.deduplication_scope == 'sentence':
             lemma_data.extend(lemmas_in_sentence.values())
@@ -1787,12 +1640,12 @@ def process_single_text(
 
                 if unit_index == -1: continue
                 
-                source_sentence = display_text_units[unit_index].strip()
+                source_sentence = display_unit_texts[unit_index].strip()
                 context_start_index = max(0, unit_index - sentence_context_size)
-                context_end_index = min(len(display_text_units), unit_index + sentence_context_size + 1)
+                context_end_index = min(len(display_unit_texts), unit_index + sentence_context_size + 1)
                 
-                source_context_left = " ".join(u.strip() for u in display_text_units[context_start_index:unit_index])
-                source_context_right = " ".join(u.strip() for u in display_text_units[unit_index + 1:context_end_index])
+                source_context_left = " ".join(u.strip() for u in display_unit_texts[context_start_index:unit_index])
+                source_context_right = " ".join(u.strip() for u in display_unit_texts[unit_index + 1:context_end_index])
                 
                 print(word, file=sys.stdout)
                 if source_context_left: print(source_context_left, file=sys.stdout)
@@ -1841,9 +1694,9 @@ def process_single_text(
                 deck_name = item['deck_name']
                 source_word_col_val = item['source_word']
             
-            source_sentence_for_tsv = display_text_units[unit_index].strip()
+            source_sentence_for_tsv = display_unit_texts[unit_index].strip()
             context_start_index = max(0, unit_index - sentence_context_size)
-            context_end_index = min(len(display_text_units), unit_index + sentence_context_size + 1)
+            context_end_index = min(len(display_unit_texts), unit_index + sentence_context_size + 1)
             
             current_wordlist = ""
             if add_wordlist_col:
@@ -1868,8 +1721,8 @@ def process_single_text(
                 lemma=word,
                 source_word=source_word_col_val,
                 source_sentence=source_sentence_for_tsv,
-                source_context_left=context_join_str.join(u.strip() for u in display_text_units[context_start_index:unit_index]),
-                source_context_right=context_join_str.join(u.strip() for u in display_text_units[unit_index + 1:context_end_index]),
+                source_context_left=context_join_str.join(u.strip() for u in display_unit_texts[context_start_index:unit_index]),
+                source_context_right=context_join_str.join(u.strip() for u in display_unit_texts[unit_index + 1:context_end_index]),
                 wordlist=current_wordlist,
                 cloze=source_sentence_for_tsv,
                 sentence_index=str(unit_index + 1).zfill(6),

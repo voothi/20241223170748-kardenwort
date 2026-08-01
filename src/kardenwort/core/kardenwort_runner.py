@@ -180,9 +180,11 @@ def get_script_args(args, python_path, workspace_path, config, anki_mapping):
                 "--de-gcs",
                 "--de-gcs-split-mode", "combined",
                 "--de-gcs-preserve-compound-word",
-                "--de-gcs-add-parts-to-wordlist",
-                "--de-gcs-skip-merge-fractions",
             ]
+            if getattr(args, 'de_gcs_add_parts_to_wordlist', False):
+                gcs_args.append("--de-gcs-add-parts-to-wordlist")
+            if getattr(args, 'de_gcs_skip_merge_fractions', False):
+                gcs_args.append("--de-gcs-skip-merge-fractions")
             if args.de_gcs_pos_tags:
                 gcs_args.append("--de-gcs-pos-tags")
                 gcs_args.extend(args.de_gcs_pos_tags)
@@ -396,6 +398,8 @@ def main():
     parser.add_argument("--prefer-shortest-form", action="store_true", help="When deduplicating globally, prefer the shortest word form of a lemma, even if it appears later in the text. Default is to keep the first occurrence.")
     parser.add_argument("--de-gcs", action='store_true', help="Enable German Compound Splitting (only effective when --language is 'de').")
     parser.add_argument("--de-gcs-pos-tags", nargs='+', help="Specify POS tags for GCS (e.g., 'NOUN PROPN' or '!VERB').")
+    parser.add_argument("--de-gcs-add-parts-to-wordlist", action="store_true", help="Add split compound parts to the sentence wordlist.")
+    parser.add_argument("--de-gcs-skip-merge-fractions", action="store_true", help="Disable merging of components, outputting raw parts from dissection.")
     parser.add_argument("--anki-create-subdecks", action="store_true", help="Automatically generate a parent deck and sub-decks for Anki based on the output filename.")
     parser.add_argument("--anki-markdown-decks", action="store_true", help="Parse Markdown headers in source text to create a hierarchical deck structure in Anki.")
     parser.add_argument("--anki-sentence-subdecks", action="store_true", help="Create a final subdeck level for each sentence.")

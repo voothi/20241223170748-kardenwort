@@ -911,6 +911,11 @@ def _extract_standard_token(
 
 def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, de_dictionary, lemma_override_rules, de_gcs_pos_tags, args, **kwargs):
     de_gcs = kwargs.get('de_gcs', False)
+    de_gcs_add_parts_to_wordlist = kwargs.get('de_gcs_add_parts_to_wordlist', False)
+    
+    if de_gcs and not de_gcs_add_parts_to_wordlist:
+        de_gcs = False
+
     gcs_automaton = kwargs.get('gcs_automaton', None)
     de_gcs_only_nouns = kwargs.get('de_gcs_only_nouns', True)
     de_gcs_combine_noun_modes = kwargs.get('de_gcs_combine_noun_modes', False)

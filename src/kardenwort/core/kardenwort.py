@@ -490,8 +490,8 @@ def lemmatize_compound_part(part, nlp_model, de_dictionary, args=None):
 
     return spacy_lemma
 
-def correct_spacy_lemma(token, de_dictionary, fix_genitive=False):
-    spacy_lemma = token.lemma_
+def correct_spacy_lemma(token, de_dictionary, fix_genitive=False, override_lemma=None):
+    spacy_lemma = override_lemma if override_lemma is not None else token.lemma_
     if (fix_genitive and
         nlp.lang == 'de' and
         token.pos_ in ["NOUN", "PROPN"] and
@@ -768,11 +768,8 @@ def _lemmatize_mapped_tokens(mapped_lemmas, nlp_model, de_dictionary, lemma_over
         doc = nlp_model(l)
         if len(doc) > 0:
             ltok = doc[0]
-            spacy_lemma = correct_spacy_lemma(ltok, de_dictionary, de_fix_genitive)
+            spacy_lemma = correct_spacy_lemma(ltok, de_dictionary, de_fix_genitive, override_lemma=simplemma.lemmatize(ltok.text, lang=getattr(args, 'language', 'en')) if getattr(args, 'use_simplemma_correction', False) else None)
             default_lemma = format_lemma_capitalization(ltok, spacy_lemma, args)
-            if getattr(args, 'use_simplemma_correction', False):
-                default_lemma = simplemma.lemmatize(ltok.text, lang=getattr(args, 'language', 'en'))
-                default_lemma = format_lemma_capitalization(ltok, default_lemma, args)
             final_lemma = get_overridden_lemma_for_word(default_lemma, l, lemma_override_rules, sentence_text)
             result.append(final_lemma)
         else:
@@ -845,11 +842,8 @@ def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, de_
             default_lemma = f"{particle.text.lower()}{base_verb_lemma}".lower()
             source_word_form = f"{token.text} {particle.text}"
         else:
-            spacy_lemma = correct_spacy_lemma(token, de_dictionary, de_fix_genitive)
+            spacy_lemma = correct_spacy_lemma(token, de_dictionary, de_fix_genitive, override_lemma=simplemma.lemmatize(token.text, lang=getattr(args, 'language', 'en')) if getattr(args, 'use_simplemma_correction', False) else None)
             default_lemma = format_lemma_capitalization(token, spacy_lemma, args)
-            if getattr(args, 'use_simplemma_correction', False):
-                default_lemma = simplemma.lemmatize(token.text, lang=getattr(args, 'language', 'en'))
-                default_lemma = format_lemma_capitalization(token, default_lemma, args)
         base_lemma = get_overridden_lemma_for_word(default_lemma, source_word_form, lemma_override_rules, sentence_text)
         
         was_split = False
@@ -1212,11 +1206,8 @@ def process_parallel_text_files(
                     default_lemma = f"{particle.text.lower()}{base_verb_lemma}".lower()
                     source_word_form = f"{token.text} {particle.text}"
                 else:
-                    spacy_lemma = correct_spacy_lemma(token, de_dictionary, de_fix_genitive)
+                    spacy_lemma = correct_spacy_lemma(token, de_dictionary, de_fix_genitive, override_lemma=simplemma.lemmatize(token.text, lang=getattr(args, 'language', 'en')) if getattr(args, 'use_simplemma_correction', False) else None)
                     default_lemma = format_lemma_capitalization(token, spacy_lemma, args)
-                    if getattr(args, 'use_simplemma_correction', False):
-                        default_lemma = simplemma.lemmatize(token.text, lang=getattr(args, 'language', 'en'))
-                        default_lemma = format_lemma_capitalization(token, default_lemma, args)
                 base_lemma = get_overridden_lemma_for_word(default_lemma, source_word_form, lemma_override_rules, source_sentence)
 
                 was_split = False
@@ -1631,11 +1622,8 @@ def process_single_text(
                     default_lemma = f"{particle.text.lower()}{base_verb_lemma}".lower()
                     source_word_form = f"{token.text} {particle.text}"
                 else:
-                    spacy_lemma = correct_spacy_lemma(token, de_dictionary, de_fix_genitive)
+                    spacy_lemma = correct_spacy_lemma(token, de_dictionary, de_fix_genitive, override_lemma=simplemma.lemmatize(token.text, lang=getattr(args, 'language', 'en')) if getattr(args, 'use_simplemma_correction', False) else None)
                     default_lemma = format_lemma_capitalization(token, spacy_lemma, args)
-                    if getattr(args, 'use_simplemma_correction', False):
-                        default_lemma = simplemma.lemmatize(token.text, lang=getattr(args, 'language', 'en'))
-                        default_lemma = format_lemma_capitalization(token, default_lemma, args)
                 base_lemma = get_overridden_lemma_for_word(default_lemma, source_word_form, lemma_override_rules, unit_text)
                 
                 if not skip_standard_extraction:

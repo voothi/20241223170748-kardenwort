@@ -912,7 +912,6 @@ def _extract_standard_token(
 def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, de_dictionary, lemma_override_rules, de_gcs_pos_tags, args, **kwargs):
     de_gcs = kwargs.get('de_gcs', False)
     gcs_automaton = kwargs.get('gcs_automaton', None)
-    de_gcs_add_parts_to_wordlist = kwargs.get('de_gcs_add_parts_to_wordlist', False)
     de_gcs_only_nouns = kwargs.get('de_gcs_only_nouns', True)
     de_gcs_combine_noun_modes = kwargs.get('de_gcs_combine_noun_modes', False)
     de_fix_genitive = kwargs.get('de_fix_genitive', False)
@@ -1254,21 +1253,21 @@ def process_parallel_text_files(
                         lemma_data['lemmas'][lemma] = cur_source_word
                         lemma_data['info'][lemma] = (content_line_idx, source_sentence, final_deck)
 
-                    elif args.deduplication_scope == 'sentence':
-                        if getattr(args, 'combine_source_words', False):
-                            if lemma not in lemmas_in_sentence:
-                                lemmas_in_sentence[lemma] = data_entry
-                            else:
-                                existing_forms = [s.strip() for s in lemmas_in_sentence[lemma]['source_word'].split(',') if s.strip()]
-                                if cur_source_word not in existing_forms:
-                                    existing_forms.append(cur_source_word)
-                                lemmas_in_sentence[lemma]['source_word'] = ", ".join(sort_inflected_forms(existing_forms, apo_cfg, order_cfg))
+                elif args.deduplication_scope == 'sentence':
+                    if getattr(args, 'combine_source_words', False):
+                        if lemma not in lemmas_in_sentence:
+                            lemmas_in_sentence[lemma] = data_entry
                         else:
-                            dedup_key = (lemma, cur_source_word.lower())
-                            if dedup_key not in lemmas_in_sentence:
-                                lemmas_in_sentence[dedup_key] = data_entry
-                    elif args.deduplication_scope == 'none':
-                        lemma_data.append(data_entry)
+                            existing_forms = [s.strip() for s in lemmas_in_sentence[lemma]['source_word'].split(',') if s.strip()]
+                            if cur_source_word not in existing_forms:
+                                existing_forms.append(cur_source_word)
+                            lemmas_in_sentence[lemma]['source_word'] = ", ".join(sort_inflected_forms(existing_forms, apo_cfg, order_cfg))
+                    else:
+                        dedup_key = (lemma, cur_source_word.lower())
+                        if dedup_key not in lemmas_in_sentence:
+                            lemmas_in_sentence[dedup_key] = data_entry
+                elif args.deduplication_scope == 'none':
+                    lemma_data.append(data_entry)
 
         if args.deduplication_scope == 'sentence':
             lemma_data.extend(lemmas_in_sentence.values())

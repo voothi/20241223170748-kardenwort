@@ -2157,9 +2157,10 @@ def main():
 
         if input_text:
             cleaned = input_text.strip()
-            # Intercept only if it's a single word and no file output is requested
+            # Intercept only if it's a single word, no file output is requested, and GCS is not requested
             if (cleaned and " " not in cleaned and "\n" not in cleaned and "\t" not in cleaned and 
-                "--output-file" not in sys.argv and "--stdout-print-output-basename" not in sys.argv):
+                "--output-file" not in sys.argv and "--stdout-print-output-basename" not in sys.argv and
+                "--de-gcs" not in sys.argv):
                 lang = ""
                 if "--language" in sys.argv:
                     lang_idx = sys.argv.index("--language")

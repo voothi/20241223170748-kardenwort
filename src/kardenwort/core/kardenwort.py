@@ -802,7 +802,6 @@ def _extract_mapped_token(match, nlp_model, de_dictionary, lemma_override_rules,
 def _extract_standard_token(
     token, nlp_model, de_dictionary, lemma_override_rules, sentence_text, de_fix_genitive, 
     de_gcs, gcs_automaton, de_gcs_pos_tags, args, separable_verb_map, 
-    de_gcs_add_parts_to_wordlist=False,
     de_gcs_only_nouns=True,
     de_gcs_combine_noun_modes=False,
     de_gcs_mask_unknown_parts=False,
@@ -946,7 +945,6 @@ def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, de_
             lemmas_for_current_token, _ = _extract_standard_token(
                 token, nlp_model, de_dictionary, lemma_override_rules, sentence_text, de_fix_genitive, 
                 de_gcs, gcs_automaton, de_gcs_pos_tags, args, separable_verb_map, 
-                de_gcs_add_parts_to_wordlist=de_gcs_add_parts_to_wordlist,
                 de_gcs_only_nouns=de_gcs_only_nouns,
                 de_gcs_combine_noun_modes=de_gcs_combine_noun_modes,
                 de_gcs_mask_unknown_parts=de_gcs_mask_unknown_parts,
@@ -1218,7 +1216,6 @@ def process_parallel_text_files(
                 lemmas_for_current_token, mapped_sources = _extract_standard_token(
                     token, nlp, de_dictionary, lemma_override_rules, source_sentence, de_fix_genitive, 
                     de_gcs, gcs_automaton, de_gcs_pos_tags, args, separable_verb_map, 
-                    de_gcs_add_parts_to_wordlist=de_gcs_add_parts_to_wordlist,
                     de_gcs_only_nouns=de_gcs_only_nouns,
                     de_gcs_combine_noun_modes=de_gcs_combine_noun_modes,
                     de_gcs_mask_unknown_parts=de_gcs_mask_unknown_parts,
@@ -1545,7 +1542,6 @@ def process_single_text(
                 lemmas_for_current_token, mapped_sources = _extract_standard_token(
                     token, nlp, de_dictionary, lemma_override_rules, unit_text, de_fix_genitive, 
                     de_gcs, gcs_automaton, de_gcs_pos_tags, args, separable_verb_map, 
-                    de_gcs_add_parts_to_wordlist=de_gcs_add_parts_to_wordlist,
                     de_gcs_only_nouns=de_gcs_only_nouns,
                     de_gcs_combine_noun_modes=de_gcs_combine_noun_modes,
                     de_gcs_mask_unknown_parts=de_gcs_mask_unknown_parts,

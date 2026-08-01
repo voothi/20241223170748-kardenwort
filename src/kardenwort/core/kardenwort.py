@@ -768,7 +768,7 @@ def _lemmatize_mapped_tokens(mapped_lemmas, nlp_model, de_dictionary, lemma_over
         doc = nlp_model(l)
         if len(doc) > 0:
             ltok = doc[0]
-            spacy_lemma = correct_spacy_lemma(ltok, de_dictionary, de_fix_genitive, override_lemma=simplemma.lemmatize(ltok.text, lang=getattr(args, 'language', 'en')) if getattr(args, 'use_simplemma_correction', False) else None)
+            spacy_lemma = correct_spacy_lemma(ltok, de_dictionary, de_fix_genitive, override_lemma=simplemma.lemmatize(ltok.text, lang=nlp_model.lang) if getattr(args, 'use_simplemma_correction', False) else None)
             default_lemma = format_lemma_capitalization(ltok, spacy_lemma, args)
             final_lemma = get_overridden_lemma_for_word(default_lemma, l, lemma_override_rules, sentence_text)
             result.append(final_lemma)
@@ -817,11 +817,11 @@ def _extract_standard_token(
         particle = separable_verb_map[token.i]
         base_verb_lemma = token.lemma_
         if getattr(args, 'use_simplemma_correction', False):
-            base_verb_lemma = simplemma.lemmatize(token.text, lang=getattr(args, 'language', 'en'))
+            base_verb_lemma = simplemma.lemmatize(token.text, lang=nlp_model.lang)
         default_lemma = f"{particle.text.lower()}{base_verb_lemma}".lower()
         source_word_form = f"{token.text} {particle.text}"
     else:
-        spacy_lemma = correct_spacy_lemma(token, de_dictionary, de_fix_genitive, override_lemma=simplemma.lemmatize(token.text, lang=getattr(args, 'language', 'en')) if getattr(args, 'use_simplemma_correction', False) else None)
+        spacy_lemma = correct_spacy_lemma(token, de_dictionary, de_fix_genitive, override_lemma=simplemma.lemmatize(token.text, lang=nlp_model.lang) if getattr(args, 'use_simplemma_correction', False) else None)
         default_lemma = format_lemma_capitalization(token, spacy_lemma, args)
         
     base_lemma = get_overridden_lemma_for_word(default_lemma, source_word_form, lemma_override_rules, sentence_text)
@@ -845,7 +845,7 @@ def _extract_standard_token(
             if processed_part_lemma:
                 lemmas_for_current_token.append(processed_part_lemma)
 
-    elif de_gcs and gcs_automaton and getattr(args, 'language', 'en') == 'de' and not is_special_token and len(token.text) > 3 and (token.pos_ in de_gcs_pos_tags):
+    elif de_gcs and gcs_automaton and nlp_model.lang == 'de' and not is_special_token and len(token.text) > 3 and (token.pos_ in de_gcs_pos_tags):
         try:
             word_to_split = token.text
             if getattr(args, 'de_gcs_part_singularization', 'only-nouns') == 'none':
@@ -859,10 +859,8 @@ def _extract_standard_token(
             if de_gcs_combine_noun_modes:
                 with redirect_stdout(io.StringIO()):
                     dissection1 = comp_split.dissect(word_to_split, gcs_automaton, make_singular=make_singular_flag, only_nouns=True, mask_unknown=de_gcs_mask_unknown_parts)
-                split_components.extend(comp_split.merge_fractions(dissection1))
                 with redirect_stdout(io.StringIO()):
                     dissection2 = comp_split.dissect(word_to_split, gcs_automaton, make_singular=make_singular_flag, only_nouns=False, mask_unknown=de_gcs_mask_unknown_parts)
-                split_components.extend(comp_split.merge_fractions(dissection2))
 
                 if de_gcs_skip_merge_fractions:
                     split_components.extend(dissection1)
@@ -1215,7 +1213,7 @@ def process_parallel_text_files(
                 else:
                     continue
             else:
-                if not (token.is_alpha or '-' in token.text):
+                if not (token.is_alpha or ('-' in token.text and token.text.strip('-'))):
                     continue
                 lemmas_for_current_token, mapped_sources = _extract_standard_token(
                     token, nlp, de_dictionary, lemma_override_rules, source_sentence, de_fix_genitive, 
@@ -1541,7 +1539,7 @@ def process_single_text(
                 else:
                     continue
             else:
-                if not (token.is_alpha or '-' in token.text):
+                if not (token.is_alpha or ('-' in token.text and token.text.strip('-'))):
                     continue
                 lemmas_for_current_token, mapped_sources = _extract_standard_token(
                     token, nlp, de_dictionary, lemma_override_rules, unit_text, de_fix_genitive, 

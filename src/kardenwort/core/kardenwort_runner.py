@@ -176,16 +176,20 @@ def get_script_args(args, python_path, workspace_path, config, anki_mapping):
         base_args.extend(german_enhancement_args)
         
         if args.de_gcs:
-            gcs_args = [
-                "--de-gcs",
-                "--de-gcs-split-mode", "combined",
-                "--de-gcs-preserve-compound-word",
-            ]
+            gcs_args = ["--de-gcs"]
+            if getattr(args, 'de_gcs_split_mode', None):
+                gcs_args.extend(["--de-gcs-split-mode", args.de_gcs_split_mode])
+            if getattr(args, 'de_gcs_part_singularization', None):
+                gcs_args.extend(["--de-gcs-part-singularization", args.de_gcs_part_singularization])
+            if getattr(args, 'de_gcs_preserve_compound_word', False):
+                gcs_args.append("--de-gcs-preserve-compound-word")
             if getattr(args, 'de_gcs_add_parts_to_wordlist', False):
                 gcs_args.append("--de-gcs-add-parts-to-wordlist")
             if getattr(args, 'de_gcs_skip_merge_fractions', False):
                 gcs_args.append("--de-gcs-skip-merge-fractions")
-            if args.de_gcs_pos_tags:
+            if getattr(args, 'de_gcs_mask_unknown_parts', False):
+                gcs_args.append("--de-gcs-mask-unknown-parts")
+            if getattr(args, 'de_gcs_pos_tags', None):
                 gcs_args.append("--de-gcs-pos-tags")
                 gcs_args.extend(args.de_gcs_pos_tags)
             base_args.extend(gcs_args)
@@ -398,6 +402,10 @@ def main():
     parser.add_argument("--prefer-shortest-form", action="store_true", help="When deduplicating globally, prefer the shortest word form of a lemma, even if it appears later in the text. Default is to keep the first occurrence.")
     parser.add_argument("--de-gcs", action='store_true', help="Enable German Compound Splitting (only effective when --language is 'de').")
     parser.add_argument("--de-gcs-pos-tags", nargs='+', help="Specify POS tags for GCS (e.g., 'NOUN PROPN' or '!VERB').")
+    parser.add_argument("--de-gcs-split-mode", type=str, choices=["only-nouns", "any", "combined"], help="Specify the rule set for GCS dissection.")
+    parser.add_argument("--de-gcs-part-singularization", type=str, choices=["only-nouns", "all", "none"], help="Control whether parts are converted to singular form.")
+    parser.add_argument("--de-gcs-preserve-compound-word", action="store_true", help="Keep the original compound word in the lemma list along with its parts.")
+    parser.add_argument("--de-gcs-mask-unknown-parts", action="store_true", help="Mask unknown intermediate segments when dissecting compounds.")
     parser.add_argument("--de-gcs-add-parts-to-wordlist", action="store_true", help="Add split compound parts to the sentence wordlist.")
     parser.add_argument("--de-gcs-skip-merge-fractions", action="store_true", help="Disable merging of components, outputting raw parts from dissection.")
     parser.add_argument("--anki-create-subdecks", action="store_true", help="Automatically generate a parent deck and sub-decks for Anki based on the output filename.")

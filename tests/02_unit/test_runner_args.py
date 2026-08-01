@@ -146,3 +146,24 @@ def test_get_script_args_missing_lang_config(mock_config):
     
     with pytest.raises(ValueError, match="Missing config for language 'fr'"):
         get_script_args(args, python_path, workspace_path, mock_config, mock_config)
+
+
+def test_get_script_args_gcs_orthogonal_flags(mock_config):
+    python_path = Path("/mock/python")
+    workspace_path = Path("/mock/workspace")
+    args = MockArgs(
+        language="de",
+        type="word",
+        de_gcs=True,
+        de_gcs_pos_tags=["ALL"],
+        de_gcs_preserve_compound_word=True,
+        de_gcs_split_mode="only-nouns"
+    )
+    
+    script_args = get_script_args(args, python_path, workspace_path, mock_config, mock_config)
+    assert "--de-gcs" in script_args
+    assert "--de-gcs-pos-tags" in script_args
+    assert "ALL" in script_args
+    assert "--de-gcs-preserve-compound-word" in script_args
+    assert "--de-gcs-split-mode" in script_args
+    assert "only-nouns" in script_args

@@ -2164,7 +2164,7 @@ def main():
     gcs_group.add_argument(
         "--de-gcs-pos-tags", 
         nargs='+', 
-        default=['NOUN PRON ADV ADJ'],
+        default=['NOUN', 'PROPN', 'ADV', 'ADJ'],
         help='''Specify which Part-of-Speech tags to apply splitting to.
 
   Default: NOUN PROPN ADV ADJ
@@ -2399,7 +2399,8 @@ def main():
     ALL_POS_TAGS = {'ADJ', 'ADP', 'ADV', 'AUX', 'CCONJ', 'DET', 'INTJ', 'NOUN', 
                     'NUM', 'PART', 'PRON', 'PROPN', 'PUNCT', 'SCONJ', 'SYM', 'VERB', 'X'}
 
-    user_tags = args.de_gcs_pos_tags
+    raw_user_tags = args.de_gcs_pos_tags or []
+    user_tags = [tag.strip() for item in raw_user_tags for tag in re.split(r'[\s,]+', str(item)) if tag.strip()]
     has_negation = any(tag.startswith('!') for tag in user_tags)
     gcs_target_pos_tags = set()
 

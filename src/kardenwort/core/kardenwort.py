@@ -1218,7 +1218,7 @@ def process_parallel_text_files(
                 lemmas_for_current_token, mapped_sources = _extract_standard_token(
                     token, nlp, de_dictionary, lemma_override_rules, source_sentence, de_fix_genitive, 
                     de_gcs, gcs_automaton, de_gcs_pos_tags, args, separable_verb_map, 
-                    de_gcs_add_parts_to_wordlist=kwargs.get('de_gcs_add_parts_to_wordlist', False),
+                    de_gcs_add_parts_to_wordlist=de_gcs_add_parts_to_wordlist,
                     de_gcs_only_nouns=de_gcs_only_nouns,
                     de_gcs_combine_noun_modes=de_gcs_combine_noun_modes,
                     de_gcs_mask_unknown_parts=de_gcs_mask_unknown_parts,
@@ -1545,7 +1545,7 @@ def process_single_text(
                 lemmas_for_current_token, mapped_sources = _extract_standard_token(
                     token, nlp, de_dictionary, lemma_override_rules, unit_text, de_fix_genitive, 
                     de_gcs, gcs_automaton, de_gcs_pos_tags, args, separable_verb_map, 
-                    de_gcs_add_parts_to_wordlist=kwargs.get('de_gcs_add_parts_to_wordlist', False),
+                    de_gcs_add_parts_to_wordlist=de_gcs_add_parts_to_wordlist,
                     de_gcs_only_nouns=de_gcs_only_nouns,
                     de_gcs_combine_noun_modes=de_gcs_combine_noun_modes,
                     de_gcs_mask_unknown_parts=de_gcs_mask_unknown_parts,
@@ -1993,11 +1993,16 @@ def main():
     # --- Auto-lite redirection check ---
     config_path = Path(__file__).resolve().parent.parent.parent.parent / 'config.ini'
     auto_lite_mode = False
+    config_use_simplemma = False
     if config_path.exists():
         config = configparser.ConfigParser(allow_no_value=True)
         config.read(config_path, encoding='utf-8')
         if 'optimization' in config and config.getboolean('optimization', 'auto_lite_mode', fallback=False):
             auto_lite_mode = True
+        if config.has_section('settings') and config.has_option('settings', 'use_simplemma_correction'):
+            config_use_simplemma = config.getboolean('settings', 'use_simplemma_correction', fallback=False)
+        elif config.has_section('lemmatization') and config.has_option('lemmatization', 'use_simplemma_correction'):
+            config_use_simplemma = config.getboolean('lemmatization', 'use_simplemma_correction', fallback=False)
 
     if auto_lite_mode:
         input_text = ""
@@ -2013,7 +2018,8 @@ def main():
             # Intercept only if it's a single word, no file output is requested, and GCS/Simplemma are not requested
             if (cleaned and " " not in cleaned and "\n" not in cleaned and "\t" not in cleaned and 
                 "--output-file" not in sys.argv and "--stdout-print-output-basename" not in sys.argv and
-                "--de-gcs" not in sys.argv and "--use-simplemma-correction" not in sys.argv):
+                "--de-gcs" not in sys.argv and "--use-simplemma-correction" not in sys.argv and
+                not config_use_simplemma):
                 lang = ""
                 if "--language" in sys.argv:
                     lang_idx = sys.argv.index("--language")

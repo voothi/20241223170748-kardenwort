@@ -119,16 +119,19 @@ class TestCrossCuttingInvariants(unittest.TestCase):
             token_mappings_enable_context_disambiguation=True,
             token_mappings_lemmatize=False,
             token_mappings_normalize_apostrophes=True,
-            token_mappings_case_sensitive=False
+            token_mappings_case_sensitive=False,
+            de_force_noun_capitalization=False,
+            force_proper_noun_capitalization=False
         )
-        mapped = kw._lemmatize_mapped_tokens(["test"], None, set(), None, args, "test text")
+        mapped = kw._lemmatize_mapped_tokens(["test"], None, set(), {}, args, "test text")
         self.assertEqual(mapped, ["test"])
 
         args.token_mappings_lemmatize = True
         mock_nlp = MagicMock()
         mock_nlp.return_value = [MockToken("test", "test")]
         mock_nlp.lang = "en"
-        mapped_lemmatized = kw._lemmatize_mapped_tokens(["test"], mock_nlp, set(), None, args, "test text")
+        with patch.object(kw, 'nlp', mock_nlp):
+            mapped_lemmatized = kw._lemmatize_mapped_tokens(["test"], mock_nlp, set(), {}, args, "test text")
         self.assertEqual(len(mapped_lemmatized), 1)
         self.assertEqual(mapped_lemmatized[0], "test")
 

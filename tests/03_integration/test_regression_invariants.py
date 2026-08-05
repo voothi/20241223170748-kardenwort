@@ -787,3 +787,55 @@ def test_parallel_sentences_context_br_and_timestamps(mock_nlp, default_args, tm
     assert recs_sp[2]["SentenceSourceContextLeft"] == "Eins. Zwei."
 
 
+# ==============================================================================
+# Phase 7: process_lemmas_per_line Regression Baselines
+# ==============================================================================
+
+def test_process_lemmas_per_line_invariants(mock_nlp, default_args, tmp_path, monkeypatch):
+    """
+    7.1 Test empty line preservation, lemma_sort_index ordering, and correct
+    delegation to extract_lemmas_from_sentence in process_lemmas_per_line without
+    global NLP model side-effects.
+    """
+    source_content = "Hund Auto Haus\n\nZwei Eins Drei\n \n"
+    src_file = str(tmp_path / "lemmas_per_line_in.txt")
+    with open(src_file, "w", encoding="utf-8") as f:
+        f.write(source_content)
+        
+    out_file = str(tmp_path / "lemmas_per_line_out.txt")
+    
+    sort_idx = {
+        "Haus": 1,
+        "Auto": 2,
+        "Hund": 3,
+        "Eins": 1,
+        "Zwei": 2,
+        "Drei": 3
+    }
+    
+    de_dict = {"Hund", "Auto", "Haus", "Zwei", "Eins", "Drei"}
+    override_rules = {
+        'priority1': {}, 'priority1_regex': [], 'priority2': {}, 'priority2_regex': [], 'priority3': {}
+    }
+    
+    monkeypatch.setattr(kw, "nlp", mock_nlp, raising=False)
+    
+    process_lemmas_per_line(
+        source_text_path=src_file,
+        output_file_path=out_file,
+        lemma_sort_index=sort_idx,
+        de_dictionary=de_dict,
+        lemma_override_rules=override_rules,
+        args=default_args
+    )
+    
+    with open(out_file, "r", encoding="utf-8") as f:
+        out_lines = [l.rstrip("\r\n") for l in f.readlines()]
+        
+    assert len(out_lines) == 4
+    assert out_lines[1] == ""
+    assert out_lines[3] == ""
+    
+    assert out_lines[0] == "Haus Auto Hund"
+    assert out_lines[2] == "Eins Zwei Drei"
+

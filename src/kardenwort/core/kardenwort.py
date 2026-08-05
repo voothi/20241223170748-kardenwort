@@ -515,10 +515,13 @@ def get_simplemma_input_text(token, args):
 def get_simplemma_lemmas(token, lang, args):
     override_lemma = None
     smart_fallback_lemma = None
-    if getattr(args, 'simplemma_smart_fallback', False):
+    if getattr(args, 'use_simplemma_correction', False):
+        target_text = get_simplemma_input_text(token, args)
+        override_lemma = simplemma.lemmatize(target_text, lang=lang)
+    elif getattr(args, 'simplemma_smart_fallback', False):
         target_text = get_simplemma_input_text(token, args)
         smart_fallback_lemma = simplemma.lemmatize(target_text, lang=lang)
-    elif getattr(args, 'use_simplemma_correction', False) or getattr(args, 'simplemma_after_spacy', False):
+    elif getattr(args, 'simplemma_after_spacy', False):
         target_text = get_simplemma_input_text(token, args)
         override_lemma = simplemma.lemmatize(target_text, lang=lang)
     return override_lemma, smart_fallback_lemma

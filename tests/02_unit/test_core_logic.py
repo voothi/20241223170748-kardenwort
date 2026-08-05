@@ -2,6 +2,7 @@ import pytest
 from pathlib import Path
 import sys
 from types import SimpleNamespace
+from unittest.mock import MagicMock
 
 # Add src and helpers to sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / 'src'))

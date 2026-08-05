@@ -21,6 +21,8 @@ except ImportError:
 
 # List to hold the paths of temporary files to be cleaned up on exit.
 TEMP_FILES_TO_CLEANUP = []
+nlp: Optional[Any] = None
+simplemma_lang: Optional[str] = None
 
 def _cleanup_temp_files():
     """Remove any temporary files created during execution."""

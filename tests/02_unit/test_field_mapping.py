@@ -1,4 +1,5 @@
 import pytest
+from types import SimpleNamespace
 from kardenwort.core.kardenwort import apply_field_mapping, get_anki_csv_header, get_field_index_map, prepare_row_data
 
 @pytest.fixture
@@ -64,11 +65,7 @@ def test_apply_field_mapping_sentence_mode(field_setup):
     assert csv_row[field_index_map["Deck"]] == "TestDeck"
 
 def test_prepare_row_data_basic():
-    class MockArgs:
-        language = "de"
-        tts_destination_lang = "ru"
-    
-    args = MockArgs()
+    args = SimpleNamespace(language="de", tts_destination_lang="ru")
     data = prepare_row_data(
         args,
         lemma="Haus",
@@ -85,22 +82,14 @@ def test_prepare_row_data_basic():
     assert data.get('tts_dest_ru') == "1"
 
 def test_prepare_row_data_empty_args():
-    class MockArgs:
-        language = None
-        tts_destination_lang = None
-    
-    args = MockArgs()
+    args = SimpleNamespace(language=None, tts_destination_lang=None)
     data = prepare_row_data(args, lemma="test")
     assert data['lemma'] == "test"
     assert 'tts_source_None' not in data
     assert 'tts_dest_None' not in data
 
 def test_prepare_row_data_subtitle_start_time():
-    class MockArgs:
-        language = "en"
-        tts_destination_lang = "de"
-        
-    args = MockArgs()
+    args = SimpleNamespace(language="en", tts_destination_lang="de")
     data = prepare_row_data(args, lemma="hello", subtitle_start_time="1.234")
     assert data['lemma'] == "hello"
     assert data['subtitle_start_time'] == "1.234"

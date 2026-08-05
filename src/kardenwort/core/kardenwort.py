@@ -10,6 +10,8 @@ import json
 import tempfile
 import atexit
 import simplemma
+from dataclasses import dataclass
+from typing import Optional, List, Any, Tuple, Dict
 
 try:
     from german_compound_splitter import comp_split
@@ -30,6 +32,301 @@ def _cleanup_temp_files():
 
 # Register the cleanup function to be called upon script exit.
 atexit.register(_cleanup_temp_files)
+
+# Internal row data keys and mapping sources
+KEY_LEMMA = "lemma"
+KEY_SOURCE_WORD = "source_word"
+KEY_SOURCE_SENTENCE = "source_sentence"
+KEY_SOURCE_CONTEXT_LEFT = "source_context_left"
+KEY_SOURCE_CONTEXT_RIGHT = "source_context_right"
+KEY_TARGET_SENTENCE = "target_sentence"
+KEY_TARGET_CONTEXT_LEFT = "target_context_left"
+KEY_TARGET_CONTEXT_RIGHT = "target_context_right"
+KEY_TERTIARY_SENTENCE = "tertiary_sentence"
+KEY_TERTIARY_CONTEXT_LEFT = "tertiary_context_left"
+KEY_TERTIARY_CONTEXT_RIGHT = "tertiary_context_right"
+KEY_WORDLIST = "wordlist"
+KEY_CLOZE = "cloze"
+KEY_SENTENCE_INDEX = "sentence_index"
+KEY_DECK_NAME = "deck_name"
+KEY_SUBTITLE_START_TIME = "subtitle_start_time"
+
+# Tabular & Anki Field Constants
+FIELD_QUOTATION = "Quotation"
+FIELD_WORD_SOURCE = "WordSource"
+FIELD_WORD_SOURCE_INFLECTED_FORM = "WordSourceInflectedForm"
+FIELD_WORD_DESTINATION = "WordDestination"
+FIELD_WORD_SOURCE_CONTEXT = "WordSourceContext"
+FIELD_SENTENCE_SOURCE_CONTEXT_LEFT = "SentenceSourceContextLeft"
+FIELD_SENTENCE_SOURCE = "SentenceSource"
+FIELD_SENTENCE_SOURCE_CONTEXT_RIGHT = "SentenceSourceContextRight"
+FIELD_SENTENCE_DESTINATION_CONTEXT_LEFT = "SentenceDestinationContextLeft"
+FIELD_SENTENCE_DESTINATION = "SentenceDestination"
+FIELD_SENTENCE_DESTINATION_CONTEXT_RIGHT = "SentenceDestinationContextRight"
+FIELD_SENTENCE_DESTINATION2_CONTEXT_LEFT = "SentenceDestination2ContextLeft"
+FIELD_SENTENCE_DESTINATION2 = "SentenceDestination2"
+FIELD_SENTENCE_DESTINATION2_CONTEXT_RIGHT = "SentenceDestination2ContextRight"
+FIELD_SENTENCE_SOURCE_WORDLIST = "SentenceSourceWordlist"
+FIELD_SENTENCE_SOURCE_CLOZE = "SentenceSourceCloze"
+FIELD_SENTENCE_SOURCE_REWRITE_AI_SENTENCE_SOURCE = "SentenceSourceRewriteAISentenceSource"
+FIELD_SENTENCE_SOURCE_REWRITE_AI_SENTENCE_DESTINATION = "SentenceSourceRewriteAISentenceDestination"
+FIELD_WORD_SOURCE_MORPHOLOGY_AI = "WordSourceMorphologyAI"
+FIELD_NOTE = "Note"
+FIELD_WORD_RUSSIAN = "WordRussian"
+FIELD_WORD_UKRAINIAN = "WordUkrainian"
+FIELD_WORD_ENGLISH = "WordEnglish"
+FIELD_WORD_GERMAN = "WordGerman"
+FIELD_WORD_SOURCE_MORPHEME_FIRST = "WordSourceMorphemeFirst"
+FIELD_WORD_SOURCE_MORPHEME_FIRST_DEFINITION = "WordSourceMorphemeFirstDefinition"
+FIELD_WORD_SOURCE_MORPHEME_SECOND = "WordSourceMorphemeSecond"
+FIELD_WORD_SOURCE_MORPHEME_SECOND_DEFINITION = "WordSourceMorphemeSecondDefinition"
+FIELD_WORD_SOURCE_MORPHEME_THIRD = "WordSourceMorphemeThird"
+FIELD_WORD_SOURCE_MORPHEME_THIRD_DEFINITION = "WordSourceMorphemeThirdDefinition"
+FIELD_WORD_SOURCE_MORPHEME_FOURTH = "WordSourceMorphemeFourth"
+FIELD_WORD_SOURCE_MORPHEME_FOURTH_DEFINITION = "WordSourceMorphemeFourthDefinition"
+FIELD_WORD_SOURCE_MORPHEME_FIFTH = "WordSourceMorphemeFifth"
+FIELD_WORD_SOURCE_MORPHEME_FIFTH_DEFINITION = "WordSourceMorphemeFifthDefinition"
+FIELD_WORD_SOURCE_IPA = "WordSourceIPA"
+FIELD_WORD_SOURCE_SYNONYM_AI = "WordSourceSynonymAI"
+FIELD_WORD_SOURCE_DEFINITION_AI_SENTENCE_SOURCE = "WordSourceDefinitionAISentenceSource"
+FIELD_WORD_SOURCE_DEFINITION_AI_SENTENCE_DESTINATION = "WordSourceDefinitionAISentenceDestination"
+FIELD_WORD_SOURCE_DEFINITION_FIRST = "WordSourceDefinitionFirst"
+FIELD_WORD_SOURCE_DEFINITION_FIRST_CLIPPING = "WordSourceDefinitionFirstClipping"
+FIELD_WORD_SOURCE_DEFINITION_SECOND = "WordSourceDefinitionSecond"
+FIELD_WORD_DESTINATION_DEFINITION_FIRST = "WordDestinationDefinitionFirst"
+FIELD_WORD_DESTINATION_DEFINITION_SECOND = "WordDestinationDefinitionSecond"
+FIELD_WORD_SOURCE_AUDIO = "WordSourceAudio"
+FIELD_SENTENCE_SOURCE_IPA = "SentenceSourceIPA"
+FIELD_SENTENCE_SOURCE_AUDIO = "SentenceSourceAudio"
+FIELD_IMAGE = "Image"
+FIELD_WORD_SOURCE_CLOZE = "WordSourceCloze"
+FIELD_WORD_SOURCE_CONTEXT_AI = "WordSourceContextAI"
+FIELD_TEXT_SOURCE = "TextSource"
+FIELD_TEXT_DESTINATION = "TextDestination"
+FIELD_TEXT_SOURCE_URL = "TextSourceURL"
+FIELD_SENTENCE_ENGLISH = "SentenceEnglish"
+FIELD_SENTENCE_GERMAN = "SentenceGerman"
+FIELD_SENTENCE_UKRAINIAN = "SentenceUkrainian"
+FIELD_SENTENCE_RUSSIAN = "SentenceRussian"
+FIELD_SOURCE = "Source"
+FIELD_SOURCE_URL = "SourceURL"
+FIELD_SEPARATOR_AUDIO = "SeparatorAudio"
+FIELD_SOURCE_EN_GB = "Source-en-GB"
+FIELD_SOURCE_EN_US = "Source-en-US"
+FIELD_SOURCE_DE_DE = "Source-de-DE"
+FIELD_SOURCE_UK_UA = "Source-uk-UA"
+FIELD_SOURCE_RU_RU = "Source-ru-RU"
+FIELD_DESTINATION_EN_GB = "Destination-en-GB"
+FIELD_DESTINATION_EN_US = "Destination-en-US"
+FIELD_DESTINATION_DE_DE = "Destination-de-DE"
+FIELD_DESTINATION_UK_UA = "Destination-uk-UA"
+FIELD_DESTINATION_RU_RU = "Destination-ru-RU"
+FIELD_OVERLAPPING = "Overlapping"
+FIELD_TOGGLE_ALWAYS_EMPTY_FIELD = "ToggleAlwaysEmptyField"
+FIELD_NOTE_ID = "Note ID"
+FIELD_AM_ALL_MORPHS = "am-all-morphs"
+FIELD_AM_ALL_MORPHS_COUNT = "am-all-morphs-count"
+FIELD_AM_UNKNOWN_MORPHS = "am-unknown-morphs"
+FIELD_AM_UNKNOWN_MORPHS_COUNT = "am-unknown-morphs-count"
+FIELD_AM_HIGHLIGHTED = "am-highlighted"
+FIELD_AM_SCORE = "am-score"
+FIELD_AM_SCORE_TERMS = "am-score-terms"
+FIELD_AM_STUDY_MORPHS = "am-study-morphs"
+FIELD_SENTENCE_SOURCE_INDEX = "SentenceSourceIndex"
+FIELD_DECK = "Deck"
+FIELD_LEITNER_BOX = "LeitnerBox"
+FIELD_LEITNER_DUE = "LeitnerDue"
+FIELD_DESK_SELECTED = "DeskSelected"
+FIELD_WORD_DESTINATION_INFLECTED_FORM = "WordDestinationInflectedForm"
+FIELD_WORD_SOURCE_AI = "WordSourceAI"
+FIELD_WORD_SOURCE_INFLECTED_FORM_AI = "WordSourceInflectedFormAI"
+
+# Standard 88-field default Anki baseline tuple
+DEFAULT_ANKI_HEADER = (
+    FIELD_QUOTATION, FIELD_WORD_SOURCE, FIELD_WORD_SOURCE_INFLECTED_FORM, FIELD_WORD_DESTINATION,
+    FIELD_WORD_SOURCE_CONTEXT, FIELD_SENTENCE_SOURCE_CONTEXT_LEFT, FIELD_SENTENCE_SOURCE,
+    FIELD_SENTENCE_SOURCE_CONTEXT_RIGHT, FIELD_SENTENCE_DESTINATION_CONTEXT_LEFT,
+    FIELD_SENTENCE_DESTINATION, FIELD_SENTENCE_DESTINATION_CONTEXT_RIGHT,
+    FIELD_SENTENCE_DESTINATION2_CONTEXT_LEFT, FIELD_SENTENCE_DESTINATION2,
+    FIELD_SENTENCE_DESTINATION2_CONTEXT_RIGHT, FIELD_SENTENCE_SOURCE_WORDLIST,
+    FIELD_SENTENCE_SOURCE_CLOZE, FIELD_SENTENCE_SOURCE_REWRITE_AI_SENTENCE_SOURCE,
+    FIELD_SENTENCE_SOURCE_REWRITE_AI_SENTENCE_DESTINATION, FIELD_WORD_SOURCE_MORPHOLOGY_AI,
+    FIELD_NOTE, FIELD_WORD_RUSSIAN, FIELD_WORD_UKRAINIAN, FIELD_WORD_ENGLISH, FIELD_WORD_GERMAN,
+    FIELD_WORD_SOURCE_MORPHEME_FIRST, FIELD_WORD_SOURCE_MORPHEME_FIRST_DEFINITION,
+    FIELD_WORD_SOURCE_MORPHEME_SECOND, FIELD_WORD_SOURCE_MORPHEME_SECOND_DEFINITION,
+    FIELD_WORD_SOURCE_MORPHEME_THIRD, FIELD_WORD_SOURCE_MORPHEME_THIRD_DEFINITION,
+    FIELD_WORD_SOURCE_MORPHEME_FOURTH, FIELD_WORD_SOURCE_MORPHEME_FOURTH_DEFINITION,
+    FIELD_WORD_SOURCE_MORPHEME_FIFTH, FIELD_WORD_SOURCE_MORPHEME_FIFTH_DEFINITION,
+    FIELD_WORD_SOURCE_IPA, FIELD_WORD_SOURCE_SYNONYM_AI, FIELD_WORD_SOURCE_DEFINITION_AI_SENTENCE_SOURCE,
+    FIELD_WORD_SOURCE_DEFINITION_AI_SENTENCE_DESTINATION, FIELD_WORD_SOURCE_DEFINITION_FIRST,
+    FIELD_WORD_SOURCE_DEFINITION_FIRST_CLIPPING, FIELD_WORD_SOURCE_DEFINITION_SECOND,
+    FIELD_WORD_DESTINATION_DEFINITION_FIRST, FIELD_WORD_DESTINATION_DEFINITION_SECOND,
+    FIELD_WORD_SOURCE_AUDIO, FIELD_SENTENCE_SOURCE_IPA, FIELD_SENTENCE_SOURCE_AUDIO, FIELD_IMAGE,
+    FIELD_WORD_SOURCE_CLOZE, FIELD_WORD_SOURCE_CONTEXT_AI, FIELD_TEXT_SOURCE, FIELD_TEXT_DESTINATION,
+    FIELD_TEXT_SOURCE_URL, FIELD_SENTENCE_ENGLISH, FIELD_SENTENCE_GERMAN, FIELD_SENTENCE_UKRAINIAN,
+    FIELD_SENTENCE_RUSSIAN, FIELD_SOURCE, FIELD_SOURCE_URL, FIELD_SEPARATOR_AUDIO, FIELD_SOURCE_EN_GB,
+    FIELD_SOURCE_EN_US, FIELD_SOURCE_DE_DE, FIELD_SOURCE_UK_UA, FIELD_SOURCE_RU_RU,
+    FIELD_DESTINATION_EN_GB, FIELD_DESTINATION_EN_US, FIELD_DESTINATION_DE_DE,
+    FIELD_DESTINATION_UK_UA, FIELD_DESTINATION_RU_RU, FIELD_OVERLAPPING,
+    FIELD_TOGGLE_ALWAYS_EMPTY_FIELD, FIELD_NOTE_ID, FIELD_AM_ALL_MORPHS, FIELD_AM_ALL_MORPHS_COUNT,
+    FIELD_AM_UNKNOWN_MORPHS, FIELD_AM_UNKNOWN_MORPHS_COUNT, FIELD_AM_HIGHLIGHTED,
+    FIELD_AM_SCORE, FIELD_AM_SCORE_TERMS, FIELD_AM_STUDY_MORPHS, FIELD_SENTENCE_SOURCE_INDEX,
+    FIELD_DECK, FIELD_LEITNER_BOX, FIELD_LEITNER_DUE, FIELD_DESK_SELECTED,
+    FIELD_WORD_DESTINATION_INFLECTED_FORM, FIELD_WORD_SOURCE_AI, FIELD_WORD_SOURCE_INFLECTED_FORM_AI
+)
+
+@dataclass(frozen=True)
+class GCSConfig:
+    de_gcs: bool = False
+    de_gcs_add_parts_to_wordlist: bool = False
+    de_gcs_pos_tags: tuple = ("NN", "NOUN", "N")
+    de_fix_genitive: bool = False
+    de_gcs_mask_unknown_parts: bool = False
+    de_gcs_preserve_compound_word: bool = False
+    de_gcs_skip_merge_fractions: bool = False
+    de_gcs_only_nouns: bool = True
+    de_gcs_combine_noun_modes: bool = False
+    de_gcs_part_singularization: str = "only-nouns"
+
+    @classmethod
+    def from_args(cls, args: Any) -> "GCSConfig":
+        tags = getattr(args, "de_gcs_pos_tags", ["NN", "NOUN", "N"])
+        if isinstance(tags, list):
+            tags = tuple(tags)
+        return cls(
+            de_gcs=getattr(args, "de_gcs", False),
+            de_gcs_add_parts_to_wordlist=getattr(args, "de_gcs_add_parts_to_wordlist", False),
+            de_gcs_pos_tags=tags,
+            de_fix_genitive=getattr(args, "de_fix_genitive", False),
+            de_gcs_mask_unknown_parts=getattr(args, "de_gcs_mask_unknown_parts", False),
+            de_gcs_preserve_compound_word=getattr(args, "de_gcs_preserve_compound_word", False),
+            de_gcs_skip_merge_fractions=getattr(args, "de_gcs_skip_merge_fractions", False),
+            de_gcs_only_nouns=getattr(args, "de_gcs_only_nouns", True),
+            de_gcs_combine_noun_modes=getattr(args, "de_gcs_combine_noun_modes", False),
+            de_gcs_part_singularization=getattr(args, "de_gcs_part_singularization", "only-nouns")
+        )
+
+@dataclass(frozen=True)
+class AnkiMappingConfig:
+    anki_markdown_decks: bool = False
+    anki_create_subdecks: bool = False
+    anki_parent_deck: Optional[str] = None
+    anki_deck_content: Any = False
+    anki_sentence_subdecks: bool = False
+    anki_context_use_br: bool = False
+    wordlist_use_br: bool = False
+    add_header: bool = True
+    add_wordlist_col: bool = True
+    header: tuple = DEFAULT_ANKI_HEADER
+    field_mapping: Optional[dict] = None
+
+    @classmethod
+    def from_args(cls, args: Any, header_override: Optional[List[str]] = None, field_mapping_override: Optional[Dict[str, str]] = None) -> "AnkiMappingConfig":
+        hdr = tuple(header_override) if header_override else DEFAULT_ANKI_HEADER
+        return cls(
+            anki_markdown_decks=getattr(args, "anki_markdown_decks", False),
+            anki_create_subdecks=getattr(args, "anki_create_subdecks", False),
+            anki_parent_deck=getattr(args, "anki_parent_deck", None),
+            anki_deck_content=getattr(args, "anki_deck_content", False),
+            anki_sentence_subdecks=getattr(args, "anki_sentence_subdecks", False),
+            anki_context_use_br=getattr(args, "anki_context_use_br", False),
+            wordlist_use_br=getattr(args, "wordlist_use_br", False),
+            add_header=getattr(args, "add_header", True),
+            add_wordlist_col=getattr(args, "add_wordlist_col", True),
+            header=hdr,
+            field_mapping=field_mapping_override
+        )
+
+@dataclass(frozen=True)
+class NLPModelConfig:
+    language: str = "de"
+    use_simplemma_correction: bool = False
+    simplemma_smart_fallback: bool = False
+    simplemma_after_spacy: bool = False
+    simplemma_pos_aware: bool = False
+
+    @classmethod
+    def from_args(cls, args: Any) -> "NLPModelConfig":
+        return cls(
+            language=getattr(args, "language", "de"),
+            use_simplemma_correction=getattr(args, "use_simplemma_correction", False),
+            simplemma_smart_fallback=getattr(args, "simplemma_smart_fallback", False),
+            simplemma_after_spacy=getattr(args, "simplemma_after_spacy", False),
+            simplemma_pos_aware=getattr(args, "simplemma_pos_aware", False)
+        )
+
+@dataclass(frozen=True)
+class ExtractionConfig:
+    language: str = "de"
+    deduplication_scope: str = "global"
+    combine_source_words: bool = False
+    combine_source_words_order: str = "contractions_first"
+    combine_source_words_prefer_lowercase: bool = True
+    prefer_shortest_form: bool = False
+    strip_headers: Any = None
+    de_force_noun_capitalization: bool = True
+    force_proper_noun_capitalization: bool = True
+    apostrophe_chars: str = "', ’, ‘, `, ´, ʼ"
+    type: str = "word"
+    tts_destination_lang: Optional[str] = None
+    tts_tertiary_lang: Optional[str] = None
+    classification_case_sensitive: bool = False
+
+    @classmethod
+    def from_args(cls, args: Any) -> "ExtractionConfig":
+        return cls(
+            language=getattr(args, "language", "de"),
+            deduplication_scope=getattr(args, "deduplication_scope", "global"),
+            combine_source_words=getattr(args, "combine_source_words", False),
+            combine_source_words_order=getattr(args, "combine_source_words_order", "contractions_first"),
+            combine_source_words_prefer_lowercase=getattr(args, "combine_source_words_prefer_lowercase", True),
+            prefer_shortest_form=getattr(args, "prefer_shortest_form", False),
+            strip_headers=getattr(args, "strip_headers", None),
+            de_force_noun_capitalization=getattr(args, "de_force_noun_capitalization", True),
+            force_proper_noun_capitalization=getattr(args, "force_proper_noun_capitalization", True),
+            apostrophe_chars=getattr(args, "apostrophe_chars", "', ’, ‘, `, ´, ʼ"),
+            type=getattr(args, "type", "word"),
+            tts_destination_lang=getattr(args, "tts_destination_lang", None),
+            tts_tertiary_lang=getattr(args, "tts_tertiary_lang", None),
+            classification_case_sensitive=getattr(args, "classification_case_sensitive", False)
+        )
+
+class ExecutionContext:
+    """Lifecycle resource manager encapsulating NLP model initialization and temporary files."""
+    def __init__(self, nlp_model: Any = None, simplemma_lang: Optional[str] = None, gcs_automaton: Any = None):
+        self.nlp = nlp_model
+        self.simplemma_lang = simplemma_lang
+        self.gcs_automaton = gcs_automaton
+        self.temp_files: List[str] = []
+
+    def add_temp_file(self, file_path: str) -> None:
+        """Registers a temporary file path for cleanup upon execution completion."""
+        self.temp_files.append(str(file_path))
+        if str(file_path) not in TEMP_FILES_TO_CLEANUP:
+            TEMP_FILES_TO_CLEANUP.append(str(file_path))
+
+    def cleanup_temp_files(self) -> None:
+        """Removes all temporary files registered within this context."""
+        for f_path in list(self.temp_files):
+            try:
+                os.remove(f_path)
+                if f_path in self.temp_files:
+                    self.temp_files.remove(f_path)
+                if f_path in TEMP_FILES_TO_CLEANUP:
+                    TEMP_FILES_TO_CLEANUP.remove(f_path)
+            except OSError:
+                pass
+
+    def close(self) -> None:
+        self.cleanup_temp_files()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
+
 
 
 
@@ -662,41 +959,10 @@ def read_text_from_file(file_path):
 
 def get_anki_csv_header(header_override=None):
     if header_override:
-        return header_override
+        return list(header_override)
     # This should technically never be reached in strict mode, but we keep it
     # for internal unit tests or if called without an override.
-    return [
-        "Quotation", "WordSource", "WordSourceInflectedForm", "WordDestination",
-        "WordSourceContext", "SentenceSourceContextLeft", "SentenceSource",
-        "SentenceSourceContextRight", "SentenceDestinationContextLeft",
-        "SentenceDestination", "SentenceDestinationContextRight",
-        "SentenceDestination2ContextLeft", "SentenceDestination2",
-        "SentenceDestination2ContextRight", "SentenceSourceWordlist",
-        "SentenceSourceCloze", "SentenceSourceRewriteAISentenceSource",
-        "SentenceSourceRewriteAISentenceDestination", "WordSourceMorphologyAI",
-        "Note", "WordRussian", "WordUkrainian", "WordEnglish", "WordGerman",
-        "WordSourceMorphemeFirst", "WordSourceMorphemeFirstDefinition",
-        "WordSourceMorphemeSecond", "WordSourceMorphemeSecondDefinition",
-        "WordSourceMorphemeThird", "WordSourceMorphemeThirdDefinition",
-        "WordSourceMorphemeFourth", "WordSourceMorphemeFourthDefinition",
-        "WordSourceMorphemeFifth", "WordSourceMorphemeFifthDefinition",
-        "WordSourceIPA", "WordSourceSynonymAI", "WordSourceDefinitionAISentenceSource",
-        "WordSourceDefinitionAISentenceDestination", "WordSourceDefinitionFirst",
-        "WordSourceDefinitionFirstClipping", "WordSourceDefinitionSecond",
-        "WordDestinationDefinitionFirst", "WordDestinationDefinitionSecond",
-        "WordSourceAudio", "SentenceSourceIPA", "SentenceSourceAudio", "Image",
-        "WordSourceCloze", "WordSourceContextAI", "TextSource", "TextDestination",
-        "TextSourceURL", "SentenceEnglish", "SentenceGerman", "SentenceUkrainian",
-        "SentenceRussian", "Source", "SourceURL", "SeparatorAudio", "Source-en-GB",
-        "Source-en-US", "Source-de-DE", "Source-uk-UA", "Source-ru-RU",
-        "Destination-en-GB", "Destination-en-US", "Destination-de-DE",
-        "Destination-uk-UA", "Destination-ru-RU", "Overlapping",
-        "ToggleAlwaysEmptyField", "Note ID", "am-all-morphs", "am-all-morphs-count",
-        "am-unknown-morphs", "am-unknown-morphs-count", "am-highlighted",
-        "am-score", "am-score-terms", "am-study-morphs", "SentenceSourceIndex",
-        "Deck", "LeitnerBox", "LeitnerDue", "DeskSelected",
-        "WordDestinationInflectedForm", "WordSourceAI", "WordSourceInflectedFormAI"
-    ]
+    return list(DEFAULT_ANKI_HEADER)
 
 def get_field_index_map(header_override=None):
     """Returns a dict mapping each header field name to its 0-based index."""
@@ -705,22 +971,22 @@ def get_field_index_map(header_override=None):
 def prepare_row_data(args, **kwargs):
     """Consolidates all possibly mapped data into a single dictionary."""
     row_data = {
-        'lemma': kwargs.get('lemma', ''),
-        'source_word': kwargs.get('source_word', ''),
-        'source_sentence': kwargs.get('source_sentence', ''),
-        'source_context_left': kwargs.get('source_context_left', ''),
-        'source_context_right': kwargs.get('source_context_right', ''),
-        'target_sentence': kwargs.get('target_sentence', ''),
-        'target_context_left': kwargs.get('target_context_left', ''),
-        'target_context_right': kwargs.get('target_context_right', ''),
-        'tertiary_sentence': kwargs.get('tertiary_sentence', ''),
-        'tertiary_context_left': kwargs.get('tertiary_context_left', ''),
-        'tertiary_context_right': kwargs.get('tertiary_context_right', ''),
-        'wordlist': kwargs.get('wordlist', ''),
-        'cloze': kwargs.get('cloze', ''),
-        'sentence_index': kwargs.get('sentence_index', ''),
-        'deck_name': kwargs.get('deck_name', ''),
-        'subtitle_start_time': kwargs.get('subtitle_start_time', ''),
+        KEY_LEMMA: kwargs.get('lemma', ''),
+        KEY_SOURCE_WORD: kwargs.get('source_word', ''),
+        KEY_SOURCE_SENTENCE: kwargs.get('source_sentence', ''),
+        KEY_SOURCE_CONTEXT_LEFT: kwargs.get('source_context_left', ''),
+        KEY_SOURCE_CONTEXT_RIGHT: kwargs.get('source_context_right', ''),
+        KEY_TARGET_SENTENCE: kwargs.get('target_sentence', ''),
+        KEY_TARGET_CONTEXT_LEFT: kwargs.get('target_context_left', ''),
+        KEY_TARGET_CONTEXT_RIGHT: kwargs.get('target_context_right', ''),
+        KEY_TERTIARY_SENTENCE: kwargs.get('tertiary_sentence', ''),
+        KEY_TERTIARY_CONTEXT_LEFT: kwargs.get('tertiary_context_left', ''),
+        KEY_TERTIARY_CONTEXT_RIGHT: kwargs.get('tertiary_context_right', ''),
+        KEY_WORDLIST: kwargs.get('wordlist', ''),
+        KEY_CLOZE: kwargs.get('cloze', ''),
+        KEY_SENTENCE_INDEX: kwargs.get('sentence_index', ''),
+        KEY_DECK_NAME: kwargs.get('deck_name', ''),
+        KEY_SUBTITLE_START_TIME: kwargs.get('subtitle_start_time', ''),
     }
     
     # Dynamic TTS activation flags

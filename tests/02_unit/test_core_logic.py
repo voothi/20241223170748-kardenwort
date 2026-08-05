@@ -1,10 +1,12 @@
 import pytest
 from pathlib import Path
 import sys
-from unittest.mock import MagicMock
+from types import SimpleNamespace
 
-# Add src to sys.path
+# Add src and helpers to sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / 'src'))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / 'helpers'))
+from mock_nlp import MockToken, MockMorph
 
 from kardenwort.core.kardenwort import (
     deduplicate_lemmas,
@@ -62,35 +64,13 @@ def test_parse_markdown_for_branch_headers():
     assert 2 not in indices
     assert 3 not in indices
 
-def test_format_lemma_capitalization():
-    class MockToken:
-        def __init__(self, text, pos, is_sent_start=False, like_url=False, like_email=False):
-            self.text = text
-            self.pos_ = pos
-            self.is_sent_start = is_sent_start
-            self.like_url = like_url
-            self.like_email = like_email
-            
-    class MockArgs:
-        de_force_noun_capitalization = True
-        force_proper_noun_capitalization = True
-
-    from kardenwort.core import kardenwort
-    original_nlp = getattr(kardenwort, 'nlp', None)
+def test_format_lemma_capitalization(mock_nlp):
+    args = SimpleNamespace(de_force_noun_capitalization=True, force_proper_noun_capitalization=True)
+    token = MockToken("Häuser", "NOUN")
+    assert format_lemma_capitalization(token, "haus", args) == "Haus"
     
-    class MockNLP:
-        lang = 'de'
-    kardenwort.nlp = MockNLP()
-    
-    try:
-        args = MockArgs()
-        token = MockToken("Häuser", "NOUN")
-        assert format_lemma_capitalization(token, "haus", args) == "Haus"
-        
-        token_propn = MockToken("Berlin", "PROPN")
-        assert format_lemma_capitalization(token_propn, "berlin", args) == "Berlin"
-    finally:
-        kardenwort.nlp = original_nlp
+    token_propn = MockToken("Berlin", "PROPN")
+    assert format_lemma_capitalization(token_propn, "berlin", args) == "Berlin"
 
 def test_get_overridden_lemma_for_word():
     override_rules = {
@@ -103,39 +83,15 @@ def test_get_overridden_lemma_for_word():
     assert get_overridden_lemma_for_word('spacy_lemma', 'source_word', override_rules, "Context") == 'target_lemma'
     assert get_overridden_lemma_for_word('other', 'source_word', override_rules, "Context") == 'other'
 
-def test_correct_spacy_lemma():
-    class MockMorph:
-        def __init__(self, data): self.data = data
-        def get(self, key, default=None): return self.data.get(key, default)
-        
-    class MockToken:
-        def __init__(self, lemma, pos, case_morph):
-            self.lemma_ = lemma
-            self.pos_ = pos
-            self.morph = MockMorph({"Case": case_morph})
-            
-    from kardenwort.core import kardenwort
-    original_nlp = getattr(kardenwort, 'nlp', None)
-    class MockNLP: lang = 'de'
-    kardenwort.nlp = MockNLP()
-    
-    try:
-        de_dictionary = {"Haus", "Auto"}
-        token = MockToken("Hauss", "NOUN", ["Gen"])
-        assert correct_spacy_lemma(token, de_dictionary, fix_genitive=True) == "Haus"
-    finally:
-        kardenwort.nlp = original_nlp
+def test_correct_spacy_lemma(mock_nlp):
+    de_dictionary = {"Haus", "Auto"}
+    token = MockToken("Hauss", lemma_="Hauss", pos_="NOUN", case_morph=["Gen"])
+    assert correct_spacy_lemma(token, de_dictionary, fix_genitive=True) == "Haus"
 
 def test_find_separable_verb_particle_pairs():
-    class MockToken:
-        def __init__(self, i, dep, head_i=None):
-            self.i = i
-            self.dep_ = dep
-            self.head = MagicMock()
-            self.head.i = head_i
-
-    t1 = MockToken(0, "ROOT")
-    t2 = MockToken(1, "svp", head_i=0)
+    t1 = MockToken("w0", dep_="ROOT", i=0)
+    t2 = MockToken("w1", dep_="svp", i=1, head_i=0)
+    t2.head = t1
     
     doc = [t1, t2]
     pairs = find_separable_verb_particle_pairs(doc)
@@ -220,9 +176,7 @@ def test_apply_field_mapping():
     assert row == ["VAL1", "VAL2"]
 
 def test_prepare_row_data_with_classifications():
-    class MockArgs:
-        language = "en"
-        tts_destination_lang = "ru"
+    args = SimpleNamespace(language="en", tts_destination_lang="ru")
 
     kwargs = {
         'lemma': 'apple',
@@ -232,7 +186,7 @@ def test_prepare_row_data_with_classifications():
         }
     }
     
-    row_data = prepare_row_data(MockArgs(), **kwargs)
+    row_data = prepare_row_data(args, **kwargs)
     assert row_data['lemma'] == 'apple'
     assert row_data['oxford'] == 'A1'
     assert row_data['cambridge'] == 'B1'

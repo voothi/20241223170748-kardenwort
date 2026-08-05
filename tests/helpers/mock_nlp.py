@@ -28,7 +28,8 @@ class MockToken:
         like_email: bool = False,
         case_morph: Optional[List[str]] = None,
         idx: Optional[int] = None,
-        pos: Optional[str] = None
+        pos: Optional[str] = None,
+        whitespace_: str = " "
     ):
         self.text = text
         # Support POS tags passed directly as positional lemma_ argument in lightweight unit tests
@@ -50,6 +51,7 @@ class MockToken:
         self.dep_ = dep_
         self.i = idx if idx is not None else i
         self.idx = self.i
+        self.whitespace_ = whitespace_
         self._head_i = head_i
         self.head = self
         self.is_sent_start = is_sent_start

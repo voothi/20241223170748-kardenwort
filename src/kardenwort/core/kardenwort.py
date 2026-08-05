@@ -591,14 +591,15 @@ def is_complex_inflected_form(form, apostrophe_chars):
         return True
     return any(not c.isalnum() for c in form)
 
-def sort_inflected_forms(forms, apostrophe_chars_or_config: Any, order='contractions_first', prefer_lowercase=True):
-    if isinstance(apostrophe_chars_or_config, (ExtractionConfig, argparse.Namespace, SimpleNamespace)) or hasattr(apostrophe_chars_or_config, 'apostrophe_chars'):
-        cfg = ExtractionConfig.from_args(apostrophe_chars_or_config) if not isinstance(apostrophe_chars_or_config, ExtractionConfig) else apostrophe_chars_or_config
+def sort_inflected_forms(forms, apostrophe_chars: Any = None, order='contractions_first', prefer_lowercase=True, config: Optional[Any] = None):
+    target = config if config is not None else apostrophe_chars
+    if isinstance(target, (ExtractionConfig, argparse.Namespace, SimpleNamespace)) or (hasattr(target, 'combine_source_words_order') and not isinstance(target, str)):
+        cfg = ExtractionConfig.from_args(target) if not isinstance(target, ExtractionConfig) else target
         apostrophe_chars = cfg.apostrophe_chars
         order = getattr(cfg, 'combine_source_words_order', order)
         prefer_lowercase = getattr(cfg, 'combine_source_words_prefer_lowercase', prefer_lowercase)
-    else:
-        apostrophe_chars = apostrophe_chars_or_config
+    elif apostrophe_chars is None and config is not None and hasattr(config, 'apostrophe_chars'):
+        apostrophe_chars = config.apostrophe_chars
 
     unique_forms_dict = {}
     for f in forms:

@@ -7,6 +7,13 @@ import sys
 # Add src to sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / 'src'))
 
+from kardenwort.core.kardenwort import (
+    deduplicate_lemmas,
+    sort_inflected_forms,
+    format_lemma_capitalization,
+)
+import kardenwort.core.kardenwort as kardenwort_mod
+
 # ==============================================================================
 # 1. Combinatorial Matrix Generators
 # ==============================================================================
@@ -134,3 +141,110 @@ def test_generator_dimensions_and_completeness_unified():
         assert len({tuple(sorted(d.items())) for d in matrix}) == expected_count
         for item in matrix:
             assert set(item.keys()) == set(expected_keys)
+
+
+# ==============================================================================
+# 3. Linguistic Helper Invariant Verification
+# ==============================================================================
+
+@pytest.mark.parametrize("config", generate_extraction_matrix())
+def test_deduplicate_lemmas_invariants(config):
+    """
+    Verifies order invariance across all candidate token states across all 16 extraction
+    parameter states without throwing exceptions or corrupting token text.
+    """
+    # Basic deduplication preserving deterministic first-occurrence order of lowercased variants
+    assert deduplicate_lemmas(["Haus", "haus", "Auto"]) == ["Haus", "Auto"]
+    # Case preservation preferring capitalized variant when present, while preserving first occurrence order
+    assert deduplicate_lemmas(["auto", "Haus", "Auto", "haus"]) == ["Auto", "Haus"]
+    assert deduplicate_lemmas(["Laufen", "laufen"]) == ["Laufen"]
+    assert deduplicate_lemmas([]) == []
+    assert deduplicate_lemmas(["test"]) == ["test"]
+
+
+@pytest.mark.parametrize("config", generate_extraction_matrix())
+def test_sort_inflected_forms_invariants(config):
+    """
+    Verifies contraction sorting and lowercase preference behavior across extraction states.
+    """
+    prefer_lower = config["prefer_lowercase"]
+    apostrophes = ["'"]
+    
+    # Check lowercase preference behavior on mixed-case variants
+    forms = ["Ist", "ist", "sind"]
+    sorted_forms = sort_inflected_forms(forms, apostrophe_chars=apostrophes, order='contractions_first', prefer_lowercase=prefer_lower)
+    if prefer_lower:
+        # Lowercase override folds "Ist" and "ist" together into "ist"
+        assert len(sorted_forms) == 2
+        assert "ist" in sorted_forms
+        assert "sind" in sorted_forms
+    else:
+        # Both case variants remain distinct when prefer_lowercase=False
+        assert len(sorted_forms) == 3
+        assert "Ist" in sorted_forms and "ist" in sorted_forms
+
+    # Check contraction sorting behavior
+    contraction_forms = ["did", "don't", "do not"]
+    sorted_contractions = sort_inflected_forms(contraction_forms, apostrophe_chars=apostrophes, order='contractions_first', prefer_lowercase=prefer_lower)
+    # Contractions and compound forms containing apostrophes or spaces are complex and must sort before simple words
+    assert sorted_contractions[0] in ["don't", "do not"]
+    assert sorted_contractions[1] in ["don't", "do not"]
+    assert sorted_contractions[2] == "did"
+
+
+class _MockToken:
+    def __init__(self, text, pos, is_sent_start=False, like_url=False, like_email=False):
+        self.text = text
+        self.pos_ = pos
+        self.is_sent_start = is_sent_start
+        self.like_url = like_url
+        self.like_email = like_email
+
+
+class _MockArgs:
+    def __init__(self, config):
+        for k, v in config.items():
+            setattr(self, k, v)
+
+
+@pytest.mark.parametrize("config", generate_capitalization_matrix())
+def test_format_lemma_capitalization_invariants(config):
+    """
+    Verifies formatting and capitalization invariance using mocked spaCy tokens and argument namespaces.
+    """
+    original_nlp = getattr(kardenwort_mod, 'nlp', None)
+    
+    class _MockNLP:
+        lang = 'de'
+        
+    kardenwort_mod.nlp = _MockNLP()
+    
+    try:
+        args = _MockArgs(config)
+        
+        # URL / email token always reduces to lowercase regardless of capitalization config
+        url_token = _MockToken("HTTPS://EXAMPLE.COM", "NOUN", like_url=True)
+        assert format_lemma_capitalization(url_token, "HTTPS://EXAMPLE.COM", args) == "https://example.com"
+
+        # German Noun capitalization rule when nlp.lang == 'de'
+        noun_token = _MockToken("häuser", "NOUN")
+        res_noun = format_lemma_capitalization(noun_token, "haus", args)
+        if config["de_force_noun_capitalization"]:
+            assert res_noun == "Haus"
+        else:
+            assert res_noun == "haus"
+
+        # Proper Noun capitalization rule
+        propn_token = _MockToken("berlin", "PROPN")
+        res_propn = format_lemma_capitalization(propn_token, "berlin", args)
+        if config["force_proper_noun_capitalization"] or config["de_force_noun_capitalization"]:
+            assert res_propn == "Berlin"
+        else:
+            assert res_propn == "berlin"
+            
+        # Non-noun at sentence start
+        verb_token = _MockToken("laufen", "VERB", is_sent_start=True)
+        assert format_lemma_capitalization(verb_token, "laufen", args) == "laufen"
+        
+    finally:
+        kardenwort_mod.nlp = original_nlp

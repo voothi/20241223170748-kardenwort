@@ -11,6 +11,10 @@ from kardenwort.core.kardenwort import (
     deduplicate_lemmas,
     sort_inflected_forms,
     format_lemma_capitalization,
+    get_anki_csv_header,
+    get_field_index_map,
+    prepare_row_data,
+    apply_field_mapping,
 )
 import kardenwort.core.kardenwort as kardenwort_mod
 
@@ -248,3 +252,85 @@ def test_format_lemma_capitalization_invariants(config):
         
     finally:
         kardenwort_mod.nlp = original_nlp
+
+
+# ==============================================================================
+# 4. Tabular & Anki Field Mapping Invariant Verification
+# ==============================================================================
+
+@pytest.mark.parametrize("config", generate_tabular_matrix())
+def test_tabular_and_anki_field_mapping_invariants(config):
+    """
+    Verifies that tabular formatting and field index mapping remain entirely invariant
+    across tabular configuration variations, locking down baseline TSV header and field mapping behavior.
+    """
+    # 1. Verify get_anki_csv_header invariance
+    header = get_anki_csv_header()
+    assert isinstance(header, list) and len(header) > 0
+    
+    # 2. Verify get_field_index_map invariance and exact 1-to-1 mapping with header
+    index_map = get_field_index_map()
+    assert len(index_map) == len(header)
+    for i, col_name in enumerate(header):
+        assert index_map[col_name] == i
+        
+    # 3. Test prepare_row_data across configuration permutations with realistic data
+    class _MockArgs:
+        language = "de"
+        tts_destination_lang = "ru"
+        
+    args = _MockArgs()
+    
+    # Test wordlist column variations according to tabular flags
+    wordlist_val = "w1<br>w2" if config["wordlist_use_br"] else "w1\\nw2"
+    deck_val = "Deck::001-sentence" if (config["anki_markdown_decks"] and config["anki_sentence_subdecks"]) else "Deck"
+    
+    row_data = prepare_row_data(
+        args,
+        lemma="Haus",
+        source_word="Häuser",
+        source_sentence="Schöne Häuser.",
+        deck_name=deck_val,
+        wordlist=wordlist_val,
+        subtitle_start_time="00:01:23.456",
+        classifications={"oxford": {"haus": "B1"}},
+        classification_case_sensitive=False
+    )
+    
+    assert row_data["lemma"] == "Haus"
+    assert row_data["source_word"] == "Häuser"
+    assert row_data["source_sentence"] == "Schöne Häuser."
+    assert row_data["deck_name"] == deck_val
+    assert row_data["wordlist"] == wordlist_val
+    assert row_data["subtitle_start_time"] == "00:01:23.456"
+    assert row_data["tts_source_de"] == "1"
+    assert row_data["tts_dest_ru"] == "1"
+    assert row_data.get("oxford") == "B1"
+
+    # 4. Verify apply_field_mapping produces deterministic TSV row output
+    empty_row = [""] * len(header)
+    csv_row = list(empty_row)
+    
+    # Simulate both word and sentence field mappings from anki-mapping.ini baseline
+    word_mapping = {
+        "WordSource": "lemma",
+        "Quotation": "source_word",
+        "SentenceSource": "source_sentence",
+        "SentenceSourceWordlist": "wordlist",
+        "Deck": "deck_name",
+        "Source-de-DE": "tts_source_de",
+        "Destination-ru-RU": "tts_dest_ru",
+        "Note": "subtitle_start_time",
+    }
+    
+    apply_field_mapping(csv_row, row_data, word_mapping, index_map)
+    
+    assert csv_row[index_map["WordSource"]] == "Haus"
+    assert csv_row[index_map["Quotation"]] == "Häuser"
+    assert csv_row[index_map["SentenceSource"]] == "Schöne Häuser."
+    assert csv_row[index_map["SentenceSourceWordlist"]] == wordlist_val
+    assert csv_row[index_map["Deck"]] == deck_val
+    assert csv_row[index_map["Source-de-DE"]] == "1"
+    assert csv_row[index_map["Destination-ru-RU"]] == "1"
+    assert csv_row[index_map["Note"]] == "00:01:23.456"
+

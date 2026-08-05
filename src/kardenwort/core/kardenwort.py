@@ -500,14 +500,52 @@ def lemmatize_compound_part(part, nlp_model, de_dictionary, args=None):
     if capitalized_part in de_dictionary:
         return capitalized_part
 
-    return spacy_lemma
+def get_simplemma_input_text(token, args):
+    if getattr(args, 'simplemma_after_spacy', False) and hasattr(token, 'lemma_') and getattr(token, 'lemma_', None) is not None:
+        base_str = str(token.lemma_)
+    else:
+        base_str = str(getattr(token, 'text', str(token)))
+    
+    if getattr(args, 'simplemma_pos_aware', False):
+        if getattr(token, 'is_sent_start', False) and getattr(token, 'pos_', '') not in ['NOUN', 'PROPN']:
+            return base_str.lower()
+    return base_str
 
-def correct_spacy_lemma(token, de_dictionary, fix_genitive=False, override_lemma=None):
-    spacy_lemma = override_lemma if override_lemma is not None else token.lemma_
+
+def get_simplemma_lemmas(token, lang, args):
+    override_lemma = None
+    smart_fallback_lemma = None
+    if getattr(args, 'simplemma_smart_fallback', False):
+        target_text = get_simplemma_input_text(token, args)
+        smart_fallback_lemma = simplemma.lemmatize(target_text, lang=lang)
+    elif getattr(args, 'use_simplemma_correction', False) or getattr(args, 'simplemma_after_spacy', False):
+        target_text = get_simplemma_input_text(token, args)
+        override_lemma = simplemma.lemmatize(target_text, lang=lang)
+    return override_lemma, smart_fallback_lemma
+
+
+def correct_spacy_lemma(token, de_dictionary, fix_genitive=False, override_lemma=None, smart_fallback_lemma=None):
+    if override_lemma is not None:
+        spacy_lemma = override_lemma
+    elif smart_fallback_lemma is not None:
+        spacy_lemma = getattr(token, 'lemma_', str(token))
+        adopted = False
+        if de_dictionary:
+            if spacy_lemma not in de_dictionary and smart_fallback_lemma in de_dictionary:
+                spacy_lemma = smart_fallback_lemma
+                adopted = True
+        if not adopted and getattr(token, 'pos_', '') in ['VERB', 'AUX']:
+            token_text = str(getattr(token, 'text', str(token))).lower()
+            if spacy_lemma.lower() == token_text and smart_fallback_lemma.lower() != token_text:
+                spacy_lemma = smart_fallback_lemma
+    else:
+        spacy_lemma = getattr(token, 'lemma_', str(token))
+
+    nlp_inst = globals().get('nlp')
     if (fix_genitive and
-        nlp.lang == 'de' and
-        token.pos_ in ["NOUN", "PROPN"] and
-        'Gen' in token.morph.get("Case", [])):
+        nlp_inst and nlp_inst.lang == 'de' and
+        getattr(token, 'pos_', '') in ["NOUN", "PROPN"] and
+        'Gen' in getattr(getattr(token, 'morph', None), 'get', lambda k, d=None: [])("Case", [])):
 
         if spacy_lemma.endswith('s') and len(spacy_lemma) > 1:
             lemma_without_genitive_s = spacy_lemma[:-1]
@@ -780,7 +818,8 @@ def _lemmatize_mapped_tokens(mapped_lemmas, nlp_model, de_dictionary, lemma_over
         doc = nlp_model(l)
         if len(doc) > 0:
             ltok = doc[0]
-            spacy_lemma = correct_spacy_lemma(ltok, de_dictionary, de_fix_genitive, override_lemma=simplemma.lemmatize(ltok.text, lang=nlp_model.lang) if getattr(args, 'use_simplemma_correction', False) else None)
+            override_lemma, smart_fallback_lemma = get_simplemma_lemmas(ltok, nlp_model.lang, args)
+            spacy_lemma = correct_spacy_lemma(ltok, de_dictionary, de_fix_genitive, override_lemma=override_lemma, smart_fallback_lemma=smart_fallback_lemma)
             default_lemma = format_lemma_capitalization(ltok, spacy_lemma, args)
             final_lemma = get_overridden_lemma_for_word(default_lemma, l, lemma_override_rules, sentence_text)
             result.append(final_lemma)
@@ -827,13 +866,13 @@ def _extract_standard_token(
     
     if token.i in separable_verb_map:
         particle = separable_verb_map[token.i]
-        base_verb_lemma = token.lemma_
-        if getattr(args, 'use_simplemma_correction', False):
-            base_verb_lemma = simplemma.lemmatize(token.text, lang=nlp_model.lang)
+        override_lemma, smart_fallback_lemma = get_simplemma_lemmas(token, nlp_model.lang, args)
+        base_verb_lemma = correct_spacy_lemma(token, de_dictionary, de_fix_genitive, override_lemma=override_lemma, smart_fallback_lemma=smart_fallback_lemma)
         default_lemma = f"{particle.text.lower()}{base_verb_lemma}".lower()
         source_word_form = f"{token.text} {particle.text}"
     else:
-        spacy_lemma = correct_spacy_lemma(token, de_dictionary, de_fix_genitive, override_lemma=simplemma.lemmatize(token.text, lang=nlp_model.lang) if getattr(args, 'use_simplemma_correction', False) else None)
+        override_lemma, smart_fallback_lemma = get_simplemma_lemmas(token, nlp_model.lang, args)
+        spacy_lemma = correct_spacy_lemma(token, de_dictionary, de_fix_genitive, override_lemma=override_lemma, smart_fallback_lemma=smart_fallback_lemma)
         default_lemma = format_lemma_capitalization(token, spacy_lemma, args)
         
     base_lemma = get_overridden_lemma_for_word(default_lemma, source_word_form, lemma_override_rules, sentence_text)

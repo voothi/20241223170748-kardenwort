@@ -973,22 +973,22 @@ def get_field_index_map(header_override=None):
 def prepare_row_data(args, **kwargs):
     """Consolidates all possibly mapped data into a single dictionary."""
     row_data = {
-        KEY_LEMMA: kwargs.get('lemma', ''),
-        KEY_SOURCE_WORD: kwargs.get('source_word', ''),
-        KEY_SOURCE_SENTENCE: kwargs.get('source_sentence', ''),
-        KEY_SOURCE_CONTEXT_LEFT: kwargs.get('source_context_left', ''),
-        KEY_SOURCE_CONTEXT_RIGHT: kwargs.get('source_context_right', ''),
-        KEY_TARGET_SENTENCE: kwargs.get('target_sentence', ''),
-        KEY_TARGET_CONTEXT_LEFT: kwargs.get('target_context_left', ''),
-        KEY_TARGET_CONTEXT_RIGHT: kwargs.get('target_context_right', ''),
-        KEY_TERTIARY_SENTENCE: kwargs.get('tertiary_sentence', ''),
-        KEY_TERTIARY_CONTEXT_LEFT: kwargs.get('tertiary_context_left', ''),
-        KEY_TERTIARY_CONTEXT_RIGHT: kwargs.get('tertiary_context_right', ''),
-        KEY_WORDLIST: kwargs.get('wordlist', ''),
-        KEY_CLOZE: kwargs.get('cloze', ''),
-        KEY_SENTENCE_INDEX: kwargs.get('sentence_index', ''),
-        KEY_DECK_NAME: kwargs.get('deck_name', ''),
-        KEY_SUBTITLE_START_TIME: kwargs.get('subtitle_start_time', ''),
+        KEY_LEMMA: kwargs.get(KEY_LEMMA, ''),
+        KEY_SOURCE_WORD: kwargs.get(KEY_SOURCE_WORD, ''),
+        KEY_SOURCE_SENTENCE: kwargs.get(KEY_SOURCE_SENTENCE, ''),
+        KEY_SOURCE_CONTEXT_LEFT: kwargs.get(KEY_SOURCE_CONTEXT_LEFT, ''),
+        KEY_SOURCE_CONTEXT_RIGHT: kwargs.get(KEY_SOURCE_CONTEXT_RIGHT, ''),
+        KEY_TARGET_SENTENCE: kwargs.get(KEY_TARGET_SENTENCE, ''),
+        KEY_TARGET_CONTEXT_LEFT: kwargs.get(KEY_TARGET_CONTEXT_LEFT, ''),
+        KEY_TARGET_CONTEXT_RIGHT: kwargs.get(KEY_TARGET_CONTEXT_RIGHT, ''),
+        KEY_TERTIARY_SENTENCE: kwargs.get(KEY_TERTIARY_SENTENCE, ''),
+        KEY_TERTIARY_CONTEXT_LEFT: kwargs.get(KEY_TERTIARY_CONTEXT_LEFT, ''),
+        KEY_TERTIARY_CONTEXT_RIGHT: kwargs.get(KEY_TERTIARY_CONTEXT_RIGHT, ''),
+        KEY_WORDLIST: kwargs.get(KEY_WORDLIST, ''),
+        KEY_CLOZE: kwargs.get(KEY_CLOZE, ''),
+        KEY_SENTENCE_INDEX: kwargs.get(KEY_SENTENCE_INDEX, ''),
+        KEY_DECK_NAME: kwargs.get(KEY_DECK_NAME, ''),
+        KEY_SUBTITLE_START_TIME: kwargs.get(KEY_SUBTITLE_START_TIME, ''),
     }
     
     # Dynamic TTS activation flags
@@ -998,7 +998,7 @@ def prepare_row_data(args, **kwargs):
         row_data[f'tts_dest_{args.tts_destination_lang}'] = "1"
         
     classifications = kwargs.get('classifications', {})
-    lemma = row_data['lemma']
+    lemma = row_data[KEY_LEMMA]
     case_sensitive = kwargs.get('classification_case_sensitive', True)
     for c_name, c_dict in classifications.items():
         lookup_lemma = lemma if case_sensitive else lemma.lower()

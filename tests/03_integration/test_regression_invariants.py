@@ -22,64 +22,7 @@ from kardenwort.core.kardenwort import (
     get_anki_csv_header
 )
 from test_core_invariants import generate_gcs_matrix
-
-@pytest.fixture
-def mock_nlp(monkeypatch):
-    nlp_instance = MockPipelineNLP('de')
-    monkeypatch.setattr(kw, 'nlp', nlp_instance, raising=False)
-    return nlp_instance
-
-
-@pytest.fixture
-def default_args(tmp_path):
-    import argparse
-    src_path = tmp_path / "src.txt"
-    src_path.write_text("Haus Haus Auto.\nAuto Haus Hund.", encoding="utf-8")
-    
-    return argparse.Namespace(
-        deduplication_scope='global',
-        language='de',
-        combine_source_words=False,
-        combine_source_words_order='contractions_first',
-        combine_source_words_prefer_lowercase=True,
-        prefer_shortest_form=False,
-        strip_headers=None,
-        add_header=True,
-        wordlist_use_br=False,
-        stdout_print_output_basename=False,
-        de_gcs=False,
-        de_gcs_add_parts_to_wordlist=False,
-        de_gcs_pos_tags=['NN', 'NOUN', 'N'],
-        de_fix_genitive=False,
-        de_gcs_mask_unknown_parts=False,
-        de_gcs_preserve_compound_word=False,
-        de_gcs_skip_merge_fractions=False,
-        de_gcs_only_nouns=True,
-        de_gcs_combine_noun_modes=False,
-        de_gcs_part_singularization='only-nouns',
-        anki_markdown_decks=False,
-        anki_create_subdecks=False,
-        anki_parent_deck=None,
-        anki_deck_content=False,
-        anki_sentence_subdecks=False,
-        anki_context_use_br=False,
-        source_timestamps=[],
-        token_mappings_enabled=False,
-        token_mappings_lemmatize=False,
-        use_simplemma_correction=False,
-        simplemma_smart_fallback=False,
-        simplemma_after_spacy=False,
-        de_force_noun_capitalization=True,
-        force_proper_noun_capitalization=True,
-        apostrophe_chars="', ’, ‘, `, ´, ʼ",
-        type='word',
-        text1_file=str(src_path),
-        text2_file=None,
-        text3_file=None,
-        classification_case_sensitive=False,
-        tts_destination_lang=None,
-        tts_tertiary_lang=None,
-    )
+from test_configs import DEFAULT_FIELD_MAPPING, DEFAULT_OVERRIDE_RULES, DEFAULT_DE_DICTIONARY, extract_gcs_kwargs
 
 
 def run_pipeline_parallel(args, tmp_path, output_filename="out.tsv", source_text=None, target_text_path=None, tertiary_text_path=None, field_mapping=None, **override_kwargs):
@@ -91,35 +34,14 @@ def run_pipeline_parallel(args, tmp_path, output_filename="out.tsv", source_text
     header = get_anki_csv_header()
     
     if field_mapping is None:
-        field_mapping = {
-            "WordSource": "lemma",
-            "Quotation": "source_word",
-            "SentenceSource": "source_sentence",
-            "SentenceSourceWordlist": "wordlist",
-            "Deck": "deck_name",
-            "Note": "subtitle_start_time",
-            "SentenceSourceContextLeft": "source_context_left",
-            "SentenceSourceContextRight": "source_context_right",
-            "SentenceDestination": "target_sentence",
-            "SentenceDestination2": "tertiary_sentence",
-            "SentenceSourceIndex": "sentence_index",
-        }
+        field_mapping = dict(DEFAULT_FIELD_MAPPING)
         
     override_rules = override_kwargs.pop('lemma_override_rules', {
-        'priority1': {}, 'priority1_regex': [], 'priority2': {}, 'priority2_regex': [], 'priority3': {}
+        k: v.copy() if isinstance(v, (dict, list)) else v for k, v in DEFAULT_OVERRIDE_RULES.items()
     })
-    de_dict = override_kwargs.pop('de_dictionary', {"Bundes", "Land", "Verwaltung", "Haus", "Auto", "Hund", "Satz", "Title", "Eins", "Zwei", "Drei", "Vier", "Groß"})
+    de_dict = override_kwargs.pop('de_dictionary', set(DEFAULT_DE_DICTIONARY))
 
-    kwargs = {
-        'de_gcs_only_nouns': getattr(args, 'de_gcs_only_nouns', True),
-        'de_gcs_combine_noun_modes': getattr(args, 'de_gcs_combine_noun_modes', False),
-        'de_fix_genitive': getattr(args, 'de_fix_genitive', False),
-        'de_gcs_mask_unknown_parts': getattr(args, 'de_gcs_mask_unknown_parts', False),
-        'de_gcs_preserve_compound_word': getattr(args, 'de_gcs_preserve_compound_word', False),
-        'de_gcs_skip_merge_fractions': getattr(args, 'de_gcs_skip_merge_fractions', False),
-        'classifications': getattr(args, 'classifications', {}),
-        'token_mappings': {},
-    }
+    kwargs = extract_gcs_kwargs(args)
     kwargs.update(override_kwargs)
 
     process_parallel_text_files(
@@ -398,35 +320,14 @@ def run_pipeline_single(args, tmp_path, output_filename="out_single.tsv", source
     header = get_anki_csv_header()
     
     if field_mapping is None:
-        field_mapping = {
-            "WordSource": "lemma",
-            "Quotation": "source_word",
-            "SentenceSource": "source_sentence",
-            "SentenceSourceWordlist": "wordlist",
-            "Deck": "deck_name",
-            "Note": "subtitle_start_time",
-            "SentenceSourceContextLeft": "source_context_left",
-            "SentenceSourceContextRight": "source_context_right",
-            "SentenceDestination": "target_sentence",
-            "SentenceDestination2": "tertiary_sentence",
-            "SentenceSourceIndex": "sentence_index",
-        }
+        field_mapping = dict(DEFAULT_FIELD_MAPPING)
         
     override_rules = override_kwargs.pop('lemma_override_rules', {
-        'priority1': {}, 'priority1_regex': [], 'priority2': {}, 'priority2_regex': [], 'priority3': {}
+        k: v.copy() if isinstance(v, (dict, list)) else v for k, v in DEFAULT_OVERRIDE_RULES.items()
     })
-    de_dict = override_kwargs.pop('de_dictionary', {"Haus", "Auto", "Hund", "Satz", "Title", "Eins", "Zwei", "Drei", "Vier", "Groß"})
+    de_dict = override_kwargs.pop('de_dictionary', set(DEFAULT_DE_DICTIONARY))
 
-    kwargs = {
-        'de_gcs_only_nouns': getattr(args, 'de_gcs_only_nouns', True),
-        'de_gcs_combine_noun_modes': getattr(args, 'de_gcs_combine_noun_modes', False),
-        'de_fix_genitive': getattr(args, 'de_fix_genitive', False),
-        'de_gcs_mask_unknown_parts': getattr(args, 'de_gcs_mask_unknown_parts', False),
-        'de_gcs_preserve_compound_word': getattr(args, 'de_gcs_preserve_compound_word', False),
-        'de_gcs_skip_merge_fractions': getattr(args, 'de_gcs_skip_merge_fractions', False),
-        'classifications': getattr(args, 'classifications', {}),
-        'token_mappings': {},
-    }
+    kwargs = extract_gcs_kwargs(args)
     kwargs.update(override_kwargs)
 
     process_single_text(
@@ -593,34 +494,13 @@ def run_pipeline_parallel_sentences(args, tmp_path, output_filename="out_sent.ts
     header = get_anki_csv_header()
     
     if field_mapping is None:
-        field_mapping = {
-            "WordSource": "lemma",
-            "Quotation": "source_word",
-            "SentenceSource": "source_sentence",
-            "SentenceSourceWordlist": "wordlist",
-            "Deck": "deck_name",
-            "Note": "subtitle_start_time",
-            "SentenceSourceContextLeft": "source_context_left",
-            "SentenceSourceContextRight": "source_context_right",
-            "SentenceDestination": "target_sentence",
-            "SentenceDestination2": "tertiary_sentence",
-            "SentenceSourceIndex": "sentence_index",
-        }
+        field_mapping = dict(DEFAULT_FIELD_MAPPING)
         
     override_rules = override_kwargs.pop('lemma_override_rules', {
-        'priority1': {}, 'priority1_regex': [], 'priority2': {}, 'priority2_regex': [], 'priority3': {}
+        k: v.copy() if isinstance(v, (dict, list)) else v for k, v in DEFAULT_OVERRIDE_RULES.items()
     })
-    kwargs = {
-        'de_gcs_only_nouns': getattr(args, 'de_gcs_only_nouns', True),
-        'de_gcs_combine_noun_modes': getattr(args, 'de_gcs_combine_noun_modes', False),
-        'de_fix_genitive': getattr(args, 'de_fix_genitive', False),
-        'de_gcs_mask_unknown_parts': getattr(args, 'de_gcs_mask_unknown_parts', False),
-        'de_gcs_preserve_compound_word': getattr(args, 'de_gcs_preserve_compound_word', False),
-        'de_gcs_skip_merge_fractions': getattr(args, 'de_gcs_skip_merge_fractions', False),
-        'classifications': getattr(args, 'classifications', {}),
-        'token_mappings': {},
-        'lemma_override_rules': override_rules,
-    }
+    kwargs = extract_gcs_kwargs(args)
+    kwargs['lemma_override_rules'] = override_rules
     kwargs.update(override_kwargs)
 
     process_parallel_sentences_to_csv(
@@ -757,9 +637,9 @@ def test_process_lemmas_per_line_invariants(mock_nlp, default_args, tmp_path, mo
         "Drei": 3
     }
     
-    de_dict = {"Hund", "Auto", "Haus", "Zwei", "Eins", "Drei"}
+    de_dict = set(DEFAULT_DE_DICTIONARY)
     override_rules = {
-        'priority1': {}, 'priority1_regex': [], 'priority2': {}, 'priority2_regex': [], 'priority3': {}
+        k: v.copy() if isinstance(v, (dict, list)) else v for k, v in DEFAULT_OVERRIDE_RULES.items()
     }
     
     monkeypatch.setattr(kw, "nlp", mock_nlp, raising=False)

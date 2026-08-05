@@ -3,6 +3,7 @@ import pytest
 from typing import List, Dict, Any, Tuple
 from pathlib import Path
 import sys
+from types import SimpleNamespace
 
 # Add src and helpers to sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / 'src'))
@@ -198,53 +199,36 @@ def test_sort_inflected_forms_invariants(config):
     assert sorted_contractions[2] == "did"
 
 
-class _MockArgs:
-    def __init__(self, config):
-        for k, v in config.items():
-            setattr(self, k, v)
-
-
 @pytest.mark.parametrize("config", generate_capitalization_matrix())
-def test_format_lemma_capitalization_invariants(config):
+def test_format_lemma_capitalization_invariants(config, mock_nlp):
     """
     Verifies formatting and capitalization invariance using mocked spaCy tokens and argument namespaces.
     """
-    original_nlp = getattr(kardenwort_mod, 'nlp', None)
+    args = SimpleNamespace(**config)
     
-    class _MockNLP:
-        lang = 'de'
-        
-    kardenwort_mod.nlp = _MockNLP()
-    
-    try:
-        args = _MockArgs(config)
-        
-        # URL / email token always reduces to lowercase regardless of capitalization config
-        url_token = _MockToken("HTTPS://EXAMPLE.COM", "NOUN", like_url=True)
-        assert format_lemma_capitalization(url_token, "HTTPS://EXAMPLE.COM", args) == "https://example.com"
+    # URL / email token always reduces to lowercase regardless of capitalization config
+    url_token = _MockToken("HTTPS://EXAMPLE.COM", "NOUN", like_url=True)
+    assert format_lemma_capitalization(url_token, "HTTPS://EXAMPLE.COM", args) == "https://example.com"
 
-        # German Noun capitalization rule when nlp.lang == 'de'
-        noun_token = _MockToken("häuser", "NOUN")
-        res_noun = format_lemma_capitalization(noun_token, "haus", args)
-        if config["de_force_noun_capitalization"]:
-            assert res_noun == "Haus"
-        else:
-            assert res_noun == "haus"
+    # German Noun capitalization rule when nlp.lang == 'de'
+    noun_token = _MockToken("häuser", "NOUN")
+    res_noun = format_lemma_capitalization(noun_token, "haus", args)
+    if config["de_force_noun_capitalization"]:
+        assert res_noun == "Haus"
+    else:
+        assert res_noun == "haus"
 
-        # Proper Noun capitalization rule
-        propn_token = _MockToken("berlin", "PROPN")
-        res_propn = format_lemma_capitalization(propn_token, "berlin", args)
-        if config["force_proper_noun_capitalization"] or config["de_force_noun_capitalization"]:
-            assert res_propn == "Berlin"
-        else:
-            assert res_propn == "berlin"
-            
-        # Non-noun at sentence start
-        verb_token = _MockToken("laufen", "VERB", is_sent_start=True)
-        assert format_lemma_capitalization(verb_token, "laufen", args) == "laufen"
+    # Proper Noun capitalization rule
+    propn_token = _MockToken("berlin", "PROPN")
+    res_propn = format_lemma_capitalization(propn_token, "berlin", args)
+    if config["force_proper_noun_capitalization"] or config["de_force_noun_capitalization"]:
+        assert res_propn == "Berlin"
+    else:
+        assert res_propn == "berlin"
         
-    finally:
-        kardenwort_mod.nlp = original_nlp
+    # Non-noun at sentence start
+    verb_token = _MockToken("laufen", "VERB", is_sent_start=True)
+    assert format_lemma_capitalization(verb_token, "laufen", args) == "laufen"
 
 
 # ==============================================================================
@@ -268,11 +252,7 @@ def test_tabular_and_anki_field_mapping_invariants(config):
         assert index_map[col_name] == i
         
     # 3. Test prepare_row_data across configuration permutations with realistic data
-    class _MockArgs:
-        language = "de"
-        tts_destination_lang = "ru"
-        
-    args = _MockArgs()
+    args = SimpleNamespace(language="de", tts_destination_lang="ru")
     
     # Test wordlist column variations according to tabular flags
     wordlist_val = "w1<br>w2" if config["wordlist_use_br"] else "w1\\nw2"

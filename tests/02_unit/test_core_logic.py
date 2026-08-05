@@ -600,3 +600,110 @@ def test_sentence_deduplication_preserves_multiple_source_words():
     assert (lemma, "isn't") in lemmas_in_sentence
     assert (lemma, "not") in lemmas_in_sentence
 
+
+def test_get_simplemma_input_text_combinations():
+    from kardenwort.core.kardenwort import get_simplemma_input_text
+    import argparse
+
+    class MockToken:
+        def __init__(self, text, lemma, pos, is_sent_start=False):
+            self.text = text
+            self.lemma_ = lemma
+            self.pos_ = pos
+            self.is_sent_start = is_sent_start
+
+    # Case 1: VERB at sentence start, pos_aware=True -> should lowercase
+    tok_verb = MockToken("Schreiben", "Schreiben", "VERB", is_sent_start=True)
+    args = argparse.Namespace(simplemma_after_spacy=False, simplemma_pos_aware=True)
+    assert get_simplemma_input_text(tok_verb, args) == "schreiben"
+
+    # Case 2: NOUN at sentence start, pos_aware=True -> should NOT lowercase
+    tok_noun = MockToken("Haus", "Haus", "NOUN", is_sent_start=True)
+    assert get_simplemma_input_text(tok_noun, args) == "Haus"
+
+    # Case 3: PROPN at sentence start, pos_aware=True -> should NOT lowercase
+    tok_propn = MockToken("Berlin", "Berlin", "PROPN", is_sent_start=True)
+    assert get_simplemma_input_text(tok_propn, args) == "Berlin"
+
+    # Case 4: ADJ at sentence start, pos_aware=True -> should lowercase
+    tok_adj = MockToken("Schön", "schön", "ADJ", is_sent_start=True)
+    assert get_simplemma_input_text(tok_adj, args) == "schön"
+
+    # Case 5: VERB NOT at sentence start, pos_aware=True -> should NOT lowercase via pos_aware (keeps casing of text/lemma)
+    tok_verb_mid = MockToken("Schreiben", "Schreiben", "VERB", is_sent_start=False)
+    assert get_simplemma_input_text(tok_verb_mid, args) == "Schreiben"
+
+    # Case 6: simplemma_after_spacy=True selects lemma_ instead of text
+    tok_diff = MockToken("Gegangen", "gehen", "VERB", is_sent_start=False)
+    args_after = argparse.Namespace(simplemma_after_spacy=True, simplemma_pos_aware=False)
+    assert get_simplemma_input_text(tok_diff, args_after) == "gehen"
+
+    # Case 7: Both flags True on sentence start verb where lemma is capitalized
+    tok_both = MockToken("Habt", "Habt", "VERB", is_sent_start=True)
+    args_both = argparse.Namespace(simplemma_after_spacy=True, simplemma_pos_aware=True)
+    assert get_simplemma_input_text(tok_both, args_both) == "habt"
+
+
+def test_simplemma_sentence_initial_verbs_integration():
+    import argparse
+    from kardenwort.core import kardenwort as kw
+    from unittest.mock import MagicMock
+
+    class MockToken:
+        def __init__(self, text, lemma, pos, is_sent_start=True):
+            self.text = text
+            self.lemma_ = lemma
+            self.pos_ = pos
+            self.is_sent_start = is_sent_start
+            self.i = 0
+            self.like_url = False
+            self.like_email = False
+            self.morph = MagicMock()
+            self.morph.get.return_value = []
+
+    nlp_model = MagicMock()
+    nlp_model.lang = 'de'
+    de_dictionary = {"Haus", "schreiben", "begründen", "haben"}
+    lemma_override_rules = {}
+    sentence_text = "Test sentence."
+
+    args_pos_aware_fallback = argparse.Namespace(
+        simplemma_after_spacy=True,
+        simplemma_pos_aware=True,
+        simplemma_smart_fallback=True,
+        use_simplemma_correction=False,
+        force_proper_noun_capitalization=False,
+        prefer_shortest_form=False,
+        de_force_noun_capitalization=False,
+        de_noun_capitalization=False,
+        token_mappings_lemmatize=True
+    )
+
+    # Test "Schreiben" -> "schreiben" (where SpaCy left lemma as "Schreiben" or similar)
+    tok1 = MockToken("Schreiben", "Schreiben", "VERB", is_sent_start=True)
+    lemmas1, _ = kw._extract_standard_token(
+        tok1, nlp_model, de_dictionary, lemma_override_rules, sentence_text,
+        de_fix_genitive=True, de_gcs=False, gcs_automaton=None, de_gcs_pos_tags=[],
+        args=args_pos_aware_fallback, separable_verb_map={}
+    )
+    assert "schreiben" in lemmas1
+
+    # Test "Begründen" -> "begründen"
+    tok2 = MockToken("Begründen", "Begründen", "VERB", is_sent_start=True)
+    lemmas2, _ = kw._extract_standard_token(
+        tok2, nlp_model, de_dictionary, lemma_override_rules, sentence_text,
+        de_fix_genitive=True, de_gcs=False, gcs_automaton=None, de_gcs_pos_tags=[],
+        args=args_pos_aware_fallback, separable_verb_map={}
+    )
+    assert "begründen" in lemmas2
+
+    # Test "Habt" -> "haben"
+    tok3 = MockToken("Habt", "Habt", "VERB", is_sent_start=True)
+    lemmas3, _ = kw._extract_standard_token(
+        tok3, nlp_model, de_dictionary, lemma_override_rules, sentence_text,
+        de_fix_genitive=True, de_gcs=False, gcs_automaton=None, de_gcs_pos_tags=[],
+        args=args_pos_aware_fallback, separable_verb_map={}
+    )
+    assert "haben" in lemmas3
+
+

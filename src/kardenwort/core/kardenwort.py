@@ -1288,6 +1288,8 @@ def process_parallel_text_files(
                     continue
                 
                 cur_source_word = mapped_lemma_sources.get(lemma, token.text)
+                if getattr(args, 'strip_garbage_characters', ''):
+                    cur_source_word = cur_source_word.strip(args.strip_garbage_characters)
                 
                 data_entry = {
                     'lemma': lemma,
@@ -1615,6 +1617,8 @@ def process_single_text(
                     continue
 
                 cur_source_word = mapped_lemma_sources.get(lemma, token.text)
+                if getattr(args, 'strip_garbage_characters', ''):
+                    cur_source_word = cur_source_word.strip(args.strip_garbage_characters)
 
                 data_entry = {
                     'lemma': lemma,

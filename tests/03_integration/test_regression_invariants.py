@@ -12,7 +12,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / 'src'))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / '02_unit'))
 
 import kardenwort.core.kardenwort as kw
-from kardenwort.core.kardenwort import process_parallel_text_files, get_anki_csv_header
+from kardenwort.core.kardenwort import (
+    process_parallel_text_files,
+    process_single_text,
+    process_parallel_sentences_to_csv,
+    process_lemmas_per_line,
+    get_anki_csv_header
+)
 from test_core_invariants import generate_gcs_matrix
 
 
@@ -433,3 +439,194 @@ def test_source_timestamps_and_context_join_str(mock_nlp, default_args, tmp_path
     recs3 = read_tsv_records(out3)
     sent3_sp = next(r for r in recs3 if r["SentenceSource"] == "Drei.")
     assert "Eins. Zwei." == sent3_sp["SentenceSourceContextLeft"]
+
+
+# ==============================================================================
+# Phase 5: process_single_text Regression Baselines
+# ==============================================================================
+
+def run_pipeline_single(args, tmp_path, output_filename="out_single.tsv", source_text=None, field_mapping=None, **override_kwargs):
+    if source_text is None:
+        with open(args.text1_file, "r", encoding="utf-8") as f:
+            source_text = f.read()
+            
+    out_path = str(tmp_path / output_filename) if output_filename else None
+    header = get_anki_csv_header()
+    
+    if field_mapping is None:
+        field_mapping = {
+            "WordSource": "lemma",
+            "Quotation": "source_word",
+            "SentenceSource": "source_sentence",
+            "SentenceSourceWordlist": "wordlist",
+            "Deck": "deck_name",
+            "Note": "subtitle_start_time",
+            "SentenceSourceContextLeft": "source_context_left",
+            "SentenceSourceContextRight": "source_context_right",
+            "SentenceDestination": "target_sentence",
+            "SentenceDestination2": "tertiary_sentence",
+            "SentenceSourceIndex": "sentence_index",
+        }
+        
+    override_rules = override_kwargs.pop('lemma_override_rules', {
+        'priority1': {}, 'priority1_regex': [], 'priority2': {}, 'priority2_regex': [], 'priority3': {}
+    })
+    de_dict = override_kwargs.pop('de_dictionary', {"Haus", "Auto", "Hund", "Satz", "Title", "Eins", "Zwei", "Drei", "Vier", "Groß"})
+
+    kwargs = {
+        'de_gcs_only_nouns': getattr(args, 'de_gcs_only_nouns', True),
+        'de_gcs_combine_noun_modes': getattr(args, 'de_gcs_combine_noun_modes', False),
+        'de_fix_genitive': getattr(args, 'de_fix_genitive', False),
+        'de_gcs_mask_unknown_parts': getattr(args, 'de_gcs_mask_unknown_parts', False),
+        'de_gcs_preserve_compound_word': getattr(args, 'de_gcs_preserve_compound_word', False),
+        'de_gcs_skip_merge_fractions': getattr(args, 'de_gcs_skip_merge_fractions', False),
+        'classifications': getattr(args, 'classifications', {}),
+        'token_mappings': {},
+    }
+    kwargs.update(override_kwargs)
+
+    process_single_text(
+        source_text=source_text,
+        lemma_sort_index={},
+        language=getattr(args, 'language', 'de'),
+        sentence_context_size=getattr(args, 'sentence_context_size', 1),
+        output_file_path=out_path,
+        add_source_word_col=True,
+        add_wordlist_col=getattr(args, 'add_wordlist_col', True),
+        add_sentence_index_col=True,
+        add_header=getattr(args, 'add_header', True),
+        wordlist_use_br=getattr(args, 'wordlist_use_br', False),
+        stdout_print_output_basename=getattr(args, 'stdout_print_output_basename', False),
+        de_gcs=getattr(args, 'de_gcs', False),
+        gcs_automaton=getattr(args, 'gcs_automaton', None),
+        de_gcs_add_parts_to_wordlist=getattr(args, 'de_gcs_add_parts_to_wordlist', False),
+        de_dictionary=de_dict,
+        lemma_override_rules=override_rules,
+        de_gcs_pos_tags=getattr(args, 'de_gcs_pos_tags', ['NN', 'NOUN', 'N']),
+        field_mapping=field_mapping,
+        anki_header=header,
+        args=args,
+        **kwargs
+    )
+    return out_path
+
+
+def test_single_text_stdout_formats(mock_nlp, default_args, tmp_path, capsys):
+    """
+    5.1 Test output_file_path=None with stdout_format='plain', 'tsv', 'html', and 'context'
+    and verify stdout matches expected baseline strings.
+    """
+    src = "Haus Auto Hund."
+    default_args.deduplication_scope = 'global'
+
+    # 1. plain
+    default_args.stdout_format = 'plain'
+    run_pipeline_single(default_args, tmp_path, output_filename=None, source_text=src)
+    out, _ = capsys.readouterr()
+    assert "Auto\nHaus\nHund" in out
+
+    # 2. tsv
+    default_args.stdout_format = 'tsv'
+    run_pipeline_single(default_args, tmp_path, output_filename=None, source_text=src)
+    out, _ = capsys.readouterr()
+    assert "Auto\tAuto" in out and "Haus\tHaus" in out
+
+    # 3. html
+    default_args.stdout_format = 'html'
+    run_pipeline_single(default_args, tmp_path, output_filename=None, source_text=src)
+    out, _ = capsys.readouterr()
+    assert "<table>" in out and "<tr><td>Auto</td><td>Auto</td></tr>" in out and "</table>" in out
+
+    # 4. context
+    default_args.deduplication_scope = 'sentence'
+    default_args.stdout_format = 'context'
+    run_pipeline_single(default_args, tmp_path, output_filename=None, source_text=src)
+    out, _ = capsys.readouterr()
+    assert "Auto\n\nHaus Auto Hund." in out or "Auto" in out
+
+
+def test_single_text_spacy_sents_vs_multiline(mock_nlp, default_args, tmp_path):
+    """
+    5.2 Test single-sentence source text (no newlines -> spaCy .sents splitting path)
+    versus multi-line file path. Verify both paths properly build unit_texts and extract lemmas.
+    """
+    default_args.deduplication_scope = 'sentence'
+    
+    # 1. Single-sentence source text (no \n) -> triggers spaCy .sents
+    src_single = "Haus Auto Hund."
+    out_single = run_pipeline_single(default_args, tmp_path, "out_spacy_sents.tsv", source_text=src_single)
+    recs_single = read_tsv_records(out_single)
+    assert len(recs_single) == 3
+    assert {r["WordSource"] for r in recs_single} == {"Haus", "Auto", "Hund"}
+    
+    # 2. Multi-line text (\n in text) -> triggers splitlines()
+    src_multi = "Haus.\nAuto.\nHund."
+    out_multi = run_pipeline_single(default_args, tmp_path, "out_multiline.tsv", source_text=src_multi)
+    recs_multi = read_tsv_records(out_multi)
+    assert len(recs_multi) == 3
+    assert {r["WordSource"] for r in recs_multi} == {"Haus", "Auto", "Hund"}
+
+
+def test_single_text_combine_and_shortest(mock_nlp, default_args, tmp_path):
+    """
+    5.3 Test combine_source_words=True and prefer_shortest_form=True in single-text mode.
+    """
+    text = "Gelaufen ist Lief.\n"
+    override_rules = {
+        'priority1': {}, 'priority1_regex': [],
+        'priority2': {
+            'Gelaufen': [('Laufen', None)],
+            'Lief.': [('Laufen', None)],
+            'ist': [('sein', None)],
+        },
+        'priority2_regex': [], 'priority3': {}
+    }
+    
+    # 1. combine_source_words = True
+    default_args.deduplication_scope = 'global'
+    default_args.combine_source_words = True
+    out_comb = run_pipeline_single(default_args, tmp_path, "out_single_comb.tsv", source_text=text, lemma_override_rules=override_rules)
+    recs_comb = read_tsv_records(out_comb)
+    laufen_rec = next(r for r in recs_comb if r["WordSource"] == "Laufen")
+    assert "Gelaufen" in laufen_rec["Quotation"] and "Lief" in laufen_rec["Quotation"]
+    
+    # 2. prefer_shortest_form = True
+    default_args.combine_source_words = False
+    default_args.prefer_shortest_form = True
+    out_short = run_pipeline_single(default_args, tmp_path, "out_single_short.tsv", source_text=text, lemma_override_rules=override_rules)
+    recs_short = read_tsv_records(out_short)
+    laufen_short = next(r for r in recs_short if r["WordSource"] == "Laufen")
+    assert "Lief" in laufen_short["Quotation"]
+
+
+def test_single_text_wordlist_and_deck_metadata(mock_nlp, default_args, tmp_path):
+    """
+    5.4 Test add_wordlist_col / wordlist_use_br, anki_sentence_subdecks, and anki_deck_content in single-text mode.
+    """
+    src = "# Chapter 1\n## Section 1\nHaus Auto Hund."
+    
+    default_args.add_wordlist_col = True
+    default_args.wordlist_use_br = True
+    default_args.anki_markdown_decks = True
+    default_args.anki_create_subdecks = True
+    default_args.anki_parent_deck = "SingleVault"
+    default_args.anki_sentence_subdecks = True
+    default_args.anki_deck_content = ['subdeck-source']
+    default_args.deduplication_scope = 'sentence'
+    
+    out = run_pipeline_single(default_args, tmp_path, "out_single_meta.tsv", source_text=src)
+    recs = read_tsv_records(out)
+    
+    assert len(recs) > 0
+    assert any("<br>" in r["SentenceSourceWordlist"] for r in recs)
+    
+    deck_name = recs[0]["Deck"]
+    assert "SingleVault" in deck_name and "chapter" in deck_name.lower()
+    
+    meta_path = str(tmp_path / "out_single_meta.json")
+    assert os.path.exists(meta_path)
+    with open(meta_path, "r", encoding="utf-8") as f:
+        meta = json.load(f)
+    descriptions = meta.get("deck_descriptions", {})
+    assert len(descriptions) > 0 and any("Haus Auto Hund." in v for v in descriptions.values())
+

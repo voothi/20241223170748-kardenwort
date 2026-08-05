@@ -630,3 +630,160 @@ def test_single_text_wordlist_and_deck_metadata(mock_nlp, default_args, tmp_path
     descriptions = meta.get("deck_descriptions", {})
     assert len(descriptions) > 0 and any("Haus Auto Hund." in v for v in descriptions.values())
 
+
+# ==============================================================================
+# Phase 6: process_parallel_sentences_to_csv Regression Baselines
+# ==============================================================================
+
+def run_pipeline_parallel_sentences(args, tmp_path, output_filename="out_sent.tsv", source_text=None, field_mapping=None, **override_kwargs):
+    src_file = str(tmp_path / "src_sent.txt")
+    if source_text is None:
+        source_text = "Eins.\nZwei.\nDrei.\n"
+    with open(src_file, "w", encoding="utf-8") as f:
+        f.write(source_text)
+        
+    target_path = getattr(args, 'text2_file', None)
+    tertiary_path = getattr(args, 'text3_file', None)
+            
+    out_path = str(tmp_path / output_filename) if output_filename else None
+    header = get_anki_csv_header()
+    
+    if field_mapping is None:
+        field_mapping = {
+            "WordSource": "lemma",
+            "Quotation": "source_word",
+            "SentenceSource": "source_sentence",
+            "SentenceSourceWordlist": "wordlist",
+            "Deck": "deck_name",
+            "Note": "subtitle_start_time",
+            "SentenceSourceContextLeft": "source_context_left",
+            "SentenceSourceContextRight": "source_context_right",
+            "SentenceDestination": "target_sentence",
+            "SentenceDestination2": "tertiary_sentence",
+            "SentenceSourceIndex": "sentence_index",
+        }
+        
+    override_rules = override_kwargs.pop('lemma_override_rules', {
+        'priority1': {}, 'priority1_regex': [], 'priority2': {}, 'priority2_regex': [], 'priority3': {}
+    })
+    kwargs = {
+        'de_gcs_only_nouns': getattr(args, 'de_gcs_only_nouns', True),
+        'de_gcs_combine_noun_modes': getattr(args, 'de_gcs_combine_noun_modes', False),
+        'de_fix_genitive': getattr(args, 'de_fix_genitive', False),
+        'de_gcs_mask_unknown_parts': getattr(args, 'de_gcs_mask_unknown_parts', False),
+        'de_gcs_preserve_compound_word': getattr(args, 'de_gcs_preserve_compound_word', False),
+        'de_gcs_skip_merge_fractions': getattr(args, 'de_gcs_skip_merge_fractions', False),
+        'classifications': getattr(args, 'classifications', {}),
+        'token_mappings': {},
+        'lemma_override_rules': override_rules,
+    }
+    kwargs.update(override_kwargs)
+
+    process_parallel_sentences_to_csv(
+        language=getattr(args, 'language', 'de'),
+        lemma_sort_index={},
+        source_text_path=src_file,
+        target_text_path=target_path,
+        tertiary_text_path=tertiary_path,
+        sentence_context_size=getattr(args, 'sentence_context_size', 1),
+        output_file_path=out_path,
+        add_wordlist_col=getattr(args, 'add_wordlist_col', True),
+        add_sentence_index_col=True,
+        add_header=getattr(args, 'add_header', True),
+        wordlist_use_br=getattr(args, 'wordlist_use_br', False),
+        stdout_print_output_basename=getattr(args, 'stdout_print_output_basename', False),
+        de_gcs_pos_tags=getattr(args, 'de_gcs_pos_tags', ['NN', 'NOUN', 'N']),
+        field_mapping=field_mapping,
+        anki_header=header,
+        args=args,
+        **kwargs
+    )
+    return out_path
+
+
+def test_parallel_sentences_tertiary_and_decks(mock_nlp, default_args, tmp_path):
+    """
+    6.1 Test with and without tertiary_text_path, anki_create_subdecks deck naming,
+    and anki_parent_deck override in sentence CSV processing mode.
+    """
+    src_text = "Satz eins.\nSatz zwei.\n"
+    target_file = str(tmp_path / "target.txt")
+    with open(target_file, "w", encoding="utf-8") as f:
+        f.write("Sentence one.\nSentence two.\n")
+    default_args.text2_file = target_file
+    
+    # 1. Without tertiary_text_path, with anki_create_subdecks and anki_parent_deck
+    default_args.anki_create_subdecks = True
+    default_args.anki_parent_deck = "GermanRoot"
+    default_args.text3_file = None
+    
+    out1 = run_pipeline_parallel_sentences(default_args, tmp_path, "out_sent_no_t3.tsv", source_text=src_text)
+    recs1 = read_tsv_records(out1)
+    assert len(recs1) == 2
+    assert recs1[0]["SentenceDestination"] == "Sentence one."
+    assert recs1[0]["SentenceDestination2"] == "" # Empty tertiary
+    assert "GermanRoot" in recs1[0]["Deck"]
+    
+    # 2. With tertiary_text_path and default deck naming
+    tertiary_file = str(tmp_path / "tertiary.txt")
+    with open(tertiary_file, "w", encoding="utf-8") as f:
+        f.write("Predicacion uno.\nPredicacion dos.\n")
+    default_args.text3_file = tertiary_file
+    default_args.anki_parent_deck = None
+    
+    out2 = run_pipeline_parallel_sentences(default_args, tmp_path, "out_sent_with_t3.tsv", source_text=src_text)
+    recs2 = read_tsv_records(out2)
+    assert len(recs2) == 2
+    assert recs2[1]["SentenceDestination2"] == "Predicacion dos."
+    assert recs2[0]["Deck"] != ""
+
+
+def test_parallel_sentences_markdown_subdecks(mock_nlp, default_args, tmp_path):
+    """
+    6.2 Test anki_markdown_decks=True + anki_sentence_subdecks=True in process_parallel_sentences_to_csv.
+    Verify per-sentence subdeck name contains zero-padded index + slug within heading hierarchy.
+    """
+    src_text = "# Chapter 1\n## Section A\nDas ist ein Satz.\nEin anderer Satz.\n"
+    default_args.anki_markdown_decks = True
+    default_args.anki_sentence_subdecks = True
+    default_args.anki_create_subdecks = True
+    default_args.anki_parent_deck = "ParentDeck"
+    
+    out = run_pipeline_parallel_sentences(default_args, tmp_path, "out_sent_md.tsv", source_text=src_text)
+    recs = read_tsv_records(out)
+    sent_recs = [r for r in recs if "Satz" in r["SentenceSource"]]
+    assert len(sent_recs) == 2
+    
+    deck0 = sent_recs[0]["Deck"]
+    assert "parentdeck" in deck0.lower() and "chapter" in deck0.lower() and "section" in deck0.lower()
+    assert "0000" in deck0
+    assert "0000" in sent_recs[1]["Deck"]
+
+
+def test_parallel_sentences_context_br_and_timestamps(mock_nlp, default_args, tmp_path):
+    """
+    6.3 Test anki_context_use_br=True vs False and source_timestamps subtitle time field population
+    in process_parallel_sentences_to_csv.
+    """
+    src_text = "Eins.\nZwei.\nDrei.\nVier.\n"
+    default_args.sentence_context_size = 2
+    default_args.source_timestamps = ["00:01", "00:02", "00:03", "00:04"]
+    default_args.text2_file = None
+    default_args.text3_file = None
+    
+    # 1. anki_context_use_br = True (<br> join)
+    default_args.anki_context_use_br = True
+    out_br = run_pipeline_parallel_sentences(default_args, tmp_path, "out_sent_br.tsv", source_text=src_text)
+    recs_br = read_tsv_records(out_br)
+    assert len(recs_br) == 4
+    assert recs_br[2]["SentenceSource"] == "Drei."
+    assert recs_br[2]["Note"] == "00:03"
+    assert "Eins.<br>Zwei." == recs_br[2]["SentenceSourceContextLeft"]
+    
+    # 2. anki_context_use_br = False (space join)
+    default_args.anki_context_use_br = False
+    out_sp = run_pipeline_parallel_sentences(default_args, tmp_path, "out_sent_sp.tsv", source_text=src_text)
+    recs_sp = read_tsv_records(out_sp)
+    assert recs_sp[2]["SentenceSourceContextLeft"] == "Eins. Zwei."
+
+

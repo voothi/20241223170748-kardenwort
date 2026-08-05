@@ -12,6 +12,7 @@ import atexit
 import simplemma
 from dataclasses import dataclass
 from typing import Optional, List, Any, Tuple, Dict
+from types import SimpleNamespace
 
 try:
     from german_compound_splitter import comp_split
@@ -590,7 +591,15 @@ def is_complex_inflected_form(form, apostrophe_chars):
         return True
     return any(not c.isalnum() for c in form)
 
-def sort_inflected_forms(forms, apostrophe_chars, order='contractions_first', prefer_lowercase=True):
+def sort_inflected_forms(forms, apostrophe_chars_or_config: Any, order='contractions_first', prefer_lowercase=True):
+    if isinstance(apostrophe_chars_or_config, (ExtractionConfig, argparse.Namespace, SimpleNamespace)) or hasattr(apostrophe_chars_or_config, 'apostrophe_chars'):
+        cfg = ExtractionConfig.from_args(apostrophe_chars_or_config) if not isinstance(apostrophe_chars_or_config, ExtractionConfig) else apostrophe_chars_or_config
+        apostrophe_chars = cfg.apostrophe_chars
+        order = getattr(cfg, 'combine_source_words_order', order)
+        prefer_lowercase = getattr(cfg, 'combine_source_words_prefer_lowercase', prefer_lowercase)
+    else:
+        apostrophe_chars = apostrophe_chars_or_config
+
     unique_forms_dict = {}
     for f in forms:
         f_clean = f.strip()
@@ -1036,7 +1045,10 @@ def generate_filename_prefix_from_text(text, word_count):
         return ""
     return "-".join(prefix_words)
 
-def format_lemma_capitalization(token, initial_lemma, args):
+def format_lemma_capitalization(token, initial_lemma, args_or_config: Any = None, context: Optional[ExecutionContext] = None):
+    config = ExtractionConfig.from_args(args_or_config) if not isinstance(args_or_config, ExtractionConfig) and args_or_config is not None else (args_or_config or ExtractionConfig())
+    current_nlp = context.nlp if (context and context.nlp is not None) else nlp
+    nlp_lang = current_nlp.lang if current_nlp is not None else getattr(config, 'language', 'de')
     if token.like_url or token.like_email:
         return initial_lemma.lower()
 
@@ -1047,11 +1059,11 @@ def format_lemma_capitalization(token, initial_lemma, args):
     if is_all_caps or has_internal_caps:
         return source_token_text
     
-    if args.de_force_noun_capitalization and nlp.lang == 'de':
+    if config.de_force_noun_capitalization and nlp_lang == 'de':
         if token.pos_ in ["NOUN", "PROPN"]:
             return initial_lemma.capitalize()
     
-    if args.force_proper_noun_capitalization:
+    if config.force_proper_noun_capitalization:
         if token.pos_ == "PROPN":
             return initial_lemma.capitalize()
 
@@ -1060,7 +1072,9 @@ def format_lemma_capitalization(token, initial_lemma, args):
 
     return initial_lemma
 
-def deduplicate_lemmas(candidate_lemmas):
+def deduplicate_lemmas(candidate_lemmas, config: Optional[Any] = None):
+    if config is not None and not isinstance(config, ExtractionConfig):
+        config = ExtractionConfig.from_args(config)
     lemmas_grouped_by_lowercase = {}
     for lemma in candidate_lemmas:
         if not lemma: continue
@@ -1229,22 +1243,34 @@ def _extract_standard_token(
         mapped_sources[lem] = source_word_form
     return lemmas_for_current_token, mapped_sources
 
-def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, de_dictionary, lemma_override_rules, de_gcs_pos_tags, args, **kwargs):
-    de_gcs = kwargs.get('de_gcs', False)
-    de_gcs_add_parts_to_wordlist = kwargs.get('de_gcs_add_parts_to_wordlist', False)
+def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model=None, de_dictionary=None, lemma_override_rules=None, de_gcs_pos_tags=None, args=None, context: Optional[ExecutionContext] = None, gcs_config: Optional[GCSConfig] = None, extraction_config: Optional[ExtractionConfig] = None, **kwargs):
+    current_nlp = context.nlp if (context and context.nlp is not None) else nlp_model
+    gcs_automaton = context.gcs_automaton if (context and context.gcs_automaton is not None) else kwargs.get('gcs_automaton', None)
+
+    if gcs_config is None:
+        merged_dict = getattr(args, '__dict__', {}).copy() if args is not None else {}
+        merged_dict.update(kwargs)
+        if de_gcs_pos_tags is not None:
+            merged_dict['de_gcs_pos_tags'] = de_gcs_pos_tags
+        gcs_config = GCSConfig.from_args(SimpleNamespace(**merged_dict))
+        
+    if extraction_config is None and args is not None:
+        extraction_config = ExtractionConfig.from_args(args)
+
+    de_gcs = gcs_config.de_gcs
+    de_gcs_add_parts_to_wordlist = gcs_config.de_gcs_add_parts_to_wordlist
     
     if de_gcs and not de_gcs_add_parts_to_wordlist:
         de_gcs = False
 
-    gcs_automaton = kwargs.get('gcs_automaton', None)
-    de_gcs_only_nouns = kwargs.get('de_gcs_only_nouns', True)
-    de_gcs_combine_noun_modes = kwargs.get('de_gcs_combine_noun_modes', False)
-    de_fix_genitive = kwargs.get('de_fix_genitive', False)
-    de_gcs_mask_unknown_parts = kwargs.get('de_gcs_mask_unknown_parts', False)
-    de_gcs_preserve_compound_word = kwargs.get('de_gcs_preserve_compound_word', False)
-    de_gcs_skip_merge_fractions = kwargs.get('de_gcs_skip_merge_fractions', False)
+    de_gcs_only_nouns = gcs_config.de_gcs_only_nouns
+    de_gcs_combine_noun_modes = gcs_config.de_gcs_combine_noun_modes
+    de_fix_genitive = gcs_config.de_fix_genitive
+    de_gcs_mask_unknown_parts = gcs_config.de_gcs_mask_unknown_parts
+    de_gcs_preserve_compound_word = gcs_config.de_gcs_preserve_compound_word
+    de_gcs_skip_merge_fractions = gcs_config.de_gcs_skip_merge_fractions
 
-    sentence_doc = nlp_model(sentence_text)
+    sentence_doc = current_nlp(sentence_text)
     final_lemmas = set()
 
     separable_verb_map = find_separable_verb_particle_pairs(sentence_doc)
@@ -1259,7 +1285,7 @@ def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, de_
         if token.i in mapped_tokens:
             if token.i in token_mappings_matches:
                 lemmas_for_current_token, _ = _extract_mapped_token(
-                    token_mappings_matches[token.i], nlp_model, de_dictionary, lemma_override_rules, args, sentence_text, de_fix_genitive
+                    token_mappings_matches[token.i], current_nlp, de_dictionary, lemma_override_rules, args, sentence_text, de_fix_genitive
                 )
             else:
                 continue
@@ -1267,7 +1293,7 @@ def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, de_
             if not (token.is_alpha or ('-' in token.text and token.text.strip('-'))):
                 continue
             lemmas_for_current_token, _ = _extract_standard_token(
-                token, nlp_model, de_dictionary, lemma_override_rules, sentence_text, de_fix_genitive, 
+                token, current_nlp, de_dictionary, lemma_override_rules, sentence_text, de_fix_genitive, 
                 de_gcs, gcs_automaton, de_gcs_pos_tags, args, separable_verb_map, 
                 de_gcs_only_nouns=de_gcs_only_nouns,
                 de_gcs_combine_noun_modes=de_gcs_combine_noun_modes,
@@ -1276,11 +1302,12 @@ def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model, de_
                 de_gcs_skip_merge_fractions=de_gcs_skip_merge_fractions
             )
 
-        deduplicated_lemmas = deduplicate_lemmas(lemmas_for_current_token)
+        deduplicated_lemmas = deduplicate_lemmas(lemmas_for_current_token, extraction_config)
         for lemma in deduplicated_lemmas:
             final_lemmas.add(lemma)
 
-    return sorted(list(final_lemmas), key=lambda x: get_lemma_sort_key(x, lemma_sort_index, getattr(args, 'language', 'en')))
+    lang_code = getattr(extraction_config, 'language', getattr(args, 'language', 'en')) if extraction_config or args else 'en'
+    return sorted(list(final_lemmas), key=lambda x: get_lemma_sort_key(x, lemma_sort_index, lang_code))
 
 def _write_deck_metadata(args, output_file_path, source_text_content, target_text_content=None, tertiary_text_content=None, subdeck_content_map=None):
     if not args.anki_deck_content:

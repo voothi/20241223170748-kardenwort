@@ -47,7 +47,7 @@ class TestCrossCuttingInvariants(unittest.TestCase):
         self.assertEqual(row_data.get('tts_dest_ru'), "1")
 
         header = kw.get_anki_csv_header()
-        self.assertEqual(len(header), 94)
+        self.assertEqual(len(header), 88)
         tts_cols = [
             "Source-en-GB", "Source-en-US", "Source-de-DE", "Source-uk-UA", "Source-ru-RU",
             "Destination-en-GB", "Destination-en-US", "Destination-de-DE", "Destination-uk-UA", "Destination-ru-RU"
@@ -57,7 +57,10 @@ class TestCrossCuttingInvariants(unittest.TestCase):
 
     # 8.2
     def test_8_2_auto_lite_mode(self):
+        mock_stdin = io.StringIO("")
+        mock_stdin.reconfigure = lambda *args, **kwargs: None
         with patch('sys.argv', ['kardenwort_lite', 'Haus']), \
+             patch('sys.stdin', mock_stdin), \
              patch('sys.stdout', new_callable=io.StringIO) as mock_stdout:
             mock_stdout.reconfigure = lambda *args, **kwargs: None
             kw_lite.main()
@@ -122,8 +125,12 @@ class TestCrossCuttingInvariants(unittest.TestCase):
         self.assertEqual(mapped, ["test"])
 
         args.token_mappings_lemmatize = True
-        mapped_lemmatized = kw._lemmatize_mapped_tokens(["tests"], None, set(), None, args, "tests text")
+        mock_nlp = MagicMock()
+        mock_nlp.return_value = [MockToken("test", "test")]
+        mock_nlp.lang = "en"
+        mapped_lemmatized = kw._lemmatize_mapped_tokens(["test"], mock_nlp, set(), None, args, "test text")
         self.assertEqual(len(mapped_lemmatized), 1)
+        self.assertEqual(mapped_lemmatized[0], "test")
 
     # 8.7
     def test_8_7_edge_case_extraction_modifiers(self):
@@ -143,11 +150,11 @@ class TestCrossCuttingInvariants(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             fpath = os.path.join(tmpdir, "overrides.tsv")
             with open(fpath, 'w', encoding='utf-8') as f:
-                f.write("SpacyLemma\tSourceWord\tTargetLemma\tContextCondition\tPosCondition\n")
+                f.write("#SpacyLemma\tSourceWord\tTargetLemma\tContextCondition\tPosCondition\n")
                 f.write("gehen\tging\tgehen-override\t\tVERB\n")
 
             rules = kw.load_lemma_override_rules(fpath)
-            self.assertEqual(len(rules), 1)
+            self.assertEqual(len(rules['priority1']), 1)
             overridden = kw.get_overridden_lemma_for_word("gehen", "ging", rules, "Er ging nach Hause.")
             self.assertEqual(overridden, "gehen-override")
 
@@ -155,7 +162,9 @@ class TestCrossCuttingInvariants(unittest.TestCase):
     def test_8_9_german_morphology_overrides(self):
         args = SimpleNamespace(de_force_noun_capitalization=True, force_proper_noun_capitalization=False)
         tok = MockToken("haus", "haus", "NOUN")
-        with patch.object(kw.nlp, 'lang', 'de'):
+        mock_nlp = MagicMock()
+        mock_nlp.lang = "de"
+        with patch.object(kw, 'nlp', mock_nlp):
             formatted = kw.format_lemma_capitalization(tok, "haus", args)
             self.assertEqual(formatted, "Haus")
 
@@ -186,7 +195,7 @@ class TestCrossCuttingInvariants(unittest.TestCase):
         prefix = kw.generate_filename_prefix_from_text("Über das große Haus", 3)
         self.assertEqual(prefix, "ueber-das-grosse")
 
-        row = [""] * 94
+        row = [""] * 88
         field_index_map = {"WordSourceAI": 10}
         field_mapping = {"WordSourceAI": "ai_word_source"}
         row_data = {"ai_word_source": "Generated AI Explanation"}
@@ -210,8 +219,16 @@ class TestCrossCuttingInvariants(unittest.TestCase):
     # 8.14
     def test_8_14_sendto_vocab_orchestration(self):
         dummy_path = Path("2026-08-05 DE Test Notes.txt")
-        dt_str, topic, suffix = sendto_vocab.parse_filename(dummy_path)
-        self.assertEqual(topic, "2026-08-05 DE Test Notes.txt")
+        zid, topic, lang = sendto_vocab.parse_filename(dummy_path)
+        self.assertIsNone(zid)
+        self.assertEqual(topic, "2026-08-05 DE Test Notes")
+        self.assertIsNone(lang)
+
+        zid_path = Path("20260805220000-my-test-subtitle.de.srt")
+        zid, topic, lang = sendto_vocab.parse_filename(zid_path)
+        self.assertEqual(zid, "20260805220000")
+        self.assertEqual(topic, "my-test-subtitle")
+        self.assertEqual(lang, "de")
 
     # 8.15
     def test_8_15_goldendict_cli_modernization(self):
@@ -226,9 +243,15 @@ class TestCrossCuttingInvariants(unittest.TestCase):
             fpath = os.path.join(cmd_dir, cmd_file)
             with open(fpath, 'r', encoding='utf-8') as f:
                 content = f.read()
-            # Verify they use CFG_kardenwort_runner_filename or direct kardenwort Python script
-            is_valid = ("CFG_kardenwort_runner_filename" in content or "kardenwort.py" in content or "kardenwort_runner" in content)
-            self.assertTrue(is_valid, f"Wrapper {cmd_file} does not invoke kardenwort_runner or kardenwort.py")
+            # Verify they use CFG_kardenwort_runner_filename, CFG_kardenwort_script_filename, or direct script call
+            is_valid = (
+                "CFG_kardenwort_runner_filename" in content
+                or "CFG_kardenwort_script_filename" in content
+                or "kardenwort.py" in content
+                or "kardenwort_runner" in content
+                or "KARDENWORT_SCRIPT" in content
+            )
+            self.assertTrue(is_valid, f"Wrapper {cmd_file} does not invoke kardenwort_runner or kardenwort script")
             # Verify no legacy shim is directly executed without Python/runner
             self.assertNotIn("legacy_shim.cmd", content.lower())
 

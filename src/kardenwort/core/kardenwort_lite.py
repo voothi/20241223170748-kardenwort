@@ -86,9 +86,9 @@ def set_clipboard(text):
 
 def main():
     # Ensure UTF-8 encoding for standard streams (useful for Windows consoles)
-    if sys.stdin is not None:
+    if sys.stdin is not None and hasattr(sys.stdin, 'reconfigure'):
         sys.stdin.reconfigure(encoding='utf-8')
-    if sys.stdout is not None:
+    if sys.stdout is not None and hasattr(sys.stdout, 'reconfigure'):
         sys.stdout.reconfigure(encoding='utf-8')
 
     # Default languages supported

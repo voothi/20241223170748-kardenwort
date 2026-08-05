@@ -4,8 +4,10 @@ from typing import List, Dict, Any, Tuple
 from pathlib import Path
 import sys
 
-# Add src to sys.path
+# Add src and helpers to sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / 'src'))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / 'helpers'))
+from mock_nlp import MockToken as _MockToken
 
 from kardenwort.core.kardenwort import (
     deduplicate_lemmas,
@@ -194,15 +196,6 @@ def test_sort_inflected_forms_invariants(config):
     assert sorted_contractions[0] in ["don't", "do not"]
     assert sorted_contractions[1] in ["don't", "do not"]
     assert sorted_contractions[2] == "did"
-
-
-class _MockToken:
-    def __init__(self, text, pos, is_sent_start=False, like_url=False, like_email=False):
-        self.text = text
-        self.pos_ = pos
-        self.is_sent_start = is_sent_start
-        self.like_url = like_url
-        self.like_email = like_email
 
 
 class _MockArgs:

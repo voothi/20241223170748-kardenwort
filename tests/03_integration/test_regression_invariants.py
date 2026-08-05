@@ -7,9 +7,11 @@ from pathlib import Path
 import pytest
 from unittest.mock import MagicMock, patch
 
-# Add src to sys.path
+# Add src, unit tests, and helpers to sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / 'src'))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / '02_unit'))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / 'helpers'))
+from mock_nlp import MockMorph, MockToken, MockDoc, MockPipelineNLP
 
 import kardenwort.core.kardenwort as kw
 from kardenwort.core.kardenwort import (
@@ -20,64 +22,6 @@ from kardenwort.core.kardenwort import (
     get_anki_csv_header
 )
 from test_core_invariants import generate_gcs_matrix
-
-
-class MockMorph:
-    def __init__(self, data=None):
-        self._data = data or {}
-    def get(self, key, default=None):
-        return self._data.get(key, default or [])
-
-
-class MockToken:
-    def __init__(self, text, i=0, pos="NOUN", tag="NN", dep="ROOT", head_i=0, is_sent_start=False, like_url=False, like_email=False, case_morph=None):
-        self.text = text
-        self.lemma_ = text.lower().strip(".,!?")
-        if not self.lemma_:
-            self.lemma_ = text.lower()
-        self.pos_ = pos
-        self.tag_ = tag
-        self.i = i
-        self.dep_ = dep
-        self._head_i = head_i
-        self.head = self
-        self.is_sent_start = is_sent_start
-        self.like_url = like_url
-        self.like_email = like_email
-        self.morph = MockMorph({"Case": case_morph or []})
-        self.is_alpha = any(c.isalpha() for c in text)
-        
-    def __str__(self):
-        return self.text
-
-
-class MockDoc(list):
-    def __init__(self, tokens, text):
-        super().__init__(tokens)
-        self.text = text
-        for token in self:
-            if 0 <= token._head_i < len(self):
-                token.head = self[token._head_i]
-                
-    @property
-    def sents(self):
-        class _Span:
-            def __init__(self, t): self.text = t
-        return [_Span(self.text)]
-
-
-class MockPipelineNLP:
-    def __init__(self, lang='de'):
-        self.lang = lang
-        
-    def __call__(self, text):
-        raw_words = text.split()
-        tokens = []
-        for idx, w in enumerate(raw_words):
-            is_start = (idx == 0)
-            tokens.append(MockToken(w, i=idx, is_sent_start=is_start))
-        return MockDoc(tokens, text)
-
 
 @pytest.fixture
 def mock_nlp(monkeypatch):

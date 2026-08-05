@@ -121,3 +121,46 @@ def test_fallback_import_error(mock_config_lite_enabled, mock_spacy_and_argparse
             assert exc_info.value.code == 99
             # Verify argv is reverted correctly
             assert sys.argv == ['kardenwort.py', 'Hund']
+
+
+def test_simplemma_cli_flags_evaluation():
+    with patch.dict('sys.modules', {'spacy': MagicMock()}), \
+         patch('pathlib.Path.exists', return_value=False), \
+         patch('kardenwort.core.kardenwort.load_lemma_frequency_index', return_value={}), \
+         patch('kardenwort.core.kardenwort.load_classification_dictionaries', return_value={}), \
+         patch('kardenwort.core.kardenwort.process_single_text') as mock_process, \
+         patch.object(sys, 'argv', ['kardenwort.py', '--type', 'word', '--text', 'test', '--language', 'en', 
+                                    '--simplemma-after-spacy', '--simplemma-pos-aware', '--simplemma-smart-fallback']):
+        main()
+        mock_process.assert_called_once()
+        args = next((arg for arg in mock_process.call_args[0] if hasattr(arg, 'simplemma_after_spacy')), None)
+        assert args is not None
+        assert args.simplemma_after_spacy is True
+        assert args.simplemma_pos_aware is True
+        assert args.simplemma_smart_fallback is True
+
+
+def test_simplemma_config_loading():
+    with patch.dict('sys.modules', {'spacy': MagicMock()}), \
+         patch('pathlib.Path.exists', return_value=True), \
+         patch('kardenwort.core.kardenwort.load_lemma_frequency_index', return_value={}), \
+         patch('kardenwort.core.kardenwort.load_classification_dictionaries', return_value={}), \
+         patch('kardenwort.core.kardenwort.process_single_text') as mock_process, \
+         patch('configparser.ConfigParser') as mock_cp, \
+         patch.object(sys, 'argv', ['kardenwort.py', '--type', 'word', '--text', 'test', '--language', 'en']):
+        
+        instance = mock_cp.return_value
+        instance.__contains__.side_effect = lambda k: k in ('settings', 'lemmatization')
+        instance.has_section.side_effect = lambda s: s in ('settings', 'lemmatization')
+        instance.has_option.side_effect = lambda s, k: k in ('simplemma_after_spacy', 'simplemma_pos_aware', 'simplemma_smart_fallback')
+        instance.getboolean.side_effect = lambda s, k, fallback=False: True if k in ('simplemma_after_spacy', 'simplemma_pos_aware', 'simplemma_smart_fallback') else fallback
+        instance.get.side_effect = lambda s, k, fallback='': fallback
+        
+        main()
+        mock_process.assert_called_once()
+        args = next((arg for arg in mock_process.call_args[0] if hasattr(arg, 'simplemma_after_spacy')), None)
+        assert args is not None
+        assert args.simplemma_after_spacy is True
+        assert args.simplemma_pos_aware is True
+        assert args.simplemma_smart_fallback is True
+

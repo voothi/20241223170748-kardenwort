@@ -2007,10 +2007,11 @@ def main():
         config.read(config_path, encoding='utf-8')
         if 'optimization' in config and config.getboolean('optimization', 'auto_lite_mode', fallback=False):
             auto_lite_mode = True
-        if config.has_section('settings') and config.has_option('settings', 'use_simplemma_correction'):
-            config_use_simplemma = config.getboolean('settings', 'use_simplemma_correction', fallback=False)
-        elif config.has_section('lemmatization') and config.has_option('lemmatization', 'use_simplemma_correction'):
-            config_use_simplemma = config.getboolean('lemmatization', 'use_simplemma_correction', fallback=False)
+        for sec in ['settings', 'lemmatization']:
+            if config.has_section(sec):
+                for opt in ['use_simplemma_correction', 'simplemma_after_spacy', 'simplemma_pos_aware', 'simplemma_smart_fallback']:
+                    if config.has_option(sec, opt) and config.getboolean(sec, opt, fallback=False):
+                        config_use_simplemma = True
 
     if auto_lite_mode:
         input_text = ""
@@ -2027,6 +2028,8 @@ def main():
             if (cleaned and " " not in cleaned and "\n" not in cleaned and "\t" not in cleaned and 
                 "--output-file" not in sys.argv and "--stdout-print-output-basename" not in sys.argv and
                 "--de-gcs" not in sys.argv and "--use-simplemma-correction" not in sys.argv and
+                "--simplemma-after-spacy" not in sys.argv and "--simplemma-pos-aware" not in sys.argv and
+                "--simplemma-smart-fallback" not in sys.argv and
                 not config_use_simplemma):
                 lang = ""
                 if "--language" in sys.argv:
@@ -2095,6 +2098,9 @@ def main():
     data_files_group.add_argument("--disable-classification", action="store_true", help="Disable loading classifications from config.ini.")
     
     parser.add_argument("--use-simplemma-correction", action="store_true", help="Apply simplemma as an unconditional override after SpaCy processing.")
+    parser.add_argument("--simplemma-after-spacy", action="store_true", help="Sequential post-processing mode where Simplemma evaluates SpaCy derived lemma.")
+    parser.add_argument("--simplemma-pos-aware", action="store_true", help="Lower-case input string passed to Simplemma at sentence start if not a noun or proper noun.")
+    parser.add_argument("--simplemma-smart-fallback", action="store_true", help="Evaluate Simplemma solely when SpaCy returns an unreduced inflected verb or an unverified dictionary lemma.")
 
     filename_group = parser.add_argument_group('Output Filename Generation')
     filename_group.add_argument("--basename-add-timestamp", action="store_true", help="Prepend the output filename with a 'YYYYMMDDHHMMSS' timestamp.")
@@ -2274,12 +2280,30 @@ def main():
             elif cfg.has_section('settings') and cfg.has_option('settings', 'combine_source_words'):
                 args.combine_source_words = cfg.getboolean('settings', 'combine_source_words')
 
-        # Read use_simplemma_correction from config
+        # Read simplemma correction options from config
         if not getattr(args, 'use_simplemma_correction', False):
             if cfg.has_section('settings') and cfg.has_option('settings', 'use_simplemma_correction'):
                 args.use_simplemma_correction = cfg.getboolean('settings', 'use_simplemma_correction')
             elif cfg.has_section('lemmatization') and cfg.has_option('lemmatization', 'use_simplemma_correction'):
                 args.use_simplemma_correction = cfg.getboolean('lemmatization', 'use_simplemma_correction')
+
+        if not getattr(args, 'simplemma_after_spacy', False):
+            if cfg.has_section('settings') and cfg.has_option('settings', 'simplemma_after_spacy'):
+                args.simplemma_after_spacy = cfg.getboolean('settings', 'simplemma_after_spacy')
+            elif cfg.has_section('lemmatization') and cfg.has_option('lemmatization', 'simplemma_after_spacy'):
+                args.simplemma_after_spacy = cfg.getboolean('lemmatization', 'simplemma_after_spacy')
+
+        if not getattr(args, 'simplemma_pos_aware', False):
+            if cfg.has_section('settings') and cfg.has_option('settings', 'simplemma_pos_aware'):
+                args.simplemma_pos_aware = cfg.getboolean('settings', 'simplemma_pos_aware')
+            elif cfg.has_section('lemmatization') and cfg.has_option('lemmatization', 'simplemma_pos_aware'):
+                args.simplemma_pos_aware = cfg.getboolean('lemmatization', 'simplemma_pos_aware')
+
+        if not getattr(args, 'simplemma_smart_fallback', False):
+            if cfg.has_section('settings') and cfg.has_option('settings', 'simplemma_smart_fallback'):
+                args.simplemma_smart_fallback = cfg.getboolean('settings', 'simplemma_smart_fallback')
+            elif cfg.has_section('lemmatization') and cfg.has_option('lemmatization', 'simplemma_smart_fallback'):
+                args.simplemma_smart_fallback = cfg.getboolean('lemmatization', 'simplemma_smart_fallback')
 
         if not getattr(args, 'combine_source_words_order', None):
             if cfg.has_section('token_mappings') and cfg.has_option('token_mappings', 'combine_source_words_order'):

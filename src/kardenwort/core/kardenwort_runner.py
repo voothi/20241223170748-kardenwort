@@ -147,6 +147,15 @@ def get_script_args(args, python_path, workspace_path, config, anki_mapping):
     if getattr(args, 'use_simplemma_correction', False):
         base_args.append("--use-simplemma-correction")
 
+    if getattr(args, 'simplemma_after_spacy', False):
+        base_args.append("--simplemma-after-spacy")
+
+    if getattr(args, 'simplemma_pos_aware', False):
+        base_args.append("--simplemma-pos-aware")
+
+    if getattr(args, 'simplemma_smart_fallback', False):
+        base_args.append("--simplemma-smart-fallback")
+
     if args.prefer_shortest_form:
         base_args.append("--prefer-shortest-form")
 
@@ -391,6 +400,9 @@ def main():
     )
     parser.add_argument("--play-sound-on-completion", action="store_true", help="Play a system beep sound upon successful completion.")
     parser.add_argument("--use-simplemma-correction", action="store_true", help="Apply simplemma as an unconditional override after SpaCy processing.")
+    parser.add_argument("--simplemma-after-spacy", action="store_true", help="Sequential post-processing mode where Simplemma evaluates SpaCy derived lemma.")
+    parser.add_argument("--simplemma-pos-aware", action="store_true", help="Lower-case input string passed to Simplemma at sentence start if not a noun or proper noun.")
+    parser.add_argument("--simplemma-smart-fallback", action="store_true", help="Evaluate Simplemma solely when SpaCy returns an unreduced inflected verb or an unverified dictionary lemma.")
     parser.add_argument("--show-success-message", action="store_true", help="Display a user-friendly success message on stdout. Useful for interactive tools like GoldenDict.")
     parser.add_argument("--type", type=str, choices=["word", "sentence"], help="Type of processing: 'word' for word extraction, 'sentence' for parallel sentences. Not required for 'mixed-triple' mode.")
     parser.add_argument("--mode", type=str, choices=["single", "dual", "triple", "mixed-triple"], help="Processing mode: single, dual, triple, or mixed-triple (runs sentence and word modes sequentially).")

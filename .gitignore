@@ -150,3 +150,6 @@ check_cov.py
 AGENTS.md
 openspec/
 scratch/
+test_out_40_idx.tsv
+test_out_40.tsv
+test_out_41.tsv

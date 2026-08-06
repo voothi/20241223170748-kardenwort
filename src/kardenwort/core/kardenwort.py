@@ -453,12 +453,14 @@ class TSVWriter:
                 writer.writerow(self.header)
 
             for record in records:
+                if record.metadata and 'subdeck_content_map' in record.metadata:
+                    self.subdeck_content_map = record.metadata['subdeck_content_map']
                 if record.fields is not None:
                     writer.writerow(record.fields)
                 elif record.raw_line is not None:
                     tsvfile.write(record.raw_line + "\n")
 
-        if self.args and self.source_text_content is not None:
+        if self.args and self.source_text_content is not None and not getattr(self.args, 'lemmas_per_line', False):
             tgt_content = self.target_text_content
             if tgt_content is None and self.target_text_path and os.path.exists(self.target_text_path):
                 with open(self.target_text_path, "r", encoding="utf-8") as f:
@@ -2515,6 +2517,1066 @@ def process_lemmas_per_line(
     
     return output_file_path
 
+
+class OutputFormatter(ABC):
+    """Abstract base class for polymorphic output formatters cleanly translating stream records to STDOUT."""
+    @abstractmethod
+    def format(self, records: Iterable[TabularRecord], output_stream: Any = sys.stdout) -> None:
+        pass
+
+    @classmethod
+    def get_formatter(cls, format_type: Optional[str]) -> "OutputFormatter":
+        if format_type == "tsv":
+            return TsvFormatter()
+        elif format_type == "html":
+            return HtmlFormatter()
+        elif format_type == "json":
+            return JsonFormatter()
+        elif format_type == "context":
+            return ContextFormatter()
+        else:
+            return PlainFormatter()
+
+
+class TsvFormatter(OutputFormatter):
+    def format(self, records: Iterable[TabularRecord], output_stream: Any = sys.stdout) -> None:
+        for record in records:
+            if record.row_data:
+                lemma = record.row_data.get('lemma', '')
+                source_word = record.row_data.get('source_word', '')
+                print(f"{lemma}\t{source_word}", file=output_stream)
+            elif record.fields:
+                print("\t".join(str(f) for f in record.fields), file=output_stream)
+            elif record.raw_line is not None:
+                print(record.raw_line, file=output_stream)
+
+
+class HtmlFormatter(OutputFormatter):
+    def format(self, records: Iterable[TabularRecord], output_stream: Any = sys.stdout) -> None:
+        print("<table>", file=output_stream)
+        for record in records:
+            if record.row_data:
+                lemma = record.row_data.get('lemma', '')
+                source_word = record.row_data.get('source_word', '')
+                print(f"<tr><td>{lemma}</td><td>{source_word}</td></tr>", file=output_stream)
+            elif record.fields and len(record.fields) >= 2:
+                print(f"<tr><td>{record.fields[0]}</td><td>{record.fields[1]}</td></tr>", file=output_stream)
+            elif record.raw_line is not None:
+                print(f"<tr><td>{record.raw_line}</td><td></td></tr>", file=output_stream)
+        print("</table>", file=output_stream)
+
+
+class JsonFormatter(OutputFormatter):
+    def format(self, records: Iterable[TabularRecord], output_stream: Any = sys.stdout) -> None:
+        data = []
+        for record in records:
+            if record.row_data:
+                data.append(record.row_data)
+            elif record.fields:
+                data.append(record.fields)
+            elif record.raw_line is not None:
+                data.append(record.raw_line)
+        print(json.dumps(data, ensure_ascii=False, indent=2), file=output_stream)
+
+
+class PlainFormatter(OutputFormatter):
+    def format(self, records: Iterable[TabularRecord], output_stream: Any = sys.stdout) -> None:
+        for record in records:
+            if record.row_data:
+                lemma = record.row_data.get('lemma', '')
+                print(lemma, file=output_stream)
+            elif record.fields:
+                print(str(record.fields[0]), file=output_stream)
+            elif record.raw_line is not None:
+                print(record.raw_line, file=output_stream)
+
+
+class ContextFormatter(OutputFormatter):
+    def format(self, records: Iterable[TabularRecord], output_stream: Any = sys.stdout) -> None:
+        for record in records:
+            if record.row_data:
+                lemma = record.row_data.get('lemma', '')
+                left = record.row_data.get('source_context_left', '')
+                sent = record.row_data.get('source_sentence', '')
+                right = record.row_data.get('source_context_right', '')
+                print(lemma, file=output_stream)
+                if left:
+                    print(left, file=output_stream)
+                if sent:
+                    print(sent, file=output_stream)
+                if right:
+                    print(right, file=output_stream)
+                print(file=output_stream)
+
+
+class ParallelTextsStrategy(OperationalStrategy):
+    """Stateless transformation strategy for parallel text processing yielding tabular records."""
+    def execute(self, config: ExtractionConfig, context: ExecutionContext) -> Iterator[TabularRecord]:
+        source_text = getattr(config, 'source_text', "")
+        if not source_text and getattr(config, 'source_text_content', None):
+            source_text = getattr(config, 'source_text_content', "")
+        lemma_sort_index = getattr(config, 'lemma_sort_index', {})
+        language = getattr(config, 'language', 'de')
+        sentence_context_size = getattr(config, 'sentence_context_size', 1)
+        add_source_word_col = getattr(config, 'add_source_word_col', False)
+        add_wordlist_col = getattr(config, 'add_wordlist_col', False)
+        wordlist_use_br = getattr(config, 'wordlist_use_br', False)
+        de_gcs = getattr(config, 'de_gcs', False)
+        de_gcs_add_parts_to_wordlist = getattr(config, 'de_gcs_add_parts_to_wordlist', False)
+        lemma_override_rules = getattr(config, 'lemma_override_rules', {})
+        de_gcs_pos_tags = getattr(config, 'de_gcs_pos_tags', [])
+        field_mapping = getattr(config, 'field_mapping', {})
+        anki_header = getattr(config, 'anki_header', [])
+        if isinstance(anki_header, tuple):
+            anki_header = list(anki_header)
+        if not anki_header and getattr(config, 'header', None):
+            anki_header = list(getattr(config, 'header', []))
+
+        current_nlp = context.nlp if (context and context.nlp) else nlp
+        gcs_automaton = context.gcs_automaton if (context and context.gcs_automaton) else getattr(config, 'gcs_automaton', None)
+        de_dictionary = context.de_dictionary if (context and context.de_dictionary) else getattr(config, 'de_dictionary', None)
+
+        de_gcs_only_nouns = getattr(config, 'de_gcs_only_nouns', True)
+        de_gcs_combine_noun_modes = getattr(config, 'de_gcs_combine_noun_modes', False)
+        de_fix_genitive = getattr(config, 'de_fix_genitive', False)
+        de_gcs_mask_unknown_parts = getattr(config, 'de_gcs_mask_unknown_parts', False)
+        de_gcs_preserve_compound_word = getattr(config, 'de_gcs_preserve_compound_word', False)
+        de_gcs_skip_merge_fractions = getattr(config, 'de_gcs_skip_merge_fractions', False)
+        token_mappings_val = getattr(config, 'token_mappings', {})
+        classifications_val = getattr(config, 'classifications', {})
+
+        source_text_lines_all = [line.rstrip("\n") for line in source_text.splitlines()] if source_text else []
+        target_content_lines_all = []
+        tgt_content = getattr(config, 'target_text_content', None)
+        if tgt_content:
+            target_content_lines_all = [line.rstrip("\n") for line in tgt_content.splitlines()]
+        tertiary_content_lines_all = []
+        tert_content = getattr(config, 'tertiary_text_content', None)
+        if tert_content:
+            tertiary_content_lines_all = [line.rstrip("\n") for line in tert_content.splitlines()]
+
+        strip_config = {'source': False, 'translations': False}
+        strip_headers = getattr(config, 'strip_headers', None)
+        if strip_headers is not None:
+            targets = strip_headers if strip_headers else ['all']
+            if 'all' in targets or 'source' in targets:
+                strip_config['source'] = True
+            if 'all' in targets or 'translations' in targets:
+                strip_config['translations'] = True
+
+        display_source_lines_all = [_strip_markdown_header(line) for line in source_text_lines_all] if strip_config['source'] else source_text_lines_all
+        display_target_lines_all = [_strip_markdown_header(line) for line in target_content_lines_all] if strip_config['translations'] else target_content_lines_all
+        display_tertiary_lines_all = [_strip_markdown_header(line) for line in tertiary_content_lines_all] if strip_config['translations'] else tertiary_content_lines_all
+        
+        display_source_content_lines = [line for line in display_source_lines_all if line.strip()]
+        display_target_content_lines = [line for line in display_target_lines_all if line.strip()]
+        display_tertiary_content_lines = [line for line in display_tertiary_lines_all if line.strip()]
+
+        lemma_data = {}
+        if getattr(config, 'deduplication_scope', 'global') == 'global':
+            lemma_data = {'lemmas': {}, 'info': {}}
+        else:
+            lemma_data = []
+
+        order_cfg = getattr(config, 'combine_source_words_order', 'contractions_first')
+        prefer_lowercase_cfg = getattr(config, 'combine_source_words_prefer_lowercase', True)
+        apo_str = getattr(config, 'apostrophe_chars', "', ’, ‘, `, ´, ʼ")
+        apo_cfg = tuple(c.strip() for c in apo_str.strip('"').split(',') if c.strip())
+
+        subdeck_content_map = {}
+        deck_stack = []
+        level_stack = []
+        header_counter = 1
+        sentence_lemmas_cache = {}
+        
+        branch_header_lines = set()
+        out_path = getattr(config, 'output_file_path', None)
+        sub_deck_name = getattr(config, 'sub_deck_name', "")
+        root_deck_prefix = getattr(config, 'root_deck_prefix', "")
+        if out_path and not sub_deck_name:
+            filename_part = str(out_path).replace('\\', '/').split('/')[-1]
+            sub_deck_name = filename_part.split('.')[0]
+        if not root_deck_prefix and sub_deck_name:
+            root_deck_prefix = re.sub(r'\.(word|sentence)', '', sub_deck_name)
+
+        if getattr(config, 'anki_markdown_decks', False):
+            branch_header_lines = parse_markdown_for_branch_headers(source_text_lines_all)
+            root_prefix_md = ""
+            if getattr(config, 'anki_create_subdecks', False):
+                if getattr(config, 'anki_parent_deck', None):
+                    root_prefix_md = getattr(config, 'anki_parent_deck')
+                else:
+                    root_prefix_md = root_deck_prefix
+            if root_prefix_md:
+                deck_stack.append(root_prefix_md)
+                level_stack.append(0)
+
+        text_has_headers = any(re.match(r'^(#+)\s+', line.strip()) for line in source_text_lines_all)
+        first_real_header_level = 2 
+        if text_has_headers:
+            for line in source_text_lines_all:
+                match = re.match(r'^(#+)', line.strip())
+                if match:
+                    first_real_header_level = len(match.group(1))
+                    break
+
+        content_line_idx = -1
+        active_header_line_index = -1
+        first_header_encountered = False
+        placeholder_deck_created = False
+        doc_cache = {}
+
+        for line_index, source_line_raw in enumerate(source_text_lines_all):
+            if context and context.is_cancelled():
+                break
+            if not source_line_raw.strip():
+                continue
+
+            lemmas_in_sentence = {}
+            source_line_for_analysis = source_line_raw.strip()
+            
+            if getattr(config, 'anki_markdown_decks', False):
+                header_match = re.match(r'^(#+)\s+(.*)', source_line_for_analysis)
+                if header_match:
+                    first_header_encountered = True
+                    active_header_line_index = line_index
+                    level = len(header_match.group(1))
+                    title = header_match.group(2).strip()
+                    sanitized_title = generate_filename_prefix_from_text(title, 5)
+
+                    while level_stack and level_stack[-1] >= level:
+                        level_stack.pop()
+                        deck_stack.pop()
+                    
+                    if sanitized_title:
+                        deck_stack.append(f"{100000 + header_counter}-{sanitized_title}")
+                        level_stack.append(level)
+                        header_counter += 1
+                    source_line_for_analysis = title
+                elif not first_header_encountered and not placeholder_deck_created and text_has_headers:
+                    level = first_real_header_level
+                    while level_stack and level_stack[-1] >= level:
+                        level_stack.pop()
+                        deck_stack.pop()
+
+                    title = source_line_for_analysis
+                    sanitized_title = generate_filename_prefix_from_text(title, 5)
+                    if sanitized_title:
+                        deck_stack.append(f"{100000 + header_counter}-{sanitized_title}")
+                        level_stack.append(level)
+                        header_counter += 1
+                    placeholder_deck_created = True
+            
+            content_line_idx += 1
+            source_sentence = source_line_for_analysis
+            
+            base_deck = "::".join(deck_stack)
+            final_deck = base_deck
+            if getattr(config, 'anki_markdown_decks', False) and active_header_line_index in branch_header_lines:
+                final_deck = f"{base_deck}::{deck_stack[-1]}"
+            
+            if getattr(config, 'anki_deck_content', False) and final_deck:
+                if final_deck not in subdeck_content_map:
+                    subdeck_content_map[final_deck] = {'source_lines': [], 'translation1_lines': [], 'translation2_lines': []}
+                subdeck_content_map[final_deck]['source_lines'].append(source_line_raw)
+                if line_index < len(target_content_lines_all):
+                    subdeck_content_map[final_deck]['translation1_lines'].append(target_content_lines_all[line_index])
+                if line_index < len(tertiary_content_lines_all):
+                    subdeck_content_map[final_deck]['translation2_lines'].append(tertiary_content_lines_all[line_index])
+
+            if getattr(config, 'anki_sentence_subdecks', False):
+                sentence_prefix = str(content_line_idx + 1).zfill(6)
+                sentence_slug = generate_filename_prefix_from_text(source_sentence, 4)
+                if sentence_slug:
+                    sentence_deck_name = f"{final_deck}::{sentence_prefix}-{sentence_slug}"
+                    final_deck = sentence_deck_name
+
+            if source_sentence not in doc_cache:
+                doc_cache[source_sentence] = current_nlp(source_sentence)
+            doc = doc_cache[source_sentence]
+            
+            separable_verb_map = find_separable_verb_particle_pairs(doc)
+            processed_particle_indices = {p.i for p in separable_verb_map.values()}
+            token_mappings_matches, mapped_tokens = find_token_mappings_in_text(source_sentence, doc, token_mappings_val, config)
+
+            for token in doc:
+                if token.i in processed_particle_indices:
+                    continue
+
+                mapped_lemma_sources = {}
+                if token.i in mapped_tokens:
+                    if token.i in token_mappings_matches:
+                        lemmas_for_current_token, mapped_sources = _extract_mapped_token(
+                            token_mappings_matches[token.i], current_nlp, de_dictionary, lemma_override_rules, config, source_sentence, de_fix_genitive
+                        )
+                        mapped_lemma_sources.update(mapped_sources)
+                    else:
+                        continue
+                else:
+                    if not (token.is_alpha or ('-' in token.text and token.text.strip('-'))):
+                        continue
+                    lemmas_for_current_token, mapped_sources = _extract_standard_token(
+                        token, current_nlp, de_dictionary, lemma_override_rules, source_sentence, de_fix_genitive, 
+                        de_gcs, gcs_automaton, de_gcs_pos_tags, config, separable_verb_map, 
+                        de_gcs_only_nouns=de_gcs_only_nouns,
+                        de_gcs_combine_noun_modes=de_gcs_combine_noun_modes,
+                        de_gcs_mask_unknown_parts=de_gcs_mask_unknown_parts,
+                        de_gcs_preserve_compound_word=de_gcs_preserve_compound_word,
+                        de_gcs_skip_merge_fractions=de_gcs_skip_merge_fractions
+                    )
+                    mapped_lemma_sources.update(mapped_sources)
+
+                deduplicated_lemmas = deduplicate_lemmas(lemmas_for_current_token)
+
+                for lemma in deduplicated_lemmas:
+                    if not lemma:
+                        continue
+                    
+                    cur_source_word = mapped_lemma_sources.get(lemma, token.text)
+                    if getattr(config, 'strip_garbage_characters', ''):
+                        cur_source_word = cur_source_word.strip(getattr(config, 'strip_garbage_characters', ''))
+                    
+                    data_entry = {
+                        'lemma': lemma,
+                        'source_word': cur_source_word,
+                        'sentence_index': content_line_idx,
+                        'source_sentence': source_sentence,
+                        'deck_name': final_deck
+                    }
+
+                    if getattr(config, 'deduplication_scope', 'global') == 'global':
+                        is_new = lemma not in lemma_data['lemmas']
+                        if is_new:
+                            lemma_data['lemmas'][lemma] = cur_source_word
+                            lemma_data['info'][lemma] = (content_line_idx, source_sentence, final_deck)
+                        elif getattr(config, 'combine_source_words', False):
+                            existing_forms = [s.strip() for s in lemma_data['lemmas'][lemma].split(',') if s.strip()]
+                            if cur_source_word not in existing_forms:
+                                existing_forms.append(cur_source_word)
+                            lemma_data['lemmas'][lemma] = ", ".join(sort_inflected_forms(existing_forms, apo_cfg, order_cfg, prefer_lowercase_cfg))
+                        elif getattr(config, 'prefer_shortest_form', False) and len(cur_source_word) < len(lemma_data['lemmas'][lemma]):
+                            lemma_data['lemmas'][lemma] = cur_source_word
+                            lemma_data['info'][lemma] = (content_line_idx, source_sentence, final_deck)
+
+                    elif getattr(config, 'deduplication_scope', 'global') == 'sentence':
+                        if getattr(config, 'combine_source_words', False):
+                            if lemma not in lemmas_in_sentence:
+                                lemmas_in_sentence[lemma] = data_entry
+                            else:
+                                existing_forms = [s.strip() for s in lemmas_in_sentence[lemma]['source_word'].split(',') if s.strip()]
+                                if cur_source_word not in existing_forms:
+                                    existing_forms.append(cur_source_word)
+                                lemmas_in_sentence[lemma]['source_word'] = ", ".join(sort_inflected_forms(existing_forms, apo_cfg, order_cfg, prefer_lowercase_cfg))
+                        else:
+                            dedup_key = (lemma, cur_source_word.lower())
+                            if dedup_key not in lemmas_in_sentence:
+                                lemmas_in_sentence[dedup_key] = data_entry
+                    elif getattr(config, 'deduplication_scope', 'global') == 'none':
+                        lemma_data.append(data_entry)
+
+            if getattr(config, 'deduplication_scope', 'global') == 'sentence':
+                lemma_data.extend(lemmas_in_sentence.values())
+
+        sorted_items = []
+        if getattr(config, 'deduplication_scope', 'global') == 'global':
+            sorted_items = sorted(list(lemma_data['lemmas'].keys()), key=lambda word: get_lemma_sort_key(word, lemma_sort_index, language))
+        else:
+            sorted_items = sorted(lemma_data, key=lambda x: get_lemma_sort_key(x['lemma'], lemma_sort_index, language))
+
+        full_deck_name = ""
+        if getattr(config, 'anki_create_subdecks', False) and not getattr(config, 'anki_markdown_decks', False):
+            if getattr(config, 'anki_parent_deck', None):
+                parent_deck_name = getattr(config, 'anki_parent_deck')
+            else:
+                parent_deck_name = root_deck_prefix
+            if parent_deck_name != sub_deck_name:
+                full_deck_name = f"{parent_deck_name}::{sub_deck_name}"
+            else:
+                full_deck_name = parent_deck_name
+
+        F = get_field_index_map(anki_header) if anki_header else {}
+        for item in sorted_items:
+            if context and context.is_cancelled():
+                break
+            csv_row = [""] * len(anki_header) if anki_header else None
+            word, source_word_col_val, sentence_index, source_sentence_for_lemmas, deck_name = "", "", -1, "", ""
+
+            if getattr(config, 'deduplication_scope', 'global') == 'global':
+                word = item
+                sentence_index, source_sentence_for_lemmas, deck_name = lemma_data['info'].get(word, (-1, "", ""))
+                if sentence_index == -1:
+                    continue
+                source_word_col_val = lemma_data['lemmas'].get(word, '')
+            else:
+                word = item['lemma']
+                sentence_index = item['sentence_index']
+                source_sentence_for_lemmas = item['source_sentence']
+                deck_name = item['deck_name']
+                source_word_col_val = item['source_word']
+
+            context_start_index = max(0, sentence_index - sentence_context_size)
+            context_end_index = sentence_index + sentence_context_size + 1
+            
+            source_sentence_for_tsv = display_source_content_lines[sentence_index].strip() if sentence_index < len(display_source_content_lines) else ""
+            target_sentence_for_tsv = display_target_content_lines[sentence_index].strip() if sentence_index < len(display_target_content_lines) else ""
+            tertiary_sentence_for_tsv = display_tertiary_content_lines[sentence_index].strip() if sentence_index < len(display_tertiary_content_lines) else ""
+
+            current_wordlist = ""
+            if add_wordlist_col:
+                if source_sentence_for_lemmas not in sentence_lemmas_cache:
+                    wordlist_generation_args = {'de_gcs': de_gcs, 'gcs_automaton': gcs_automaton, 'de_gcs_add_parts_to_wordlist': de_gcs_add_parts_to_wordlist, 'classifications': classifications_val}
+                    lemmas = extract_lemmas_from_sentence(source_sentence_for_lemmas, lemma_sort_index, current_nlp, de_dictionary, lemma_override_rules, de_gcs_pos_tags, config, **wordlist_generation_args)
+                    sentence_lemmas_cache[source_sentence_for_lemmas] = lemmas
+                current_wordlist = "<br>".join(sentence_lemmas_cache[source_sentence_for_lemmas]) if wordlist_use_br else "\n".join(sentence_lemmas_cache[source_sentence_for_lemmas])
+            
+            CSV_ROW_DECK_VAL = ""
+            if getattr(config, 'anki_markdown_decks', False):
+                CSV_ROW_DECK_VAL = deck_name
+            elif full_deck_name:
+                CSV_ROW_DECK_VAL = full_deck_name
+
+            source_timestamps = getattr(config, 'source_timestamps', [])
+            subtitle_start_time = source_timestamps[sentence_index] if sentence_index < len(source_timestamps) else ""
+            context_join_str = "<br>" if getattr(config, 'anki_context_use_br', False) else " "
+            row_data = prepare_row_data(
+                config,
+                lemma=word,
+                source_word=source_word_col_val,
+                sentence_index=str(sentence_index + 1).zfill(6),
+                source_sentence=source_sentence_for_tsv,
+                source_context_left=context_join_str.join(line.strip() for line in display_source_content_lines[context_start_index:sentence_index]),
+                source_context_right=context_join_str.join(line.strip() for line in display_source_content_lines[sentence_index + 1:context_end_index]),
+                target_sentence=target_sentence_for_tsv,
+                target_context_left=context_join_str.join(line.strip() for line in display_target_content_lines[context_start_index:sentence_index]),
+                target_context_right=context_join_str.join(line.strip() for line in display_target_content_lines[sentence_index + 1:context_end_index]),
+                tertiary_sentence=tertiary_sentence_for_tsv,
+                tertiary_context_left=context_join_str.join(line.strip() for line in display_tertiary_content_lines[context_start_index:sentence_index]),
+                tertiary_context_right=context_join_str.join(line.strip() for line in display_tertiary_content_lines[sentence_index + 1:context_end_index]),
+                wordlist=current_wordlist,
+                cloze=source_sentence_for_tsv,
+                deck_name=CSV_ROW_DECK_VAL,
+                subtitle_start_time=subtitle_start_time,
+                classifications=classifications_val
+            )
+            if csv_row is not None:
+                apply_field_mapping(csv_row, row_data, field_mapping, F)
+            yield TabularRecord(fields=csv_row, row_data=row_data, metadata={'subdeck_content_map': subdeck_content_map})
+
+
+class SingleTextStrategy(OperationalStrategy):
+    """Stateless transformation strategy for single text lexical processing yielding tabular records."""
+    def execute(self, config: ExtractionConfig, context: ExecutionContext) -> Iterator[TabularRecord]:
+        source_text = getattr(config, 'source_text', "")
+        if not source_text and getattr(config, 'source_text_content', None):
+            source_text = getattr(config, 'source_text_content', "")
+        lemma_sort_index = getattr(config, 'lemma_sort_index', {})
+        language = getattr(config, 'language', 'de')
+        sentence_context_size = getattr(config, 'sentence_context_size', 1)
+        add_wordlist_col = getattr(config, 'add_wordlist_col', False)
+        wordlist_use_br = getattr(config, 'wordlist_use_br', False)
+        de_gcs = getattr(config, 'de_gcs', False)
+        de_gcs_add_parts_to_wordlist = getattr(config, 'de_gcs_add_parts_to_wordlist', False)
+        lemma_override_rules = getattr(config, 'lemma_override_rules', {})
+        de_gcs_pos_tags = getattr(config, 'de_gcs_pos_tags', [])
+        field_mapping = getattr(config, 'field_mapping', {})
+        anki_header = getattr(config, 'anki_header', [])
+        if isinstance(anki_header, tuple):
+            anki_header = list(anki_header)
+        if not anki_header and getattr(config, 'header', None):
+            anki_header = list(getattr(config, 'header', []))
+
+        current_nlp = context.nlp if (context and context.nlp) else nlp
+        gcs_automaton = context.gcs_automaton if (context and context.gcs_automaton) else getattr(config, 'gcs_automaton', None)
+        de_dictionary = context.de_dictionary if (context and context.de_dictionary) else getattr(config, 'de_dictionary', None)
+
+        de_gcs_only_nouns = getattr(config, 'de_gcs_only_nouns', True)
+        de_gcs_combine_noun_modes = getattr(config, 'de_gcs_combine_noun_modes', False)
+        de_fix_genitive = getattr(config, 'de_fix_genitive', False)
+        de_gcs_mask_unknown_parts = getattr(config, 'de_gcs_mask_unknown_parts', False)
+        de_gcs_preserve_compound_word = getattr(config, 'de_gcs_preserve_compound_word', False)
+        de_gcs_skip_merge_fractions = getattr(config, 'de_gcs_skip_merge_fractions', False)
+        token_mappings_val = getattr(config, 'token_mappings', {})
+        classifications_val = getattr(config, 'classifications', {})
+
+        is_multiline_from_file = '\n' in source_text.strip()
+        source_lines = source_text.splitlines() if is_multiline_from_file else []
+
+        unit_texts = []
+        deck_map = {}
+        subdeck_content_map = {}
+        header_counter = 1
+        branch_header_lines = set()
+        active_header_line_index = -1
+        
+        out_path = getattr(config, 'output_file_path', None)
+        sub_deck_name = getattr(config, 'sub_deck_name', "")
+        root_deck_prefix = getattr(config, 'root_deck_prefix', "")
+        if out_path and not sub_deck_name:
+            filename_part = str(out_path).replace('\\', '/').split('/')[-1]
+            sub_deck_name = filename_part.split('.')[0]
+        if not root_deck_prefix and sub_deck_name:
+            root_deck_prefix = re.sub(r'\.(word|sentence)', '', sub_deck_name)
+
+        if getattr(config, 'anki_markdown_decks', False) and is_multiline_from_file:
+            branch_header_lines = parse_markdown_for_branch_headers(source_lines)
+            deck_stack = []
+            level_stack = []
+            root_prefix_md = ""
+            if getattr(config, 'anki_create_subdecks', False):
+                if getattr(config, 'anki_parent_deck', None):
+                    root_prefix_md = getattr(config, 'anki_parent_deck')
+                else:
+                    root_prefix_md = root_deck_prefix
+            if root_prefix_md:
+                deck_stack.append(root_prefix_md)
+                level_stack.append(0)
+
+            text_has_headers = any(re.match(r'^(#+)\s+', line.strip()) for line in source_lines)
+            first_real_header_level = 2 
+            if text_has_headers:
+                for line in source_lines:
+                    match = re.match(r'^(#+)', line.strip())
+                    if match:
+                        first_real_header_level = len(match.group(1))
+                        break
+
+            first_header_encountered = False
+            placeholder_deck_created = False
+
+            for line_index, line_raw in enumerate(source_lines):
+                if context and context.is_cancelled():
+                    break
+                line = line_raw.strip()
+                if not line:
+                    continue
+                
+                header_match = re.match(r'^(#+)\s+(.*)', line)
+                if header_match:
+                    first_header_encountered = True
+                    active_header_line_index = line_index
+                    level = len(header_match.group(1))
+                    title = header_match.group(2).strip()
+                    sanitized_title = generate_filename_prefix_from_text(title, 5)
+
+                    while level_stack and level_stack[-1] >= level:
+                        level_stack.pop()
+                        deck_stack.pop()
+
+                    if sanitized_title:
+                        deck_stack.append(f"{100000 + header_counter}-{sanitized_title}")
+                        level_stack.append(level)
+                        header_counter += 1
+                    line = title
+                elif not first_header_encountered and not placeholder_deck_created and text_has_headers:
+                    level = first_real_header_level
+                    while level_stack and level_stack[-1] >= level:
+                        level_stack.pop()
+                        deck_stack.pop()
+
+                    title = line
+                    sanitized_title = generate_filename_prefix_from_text(title, 5)
+                    if sanitized_title:
+                        deck_stack.append(f"{100000 + header_counter}-{sanitized_title}")
+                        level_stack.append(level)
+                        header_counter += 1
+                    placeholder_deck_created = True
+
+                base_deck = "::".join(deck_stack)
+                final_deck = base_deck
+                if active_header_line_index in branch_header_lines:
+                    final_deck = f"{base_deck}::{deck_stack[-1]}"
+
+                if getattr(config, 'anki_deck_content', False) and final_deck:
+                    if final_deck not in subdeck_content_map:
+                        subdeck_content_map[final_deck] = {'source_lines': []}
+                    subdeck_content_map[final_deck]['source_lines'].append(line_raw)
+
+                if getattr(config, 'anki_sentence_subdecks', False):
+                    sentence_prefix = str(len(unit_texts) + 1).zfill(6)
+                    sentence_slug = generate_filename_prefix_from_text(line, 4)
+                    if sentence_slug:
+                        sentence_deck_name = f"{final_deck}::{sentence_prefix}-{sentence_slug}"
+                        final_deck = sentence_deck_name
+
+                deck_map[len(unit_texts)] = final_deck
+                unit_texts.append(line)
+        else:
+            if is_multiline_from_file:
+                unit_texts = [line.strip() for line in source_lines if line.strip()]
+            else:
+                doc = current_nlp(source_text)
+                unit_texts = [sent.text for sent in doc.sents]
+
+        strip_config = {'source': False}
+        strip_headers = getattr(config, 'strip_headers', None)
+        if strip_headers is not None:
+            targets = strip_headers if strip_headers else ['all']
+            if 'all' in targets or 'source' in targets:
+                strip_config['source'] = True
+
+        display_unit_texts = [_strip_markdown_header(unit) for unit in unit_texts] if strip_config['source'] else unit_texts
+
+        lemma_data = {}
+        if getattr(config, 'deduplication_scope', 'global') == 'global':
+            lemma_data = {'lemmas': {}, 'info': {}}
+        else:
+            lemma_data = []
+
+        order_cfg = getattr(config, 'combine_source_words_order', 'contractions_first')
+        prefer_lowercase_cfg = getattr(config, 'combine_source_words_prefer_lowercase', True)
+        apo_str = getattr(config, 'apostrophe_chars', "', ’, ‘, `, ´, ʼ")
+        apo_cfg = tuple(c.strip() for c in apo_str.strip('"').split(',') if c.strip())
+
+        doc_cache = {}
+
+        for unit_index, unit_text in enumerate(unit_texts):
+            if context and context.is_cancelled():
+                break
+            lemmas_in_sentence = {}
+            if unit_text not in doc_cache:
+                doc_cache[unit_text] = current_nlp(unit_text)
+            unit_doc = doc_cache[unit_text]
+
+            current_deck = deck_map.get(unit_index, "")
+            separable_verb_map = find_separable_verb_particle_pairs(unit_doc)
+            processed_particle_indices = {p.i for p in separable_verb_map.values()}
+            token_mappings_matches, mapped_tokens = find_token_mappings_in_text(unit_text, unit_doc, token_mappings_val, config)
+
+            for token in unit_doc:
+                if token.i in processed_particle_indices:
+                    continue
+
+                mapped_lemma_sources = {}
+                if token.i in mapped_tokens:
+                    if token.i in token_mappings_matches:
+                        lemmas_for_current_token, mapped_sources = _extract_mapped_token(
+                            token_mappings_matches[token.i], current_nlp, de_dictionary, lemma_override_rules, config, unit_text, de_fix_genitive
+                        )
+                        mapped_lemma_sources.update(mapped_sources)
+                    else:
+                        continue
+                else:
+                    if not (token.is_alpha or ('-' in token.text and token.text.strip('-'))):
+                        continue
+                    lemmas_for_current_token, mapped_sources = _extract_standard_token(
+                        token, current_nlp, de_dictionary, lemma_override_rules, unit_text, de_fix_genitive, 
+                        de_gcs, gcs_automaton, de_gcs_pos_tags, config, separable_verb_map, 
+                        de_gcs_only_nouns=de_gcs_only_nouns,
+                        de_gcs_combine_noun_modes=de_gcs_combine_noun_modes,
+                        de_gcs_mask_unknown_parts=de_gcs_mask_unknown_parts,
+                        de_gcs_preserve_compound_word=de_gcs_preserve_compound_word,
+                        de_gcs_skip_merge_fractions=de_gcs_skip_merge_fractions
+                    )
+                    mapped_lemma_sources.update(mapped_sources)
+
+                deduplicated_lemmas = deduplicate_lemmas(lemmas_for_current_token)
+
+                for lemma in deduplicated_lemmas:
+                    if not lemma:
+                        continue
+
+                    cur_source_word = mapped_lemma_sources.get(lemma, token.text)
+                    if getattr(config, 'strip_garbage_characters', ''):
+                        cur_source_word = cur_source_word.strip(getattr(config, 'strip_garbage_characters', ''))
+
+                    data_entry = {
+                        'lemma': lemma,
+                        'source_word': cur_source_word,
+                        'sentence_index': unit_index,
+                        'source_sentence': unit_text,
+                        'deck_name': current_deck
+                    }
+
+                    if getattr(config, 'deduplication_scope', 'global') == 'global':
+                        is_new = lemma not in lemma_data['lemmas']
+                        if is_new:
+                            lemma_data['lemmas'][lemma] = cur_source_word
+                            lemma_data['info'][lemma] = (unit_index, unit_text, current_deck)
+                        elif getattr(config, 'combine_source_words', False):
+                            existing_forms = [s.strip() for s in lemma_data['lemmas'][lemma].split(',') if s.strip()]
+                            if cur_source_word not in existing_forms:
+                                existing_forms.append(cur_source_word)
+                            lemma_data['lemmas'][lemma] = ", ".join(sort_inflected_forms(existing_forms, apo_cfg, order_cfg, prefer_lowercase_cfg))
+                        elif getattr(config, 'prefer_shortest_form', False) and len(cur_source_word) < len(lemma_data['lemmas'][lemma]):
+                            lemma_data['lemmas'][lemma] = cur_source_word
+                            lemma_data['info'][lemma] = (unit_index, unit_text, current_deck)
+                            
+                    elif getattr(config, 'deduplication_scope', 'global') == 'sentence':
+                        if getattr(config, 'combine_source_words', False):
+                            if lemma not in lemmas_in_sentence:
+                                lemmas_in_sentence[lemma] = data_entry
+                            else:
+                                existing_forms = [s.strip() for s in lemmas_in_sentence[lemma]['source_word'].split(',') if s.strip()]
+                                if cur_source_word not in existing_forms:
+                                    existing_forms.append(cur_source_word)
+                                lemmas_in_sentence[lemma]['source_word'] = ", ".join(sort_inflected_forms(existing_forms, apo_cfg, order_cfg, prefer_lowercase_cfg))
+                        else:
+                            dedup_key = (lemma, cur_source_word.lower())
+                            if dedup_key not in lemmas_in_sentence:
+                                lemmas_in_sentence[dedup_key] = data_entry
+                    elif getattr(config, 'deduplication_scope', 'global') == 'none':
+                        lemma_data.append(data_entry)
+
+        if getattr(config, 'deduplication_scope', 'global') == 'sentence':
+            lemma_data.extend(lemmas_in_sentence.values())
+
+        sorted_items = []
+        if getattr(config, 'deduplication_scope', 'global') == 'global':
+            sorted_items = sorted(list(lemma_data['lemmas'].keys()), key=lambda word: get_lemma_sort_key(word, lemma_sort_index, language))
+        else:
+            sorted_items = sorted(lemma_data, key=lambda x: get_lemma_sort_key(x['lemma'], lemma_sort_index, language))
+        
+        sentence_lemmas_cache = {}
+
+        full_deck_name = ""
+        if getattr(config, 'anki_create_subdecks', False) and not getattr(config, 'anki_markdown_decks', False):
+            if getattr(config, 'anki_parent_deck', None):
+                parent_deck_name = getattr(config, 'anki_parent_deck')
+            else:
+                parent_deck_name = root_deck_prefix
+            if parent_deck_name != sub_deck_name:
+                full_deck_name = f"{parent_deck_name}::{sub_deck_name}"
+            else:
+                full_deck_name = parent_deck_name
+
+        F = get_field_index_map(anki_header) if anki_header else {}
+        for item in sorted_items:
+            if context and context.is_cancelled():
+                break
+            csv_row = [""] * len(anki_header) if anki_header else None
+            word, source_word_col_val, unit_index, source_sentence_for_lemmas, deck_name = "", "", -1, "", ""
+
+            if getattr(config, 'deduplication_scope', 'global') == 'global':
+                word = item
+                unit_index, source_sentence_for_lemmas, deck_name = lemma_data['info'].get(word, (-1, "", ""))
+                if unit_index == -1:
+                    continue
+                source_word_col_val = lemma_data['lemmas'].get(word, '')
+            else:
+                word = item['lemma']
+                unit_index = item['sentence_index']
+                source_sentence_for_lemmas = item['source_sentence']
+                deck_name = item['deck_name']
+                source_word_col_val = item['source_word']
+            
+            source_sentence_for_tsv = display_unit_texts[unit_index].strip() if unit_index < len(display_unit_texts) else ""
+            context_start_index = max(0, unit_index - sentence_context_size)
+            context_end_index = min(len(display_unit_texts), unit_index + sentence_context_size + 1)
+            
+            current_wordlist = ""
+            if add_wordlist_col:
+                if source_sentence_for_lemmas not in sentence_lemmas_cache:
+                    wordlist_generation_args = {'de_gcs': de_gcs, 'gcs_automaton': gcs_automaton, 'de_gcs_add_parts_to_wordlist': de_gcs_add_parts_to_wordlist, 'classifications': classifications_val}
+                    lemmas = extract_lemmas_from_sentence(source_sentence_for_lemmas, lemma_sort_index, current_nlp, de_dictionary, lemma_override_rules, de_gcs_pos_tags, config, **wordlist_generation_args)
+                    sentence_lemmas_cache[source_sentence_for_lemmas] = lemmas
+                current_wordlist = "<br>".join(sentence_lemmas_cache[source_sentence_for_lemmas]) if wordlist_use_br else "\n".join(sentence_lemmas_cache[source_sentence_for_lemmas])
+
+            CSV_ROW_DECK_VAL = ""
+            if getattr(config, 'anki_markdown_decks', False):
+                CSV_ROW_DECK_VAL = deck_name
+            elif full_deck_name:
+                CSV_ROW_DECK_VAL = full_deck_name
+
+            source_timestamps = getattr(config, 'source_timestamps', [])
+            subtitle_start_time = source_timestamps[unit_index] if unit_index < len(source_timestamps) else ""
+            context_join_str = "<br>" if getattr(config, 'anki_context_use_br', False) else " "
+            
+            left_str = context_join_str.join(u.strip() for u in display_unit_texts[context_start_index:unit_index])
+            right_str = context_join_str.join(u.strip() for u in display_unit_texts[unit_index + 1:context_end_index])
+            
+            row_data = prepare_row_data(
+                config,
+                lemma=word,
+                source_word=source_word_col_val,
+                source_sentence=source_sentence_for_tsv,
+                source_context_left=left_str,
+                source_context_right=right_str,
+                wordlist=current_wordlist,
+                cloze=source_sentence_for_tsv,
+                sentence_index=str(unit_index + 1).zfill(6),
+                deck_name=CSV_ROW_DECK_VAL,
+                subtitle_start_time=subtitle_start_time,
+                classifications=classifications_val
+            )
+            if csv_row is not None:
+                apply_field_mapping(csv_row, row_data, field_mapping, F)
+            yield TabularRecord(
+                fields=csv_row,
+                row_data=row_data,
+                metadata={'subdeck_content_map': subdeck_content_map}
+            )
+
+
+class ParallelSentencesStrategy(OperationalStrategy):
+    """Stateless operational strategy for processing parallel sentences yielding tabular records."""
+    def execute(self, config: ExtractionConfig, context: ExecutionContext) -> Iterator[TabularRecord]:
+        source_text = getattr(config, 'source_text_content', "")
+        if not source_text and getattr(config, 'source_text', None):
+            source_text = getattr(config, 'source_text', "")
+        lemma_sort_index = getattr(config, 'lemma_sort_index', {})
+        language = getattr(config, 'language', 'de')
+        sentence_context_size = getattr(config, 'sentence_context_size', 1)
+        add_wordlist_col = getattr(config, 'add_wordlist_col', False)
+        wordlist_use_br = getattr(config, 'wordlist_use_br', False)
+        lemma_override_rules = getattr(config, 'lemma_override_rules', {})
+        de_gcs = getattr(config, 'de_gcs', False)
+        de_gcs_pos_tags = getattr(config, 'de_gcs_pos_tags', [])
+        field_mapping = getattr(config, 'field_mapping', {})
+        anki_header = getattr(config, 'anki_header', [])
+        if isinstance(anki_header, tuple):
+            anki_header = list(anki_header)
+        if not anki_header and getattr(config, 'header', None):
+            anki_header = list(getattr(config, 'header', []))
+
+        current_nlp = context.nlp if (context and context.nlp) else nlp
+        classifications_val = getattr(config, 'classifications', {})
+
+        source_text_lines_all = [line.rstrip("\n") for line in source_text.splitlines()] if source_text else []
+        target_content_lines_all = []
+        tgt_content = getattr(config, 'target_text_content', None)
+        if tgt_content:
+            target_content_lines_all = [line.rstrip("\n") for line in tgt_content.splitlines()]
+        tertiary_content_lines_all = []
+        tert_content = getattr(config, 'tertiary_text_content', None)
+        if tert_content:
+            tertiary_content_lines_all = [line.rstrip("\n") for line in tert_content.splitlines()]
+
+        strip_config = {'source': False, 'translations': False}
+        strip_headers = getattr(config, 'strip_headers', None)
+        if strip_headers is not None:
+            targets = strip_headers if strip_headers else ['all']
+            if 'all' in targets or 'source' in targets:
+                strip_config['source'] = True
+            if 'all' in targets or 'translations' in targets:
+                strip_config['translations'] = True
+
+        display_source_lines_all = [_strip_markdown_header(line) for line in source_text_lines_all] if strip_config['source'] else source_text_lines_all
+        display_target_lines_all = [_strip_markdown_header(line) for line in target_content_lines_all] if strip_config['translations'] else target_content_lines_all
+        display_tertiary_lines_all = [_strip_markdown_header(line) for line in tertiary_content_lines_all] if strip_config['translations'] else tertiary_content_lines_all
+        
+        display_source_content_lines = [line for line in display_source_lines_all if line.strip()]
+        display_target_content_lines = [line for line in display_target_lines_all if line.strip()]
+        display_tertiary_content_lines = [line for line in display_tertiary_lines_all if line.strip()]
+
+        out_path = getattr(config, 'output_file_path', None)
+        sub_deck_name = getattr(config, 'sub_deck_name', "")
+        root_deck_prefix = getattr(config, 'root_deck_prefix', "")
+        if out_path and not sub_deck_name:
+            filename_part = str(out_path).replace('\\', '/').split('/')[-1]
+            sub_deck_name = filename_part.split('.')[0]
+        if not root_deck_prefix and sub_deck_name:
+            root_deck_prefix = re.sub(r'\.(word|sentence)', '', sub_deck_name)
+
+        full_deck_name = ""
+        if getattr(config, 'anki_create_subdecks', False) and not getattr(config, 'anki_markdown_decks', False):
+            if getattr(config, 'anki_parent_deck', None):
+                parent_deck_name = getattr(config, 'anki_parent_deck')
+            else:
+                parent_deck_name = root_deck_prefix
+            if parent_deck_name != sub_deck_name:
+                full_deck_name = f"{parent_deck_name}::{sub_deck_name}"
+            else:
+                full_deck_name = parent_deck_name
+
+        F = get_field_index_map(anki_header) if anki_header else {}
+        deck_stack = []
+        level_stack = []
+        subdeck_content_map = {}
+        sentence_lemmas_cache = {}
+        header_counter = 1
+        branch_header_lines = set()
+        if getattr(config, 'anki_markdown_decks', False):
+            branch_header_lines = parse_markdown_for_branch_headers(source_text_lines_all)
+            root_prefix_md = ""
+            if getattr(config, 'anki_create_subdecks', False):
+                if getattr(config, 'anki_parent_deck', None):
+                    root_prefix_md = getattr(config, 'anki_parent_deck')
+                else:
+                    root_prefix_md = root_deck_prefix
+            if root_prefix_md:
+                deck_stack.append(root_prefix_md)
+                level_stack.append(0)
+
+        text_has_headers = any(re.match(r'^(#+)\s+', line.strip()) for line in source_text_lines_all)
+        first_real_header_level = 2 
+        if text_has_headers:
+            for line in source_text_lines_all:
+                match = re.match(r'^(#+)', line.strip())
+                if match:
+                    first_real_header_level = len(match.group(1))
+                    break
+        
+        content_line_idx = -1
+        active_header_line_index = -1
+        first_header_encountered = False
+        placeholder_deck_created = False
+
+        for line_index, source_line_raw in enumerate(source_text_lines_all):
+            if context and context.is_cancelled():
+                break
+            if not source_line_raw.strip():
+                continue
+
+            source_line_for_analysis = source_line_raw.strip()
+            if getattr(config, 'anki_markdown_decks', False):
+                header_match = re.match(r'^(#+)\s+(.*)', source_line_for_analysis)
+                if header_match:
+                    first_header_encountered = True
+                    active_header_line_index = line_index
+                    level = len(header_match.group(1))
+                    title = header_match.group(2).strip()
+                    sanitized_title = generate_filename_prefix_from_text(title, 5)
+
+                    while level_stack and level_stack[-1] >= level:
+                        level_stack.pop()
+                        deck_stack.pop()
+
+                    if sanitized_title:
+                        deck_stack.append(f"{100000 + header_counter}-{sanitized_title}")
+                        level_stack.append(level)
+                        header_counter += 1
+                    source_line_for_analysis = title
+                elif not first_header_encountered and not placeholder_deck_created and text_has_headers:
+                    level = first_real_header_level
+                    while level_stack and level_stack[-1] >= level:
+                        level_stack.pop()
+                        deck_stack.pop()
+
+                    title = source_line_for_analysis
+                    sanitized_title = generate_filename_prefix_from_text(title, 5)
+                    if sanitized_title:
+                        deck_stack.append(f"{100000 + header_counter}-{sanitized_title}")
+                        level_stack.append(level)
+                        header_counter += 1
+                    placeholder_deck_created = True
+
+            base_deck = "::".join(deck_stack)
+            final_deck_for_content = base_deck
+            if active_header_line_index in branch_header_lines:
+                final_deck_for_content = f"{base_deck}::{deck_stack[-1]}"
+
+            if getattr(config, 'anki_deck_content', False) and final_deck_for_content:
+                if final_deck_for_content not in subdeck_content_map:
+                    subdeck_content_map[final_deck_for_content] = {'source_lines': [], 'translation1_lines': [], 'translation2_lines': []}
+                subdeck_content_map[final_deck_for_content]['source_lines'].append(source_line_raw)
+                if line_index < len(target_content_lines_all):
+                    subdeck_content_map[final_deck_for_content]['translation1_lines'].append(target_content_lines_all[line_index])
+                if line_index < len(tertiary_content_lines_all):
+                    subdeck_content_map[final_deck_for_content]['translation2_lines'].append(tertiary_content_lines_all[line_index])
+
+            content_line_idx += 1
+            if content_line_idx >= len(display_source_content_lines):
+                break
+
+            csv_row = [""] * len(anki_header) if anki_header else None
+            source_sentence = display_source_content_lines[content_line_idx].strip()
+            target_sentence = display_target_content_lines[content_line_idx].strip() if content_line_idx < len(display_target_content_lines) else ""
+            tertiary_sentence = display_tertiary_content_lines[content_line_idx].strip() if content_line_idx < len(display_tertiary_content_lines) else ""
+            
+            context_start_index = max(0, content_line_idx - sentence_context_size)
+            context_end_index = content_line_idx + sentence_context_size + 1
+
+            current_wordlist = ""
+            if add_wordlist_col:
+                source_sentence_for_lemmas = source_text_lines_all[line_index]
+                if source_sentence_for_lemmas not in sentence_lemmas_cache:
+                    wordlist_generation_args = {'de_gcs': de_gcs, 'gcs_automaton': None}
+                    lemmas = extract_lemmas_from_sentence(source_sentence_for_lemmas, lemma_sort_index, current_nlp, None, lemma_override_rules, de_gcs_pos_tags, config, **wordlist_generation_args)
+                    sentence_lemmas_cache[source_sentence_for_lemmas] = lemmas
+                current_wordlist = "<br>".join(sentence_lemmas_cache[source_sentence_for_lemmas]) if wordlist_use_br else "\n".join(sentence_lemmas_cache[source_sentence_for_lemmas])
+
+            final_deck_for_card = ""
+            if getattr(config, 'anki_markdown_decks', False):
+                final_deck_for_card = "::".join(deck_stack)
+                if active_header_line_index in branch_header_lines:
+                    final_deck_for_card = f"{final_deck_for_card}::{deck_stack[-1]}"
+                
+                if getattr(config, 'anki_sentence_subdecks', False):
+                    sentence_prefix = str(content_line_idx + 1).zfill(6)
+                    sentence_slug = generate_filename_prefix_from_text(source_sentence, 4)
+                    if sentence_slug:
+                        sentence_deck_name = f"{final_deck_for_card}::{sentence_prefix}-{sentence_slug}"
+                        final_deck_for_card = sentence_deck_name
+            elif full_deck_name:
+                final_deck_for_card = full_deck_name
+
+            source_timestamps = getattr(config, 'source_timestamps', [])
+            subtitle_start_time = source_timestamps[content_line_idx] if content_line_idx < len(source_timestamps) else ""
+            context_join_str = "<br>" if getattr(config, 'anki_context_use_br', False) else " "
+            row_data = prepare_row_data(
+                config,
+                source_sentence=source_sentence,
+                source_context_left=context_join_str.join(line.strip() for line in display_source_content_lines[context_start_index:content_line_idx]),
+                source_context_right=context_join_str.join(line.strip() for line in display_source_content_lines[content_line_idx + 1:context_end_index]),
+                target_sentence=target_sentence,
+                target_context_left=context_join_str.join(line.strip() for line in display_target_content_lines[context_start_index:content_line_idx]),
+                target_context_right=context_join_str.join(line.strip() for line in display_target_content_lines[content_line_idx + 1:context_end_index]),
+                tertiary_sentence=tertiary_sentence,
+                tertiary_context_left=context_join_str.join(line.strip() for line in display_tertiary_content_lines[context_start_index:content_line_idx]),
+                tertiary_context_right=context_join_str.join(line.strip() for line in display_tertiary_content_lines[content_line_idx + 1:context_end_index]),
+                wordlist=current_wordlist,
+                cloze=source_sentence,
+                sentence_index=str(content_line_idx + 1).zfill(6),
+                deck_name=final_deck_for_card,
+                subtitle_start_time=subtitle_start_time,
+                classifications=classifications_val
+            )
+
+            if csv_row is not None:
+                apply_field_mapping(csv_row, row_data, field_mapping, F)
+            yield TabularRecord(fields=csv_row, row_data=row_data, metadata={'subdeck_content_map': subdeck_content_map})
+
+
+class LemmasPerLineStrategy(OperationalStrategy):
+    """Stateless transformation strategy for extracting line-by-line lemmas without persistence concerns."""
+    def execute(self, config: ExtractionConfig, context: ExecutionContext) -> Iterator[TabularRecord]:
+        source_text_content = getattr(config, 'source_text_content', "")
+        source_lines = source_text_content.splitlines() if source_text_content else []
+        lemma_sort_index = getattr(config, 'lemma_sort_index', {})
+        de_dictionary = context.de_dictionary if (context and context.de_dictionary) else getattr(config, 'de_dictionary', None)
+        lemma_override_rules = getattr(config, 'lemma_override_rules', {})
+        current_nlp = context.nlp if (context and context.nlp) else nlp
+
+        for line in source_lines:
+            if context and context.is_cancelled():
+                break
+            line_str = line.strip()
+            if not line_str:
+                yield TabularRecord(raw_line="")
+                continue
+            lemmas = extract_lemmas_from_sentence(
+                line_str, lemma_sort_index, current_nlp, de_dictionary,
+                lemma_override_rules, [], config, de_gcs=False
+            )
+            output_line = " ".join(lemmas)
+            yield TabularRecord(raw_line=output_line)
+
+
+class ModeDispatcher:
+    """Immutable mode dispatcher routing operational modes directly to standalone strategy handlers."""
+    def __init__(self):
+        self._strategies: Dict[OperationalMode, OperationalStrategy] = {
+            OperationalMode.PARALLEL_TEXTS: ParallelTextsStrategy(),
+            OperationalMode.SINGLE_TEXT: SingleTextStrategy(),
+            OperationalMode.PARALLEL_SENTENCES: ParallelSentencesStrategy(),
+            OperationalMode.LEMMAS_PER_LINE: LemmasPerLineStrategy(),
+        }
+
+    def get_strategy(self, mode: Union[OperationalMode, str, Any]) -> OperationalStrategy:
+        if isinstance(mode, str):
+            try:
+                mode = OperationalMode(mode)
+            except ValueError:
+                pass
+        if mode not in self._strategies:
+            raise ValueError(f"Unknown or unregistered operational mode: {mode}")
+        return self._strategies[mode]
+
+    def dispatch(self, mode: Union[OperationalMode, str, Any], config: ExtractionConfig, context: ExecutionContext) -> Iterator[TabularRecord]:
+        strategy = self.get_strategy(mode)
+        return strategy.execute(config, context)
+
+
 def main():
     import configparser
     from pathlib import Path
@@ -3067,19 +4129,20 @@ def main():
     add_source_word_col = "source_word" in data_sources_needed
     # ----------------------------------------
 
+    mode = None
+    input_text = ""
+    target_text_content = None
+    tertiary_text_content = None
+
     if args.lemmas_per_line:
         if not args.text1_file:
             print("Error: --text1-file is required for --lemmas-per-line mode.", file=sys.stderr); exit(1)
         if not final_output_path:
             print("Error: --output-file is required for --lemmas-per-line mode.", file=sys.stderr); exit(1)
-
-        processed_output_file = process_lemmas_per_line(
-            args.text1_file, final_output_path, lemma_index,
-            de_dictionary, lemma_override_rules, args
-        )
-            
+        mode = OperationalMode.LEMMAS_PER_LINE
+        if os.path.exists(args.text1_file):
+            input_text = read_text_from_file(args.text1_file)
     elif args.type == "word":
-        input_text = ""
         if args.text1_file:
             input_text = read_text_from_file(args.text1_file)
         elif args.text:
@@ -3092,67 +4155,100 @@ def main():
         if not input_text and not args.text2_file:
             print("Error: No input provided. Use --text, --text1-file, environment variable, or pipe data via stdin.", file=sys.stderr); exit(1)
 
-        processing_options = {
-            'token_mappings': token_mappings,
-            'de_gcs_only_nouns': (args.de_gcs_split_mode == 'only-nouns'),
-            'de_gcs_combine_noun_modes': (args.de_gcs_split_mode == 'combined'),
-            'de_fix_genitive': args.de_fix_genitive,
-            'de_gcs_mask_unknown_parts': args.de_gcs_mask_unknown_parts,
-            'de_gcs_preserve_compound_word': args.de_gcs_preserve_compound_word,
-            'de_gcs_skip_merge_fractions': args.de_gcs_skip_merge_fractions,
-            'classification_case_sensitive': getattr(args, 'classification_case_sensitive', True),
-        }
-        
         if args.text2_file:
-             if not input_text:
+            if not input_text and args.text1_file:
                 input_text = read_text_from_file(args.text1_file)
-
-             processed_output_file = process_parallel_text_files(
-                input_text, lemma_index, args.language, args.text2_file, args.text3_file,
-                args.sentence_context_size, final_output_path,
-                add_source_word_col, add_wordlist_col, add_sentence_index_col,
-                args.add_header, args.wordlist_use_br, args.stdout_print_output_basename,
-                args.de_gcs, gcs_automaton, args.de_gcs_add_parts_to_wordlist, de_dictionary, lemma_override_rules,
-                args.de_gcs_pos_tags, field_mapping, anki_header, args, classifications=classifications, **processing_options
-            )
+            if os.path.exists(args.text2_file):
+                with open(args.text2_file, "r", encoding="utf-8") as f2:
+                    target_text_content = f2.read()
+            if args.text3_file and os.path.exists(args.text3_file):
+                with open(args.text3_file, "r", encoding="utf-8") as f3:
+                    tertiary_text_content = f3.read()
+            mode = OperationalMode.PARALLEL_TEXTS
         else:
-             if not input_text:
-                 print("Error: No input provided for single text processing.", file=sys.stderr); exit(1)
-             processed_output_file = process_single_text(
-                input_text, lemma_index, args.language, args.sentence_context_size,
-                final_output_path, add_source_word_col, add_wordlist_col, add_sentence_index_col,
-                args.add_header, args.wordlist_use_br, args.stdout_print_output_basename,
-                args.de_gcs, gcs_automaton, args.de_gcs_add_parts_to_wordlist, de_dictionary, lemma_override_rules,
-                args.de_gcs_pos_tags, field_mapping, anki_header, args, classifications=classifications, **processing_options
-            )
-
+            if not input_text:
+                print("Error: No input provided for single text processing.", file=sys.stderr); exit(1)
+            mode = OperationalMode.SINGLE_TEXT
     elif args.type == "sentence":
         if any([args.de_gcs, args.de_gcs_mask_unknown_parts]):
             print("Warning: GCS-related flags are only applicable for --type word and will be ignored.", file=sys.stderr)
-        
         if not args.text1_file or not args.text2_file:
             print("Error: --text1-file and --text2-file must be specified for sentence mode.", file=sys.stderr); exit(1)
-        
-        processing_options = {
-            'token_mappings': token_mappings,
-            'lemma_override_rules': lemma_override_rules,
-            'de_gcs': args.de_gcs,
-            'gcs_automaton': gcs_automaton,
-            'de_gcs_add_parts_to_wordlist': args.de_gcs_add_parts_to_wordlist,
-            'de_gcs_only_nouns': (args.de_gcs_split_mode == 'only-nouns'),
-            'de_gcs_combine_noun_modes': (args.de_gcs_split_mode == 'combined'),
-            'de_fix_genitive': args.de_fix_genitive,
-            'de_gcs_mask_unknown_parts': args.de_gcs_mask_unknown_parts,
-            'de_gcs_preserve_compound_word': args.de_gcs_preserve_compound_word,
-            'de_gcs_skip_merge_fractions': args.de_gcs_skip_merge_fractions,
-            'classification_case_sensitive': getattr(args, 'classification_case_sensitive', True),
-        }
-        processed_output_file = process_parallel_sentences_to_csv(
-            args.language, lemma_index, args.text1_file, args.text2_file, args.text3_file,
-            args.sentence_context_size, final_output_path,
-            add_wordlist_col, add_sentence_index_col, args.add_header, args.wordlist_use_br, args.stdout_print_output_basename,
-            args.de_gcs_pos_tags, field_mapping, anki_header, args, classifications=classifications, **processing_options
+        try:
+            input_text = read_text_from_file(args.text1_file)
+            if args.text2_file and os.path.exists(args.text2_file):
+                with open(args.text2_file, "r", encoding="utf-8") as f2:
+                    target_text_content = f2.read()
+            if args.text3_file and os.path.exists(args.text3_file):
+                with open(args.text3_file, "r", encoding="utf-8") as f3:
+                    tertiary_text_content = f3.read()
+        except IOError as e:
+            print(f"Error reading files: {e}", file=sys.stderr); sys.exit(1)
+        mode = OperationalMode.PARALLEL_SENTENCES
+    else:
+        raise ValueError(f"Cannot resolve operational mode for execution type '{args.type}'")
+
+    processing_options = {
+        'token_mappings': token_mappings,
+        'de_gcs_only_nouns': (getattr(args, 'de_gcs_split_mode', 'only-nouns') == 'only-nouns'),
+        'de_gcs_combine_noun_modes': (getattr(args, 'de_gcs_split_mode', 'only-nouns') == 'combined'),
+        'de_fix_genitive': getattr(args, 'de_fix_genitive', False),
+        'de_gcs_mask_unknown_parts': getattr(args, 'de_gcs_mask_unknown_parts', False),
+        'de_gcs_preserve_compound_word': getattr(args, 'de_gcs_preserve_compound_word', False),
+        'de_gcs_skip_merge_fractions': getattr(args, 'de_gcs_skip_merge_fractions', False),
+        'classification_case_sensitive': getattr(args, 'classification_case_sensitive', True),
+        'classifications': classifications,
+        'lemma_override_rules': lemma_override_rules,
+        'gcs_automaton': gcs_automaton,
+        'de_dictionary': de_dictionary,
+        'source_text': input_text,
+        'source_text_content': input_text,
+        'target_text_content': target_text_content,
+        'tertiary_text_content': tertiary_text_content,
+        'lemma_sort_index': lemma_index,
+        'add_wordlist_col': add_wordlist_col,
+        'add_sentence_index_col': add_sentence_index_col,
+        'add_source_word_col': add_source_word_col,
+        'field_mapping': field_mapping,
+        'anki_header': anki_header,
+        'output_file_path': final_output_path,
+        'target_text_path': getattr(args, 'text2_file', None),
+        'tertiary_text_path': getattr(args, 'text3_file', None)
+    }
+
+    cfg_dict = vars(args).copy() if hasattr(args, '__dict__') else {}
+    cfg_dict.update(processing_options)
+    config = ExtractionConfig.from_args(SimpleNamespace(**cfg_dict))
+
+    exec_ctx = ExecutionContext(
+        nlp_model=nlp,
+        simplemma_lang=getattr(args, 'language', 'de'),
+        gcs_automaton=gcs_automaton,
+        de_dictionary=de_dictionary
+    )
+
+    dispatcher = ModeDispatcher()
+    records_generator = dispatcher.dispatch(mode, config, exec_ctx)
+
+    processed_output_file = None
+    if not final_output_path and mode == OperationalMode.SINGLE_TEXT:
+        formatter = OutputFormatter.get_formatter(getattr(args, 'stdout_format', None))
+        formatter.format(records_generator, sys.stdout)
+    else:
+        writer = TSVWriter(
+            output_file_path=final_output_path,
+            header=anki_header,
+            add_header=getattr(args, 'add_header', True) and bool(anki_header) and mode != OperationalMode.LEMMAS_PER_LINE,
+            delimiter="\t",
+            args=args,
+            source_text_content=input_text,
+            target_text_path=getattr(args, 'text2_file', None),
+            tertiary_text_path=getattr(args, 'text3_file', None),
+            target_text_content=target_text_content,
+            tertiary_text_content=tertiary_text_content,
+            stdout_print_output_basename=getattr(args, 'stdout_print_output_basename', False)
         )
+        processed_output_file = writer.write(records_generator)
 
     if args.stdout_print_output_basename and processed_output_file:
         print(os.path.basename(processed_output_file), file=sys.stdout)

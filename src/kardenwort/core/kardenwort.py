@@ -1,5 +1,6 @@
 import sys
 import csv
+import json
 import argparse
 from datetime import datetime
 import os
@@ -454,23 +455,44 @@ class TSVWriter:
 
     def write(self, records: Iterable[TabularRecord]) -> Optional[str]:
         """Serializes iterable records to disk and generates companion deck metadata files."""
-        if not self.output_file_path:
+        if not self.output_file_path and not getattr(self.args, 'structured_output', False):
             for _ in records:
                 pass
             return None
 
-        with open(self.output_file_path, "w", newline="", encoding="utf-8") as tsvfile:
-            writer = csv.writer(tsvfile, delimiter=self.delimiter)
-            if self.header and self.add_header:
-                writer.writerow(self.header)
+        is_jsonl = getattr(self.args, 'structured_output', False)
+        import contextlib
+        import io
+        import json
+        import sys
+        
+        file_mgr = open(self.output_file_path, "w", newline="", encoding="utf-8") if self.output_file_path else contextlib.nullcontext(sys.stdout)
+        
+        with file_mgr as tsvfile:
+            writer = None
+            if not is_jsonl:
+                writer = csv.writer(tsvfile, delimiter=self.delimiter)
+                if self.header and self.add_header:
+                    writer.writerow(self.header)
 
             for record in records:
                 if record.metadata and 'subdeck_content_map' in record.metadata:
                     self.subdeck_content_map = record.metadata['subdeck_content_map']
-                if record.fields is not None:
-                    writer.writerow(record.fields)
-                elif record.raw_line is not None:
-                    tsvfile.write(record.raw_line + "\n")
+                
+                if is_jsonl:
+                    if record.fields is not None and self.header:
+                        record_dict = dict(zip(self.header, record.fields))
+                        print(json.dumps(record_dict, ensure_ascii=False), file=sys.stdout)
+                    elif record.row_data is not None:
+                        print(json.dumps(record.row_data, ensure_ascii=False), file=sys.stdout)
+                    elif record.raw_line is not None:
+                        print(json.dumps({"raw_line": record.raw_line}, ensure_ascii=False), file=sys.stdout)
+                    sys.stdout.flush()
+                else:
+                    if record.fields is not None:
+                        writer.writerow(record.fields)
+                    elif record.raw_line is not None:
+                        tsvfile.write(record.raw_line + "\n")
 
         if self.args and self.source_text_content is not None and not getattr(self.args, 'lemmas_per_line', False):
             tgt_content = self.target_text_content
@@ -2275,7 +2297,15 @@ def process_single_text(
             )
             
             apply_field_mapping(csv_row, row_data, field_mapping, F)
-            tsv_writer.writerow(csv_row)
+            if getattr(args, 'structured_output', False):
+                if len(anki_header) > 0:
+                    record_dict = dict(zip(anki_header, csv_row))
+                else:
+                    record_dict = row_data
+                print(json.dumps(record_dict, ensure_ascii=False), file=sys.stdout)
+                sys.stdout.flush()
+            else:
+                tsv_writer.writerow(csv_row)
 
     _write_deck_metadata(args, output_file_path, source_text, subdeck_content_map=subdeck_content_map)
     return output_file_path
@@ -2486,7 +2516,15 @@ def process_parallel_sentences_to_csv(
             )
 
             apply_field_mapping(csv_row, row_data, field_mapping, F)
-            tsv_writer.writerow(csv_row)
+            if getattr(args, 'structured_output', False):
+                if len(anki_header) > 0:
+                    record_dict = dict(zip(anki_header, csv_row))
+                else:
+                    record_dict = row_data
+                print(json.dumps(record_dict, ensure_ascii=False), file=sys.stdout)
+                sys.stdout.flush()
+            else:
+                tsv_writer.writerow(csv_row)
             
     target_text_content = None
     if target_text_path and os.path.exists(target_text_path):
@@ -3794,6 +3832,9 @@ def main():
     gcs_group.add_argument("--de-gcs-add-parts-to-wordlist", action="store_true", help="[GCS] Add split compound parts to the sentence wordlist. Requires --add-wordlist-col.")
     gcs_group.add_argument("--de-gcs-skip-merge-fractions", action="store_true", help="[GCS] Disable merging of components, outputting raw parts from dissection.")
 
+    parser.add_argument("--json-ipc", action="store_true", dest="structured_output", help="Alias for --structured-output.")
+    parser.add_argument("--structured-output", action="store_true", dest="structured_output", help="Emit JSON/JSONL output instead of plain text, enabling structured IPC communication.")
+    
     args = parser.parse_args()
     
     if hasattr(args, 'text') and args.text:
@@ -4222,7 +4263,7 @@ def main():
     records_generator = dispatcher.dispatch(mode, config, exec_ctx)
 
     processed_output_file = None
-    if not final_output_path and mode == OperationalMode.SINGLE_TEXT:
+    if not final_output_path and mode == OperationalMode.SINGLE_TEXT and not getattr(args, 'structured_output', False):
         formatter = OutputFormatter.get_formatter(getattr(args, 'stdout_format', None))
         formatter.format(records_generator, sys.stdout)
     else:
@@ -4245,4 +4286,21 @@ def main():
         print(os.path.basename(processed_output_file), file=sys.stdout)
 
 if __name__ == "__main__":
-    main()
+    is_structured = "--structured-output" in sys.argv or "--json-ipc" in sys.argv
+    if is_structured:
+        from kardenwort.core.errors import setup_structured_logging, StructuredError, ErrorCode
+        setup_structured_logging()
+        try:
+            main()
+        except SystemExit as e:
+            if e.code != 0:
+                msg = str(e.code) if e.code else "Unknown exit code"
+                err = StructuredError(ErrorCode.ERR_UNHANDLED_EXCEPTION, f"Process exited with {msg}")
+                err.exit()
+            else:
+                sys.exit(0)
+        except Exception as e:
+            err = StructuredError(ErrorCode.ERR_UNHANDLED_EXCEPTION, str(e))
+            err.exit()
+    else:
+        main()

@@ -7,6 +7,16 @@ import os
 import re
 import json
 
+# Temporarily add current dir to sys.path so we can import errors
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from errors import setup_structured_logging, ErrorCode, StructuredError
+setup_structured_logging()
+sys.path.pop(0)
+
+class ConfigurationError(Exception):
+    """Exception raised for errors in the configuration."""
+    pass
+
 if sys.platform == "win32":
     import winsound
 
@@ -18,7 +28,7 @@ def load_config():
     if not config_path.exists():
         print_debug(f"ERROR: Configuration file not found at {config_path}")
         print_debug("Please copy 'config.ini.template' to 'config.ini' and fill it in.")
-        sys.exit(1)
+        raise ConfigurationError(f"Configuration file not found at {config_path}")
 
     project_root = config_path.parent
     
@@ -30,7 +40,7 @@ def load_config():
 
     if section not in config:
         print_debug(f"ERROR: Missing section [{section}] in {config_path}")
-        sys.exit(1)
+        raise ConfigurationError(f"Missing section [{section}] in {config_path}")
 
     try:
         python_path_str = config[section]['python_executable']
@@ -50,7 +60,7 @@ def load_config():
 
     except KeyError as e:
         print_debug(f"ERROR: Missing key {e} in section [{section}] of {config_path}")
-        sys.exit(1)
+        raise ConfigurationError(f"Missing key {e} in section [{section}] of {config_path}")
         
     return python_path, workspace_path, importer_workspace, config
 
@@ -60,7 +70,7 @@ def load_anki_mapping():
     if not mapping_path.exists():
         print_debug(f"ERROR: Anki mapping file not found at {mapping_path}")
         print_debug("Please copy 'anki-mapping.ini.template' to 'anki-mapping.ini' and fill it in.")
-        sys.exit(1)
+        raise ConfigurationError(f"Anki mapping file not found at {mapping_path}")
         
     mapping = configparser.ConfigParser(allow_no_value=True)
     mapping.optionxform = str
@@ -109,7 +119,7 @@ def get_script_args(args, python_path, workspace_path, config, anki_mapping):
         base_args.append("--add-header")
 
     if 'anki_fields' not in anki_mapping:
-        sys.exit("Error: Missing '[anki_fields]' section in anki-mapping.ini. Please update your configuration following anki-mapping.ini.template to define your Anki structure.")
+        raise ConfigurationError("Missing '[anki_fields]' section in anki-mapping.ini. Please update your configuration following anki-mapping.ini.template to define your Anki structure.")
     
     # Support both numbered lists (backward compatibility) and simple ordered lists
     raw_fields_dict = dict(anki_mapping.items('anki_fields'))
@@ -128,12 +138,12 @@ def get_script_args(args, python_path, workspace_path, config, anki_mapping):
         anki_header = list(raw_fields_dict.keys())
 
     if not anki_header:
-        sys.exit("Error: No fields defined in '[anki_fields]' section of anki-mapping.ini.")
+        raise ConfigurationError("No fields defined in '[anki_fields]' section of anki-mapping.ini.")
     base_args.extend(["--anki-csv-header", json.dumps(anki_header)])
 
     mapping_section = f'anki_field_mapping.{args.type}'
     if mapping_section not in anki_mapping:
-        sys.exit(f"Error: Missing '[{mapping_section}]' section in anki-mapping.ini. Please define your data mappings.")
+        raise ConfigurationError(f"Missing '[{mapping_section}]' section in anki-mapping.ini. Please define your data mappings.")
     
     field_mapping = dict(anki_mapping[mapping_section])
     base_args.extend(["--anki-field-mapping", json.dumps(field_mapping)])
@@ -144,8 +154,13 @@ def get_script_args(args, python_path, workspace_path, config, anki_mapping):
     if args.multi_text:
         base_args.append("--multi-text")
 
-    if getattr(args, 'use_simplemma_correction', False):
-        base_args.append("--use-simplemma-correction")
+    if getattr(args, 'disable_dictionary_validation', False):
+        base_args.append("--disable-dictionary-validation")
+
+    if getattr(args, 'structured_output', False):
+        base_args.append("--structured-output")
+    elif getattr(args, 'json_ipc', False):
+        base_args.append("--json-ipc")
 
     if getattr(args, 'simplemma_after_spacy', False):
         base_args.append("--simplemma-after-spacy")
@@ -437,6 +452,7 @@ def main():
     parser.add_argument("--subtitle-timestamps-file", type=str, help="Path to the sidecar subtitle timestamps file.")
     parser.add_argument("--import-only", action="store_true", help="Import an existing TSV directly into Anki without running extraction.")
     parser.add_argument("--tsv", nargs="+", help="Path to the TSV file(s) (required for --import-only).")
+    parser.add_argument("--structured-output", "--json-ipc", action="store_true", dest="structured_output", help="Emit JSON/JSONL output instead of plain text, enabling structured IPC communication.")
 
     args = parser.parse_args()
     
@@ -665,4 +681,29 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if "--structured-output" in sys.argv or "--json-ipc" in sys.argv:
+        try:
+            main()
+        except StructuredError as e:
+            e.exit()
+        except ConfigurationError as e:
+            err = StructuredError(ErrorCode.ERR_SCHEMA_MISMATCH, str(e))
+            err.exit()
+        except SystemExit as e:
+            if e.code != 0:
+                msg = str(e.code) if e.code else "Unknown exit code"
+                err = StructuredError(ErrorCode.ERR_UNHANDLED_EXCEPTION, f"Process exited with {msg}")
+                err.exit()
+            else:
+                sys.exit(0)
+        except Exception as e:
+            import traceback
+            context = {"traceback": traceback.format_exc()}
+            err = StructuredError(ErrorCode.ERR_UNHANDLED_EXCEPTION, str(e), context)
+            err.exit()
+    else:
+        try:
+            main()
+        except ConfigurationError as e:
+            print_debug(f"ERROR: {e}")
+            sys.exit(1)

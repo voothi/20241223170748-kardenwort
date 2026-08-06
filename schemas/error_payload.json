@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ErrorPayload",
+  "type": "object",
+  "properties": {
+    "error_code": {
+      "type": "string",
+      "description": "String representation of ErrorCode (e.g., ERR_DICT_MISSING)"
+    },
+    "message": {
+      "type": "string",
+      "description": "Human-readable error description"
+    },
+    "context": {
+      "type": "object",
+      "description": "Structured diagnostic metadata",
+      "additionalProperties": true
+    }
+  },
+  "required": ["error_code", "message", "context"]
+}

@@ -409,6 +409,18 @@ class OperationalStrategy(ABC):
         """Execute the transformation strategy yielding iterable tabular records."""
         pass
 
+    def _derive_deck_prefixes(self, config: ExtractionConfig) -> Tuple[str, str]:
+        """Centralized derivation of subdeck name and root deck prefix without filesystem I/O."""
+        out_path = getattr(config, 'output_file_path', None)
+        sub_deck_name = getattr(config, 'sub_deck_name', "")
+        root_deck_prefix = getattr(config, 'root_deck_prefix', "")
+        if out_path and not sub_deck_name:
+            filename_part = str(out_path).replace('\\', '/').split('/')[-1]
+            sub_deck_name = filename_part.rsplit('.', 1)[0]
+        if not root_deck_prefix and sub_deck_name:
+            root_deck_prefix = re.sub(r'\.(word|sentence)', '', sub_deck_name)
+        return sub_deck_name, root_deck_prefix
+
 
 class TSVWriter:
     """Dedicated persistence utility to handle stream output serialization independently from calculation loops."""
@@ -2542,8 +2554,8 @@ class TsvFormatter(OutputFormatter):
     def format(self, records: Iterable[TabularRecord], output_stream: Any = sys.stdout) -> None:
         for record in records:
             if record.row_data:
-                lemma = record.row_data.get('lemma', '')
-                source_word = record.row_data.get('source_word', '')
+                lemma = record.row_data.get(KEY_LEMMA, '')
+                source_word = record.row_data.get(KEY_SOURCE_WORD, '')
                 print(f"{lemma}\t{source_word}", file=output_stream)
             elif record.fields:
                 print("\t".join(str(f) for f in record.fields), file=output_stream)
@@ -2556,8 +2568,8 @@ class HtmlFormatter(OutputFormatter):
         print("<table>", file=output_stream)
         for record in records:
             if record.row_data:
-                lemma = record.row_data.get('lemma', '')
-                source_word = record.row_data.get('source_word', '')
+                lemma = record.row_data.get(KEY_LEMMA, '')
+                source_word = record.row_data.get(KEY_SOURCE_WORD, '')
                 print(f"<tr><td>{lemma}</td><td>{source_word}</td></tr>", file=output_stream)
             elif record.fields and len(record.fields) >= 2:
                 print(f"<tr><td>{record.fields[0]}</td><td>{record.fields[1]}</td></tr>", file=output_stream)
@@ -2583,7 +2595,7 @@ class PlainFormatter(OutputFormatter):
     def format(self, records: Iterable[TabularRecord], output_stream: Any = sys.stdout) -> None:
         for record in records:
             if record.row_data:
-                lemma = record.row_data.get('lemma', '')
+                lemma = record.row_data.get(KEY_LEMMA, '')
                 print(lemma, file=output_stream)
             elif record.fields:
                 print(str(record.fields[0]), file=output_stream)
@@ -2595,10 +2607,10 @@ class ContextFormatter(OutputFormatter):
     def format(self, records: Iterable[TabularRecord], output_stream: Any = sys.stdout) -> None:
         for record in records:
             if record.row_data:
-                lemma = record.row_data.get('lemma', '')
-                left = record.row_data.get('source_context_left', '')
-                sent = record.row_data.get('source_sentence', '')
-                right = record.row_data.get('source_context_right', '')
+                lemma = record.row_data.get(KEY_LEMMA, '')
+                left = record.row_data.get(KEY_SOURCE_CONTEXT_LEFT, '')
+                sent = record.row_data.get(KEY_SOURCE_SENTENCE, '')
+                right = record.row_data.get(KEY_SOURCE_CONTEXT_RIGHT, '')
                 print(lemma, file=output_stream)
                 if left:
                     print(left, file=output_stream)
@@ -2690,14 +2702,7 @@ class ParallelTextsStrategy(OperationalStrategy):
         sentence_lemmas_cache = {}
         
         branch_header_lines = set()
-        out_path = getattr(config, 'output_file_path', None)
-        sub_deck_name = getattr(config, 'sub_deck_name', "")
-        root_deck_prefix = getattr(config, 'root_deck_prefix', "")
-        if out_path and not sub_deck_name:
-            filename_part = str(out_path).replace('\\', '/').split('/')[-1]
-            sub_deck_name = filename_part.rsplit('.', 1)[0]
-        if not root_deck_prefix and sub_deck_name:
-            root_deck_prefix = re.sub(r'\.(word|sentence)', '', sub_deck_name)
+        sub_deck_name, root_deck_prefix = self._derive_deck_prefixes(config)
 
         if getattr(config, 'anki_markdown_decks', False):
             branch_header_lines = parse_markdown_for_branch_headers(source_text_lines_all)
@@ -3008,14 +3013,7 @@ class SingleTextStrategy(OperationalStrategy):
         branch_header_lines = set()
         active_header_line_index = -1
         
-        out_path = getattr(config, 'output_file_path', None)
-        sub_deck_name = getattr(config, 'sub_deck_name', "")
-        root_deck_prefix = getattr(config, 'root_deck_prefix', "")
-        if out_path and not sub_deck_name:
-            filename_part = str(out_path).replace('\\', '/').split('/')[-1]
-            sub_deck_name = filename_part.rsplit('.', 1)[0]
-        if not root_deck_prefix and sub_deck_name:
-            root_deck_prefix = re.sub(r'\.(word|sentence)', '', sub_deck_name)
+        sub_deck_name, root_deck_prefix = self._derive_deck_prefixes(config)
 
         if getattr(config, 'anki_markdown_decks', False) and is_multiline_from_file:
             branch_header_lines = parse_markdown_for_branch_headers(source_lines)
@@ -3358,14 +3356,7 @@ class ParallelSentencesStrategy(OperationalStrategy):
         display_target_content_lines = [line for line in display_target_lines_all if line.strip()]
         display_tertiary_content_lines = [line for line in display_tertiary_lines_all if line.strip()]
 
-        out_path = getattr(config, 'output_file_path', None)
-        sub_deck_name = getattr(config, 'sub_deck_name', "")
-        root_deck_prefix = getattr(config, 'root_deck_prefix', "")
-        if out_path and not sub_deck_name:
-            filename_part = str(out_path).replace('\\', '/').split('/')[-1]
-            sub_deck_name = filename_part.rsplit('.', 1)[0]
-        if not root_deck_prefix and sub_deck_name:
-            root_deck_prefix = re.sub(r'\.(word|sentence)', '', sub_deck_name)
+        sub_deck_name, root_deck_prefix = self._derive_deck_prefixes(config)
 
         full_deck_name = ""
         if getattr(config, 'anki_create_subdecks', False) and not getattr(config, 'anki_markdown_decks', False):

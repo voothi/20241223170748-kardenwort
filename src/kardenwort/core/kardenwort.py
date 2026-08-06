@@ -2695,7 +2695,7 @@ class ParallelTextsStrategy(OperationalStrategy):
         root_deck_prefix = getattr(config, 'root_deck_prefix', "")
         if out_path and not sub_deck_name:
             filename_part = str(out_path).replace('\\', '/').split('/')[-1]
-            sub_deck_name = filename_part.split('.')[0]
+            sub_deck_name = filename_part.rsplit('.', 1)[0]
         if not root_deck_prefix and sub_deck_name:
             root_deck_prefix = re.sub(r'\.(word|sentence)', '', sub_deck_name)
 
@@ -2924,7 +2924,7 @@ class ParallelTextsStrategy(OperationalStrategy):
             current_wordlist = ""
             if add_wordlist_col:
                 if source_sentence_for_lemmas not in sentence_lemmas_cache:
-                    wordlist_generation_args = {'de_gcs': de_gcs, 'gcs_automaton': gcs_automaton, 'de_gcs_add_parts_to_wordlist': de_gcs_add_parts_to_wordlist, 'classifications': classifications_val}
+                    wordlist_generation_args = {'de_gcs': de_gcs, 'gcs_automaton': gcs_automaton, 'de_gcs_add_parts_to_wordlist': de_gcs_add_parts_to_wordlist, 'classifications': classifications_val, 'token_mappings': getattr(config, 'token_mappings', {})}
                     lemmas = extract_lemmas_from_sentence(source_sentence_for_lemmas, lemma_sort_index, current_nlp, de_dictionary, lemma_override_rules, de_gcs_pos_tags, config, **wordlist_generation_args)
                     sentence_lemmas_cache[source_sentence_for_lemmas] = lemmas
                 current_wordlist = "<br>".join(sentence_lemmas_cache[source_sentence_for_lemmas]) if wordlist_use_br else "\n".join(sentence_lemmas_cache[source_sentence_for_lemmas])
@@ -3013,7 +3013,7 @@ class SingleTextStrategy(OperationalStrategy):
         root_deck_prefix = getattr(config, 'root_deck_prefix', "")
         if out_path and not sub_deck_name:
             filename_part = str(out_path).replace('\\', '/').split('/')[-1]
-            sub_deck_name = filename_part.split('.')[0]
+            sub_deck_name = filename_part.rsplit('.', 1)[0]
         if not root_deck_prefix and sub_deck_name:
             root_deck_prefix = re.sub(r'\.(word|sentence)', '', sub_deck_name)
 
@@ -3266,7 +3266,7 @@ class SingleTextStrategy(OperationalStrategy):
             current_wordlist = ""
             if add_wordlist_col:
                 if source_sentence_for_lemmas not in sentence_lemmas_cache:
-                    wordlist_generation_args = {'de_gcs': de_gcs, 'gcs_automaton': gcs_automaton, 'de_gcs_add_parts_to_wordlist': de_gcs_add_parts_to_wordlist, 'classifications': classifications_val}
+                    wordlist_generation_args = {'de_gcs': de_gcs, 'gcs_automaton': gcs_automaton, 'de_gcs_add_parts_to_wordlist': de_gcs_add_parts_to_wordlist, 'classifications': classifications_val, 'token_mappings': getattr(config, 'token_mappings', {})}
                     lemmas = extract_lemmas_from_sentence(source_sentence_for_lemmas, lemma_sort_index, current_nlp, de_dictionary, lemma_override_rules, de_gcs_pos_tags, config, **wordlist_generation_args)
                     sentence_lemmas_cache[source_sentence_for_lemmas] = lemmas
                 current_wordlist = "<br>".join(sentence_lemmas_cache[source_sentence_for_lemmas]) if wordlist_use_br else "\n".join(sentence_lemmas_cache[source_sentence_for_lemmas])
@@ -3363,7 +3363,7 @@ class ParallelSentencesStrategy(OperationalStrategy):
         root_deck_prefix = getattr(config, 'root_deck_prefix', "")
         if out_path and not sub_deck_name:
             filename_part = str(out_path).replace('\\', '/').split('/')[-1]
-            sub_deck_name = filename_part.split('.')[0]
+            sub_deck_name = filename_part.rsplit('.', 1)[0]
         if not root_deck_prefix and sub_deck_name:
             root_deck_prefix = re.sub(r'\.(word|sentence)', '', sub_deck_name)
 
@@ -3480,7 +3480,7 @@ class ParallelSentencesStrategy(OperationalStrategy):
             if add_wordlist_col:
                 source_sentence_for_lemmas = source_text_lines_all[line_index]
                 if source_sentence_for_lemmas not in sentence_lemmas_cache:
-                    wordlist_generation_args = {'de_gcs': de_gcs, 'gcs_automaton': None}
+                    wordlist_generation_args = {'de_gcs': de_gcs, 'gcs_automaton': None, 'classifications': getattr(config, 'classifications', {}), 'token_mappings': getattr(config, 'token_mappings', {})}
                     lemmas = extract_lemmas_from_sentence(source_sentence_for_lemmas, lemma_sort_index, current_nlp, None, lemma_override_rules, de_gcs_pos_tags, config, **wordlist_generation_args)
                     sentence_lemmas_cache[source_sentence_for_lemmas] = lemmas
                 current_wordlist = "<br>".join(sentence_lemmas_cache[source_sentence_for_lemmas]) if wordlist_use_br else "\n".join(sentence_lemmas_cache[source_sentence_for_lemmas])

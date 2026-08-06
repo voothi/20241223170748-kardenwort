@@ -128,7 +128,7 @@ def test_simplemma_cli_flags_evaluation():
          patch('pathlib.Path.exists', return_value=False), \
          patch('kardenwort.core.kardenwort.load_lemma_frequency_index', return_value={}), \
          patch('kardenwort.core.kardenwort.load_classification_dictionaries', return_value={}), \
-         patch('kardenwort.core.kardenwort.process_single_text') as mock_process, \
+         patch('kardenwort.core.kardenwort.ModeDispatcher.dispatch') as mock_process, \
          patch.object(sys, 'argv', ['kardenwort.py', '--type', 'word', '--text', 'test', '--language', 'en', 
                                     '--simplemma-after-spacy', '--simplemma-pos-aware', '--simplemma-smart-fallback']):
         main()
@@ -145,7 +145,7 @@ def test_simplemma_config_loading():
          patch('pathlib.Path.exists', return_value=True), \
          patch('kardenwort.core.kardenwort.load_lemma_frequency_index', return_value={}), \
          patch('kardenwort.core.kardenwort.load_classification_dictionaries', return_value={}), \
-         patch('kardenwort.core.kardenwort.process_single_text') as mock_process, \
+         patch('kardenwort.core.kardenwort.ModeDispatcher.dispatch') as mock_process, \
          patch('configparser.ConfigParser') as mock_cp, \
          patch.object(sys, 'argv', ['kardenwort.py', '--type', 'word', '--text', 'test', '--language', 'en']):
         

@@ -10,8 +10,10 @@ import json
 import tempfile
 import atexit
 import simplemma
+from enum import Enum
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field, fields
-from typing import Optional, List, Any, Tuple, Dict, Literal, Union, Set
+from typing import Optional, List, Any, Tuple, Dict, Literal, Union, Set, Iterator, Iterable
 from types import SimpleNamespace
 import configparser
 
@@ -349,6 +351,15 @@ class ExecutionContext:
         self.gcs_automaton = gcs_automaton
         self.de_dictionary = de_dictionary
         self.temp_files: List[str] = []
+        self._cancelled: bool = False
+
+    def cancel(self) -> None:
+        """Sets the cancellation signal to abort ongoing operations cleanly."""
+        self._cancelled = True
+
+    def is_cancelled(self) -> bool:
+        """Returns True if cancellation has been requested, otherwise False."""
+        return self._cancelled
 
     def add_temp_file(self, file_path: str) -> None:
         """Registers a temporary file path for cleanup upon execution completion."""
@@ -372,6 +383,102 @@ class ExecutionContext:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
+
+
+class OperationalMode(str, Enum):
+    """Enumeration of explicit operational routing modes for document processing workflows."""
+    PARALLEL_TEXTS = "PARALLEL_TEXTS"
+    SINGLE_TEXT = "SINGLE_TEXT"
+    PARALLEL_SENTENCES = "PARALLEL_SENTENCES"
+    LEMMAS_PER_LINE = "LEMMAS_PER_LINE"
+
+
+@dataclass
+class TabularRecord:
+    """Represents a decoupled record unit (table row or line) yielded by an OperationalStrategy."""
+    fields: Optional[List[Any]] = None
+    row_data: Optional[Dict[str, Any]] = None
+    raw_line: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class OperationalStrategy(ABC):
+    """Abstract base class for stateless operational strategies decoupling token transformation from file I/O."""
+    @abstractmethod
+    def execute(self, config: ExtractionConfig, context: ExecutionContext) -> Iterator[TabularRecord]:
+        """Execute the transformation strategy yielding iterable tabular records."""
+        pass
+
+
+class TSVWriter:
+    """Dedicated persistence utility to handle stream output serialization independently from calculation loops."""
+    def __init__(
+        self,
+        output_file_path: Optional[str] = None,
+        header: Optional[List[Any]] = None,
+        add_header: bool = True,
+        delimiter: str = "\t",
+        args: Any = None,
+        source_text_content: Optional[str] = None,
+        target_text_path: Optional[str] = None,
+        tertiary_text_path: Optional[str] = None,
+        target_text_content: Optional[str] = None,
+        tertiary_text_content: Optional[str] = None,
+        subdeck_content_map: Optional[Dict[str, Any]] = None,
+        stdout_print_output_basename: bool = False
+    ):
+        self.output_file_path = output_file_path
+        self.header = header
+        self.add_header = add_header
+        self.delimiter = delimiter
+        self.args = args
+        self.source_text_content = source_text_content
+        self.target_text_path = target_text_path
+        self.tertiary_text_path = tertiary_text_path
+        self.target_text_content = target_text_content
+        self.tertiary_text_content = tertiary_text_content
+        self.subdeck_content_map = subdeck_content_map
+        self.stdout_print_output_basename = stdout_print_output_basename
+
+    def write(self, records: Iterable[TabularRecord]) -> Optional[str]:
+        """Serializes iterable records to disk and generates companion deck metadata files."""
+        if not self.output_file_path:
+            for _ in records:
+                pass
+            return None
+
+        with open(self.output_file_path, "w", newline="", encoding="utf-8") as tsvfile:
+            writer = csv.writer(tsvfile, delimiter=self.delimiter)
+            if self.header and self.add_header:
+                writer.writerow(self.header)
+
+            for record in records:
+                if record.fields is not None:
+                    writer.writerow(record.fields)
+                elif record.raw_line is not None:
+                    tsvfile.write(record.raw_line + "\n")
+
+        if self.args and self.source_text_content is not None:
+            tgt_content = self.target_text_content
+            if tgt_content is None and self.target_text_path and os.path.exists(self.target_text_path):
+                with open(self.target_text_path, "r", encoding="utf-8") as f:
+                    tgt_content = f.read()
+
+            tert_content = self.tertiary_text_content
+            if tert_content is None and self.tertiary_text_path and os.path.exists(self.tertiary_text_path):
+                with open(self.tertiary_text_path, "r", encoding="utf-8") as f:
+                    tert_content = f.read()
+
+            _write_deck_metadata(
+                self.args,
+                self.output_file_path,
+                self.source_text_content,
+                tgt_content,
+                tert_content,
+                self.subdeck_content_map
+            )
+
+        return self.output_file_path
 
 
 

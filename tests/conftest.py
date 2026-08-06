@@ -25,6 +25,8 @@ def mock_nlp(monkeypatch):
     """Injects a stateless MockPipelineNLP instance into kardenwort core."""
     nlp_instance = MockPipelineNLP('de')
     monkeypatch.setattr(kw, 'nlp', nlp_instance, raising=False)
+    import kardenwort.core.legacy_baselines as legacy_baselines
+    monkeypatch.setattr(legacy_baselines, 'nlp', nlp_instance, raising=False)
     return nlp_instance
 
 

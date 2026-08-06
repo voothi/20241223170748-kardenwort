@@ -12,6 +12,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / 'helpers'))
 
 from mock_nlp import MockPipelineNLP, MockToken, MockDoc
 import kardenwort.core.kardenwort as kw
+import kardenwort.core.legacy_baselines as legacy_baselines
+from kardenwort.core.legacy_baselines import process_single_text, process_lemmas_per_line
 from kardenwort.core.kardenwort import (
     ParallelTextsStrategy,
     SingleTextStrategy,
@@ -93,13 +95,14 @@ def test_zero_file_io_in_strategies():
 def test_single_text_strategy_equivalence(tmp_path, monkeypatch):
     """Task 3.3: Compare SingleTextStrategy output against legacy process_single_text."""
     monkeypatch.setattr(kw, 'nlp', mock_nlp)
+    monkeypatch.setattr(legacy_baselines, 'nlp', mock_nlp)
     source_text = "Der Hund läuft in den Garten.\nDie Katze schläft auf dem Sofa."
     out_file_legacy = tmp_path / "legacy_single.tsv"
     out_file_strat = tmp_path / "strat_single.tsv"
 
     args_ns = create_base_args()
 
-    kw.process_single_text(
+    process_single_text(
         source_text, {}, "de", 1,
         str(out_file_legacy), True, False, False,
         True, False, False,
@@ -135,6 +138,7 @@ def test_single_text_strategy_equivalence(tmp_path, monkeypatch):
 def test_lemmas_per_line_strategy_equivalence(tmp_path, monkeypatch):
     """Task 3.3: Compare LemmasPerLineStrategy against legacy process_lemmas_per_line."""
     monkeypatch.setattr(kw, 'nlp', mock_nlp)
+    monkeypatch.setattr(legacy_baselines, 'nlp', mock_nlp)
     in_file = tmp_path / "input.txt"
     in_file.write_text("Der schnelle Hund.\nDie Katze.", encoding="utf-8")
     
@@ -143,7 +147,7 @@ def test_lemmas_per_line_strategy_equivalence(tmp_path, monkeypatch):
     
     args_ns = create_base_args()
     args_ns.lemmas_per_line = True
-    kw.process_lemmas_per_line(str(in_file), str(out_file_legacy), {}, None, {}, args_ns)
+    process_lemmas_per_line(str(in_file), str(out_file_legacy), {}, None, {}, args_ns)
 
     source_content = in_file.read_text(encoding="utf-8")
     config_dict = vars(args_ns).copy()

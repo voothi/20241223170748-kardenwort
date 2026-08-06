@@ -14,13 +14,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / 'helpers'))
 from mock_nlp import MockMorph, MockToken, MockDoc, MockPipelineNLP
 
 import kardenwort.core.kardenwort as kw
-from kardenwort.core.kardenwort import (
+from kardenwort.core.legacy_baselines import (
     process_parallel_text_files,
     process_single_text,
     process_parallel_sentences_to_csv,
     process_lemmas_per_line,
-    get_anki_csv_header
 )
+from kardenwort.core.kardenwort import get_anki_csv_header
 from test_core_invariants import generate_gcs_matrix
 from test_configs import DEFAULT_FIELD_MAPPING, DEFAULT_OVERRIDE_RULES, DEFAULT_DE_DICTIONARY, extract_gcs_kwargs
 

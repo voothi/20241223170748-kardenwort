@@ -10,9 +10,10 @@ import json
 import tempfile
 import atexit
 import simplemma
-from dataclasses import dataclass
-from typing import Optional, List, Any, Tuple, Dict
+from dataclasses import dataclass, field, fields
+from typing import Optional, List, Any, Tuple, Dict, Literal, Union
 from types import SimpleNamespace
+import configparser
 
 try:
     from german_compound_splitter import comp_split
@@ -55,9 +56,13 @@ KEY_DECK_NAME = "deck_name"
 KEY_SUBTITLE_START_TIME = "subtitle_start_time"
 
 # Tabular & Anki Field Constants
+FIELD_LEMMA = "Lemma"
+FIELD_POS_TAG = "PosTag"
 FIELD_QUOTATION = "Quotation"
 FIELD_WORD_SOURCE = "WordSource"
+FIELD_WORD_SOURCE2 = "WordSource2"
 FIELD_WORD_SOURCE_INFLECTED_FORM = "WordSourceInflectedForm"
+FIELD_WORD_SOURCE_INFLECTED_FORM2 = "WordSourceInflectedForm2"
 FIELD_WORD_DESTINATION = "WordDestination"
 FIELD_WORD_SOURCE_CONTEXT = "WordSourceContext"
 FIELD_SENTENCE_SOURCE_CONTEXT_LEFT = "SentenceSourceContextLeft"
@@ -140,13 +145,16 @@ FIELD_DECK = "Deck"
 FIELD_LEITNER_BOX = "LeitnerBox"
 FIELD_LEITNER_DUE = "LeitnerDue"
 FIELD_DESK_SELECTED = "DeskSelected"
+FIELD_CLASSIFICATION_OXFORD = "ClassificationOxford"
+FIELD_CLASSIFICATION_GOETHE = "ClassificationGoethe"
 FIELD_WORD_DESTINATION_INFLECTED_FORM = "WordDestinationInflectedForm"
 FIELD_WORD_SOURCE_AI = "WordSourceAI"
 FIELD_WORD_SOURCE_INFLECTED_FORM_AI = "WordSourceInflectedFormAI"
 
-# Standard 88-field default Anki baseline tuple
+# Standard 90-field default Anki baseline tuple
 DEFAULT_ANKI_HEADER = (
-    FIELD_QUOTATION, FIELD_WORD_SOURCE, FIELD_WORD_SOURCE_INFLECTED_FORM, FIELD_WORD_DESTINATION,
+    FIELD_QUOTATION, FIELD_WORD_SOURCE, FIELD_WORD_SOURCE2, FIELD_WORD_SOURCE_INFLECTED_FORM,
+    FIELD_WORD_SOURCE_INFLECTED_FORM2, FIELD_WORD_DESTINATION, FIELD_WORD_DESTINATION_INFLECTED_FORM,
     FIELD_WORD_SOURCE_CONTEXT, FIELD_SENTENCE_SOURCE_CONTEXT_LEFT, FIELD_SENTENCE_SOURCE,
     FIELD_SENTENCE_SOURCE_CONTEXT_RIGHT, FIELD_SENTENCE_DESTINATION_CONTEXT_LEFT,
     FIELD_SENTENCE_DESTINATION, FIELD_SENTENCE_DESTINATION_CONTEXT_RIGHT,
@@ -175,21 +183,21 @@ DEFAULT_ANKI_HEADER = (
     FIELD_AM_UNKNOWN_MORPHS, FIELD_AM_UNKNOWN_MORPHS_COUNT, FIELD_AM_HIGHLIGHTED,
     FIELD_AM_SCORE, FIELD_AM_SCORE_TERMS, FIELD_AM_STUDY_MORPHS, FIELD_SENTENCE_SOURCE_INDEX,
     FIELD_DECK, FIELD_LEITNER_BOX, FIELD_LEITNER_DUE, FIELD_DESK_SELECTED,
-    FIELD_WORD_DESTINATION_INFLECTED_FORM, FIELD_WORD_SOURCE_AI, FIELD_WORD_SOURCE_INFLECTED_FORM_AI
+    FIELD_CLASSIFICATION_OXFORD, FIELD_CLASSIFICATION_GOETHE
 )
 
 @dataclass(frozen=True)
 class GCSConfig:
     de_gcs: bool = False
     de_gcs_add_parts_to_wordlist: bool = False
-    de_gcs_pos_tags: tuple = ("NN", "NOUN", "N")
+    de_gcs_pos_tags: Tuple[str, ...] = ("NN", "NOUN", "N")
     de_fix_genitive: bool = False
     de_gcs_mask_unknown_parts: bool = False
     de_gcs_preserve_compound_word: bool = False
     de_gcs_skip_merge_fractions: bool = False
     de_gcs_only_nouns: bool = True
     de_gcs_combine_noun_modes: bool = False
-    de_gcs_part_singularization: str = "only-nouns"
+    de_gcs_part_singularization: Literal["only-nouns", "all", "none"] = "only-nouns"
 
     @classmethod
     def from_args(cls, args: Any) -> "GCSConfig":
@@ -209,19 +217,27 @@ class GCSConfig:
             de_gcs_part_singularization=getattr(args, "de_gcs_part_singularization", "only-nouns")
         )
 
+    @classmethod
+    def from_kwargs(cls, **kwargs: Any) -> "GCSConfig":
+        valid_fields = {f.name for f in fields(cls)}
+        filtered = {k: v for k, v in kwargs.items() if k in valid_fields}
+        if "de_gcs_pos_tags" in filtered and isinstance(filtered["de_gcs_pos_tags"], list):
+            filtered["de_gcs_pos_tags"] = tuple(filtered["de_gcs_pos_tags"])
+        return cls(**filtered)
+
 @dataclass(frozen=True)
 class AnkiMappingConfig:
     anki_markdown_decks: bool = False
     anki_create_subdecks: bool = False
     anki_parent_deck: Optional[str] = None
-    anki_deck_content: Any = False
+    anki_deck_content: Union[bool, List[str], Tuple[str, ...]] = False
     anki_sentence_subdecks: bool = False
     anki_context_use_br: bool = False
     wordlist_use_br: bool = False
     add_header: bool = True
     add_wordlist_col: bool = True
-    header: tuple = DEFAULT_ANKI_HEADER
-    field_mapping: Optional[dict] = None
+    header: Tuple[str, ...] = DEFAULT_ANKI_HEADER
+    field_mapping: Optional[Dict[str, str]] = None
 
     @classmethod
     def from_args(cls, args: Any, header_override: Optional[List[str]] = None, field_mapping_override: Optional[Dict[str, str]] = None) -> "AnkiMappingConfig":
@@ -239,6 +255,26 @@ class AnkiMappingConfig:
             header=hdr,
             field_mapping=field_mapping_override
         )
+
+    @classmethod
+    def from_ini(cls, path: str, mode: str = "word") -> "AnkiMappingConfig":
+        parser = configparser.ConfigParser(allow_no_value=True)
+        parser.optionxform = str
+        parser.read(path, encoding='utf-8')
+        if "anki_fields" in parser:
+            raw_fields_dict = dict(parser.items('anki_fields'))
+            try:
+                [int(k) for k in raw_fields_dict.keys()]
+                sorted_keys = sorted(raw_fields_dict.keys(), key=lambda x: int(x))
+                header = [raw_fields_dict[k] for k in sorted_keys]
+            except (ValueError, TypeError):
+                header = list(raw_fields_dict.keys())
+        else:
+            header = list(DEFAULT_ANKI_HEADER)
+            
+        mapping_section = f"anki_field_mapping.{mode}"
+        field_mapping = dict(parser[mapping_section]) if mapping_section in parser else None
+        return cls(header=tuple(header), field_mapping=field_mapping)
 
 @dataclass(frozen=True)
 class NLPModelConfig:
@@ -266,7 +302,7 @@ class ExtractionConfig:
     combine_source_words_order: str = "contractions_first"
     combine_source_words_prefer_lowercase: bool = True
     prefer_shortest_form: bool = False
-    strip_headers: Any = None
+    strip_headers: Optional[Union[List[str], Tuple[str, ...], str, bool]] = None
     de_force_noun_capitalization: bool = True
     force_proper_noun_capitalization: bool = True
     apostrophe_chars: str = "', ’, ‘, `, ´, ʼ"
@@ -274,25 +310,30 @@ class ExtractionConfig:
     tts_destination_lang: Optional[str] = None
     tts_tertiary_lang: Optional[str] = None
     classification_case_sensitive: bool = False
+    _extra: Optional[Dict[str, Any]] = field(default=None, repr=False, compare=False)
+
+    def __getattr__(self, item: str) -> Any:
+        if self._extra and item in self._extra:
+            return self._extra[item]
+        raise AttributeError(f"'{type(self).__name__}' object has no attribute '{item}'")
 
     @classmethod
     def from_args(cls, args: Any) -> "ExtractionConfig":
-        return cls(
-            language=getattr(args, "language", "de"),
-            deduplication_scope=getattr(args, "deduplication_scope", "global"),
-            combine_source_words=getattr(args, "combine_source_words", False),
-            combine_source_words_order=getattr(args, "combine_source_words_order", "contractions_first"),
-            combine_source_words_prefer_lowercase=getattr(args, "combine_source_words_prefer_lowercase", True),
-            prefer_shortest_form=getattr(args, "prefer_shortest_form", False),
-            strip_headers=getattr(args, "strip_headers", None),
-            de_force_noun_capitalization=getattr(args, "de_force_noun_capitalization", True),
-            force_proper_noun_capitalization=getattr(args, "force_proper_noun_capitalization", True),
-            apostrophe_chars=getattr(args, "apostrophe_chars", "', ’, ‘, `, ´, ʼ"),
-            type=getattr(args, "type", "word"),
-            tts_destination_lang=getattr(args, "tts_destination_lang", None),
-            tts_tertiary_lang=getattr(args, "tts_tertiary_lang", None),
-            classification_case_sensitive=getattr(args, "classification_case_sensitive", False)
-        )
+        raw_dict = vars(args) if hasattr(args, "__dict__") else dict(getattr(args, "_extra", {}) or {})
+        if not raw_dict and isinstance(args, dict):
+            raw_dict = args
+        valid_field_names = {f.name for f in fields(cls) if f.name != "_extra"}
+        explicit_kwargs = {}
+        extra_kwargs = {}
+        for k, v in raw_dict.items():
+            if k in valid_field_names:
+                explicit_kwargs[k] = v
+            else:
+                extra_kwargs[k] = v
+        for fname in valid_field_names:
+            if fname not in explicit_kwargs and hasattr(args, fname):
+                explicit_kwargs[fname] = getattr(args, fname)
+        return cls(**explicit_kwargs, _extra=extra_kwargs if extra_kwargs else None)
 
 class ExecutionContext:
     """Lifecycle resource manager encapsulating NLP model initialization and temporary files."""
@@ -305,8 +346,6 @@ class ExecutionContext:
     def add_temp_file(self, file_path: str) -> None:
         """Registers a temporary file path for cleanup upon execution completion."""
         self.temp_files.append(str(file_path))
-        if str(file_path) not in TEMP_FILES_TO_CLEANUP:
-            TEMP_FILES_TO_CLEANUP.append(str(file_path))
 
     def cleanup_temp_files(self) -> None:
         """Removes all temporary files registered within this context."""
@@ -315,8 +354,6 @@ class ExecutionContext:
                 os.remove(f_path)
                 if f_path in self.temp_files:
                     self.temp_files.remove(f_path)
-                if f_path in TEMP_FILES_TO_CLEANUP:
-                    TEMP_FILES_TO_CLEANUP.remove(f_path)
             except OSError:
                 pass
 

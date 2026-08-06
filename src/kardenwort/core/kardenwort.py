@@ -11,7 +11,7 @@ import tempfile
 import atexit
 import simplemma
 from dataclasses import dataclass, field, fields
-from typing import Optional, List, Any, Tuple, Dict, Literal, Union
+from typing import Optional, List, Any, Tuple, Dict, Literal, Union, Set
 from types import SimpleNamespace
 import configparser
 
@@ -54,6 +54,10 @@ KEY_CLOZE = "cloze"
 KEY_SENTENCE_INDEX = "sentence_index"
 KEY_DECK_NAME = "deck_name"
 KEY_SUBTITLE_START_TIME = "subtitle_start_time"
+KEY_CLASSIFICATIONS = "classifications"
+KEY_CLASSIFICATION_CASE_SENSITIVE = "classification_case_sensitive"
+KEY_TTS_SOURCE_PREFIX = "tts_source_"
+KEY_TTS_DEST_PREFIX = "tts_dest_"
 
 # Tabular & Anki Field Constants
 FIELD_LEMMA = "Lemma"
@@ -337,10 +341,11 @@ class ExtractionConfig:
 
 class ExecutionContext:
     """Lifecycle resource manager encapsulating NLP model initialization and temporary files."""
-    def __init__(self, nlp_model: Any = None, simplemma_lang: Optional[str] = None, gcs_automaton: Any = None):
+    def __init__(self, nlp_model: Optional[object] = None, simplemma_lang: Optional[str] = None, gcs_automaton: Optional[object] = None, de_dictionary: Optional[Union[Set[str], Dict[str, str], object]] = None):
         self.nlp = nlp_model
         self.simplemma_lang = simplemma_lang
         self.gcs_automaton = gcs_automaton
+        self.de_dictionary = de_dictionary
         self.temp_files: List[str] = []
 
     def add_temp_file(self, file_path: str) -> None:
@@ -628,7 +633,13 @@ def is_complex_inflected_form(form, apostrophe_chars):
         return True
     return any(not c.isalnum() for c in form)
 
-def sort_inflected_forms(forms, apostrophe_chars: Any = None, order='contractions_first', prefer_lowercase=True, config: Optional[Any] = None):
+def sort_inflected_forms(
+    forms: List[str],
+    apostrophe_chars: Optional[Union[str, ExtractionConfig, argparse.Namespace, SimpleNamespace, object]] = None,
+    order: str = 'contractions_first',
+    prefer_lowercase: bool = True,
+    config: Optional[Union[ExtractionConfig, argparse.Namespace, SimpleNamespace, object]] = None
+) -> List[str]:
     target = config if config is not None else apostrophe_chars
     if isinstance(target, (ExtractionConfig, argparse.Namespace, SimpleNamespace)) or (hasattr(target, 'combine_source_words_order') and not isinstance(target, str)):
         cfg = ExtractionConfig.from_args(target) if not isinstance(target, ExtractionConfig) else target
@@ -1006,18 +1017,17 @@ def read_text_from_file(file_path):
     except Exception as e:
         print(f"Error reading file {file_path}: {e}", file=sys.stderr); exit(1)
 
-def get_anki_csv_header(header_override=None):
+def get_anki_csv_header(header_override: Optional[Union[List[str], Tuple[str, ...], object]] = None) -> List[str]:
     if header_override:
         return list(header_override)
-    # This should technically never be reached in strict mode, but we keep it
-    # for internal unit tests or if called without an override.
-    return list(DEFAULT_ANKI_HEADER)
+    config = AnkiMappingConfig()
+    return list(config.header)
 
-def get_field_index_map(header_override=None):
+def get_field_index_map(header_override: Optional[Union[List[str], Tuple[str, ...], object]] = None) -> Dict[str, int]:
     """Returns a dict mapping each header field name to its 0-based index."""
     return {name: i for i, name in enumerate(get_anki_csv_header(header_override))}
 
-def prepare_row_data(args, **kwargs):
+def prepare_row_data(args: Union[ExtractionConfig, argparse.Namespace, SimpleNamespace, object], **kwargs: object) -> Dict[str, object]:
     """Consolidates all possibly mapped data into a single dictionary."""
     row_data = {
         KEY_LEMMA: kwargs.get(KEY_LEMMA, ''),
@@ -1039,18 +1049,19 @@ def prepare_row_data(args, **kwargs):
     }
     
     # Dynamic TTS activation flags
-    if args.language:
-        row_data[f'tts_source_{args.language}'] = "1"
-    if args.tts_destination_lang:
-        row_data[f'tts_dest_{args.tts_destination_lang}'] = "1"
+    if getattr(args, 'language', None):
+        row_data[f'{KEY_TTS_SOURCE_PREFIX}{getattr(args, "language")}'] = "1"
+    if getattr(args, 'tts_destination_lang', None):
+        row_data[f'{KEY_TTS_DEST_PREFIX}{getattr(args, "tts_destination_lang")}'] = "1"
         
-    classifications = kwargs.get('classifications', {})
+    classifications = kwargs.get(KEY_CLASSIFICATIONS, {})
     lemma = row_data[KEY_LEMMA]
-    case_sensitive = kwargs.get('classification_case_sensitive', True)
-    for c_name, c_dict in classifications.items():
-        lookup_lemma = lemma if case_sensitive else lemma.lower()
-        if lookup_lemma in c_dict:
-            row_data[c_name] = c_dict[lookup_lemma]
+    case_sensitive = kwargs.get(KEY_CLASSIFICATION_CASE_SENSITIVE, True)
+    if isinstance(classifications, dict):
+        for c_name, c_dict in classifications.items():
+            lookup_lemma = lemma if case_sensitive else getattr(lemma, 'lower', lambda: str(lemma))()
+            if lookup_lemma in c_dict:
+                row_data[c_name] = c_dict[lookup_lemma]
             
     return row_data
 
@@ -1083,45 +1094,54 @@ def generate_filename_prefix_from_text(text, word_count):
         return ""
     return "-".join(prefix_words)
 
-def format_lemma_capitalization(token, initial_lemma, args_or_config: Any = None, context: Optional[ExecutionContext] = None):
+def format_lemma_capitalization(
+    token: Union[object, SimpleNamespace],
+    initial_lemma: str,
+    args_or_config: Optional[Union[ExtractionConfig, argparse.Namespace, SimpleNamespace, object]] = None,
+    context: Optional[ExecutionContext] = None
+) -> str:
     config = ExtractionConfig.from_args(args_or_config) if not isinstance(args_or_config, ExtractionConfig) and args_or_config is not None else (args_or_config or ExtractionConfig())
     current_nlp = context.nlp if (context and context.nlp is not None) else nlp
-    nlp_lang = current_nlp.lang if current_nlp is not None else getattr(config, 'language', 'de')
-    if token.like_url or token.like_email:
+    nlp_lang = getattr(current_nlp, 'lang', getattr(config, 'language', 'de'))
+    if getattr(token, 'like_url', False) or getattr(token, 'like_email', False):
         return initial_lemma.lower()
 
-    source_token_text = token.text
+    source_token_text = getattr(token, 'text', str(token))
     is_all_caps = source_token_text.isupper() and len(source_token_text) > 1
     has_internal_caps = any(c.isupper() for c in source_token_text[1:])
 
     if is_all_caps or has_internal_caps:
         return source_token_text
     
+    token_pos = getattr(token, 'pos_', '')
     if config.de_force_noun_capitalization and nlp_lang == 'de':
-        if token.pos_ in ["NOUN", "PROPN"]:
+        if token_pos in ["NOUN", "PROPN"]:
             return initial_lemma.capitalize()
     
     if config.force_proper_noun_capitalization:
-        if token.pos_ == "PROPN":
+        if token_pos == "PROPN":
             return initial_lemma.capitalize()
 
-    if token.is_sent_start and token.pos_ not in ["NOUN", "PROPN"]:
+    if getattr(token, 'is_sent_start', False) and token_pos not in ["NOUN", "PROPN"]:
         return initial_lemma
 
     return initial_lemma
 
-def deduplicate_lemmas(candidate_lemmas, config: Optional[Any] = None):
+def deduplicate_lemmas(
+    candidate_lemmas: Union[List[str], Set[str], Tuple[str, ...], object],
+    config: Optional[Union[ExtractionConfig, argparse.Namespace, SimpleNamespace, object]] = None
+) -> List[str]:
     if config is not None and not isinstance(config, ExtractionConfig):
         config = ExtractionConfig.from_args(config)
-    lemmas_grouped_by_lowercase = {}
+    lemmas_grouped_by_lowercase: Dict[str, Set[str]] = {}
     for lemma in candidate_lemmas:
         if not lemma: continue
-        lower_lemma = lemma.lower()
+        lower_lemma = str(lemma).lower()
         if lower_lemma not in lemmas_grouped_by_lowercase:
             lemmas_grouped_by_lowercase[lower_lemma] = set()
-        lemmas_grouped_by_lowercase[lower_lemma].add(lemma)
+        lemmas_grouped_by_lowercase[lower_lemma].add(str(lemma))
     
-    final_lemmas = []
+    final_lemmas: List[str] = []
     for _, capitalization_variants in lemmas_grouped_by_lowercase.items():
         capitalized_variant = next((v for v in capitalization_variants if v[0].isupper()), None)
         
@@ -1281,9 +1301,22 @@ def _extract_standard_token(
         mapped_sources[lem] = source_word_form
     return lemmas_for_current_token, mapped_sources
 
-def extract_lemmas_from_sentence(sentence_text, lemma_sort_index, nlp_model=None, de_dictionary=None, lemma_override_rules=None, de_gcs_pos_tags=None, args=None, context: Optional[ExecutionContext] = None, gcs_config: Optional[GCSConfig] = None, extraction_config: Optional[ExtractionConfig] = None, **kwargs):
+def extract_lemmas_from_sentence(
+    sentence_text: str,
+    lemma_sort_index: Union[Dict[str, int], SimpleNamespace, object],
+    nlp_model: Optional[object] = None,
+    de_dictionary: Optional[Union[Set[str], Dict[str, str], object]] = None,
+    lemma_override_rules: Optional[Dict[str, str]] = None,
+    de_gcs_pos_tags: Optional[Union[List[str], Tuple[str, ...], Set[str]]] = None,
+    args: Optional[Union[ExtractionConfig, argparse.Namespace, SimpleNamespace, object]] = None,
+    context: Optional[ExecutionContext] = None,
+    gcs_config: Optional[GCSConfig] = None,
+    extraction_config: Optional[ExtractionConfig] = None,
+    **kwargs: object
+) -> List[str]:
     current_nlp = context.nlp if (context and context.nlp is not None) else nlp_model
     gcs_automaton = context.gcs_automaton if (context and context.gcs_automaton is not None) else kwargs.get('gcs_automaton', None)
+    de_dictionary = getattr(context, 'de_dictionary', None) if (context and getattr(context, 'de_dictionary', None) is not None) else de_dictionary
 
     if gcs_config is None:
         merged_dict = getattr(args, '__dict__', {}).copy() if args is not None else {}

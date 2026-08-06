@@ -3215,8 +3215,8 @@ class SingleTextStrategy(OperationalStrategy):
                     elif getattr(config, 'deduplication_scope', 'global') == 'none':
                         lemma_data.append(data_entry)
 
-        if getattr(config, 'deduplication_scope', 'global') == 'sentence':
-            lemma_data.extend(lemmas_in_sentence.values())
+            if getattr(config, 'deduplication_scope', 'global') == 'sentence':
+                lemma_data.extend(lemmas_in_sentence.values())
 
         sorted_items = []
         if getattr(config, 'deduplication_scope', 'global') == 'global':

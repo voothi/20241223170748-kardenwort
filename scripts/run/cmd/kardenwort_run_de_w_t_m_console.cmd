@@ -36,7 +36,7 @@ if not defined CFG_override_file_de (echo ERROR: override_file_de not found in [
 if not defined CFG_dictionary_file_de (echo ERROR: dictionary_file_de not found in [language_resources] section. >&2 & exit /b 1)
 
 set "PYTHON_EXE=%CFG_python_executable%"
-set "KARDENWORT_SCRIPT=%CFG_kardenwort_workspace%/%CFG_source_code_dir%/%CFG_kardenwort_script_filename%"
+set "KARDENWORT_SCRIPT=%CFG_kardenwort_workspace%/%CFG_source_code_dir%/%CFG_kardenwort_runner_filename%"
 set "LEMMA_INDEX_FILE=%CFG_kardenwort_workspace%/%CFG_data_dir%/%CFG_lemma_file_de%"
 set "LEMMA_OVERRIDE_FILE=%CFG_kardenwort_workspace%/%CFG_data_dir%/%CFG_override_file_de%"
 set "DE_DICT_FILE=%CFG_kardenwort_workspace%/%CFG_data_dir%/%CFG_dictionary_file_de%"

@@ -339,6 +339,8 @@ class ExtractionConfig:
                 explicit_kwargs[fname] = getattr(args, fname)
         return cls(**explicit_kwargs, _extra=extra_kwargs if extra_kwargs else None)
 
+ExecutionStrategyConfig = ExtractionConfig
+
 class ExecutionContext:
     """Lifecycle resource manager encapsulating NLP model initialization and temporary files."""
     def __init__(self, nlp_model: Optional[object] = None, simplemma_lang: Optional[str] = None, gcs_automaton: Optional[object] = None, de_dictionary: Optional[Union[Set[str], Dict[str, str], object]] = None):

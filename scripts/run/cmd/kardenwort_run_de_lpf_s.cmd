@@ -4,7 +4,7 @@ chcp 65001 > nul
 
 rem --- Configuration Section ---
 set "PYTHON_EXE=U:/voothi/20250825231214-spacy-env/Scripts/python.exe"
-set "KARDENWORT_SCRIPT=U:/voothi/20241223170748-kardenwort/src/kardenwort/core/kardenwort.py"
+set "KARDENWORT_SCRIPT=U:/voothi/20241223170748-kardenwort/src/kardenwort/core/kardenwort_runner.py"
 set "INPUT_FILE=U:/voothi/20241223170748-kardenwort/source_texts/text1.txt"
 for %%F in ("%INPUT_FILE%") do set "OUTPUT_FILE=%%~dpnF.lemmas.txt"
 set "LEMMA_INDEX_FILE=U:/voothi/20241223170748-kardenwort/data/de/deu-mixed-typical-2011-1m-words.csv"

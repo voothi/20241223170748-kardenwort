@@ -662,3 +662,177 @@ def test_simplemma_sentence_initial_verbs_integration():
     assert "haben" in lemmas3
 
 
+def test_composite_identifier_decomposition_extract_standard_token():
+    import argparse
+    from kardenwort.core import kardenwort as kw
+    from mock_nlp import MockPipelineNLP
+
+    nlp = MockPipelineNLP('en')
+    tok = MockToken("split_camel_case", pos_="NOUN", is_alpha=False)
+    args = argparse.Namespace(language='en', de_force_noun_capitalization=False)
+    
+    lemmas, mapped_sources = kw._extract_standard_token(
+        tok, nlp, de_dictionary=None, lemma_override_rules={},
+        sentence_text="def split_camel_case(val):", de_fix_genitive=False,
+        de_gcs=False, gcs_automaton=None, de_gcs_pos_tags=[],
+        args=args, separable_verb_map={}
+    )
+    
+    assert "split" in lemmas
+    assert "camel" in lemmas
+    assert "case" in lemmas
+    assert mapped_sources["split"] == "split_camel_case"
+    assert mapped_sources["camel"] == "split_camel_case"
+    assert mapped_sources["case"] == "split_camel_case"
+
+
+def test_composite_identifier_extract_lemmas_from_sentence():
+    import argparse
+    from kardenwort.core.kardenwort import extract_lemmas_from_sentence
+    from mock_nlp import MockPipelineNLP
+
+    nlp = MockPipelineNLP('en')
+    sentence = "result = prepare_lookup_tsv ( decompose_identifier )"
+    args = argparse.Namespace(language='en', de_force_noun_capitalization=False)
+    
+    lemmas = extract_lemmas_from_sentence(
+        sentence_text=sentence,
+        lemma_sort_index={},
+        nlp_model=nlp,
+        args=args
+    )
+
+    assert "prepare" in lemmas
+    assert "lookup" in lemmas
+    assert "tsv" in lemmas
+    assert "decompose" in lemmas
+    assert "identifier" in lemmas
+
+
+def test_composite_identifier_process_parallel_text_files_tsv(tmp_path, monkeypatch):
+    import csv
+    import argparse
+    from types import SimpleNamespace
+    from kardenwort.core.kardenwort import ParallelTextsStrategy, ExtractionConfig, ExecutionContext
+    import kardenwort.core.legacy_baselines as legacy_baselines
+    from mock_nlp import MockPipelineNLP
+
+    nlp = MockPipelineNLP('en')
+    monkeypatch.setattr(legacy_baselines, 'nlp', nlp)
+    source_text = "def split_camel_case():\n    prepare_lookup_tsv()\n    decompose_identifier()"
+    out_tsv = str(tmp_path / "vocab.tsv")
+
+    args = argparse.Namespace(
+        deduplication_scope='global',
+        language='en',
+        combine_source_words=False,
+        combine_source_words_order='contractions_first',
+        combine_source_words_prefer_lowercase=True,
+        apostrophe_chars="', ’, ‘, `, ´, ʼ",
+        prefer_shortest_form=False,
+        strip_headers=None,
+        add_header=True,
+        add_source_word_col=True,
+        add_wordlist_col=True,
+        add_sentence_index_col=True,
+        stdout_print_output_basename=False,
+        de_gcs=False,
+        de_gcs_add_parts_to_wordlist=False,
+        de_gcs_pos_tags=[],
+        de_fix_genitive=False,
+        de_gcs_mask_unknown_parts=False,
+        de_gcs_preserve_compound_word=False,
+        de_gcs_skip_merge_fractions=False,
+        de_gcs_only_nouns=False,
+        de_gcs_combine_noun_modes=False,
+        de_gcs_part_singularization='none',
+        de_force_noun_capitalization=False,
+        force_proper_noun_capitalization=False,
+        anki_markdown_decks=False,
+        anki_create_subdecks=False,
+        anki_sentence_subdecks=False,
+        anki_context_use_br=False,
+        anki_parent_deck=None,
+        anki_deck_content=None,
+        context_window_type=None,
+        unit_type='sentence',
+        sentence_context_size=1,
+        source_text=source_text,
+        source_text_content=source_text,
+        output_file_path=out_tsv,
+        field_mapping={
+            'WordSource': 'lemma',
+            'WordSourceInflectedForm': 'source_word',
+            'SentenceSource': 'source_sentence'
+        },
+        anki_header=['WordSource', 'WordSourceInflectedForm', 'SentenceSource'],
+        header=['WordSource', 'WordSourceInflectedForm', 'SentenceSource']
+    )
+
+    # 1. Test ParallelTextsStrategy
+    config = ExtractionConfig.from_args(args)
+    ctx = ExecutionContext(nlp_model=nlp, simplemma_lang='en')
+    records = list(ParallelTextsStrategy().execute(config, ctx))
+
+    lemmas_map = {}
+    for r in records:
+        if r.row_data:
+            lemmas_map[r.row_data.get('lemma')] = r.row_data.get('source_word')
+
+    assert 'split' in lemmas_map
+    assert 'camel' in lemmas_map
+    assert 'case' in lemmas_map
+    assert 'prepare' in lemmas_map
+    assert 'lookup' in lemmas_map
+    assert 'tsv' in lemmas_map
+    assert 'decompose' in lemmas_map
+    assert 'identifier' in lemmas_map
+    assert 'split_camel_case' in lemmas_map['split']
+    assert 'prepare_lookup_tsv' in lemmas_map['prepare']
+    assert 'decompose_identifier' in lemmas_map['decompose']
+
+    # 2. Test legacy_baselines.process_parallel_text_files
+    legacy_baselines.process_parallel_text_files(
+        source_text=source_text,
+        lemma_sort_index={},
+        language='en',
+        target_text_path=None,
+        tertiary_text_path=None,
+        sentence_context_size=1,
+        output_file_path=out_tsv,
+        add_source_word_col=True,
+        add_wordlist_col=False,
+        add_sentence_index_col=False,
+        add_header=True,
+        wordlist_use_br=False,
+        stdout_print_output_basename=False,
+        de_gcs=False,
+        gcs_automaton=None,
+        de_gcs_add_parts_to_wordlist=False,
+        de_dictionary=None,
+        lemma_override_rules={},
+        de_gcs_pos_tags=[],
+        field_mapping=args.field_mapping,
+        anki_header=['WordSource', 'WordSourceInflectedForm', 'SentenceSource'],
+        args=args,
+        nlp=nlp
+    )
+
+    file_records = []
+    with open(out_tsv, 'r', encoding='utf-8') as f:
+        reader = csv.DictReader(f, delimiter='\t')
+        for row in reader:
+            file_records.append(row)
+
+    file_lemmas = {r['WordSource']: r['WordSourceInflectedForm'] for r in file_records}
+    assert 'split' in file_lemmas
+    assert 'prepare' in file_lemmas
+    assert 'decompose' in file_lemmas
+
+
+
+
+
+
+
+

@@ -189,7 +189,7 @@ def process_parallel_text_files(
                 else:
                     continue
             else:
-                if not (token.is_alpha or ('-' in token.text and token.text.strip('-'))):
+                if not (token.is_alpha or ('-' in token.text and token.text.strip('-')) or ('_' in token.text and token.text.strip('_'))):
                     continue
                 lemmas_for_current_token, mapped_sources = _extract_standard_token(
                     token, nlp, de_dictionary, lemma_override_rules, source_sentence, de_fix_genitive, 
@@ -518,7 +518,7 @@ def process_single_text(
                 else:
                     continue
             else:
-                if not (token.is_alpha or ('-' in token.text and token.text.strip('-'))):
+                if not (token.is_alpha or ('-' in token.text and token.text.strip('-')) or ('_' in token.text and token.text.strip('_'))):
                     continue
                 lemmas_for_current_token, mapped_sources = _extract_standard_token(
                     token, nlp, de_dictionary, lemma_override_rules, unit_text, de_fix_genitive, 

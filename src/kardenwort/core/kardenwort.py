@@ -895,6 +895,8 @@ def find_matching_override_in_context(rules, context_sentence):
     return None
 
 def get_overridden_lemma_for_word(initial_lemma, original_word, override_rules, context_sentence):
+    if not override_rules:
+        return initial_lemma
     priority1_rules = override_rules.get('priority1', {}).get((initial_lemma, original_word))
     matched_lemma1 = find_matching_override_in_context(priority1_rules, context_sentence)
     if matched_lemma1 is not None:
@@ -932,6 +934,8 @@ def get_overridden_lemma_for_word(initial_lemma, original_word, override_rules, 
     return initial_lemma
 
 def get_overridden_lemma_for_compound_part(initial_lemma, part, original_word, override_rules, context_sentence):
+    if not override_rules:
+        return initial_lemma
     priority1_rules = override_rules.get('priority1', {}).get((initial_lemma, original_word))
     matched_lemma1 = find_matching_override_in_context(priority1_rules, context_sentence)
     if matched_lemma1 is not None:
@@ -1368,7 +1372,25 @@ def _extract_standard_token(
     was_split = False
     is_special_token = token.like_url or token.like_email
 
-    if de_gcs and '-' in token.text and not is_special_token:
+    if '_' in token.text and not is_special_token and token.text.strip('_'):
+        was_split = True
+        sub_parts = token.text.split('_')
+        for part in sub_parts:
+            part = part.strip("()[]{}:;,.!?'\"`~-<> \t\r\n")
+            if not part:
+                continue
+            part_doc = nlp_model(part)
+            for sub_token in part_doc:
+                if not (sub_token.is_alpha or ('-' in sub_token.text and sub_token.text.strip('-'))):
+                    continue
+                sub_override_lemma, sub_smart_fallback = get_simplemma_lemmas(sub_token, getattr(nlp_model, 'lang', 'en'), args)
+                sub_spacy_lemma = correct_spacy_lemma(sub_token, de_dictionary, de_fix_genitive, override_lemma=sub_override_lemma, smart_fallback_lemma=sub_smart_fallback)
+                sub_default_lemma = format_lemma_capitalization(sub_token, sub_spacy_lemma, args)
+                sub_lemma = get_overridden_lemma_for_word(sub_default_lemma, sub_token.text, lemma_override_rules, sentence_text)
+                if sub_lemma:
+                    lemmas_for_current_token.append(sub_lemma)
+
+    elif de_gcs and '-' in token.text and not is_special_token:
         was_split = True
         hyphenated_parts = token.text.split('-')
 
@@ -1506,7 +1528,7 @@ def extract_lemmas_from_sentence(
             else:
                 continue
         else:
-            if not (token.is_alpha or ('-' in token.text and token.text.strip('-'))):
+            if not (token.is_alpha or ('-' in token.text and token.text.strip('-')) or ('_' in token.text and token.text.strip('_'))):
                 continue
             lemmas_for_current_token, _ = _extract_standard_token(
                 token, current_nlp, de_dictionary, lemma_override_rules, sentence_text, de_fix_genitive, 
@@ -1891,7 +1913,7 @@ class ParallelTextsStrategy(OperationalStrategy):
                     else:
                         continue
                 else:
-                    if not (token.is_alpha or ('-' in token.text and token.text.strip('-'))):
+                    if not (token.is_alpha or ('-' in token.text and token.text.strip('-')) or ('_' in token.text and token.text.strip('_'))):
                         continue
                     lemmas_for_current_token, mapped_sources = _extract_standard_token(
                         token, current_nlp, de_dictionary, lemma_override_rules, source_sentence, de_fix_genitive, 
@@ -2227,7 +2249,7 @@ class SingleTextStrategy(OperationalStrategy):
                     else:
                         continue
                 else:
-                    if not (token.is_alpha or ('-' in token.text and token.text.strip('-'))):
+                    if not (token.is_alpha or ('-' in token.text and token.text.strip('-')) or ('_' in token.text and token.text.strip('_'))):
                         continue
                     lemmas_for_current_token, mapped_sources = _extract_standard_token(
                         token, current_nlp, de_dictionary, lemma_override_rules, unit_text, de_fix_genitive, 

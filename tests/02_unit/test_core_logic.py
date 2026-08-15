@@ -729,6 +729,38 @@ def test_composite_identifier_decomposition_extract_standard_token():
     assert mapped_sources["case"] == "split_camel_case"
 
 
+def test_path_token_decomposition_and_numeric_filtering_extract_standard_token():
+    import argparse
+    from kardenwort.core import kardenwort as kw
+    from mock_nlp import MockPipelineNLP, MockToken
+
+    nlp = MockPipelineNLP('en')
+    tok = MockToken("openspec/changes/archive/20260815131120-token-mapping-inflected-expansion/", pos_="NOUN", is_alpha=False)
+    args = argparse.Namespace(language='en', de_force_noun_capitalization=False, preserve_composite_tokens=True)
+    
+    lemmas, mapped_sources = kw._extract_standard_token(
+        tok, nlp, de_dictionary=None, lemma_override_rules={},
+        sentence_text="Archived to: openspec/changes/archive/20260815131120-token-mapping-inflected-expansion/", de_fix_genitive=False,
+        de_gcs=False, gcs_automaton=None, de_gcs_pos_tags=[],
+        args=args, separable_verb_map={}, preserve_composite_tokens=True
+    )
+    
+    assert "openspec" in lemmas
+    assert "changes" in lemmas
+    assert "archive" in lemmas
+    assert "token" in lemmas
+    assert "mapping" in lemmas
+    assert "inflected" in lemmas
+    assert "expansion" in lemmas
+    # Ensure no trailing slashes on individual lemmas
+    assert "expansion/" not in lemmas
+    assert "archive/" not in lemmas
+    # Ensure numeric timestamp is omitted
+    assert "20260815131120" not in lemmas
+    # Ensure entire path is NOT preserved as a composite lemma
+    assert "openspec/changes/archive/20260815131120-token-mapping-inflected-expansion/" not in lemmas
+
+
 def test_composite_identifier_extract_lemmas_from_sentence():
     import argparse
     from kardenwort.core.kardenwort import extract_lemmas_from_sentence

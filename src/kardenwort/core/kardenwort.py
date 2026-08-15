@@ -1417,6 +1417,8 @@ def retokenize_hyphenated_compounds(doc: Any) -> Any:
     return doc
 
 def is_composite_token(text: str) -> bool:
+    if ('/' in text or '\\' in text) and any(c.isalpha() for c in text):
+        return True
     if '_' in text and text.strip('_'):
         return True
     if re.search(r'\w\.\w', text) and any(c.isalpha() for c in text):
@@ -1475,11 +1477,12 @@ def _extract_standard_token(
                 lemmas_for_current_token.append(processed_part_lemma)
 
     elif is_composite_token(token.text) and not is_special_token:
-        sub_parts = re.split(r'[_.-]', token.text)
+        is_path_token = '/' in token.text or '\\' in token.text
+        sub_parts = re.split(r'[_.\-/:#@\\]+', token.text)
         extracted_sub_lemmas = []
         for part in sub_parts:
-            part = part.strip("()[]{}:;,.!?'\"`~-<> \t\r\n")
-            if not part:
+            part = part.strip("()[]{}:;,.!?'\"`~-<>\\/ \t\r\n")
+            if not part or part.isdigit():
                 continue
             part_doc = nlp_model(part)
             for sub_token in part_doc:
@@ -1493,7 +1496,7 @@ def _extract_standard_token(
                     extracted_sub_lemmas.append(sub_lemma)
         if extracted_sub_lemmas:
             was_split = True
-            if preserve_composite or (de_gcs and de_gcs_preserve_compound_word):
+            if not is_path_token and (preserve_composite or (de_gcs and de_gcs_preserve_compound_word)):
                 lemmas_for_current_token.append(base_lemma)
             lemmas_for_current_token.extend(extracted_sub_lemmas)
 

@@ -774,8 +774,18 @@ def load_token_mappings(file_paths, case_sensitive=False, normalize_apostrophes=
             print(f"Error reading token mapping file {file_path}: {e}", file=sys.stderr)
     return mappings
 
-def is_complex_inflected_form(form, apostrophe_chars):
-    if any(c in form for c in apostrophe_chars) or '-' in form or ' ' in form:
+def is_complex_inflected_form(form: str, apostrophe_chars: Optional[Union[str, Tuple[str, ...], List[str], Set[str]]] = None) -> bool:
+    if apostrophe_chars:
+        if isinstance(apostrophe_chars, str):
+            apo_list = [c.strip().strip("'").strip('"') for c in apostrophe_chars.split(',') if c.strip()]
+            if any(c in form for c in apo_list if c):
+                return True
+        elif hasattr(apostrophe_chars, '__iter__'):
+            if any(c in form for c in apostrophe_chars):
+                return True
+    if any(c in form for c in ("'", "’", "‘", "`", "´", "ʼ")):
+        return True
+    if '-' in form or ' ' in form:
         return True
     return any(not c.isalnum() for c in form)
 

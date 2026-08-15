@@ -8,7 +8,7 @@ from kardenwort.core.kardenwort import (
     find_separable_verb_particle_pairs, find_token_mappings_in_text, _extract_mapped_token,
     _extract_standard_token, deduplicate_lemmas, sort_inflected_forms, get_lemma_sort_key,
     get_field_index_map, prepare_row_data, apply_field_mapping, extract_lemmas_from_sentence,
-    _write_deck_metadata, read_text_from_file, is_composite_token
+    _write_deck_metadata, read_text_from_file, is_composite_token, retokenize_hyphenated_compounds
 )
 
 nlp = None
@@ -168,7 +168,7 @@ def process_parallel_text_files(
                 final_deck = sentence_deck_name
 
         if source_sentence not in doc_cache:
-            doc_cache[source_sentence] = nlp(source_sentence)
+            doc_cache[source_sentence] = retokenize_hyphenated_compounds(nlp(source_sentence))
         doc = doc_cache[source_sentence]
         
         separable_verb_map = find_separable_verb_particle_pairs(doc)
@@ -468,7 +468,7 @@ def process_single_text(
         if is_multiline_from_file:
             unit_texts = [line.strip() for line in source_lines if line.strip()]
         else:
-            doc = nlp(source_text)
+            doc = retokenize_hyphenated_compounds(nlp(source_text))
             unit_texts = [sent.text for sent in doc.sents]
 
     strip_config = {'source': False, 'translations': False}
@@ -494,7 +494,7 @@ def process_single_text(
     for unit_index, unit_text in enumerate(unit_texts):
         lemmas_in_sentence = {}
         if unit_text not in doc_cache:
-            doc_cache[unit_text] = nlp(unit_text)
+            doc_cache[unit_text] = retokenize_hyphenated_compounds(nlp(unit_text))
         unit_doc = doc_cache[unit_text]
 
         current_deck = deck_map.get(unit_index, "")

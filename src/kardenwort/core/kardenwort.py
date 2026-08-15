@@ -1037,7 +1037,7 @@ def correct_spacy_lemma(token, de_dictionary, fix_genitive=False, override_lemma
     if override_lemma is not None:
         spacy_lemma = override_lemma
     elif smart_fallback_lemma is not None:
-        spacy_lemma = getattr(token, 'lemma_', str(token))
+        spacy_lemma = getattr(token, 'lemma_', None) or str(token)
         adopted = False
         if de_dictionary:
             if spacy_lemma not in de_dictionary and smart_fallback_lemma in de_dictionary:
@@ -1048,7 +1048,7 @@ def correct_spacy_lemma(token, de_dictionary, fix_genitive=False, override_lemma
             if spacy_lemma.lower() == token_text and smart_fallback_lemma.lower() != token_text:
                 spacy_lemma = smart_fallback_lemma
     else:
-        spacy_lemma = getattr(token, 'lemma_', str(token))
+        spacy_lemma = getattr(token, 'lemma_', None) or str(token)
 
     nlp_inst = globals().get('nlp')
     if (fix_genitive and
@@ -1342,10 +1342,62 @@ def _extract_mapped_token(match, nlp_model, de_dictionary, lemma_override_rules,
     mapped_sources = {lem: match['source_word'] for lem in lemmas}
     return lemmas, mapped_sources
 
+def retokenize_hyphenated_compounds(doc: Any) -> Any:
+    """Retokenize contiguous alphanumeric tokens separated by single hyphens into single composite tokens.
+    
+    Excludes purely numeric ranges (e.g. '2024-2026'), negative numbers ('-10'),
+    and standalone punctuation dashes ('--', '- item', 'A - B').
+    """
+    if doc is None or not hasattr(doc, 'retokenize') or not hasattr(doc, '__len__'):
+        return doc
+
+    spans_to_merge = []
+    i = 0
+    n = len(doc)
+    while i < n:
+        if i + 2 < n:
+            tok_i = doc[i]
+            tok_dash = doc[i + 1]
+            if getattr(tok_i, 'whitespace_', ' ') == '' and getattr(tok_dash, 'text', '') == '-' and getattr(tok_dash, 'whitespace_', ' ') == '':
+                j = i
+                while (
+                    j + 2 < n and 
+                    getattr(doc[j], 'whitespace_', ' ') == '' and 
+                    getattr(doc[j + 1], 'text', '') == '-' and 
+                    getattr(doc[j + 1], 'whitespace_', ' ') == ''
+                ):
+                    j += 2
+                
+                candidate_tokens = [doc[k] for k in range(i, j + 1, 2)]
+                has_alpha = any(any(c.isalpha() for c in getattr(tok, 'text', '')) for tok in candidate_tokens)
+                all_valid = all(
+                    getattr(tok, 'text', '') and not any(c in ' \t\r\n' for c in getattr(tok, 'text', ''))
+                    for tok in candidate_tokens
+                )
+                all_alnum = all(
+                    any(c.isalnum() for c in getattr(tok, 'text', ''))
+                    for tok in candidate_tokens
+                )
+
+                if has_alpha and all_valid and all_alnum:
+                    spans_to_merge.append(doc[i : j + 1])
+                    i = j + 1
+                    continue
+        i += 1
+
+    if spans_to_merge:
+        with doc.retokenize() as retokenizer:
+            for span in spans_to_merge:
+                retokenizer.merge(span)
+
+    return doc
+
 def is_composite_token(text: str) -> bool:
     if '_' in text and text.strip('_'):
         return True
     if re.search(r'[a-zA-Z0-9_]\.[a-zA-Z0-9_]', text) and any(c.isalpha() for c in text):
+        return True
+    if re.search(r'[a-zA-Z0-9_]-[a-zA-Z0-9_]', text) and any(c.isalpha() for c in text):
         return True
     return False
 
@@ -1380,28 +1432,7 @@ def _extract_standard_token(
     is_explicit_url = token.like_url and (token.text.startswith(('http://', 'https://', 'ftp://', 'www.')) or '://' in token.text)
     is_special_token = is_explicit_url or token.like_email
 
-    if is_composite_token(token.text) and not is_special_token:
-        sub_parts = re.split(r'[_.]', token.text)
-        extracted_sub_lemmas = []
-        for part in sub_parts:
-            part = part.strip("()[]{}:;,.!?'\"`~-<> \t\r\n")
-            if not part:
-                continue
-            part_doc = nlp_model(part)
-            for sub_token in part_doc:
-                if not (sub_token.is_alpha or ('-' in sub_token.text and sub_token.text.strip('-'))):
-                    continue
-                sub_override_lemma, sub_smart_fallback = get_simplemma_lemmas(sub_token, getattr(nlp_model, 'lang', 'en'), args)
-                sub_spacy_lemma = correct_spacy_lemma(sub_token, de_dictionary, de_fix_genitive, override_lemma=sub_override_lemma, smart_fallback_lemma=sub_smart_fallback)
-                sub_default_lemma = format_lemma_capitalization(sub_token, sub_spacy_lemma, args)
-                sub_lemma = get_overridden_lemma_for_word(sub_default_lemma, sub_token.text, lemma_override_rules, sentence_text)
-                if sub_lemma:
-                    extracted_sub_lemmas.append(sub_lemma)
-        if extracted_sub_lemmas:
-            was_split = True
-            lemmas_for_current_token.extend(extracted_sub_lemmas)
-
-    elif de_gcs and '-' in token.text and not is_special_token:
+    if de_gcs and '-' in token.text and not is_special_token:
         was_split = True
         hyphenated_parts = token.text.split('-')
 
@@ -1416,6 +1447,27 @@ def _extract_standard_token(
             processed_part_lemma = get_overridden_lemma_for_compound_part(initial_part_lemma, part, token.text, lemma_override_rules, sentence_text)
             if processed_part_lemma:
                 lemmas_for_current_token.append(processed_part_lemma)
+
+    elif is_composite_token(token.text) and not is_special_token:
+        sub_parts = re.split(r'[_.-]', token.text)
+        extracted_sub_lemmas = []
+        for part in sub_parts:
+            part = part.strip("()[]{}:;,.!?'\"`~-<> \t\r\n")
+            if not part:
+                continue
+            part_doc = nlp_model(part)
+            for sub_token in part_doc:
+                if not (sub_token.is_alpha or ('-' in sub_token.text and sub_token.text.strip('-')) or any(c.isalpha() for c in sub_token.text)):
+                    continue
+                sub_override_lemma, sub_smart_fallback = get_simplemma_lemmas(sub_token, getattr(nlp_model, 'lang', 'en'), args)
+                sub_spacy_lemma = correct_spacy_lemma(sub_token, de_dictionary, de_fix_genitive, override_lemma=sub_override_lemma, smart_fallback_lemma=sub_smart_fallback)
+                sub_default_lemma = format_lemma_capitalization(sub_token, sub_spacy_lemma, args)
+                sub_lemma = get_overridden_lemma_for_word(sub_default_lemma, sub_token.text, lemma_override_rules, sentence_text)
+                if sub_lemma:
+                    extracted_sub_lemmas.append(sub_lemma)
+        if extracted_sub_lemmas:
+            was_split = True
+            lemmas_for_current_token.extend(extracted_sub_lemmas)
 
     elif de_gcs and gcs_automaton and nlp_model.lang == 'de' and not is_special_token and len(token.text) > 3 and (token.pos_ in de_gcs_pos_tags):
         try:
@@ -1519,7 +1571,7 @@ def extract_lemmas_from_sentence(
     de_gcs_preserve_compound_word = gcs_config.de_gcs_preserve_compound_word
     de_gcs_skip_merge_fractions = gcs_config.de_gcs_skip_merge_fractions
 
-    sentence_doc = current_nlp(sentence_text)
+    sentence_doc = retokenize_hyphenated_compounds(current_nlp(sentence_text))
     final_lemmas = set()
 
     separable_verb_map = find_separable_verb_particle_pairs(sentence_doc)
@@ -1903,7 +1955,7 @@ class ParallelTextsStrategy(OperationalStrategy):
                     final_deck = sentence_deck_name
 
             if source_sentence not in doc_cache:
-                doc_cache[source_sentence] = current_nlp(source_sentence)
+                doc_cache[source_sentence] = retokenize_hyphenated_compounds(current_nlp(source_sentence))
             doc = doc_cache[source_sentence]
             
             separable_verb_map = find_separable_verb_particle_pairs(doc)
@@ -2208,7 +2260,7 @@ class SingleTextStrategy(OperationalStrategy):
             if is_multiline_from_file:
                 unit_texts = [line.strip() for line in source_lines if line.strip()]
             else:
-                doc = current_nlp(source_text)
+                doc = retokenize_hyphenated_compounds(current_nlp(source_text))
                 unit_texts = [sent.text for sent in doc.sents]
 
         strip_config = {'source': False}
@@ -2238,7 +2290,7 @@ class SingleTextStrategy(OperationalStrategy):
                 break
             lemmas_in_sentence = {}
             if unit_text not in doc_cache:
-                doc_cache[unit_text] = current_nlp(unit_text)
+                doc_cache[unit_text] = retokenize_hyphenated_compounds(current_nlp(unit_text))
             unit_doc = doc_cache[unit_text]
 
             current_deck = deck_map.get(unit_index, "")

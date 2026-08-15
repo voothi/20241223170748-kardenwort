@@ -872,3 +872,229 @@ def test_code_identifier_and_url_delimiter_tokenization():
     res_url = extract_lemmas_from_sentence("Visit https://spacy.io/api for docs.", {}, nlp, {}, {}, [], args=args)
     assert "https://spacy.io/api" in res_url
     assert "spacy" not in res_url  # URL was not chopped up into separate sub-tokens
+
+
+def test_retokenize_hyphenated_compounds():
+    import spacy
+    from kardenwort.core.kardenwort import retokenize_hyphenated_compounds
+
+    nlp_en = spacy.blank('en')
+    text = "In-Memory Execution and user-friendly and kebab-case-identifier and 2024-2026 and -15 and A - B and --dash"
+    doc = nlp_en(text)
+    doc = retokenize_hyphenated_compounds(doc)
+
+    tokens = [t.text for t in doc]
+    assert "In-Memory" in tokens
+    assert "user-friendly" in tokens
+    assert "kebab-case-identifier" in tokens
+    # Numeric range and standalone dashes must NOT be merged
+    assert "2024-2026" not in tokens
+    assert "2024" in tokens
+    assert "2026" in tokens
+    assert "A - B" not in tokens
+    assert "A" in tokens
+    assert "B" in tokens
+    assert "--dash" in tokens or ("--" in tokens and "dash" in tokens)
+
+
+def test_hyphenated_compound_lemma_extraction_and_source_form():
+    import spacy
+    from kardenwort.core.kardenwort import (
+        retokenize_hyphenated_compounds, _extract_standard_token, extract_lemmas_from_sentence
+    )
+
+    nlp_en = spacy.blank('en')
+    args = SimpleNamespace(
+        language='en',
+        de_gcs=False,
+        de_gcs_only_nouns=False,
+        de_gcs_combine_noun_modes=False,
+        de_fix_genitive=False,
+        de_gcs_mask_unknown_parts=False,
+        de_gcs_preserve_compound_word=False,
+        de_gcs_skip_merge_fractions=False,
+        simplemma_pos_aware=False,
+        simplemma_smart_fallback=False,
+        preserve_capitalization=False,
+        strip_garbage_characters='',
+        de_gcs_part_singularization='none',
+        de_gcs_pos_tags=[]
+    )
+
+    # 1. extract_lemmas_from_sentence on English hyphenated compounds
+    lemmas = extract_lemmas_from_sentence("C. Threaded In-Memory Execution", {}, nlp_en, {}, {}, [], args=args)
+    assert "in" in lemmas or "In" in lemmas
+    assert "memory" in lemmas or "Memory" in lemmas
+
+    # 2. _extract_standard_token verifies source_word_form mapping
+    doc = retokenize_hyphenated_compounds(nlp_en("In-Memory"))
+    token = doc[0]
+    extracted_lemmas, mapped_sources = _extract_standard_token(
+        token=token,
+        nlp_model=nlp_en,
+        de_dictionary=set(),
+        lemma_override_rules={},
+        sentence_text="In-Memory",
+        de_fix_genitive=False,
+        de_gcs=False,
+        gcs_automaton=None,
+        de_gcs_pos_tags=[],
+        args=args,
+        separable_verb_map={}
+    )
+
+    assert "in" in extracted_lemmas or "In" in extracted_lemmas
+    assert "memory" in extracted_lemmas or "Memory" in extracted_lemmas
+    for lem in extracted_lemmas:
+        assert mapped_sources[lem] == "In-Memory"
+
+    # 3. kebab-case constituent ordering
+    doc_kebab = retokenize_hyphenated_compounds(nlp_en("kebab-case-file"))
+    kebab_lemmas, kebab_mapped = _extract_standard_token(
+        token=doc_kebab[0],
+        nlp_model=nlp_en,
+        de_dictionary=set(),
+        lemma_override_rules={},
+        sentence_text="kebab-case-file",
+        de_fix_genitive=False,
+        de_gcs=False,
+        gcs_automaton=None,
+        de_gcs_pos_tags=[],
+        args=args,
+        separable_verb_map={}
+    )
+    assert kebab_lemmas == ["kebab", "case", "file"]
+    for lem in kebab_lemmas:
+        assert kebab_mapped[lem] == "kebab-case-file"
+
+
+def test_hyphenated_compound_process_parallel_text_files_tsv(tmp_path, monkeypatch):
+    import argparse
+    import spacy
+    from kardenwort.core.kardenwort import ParallelTextsStrategy, ExtractionConfig, ExecutionContext
+    import kardenwort.core.legacy_baselines as legacy_baselines
+
+    nlp_en = spacy.blank('en')
+    monkeypatch.setattr(legacy_baselines, 'nlp', nlp_en)
+    source_text = "C. Threaded In-Memory Execution\nuser-friendly kebab-case-name"
+    out_tsv = str(tmp_path / "vocab_hyphen.tsv")
+
+    args = argparse.Namespace(
+        deduplication_scope='global',
+        language='en',
+        combine_source_words=False,
+        combine_source_words_order='contractions_first',
+        combine_source_words_prefer_lowercase=True,
+        apostrophe_chars="', ’, ‘, `, ´, ʼ",
+        prefer_shortest_form=False,
+        strip_headers=None,
+        add_header=True,
+        add_source_word_col=True,
+        add_wordlist_col=True,
+        add_sentence_index_col=True,
+        stdout_print_output_basename=False,
+        de_gcs=False,
+        de_gcs_add_parts_to_wordlist=False,
+        de_gcs_pos_tags=[],
+        de_fix_genitive=False,
+        de_gcs_mask_unknown_parts=False,
+        de_gcs_preserve_compound_word=False,
+        de_gcs_skip_merge_fractions=False,
+        de_gcs_only_nouns=False,
+        de_gcs_combine_noun_modes=False,
+        de_gcs_part_singularization='none',
+        de_force_noun_capitalization=False,
+        force_proper_noun_capitalization=False,
+        anki_markdown_decks=False,
+        anki_create_subdecks=False,
+        anki_sentence_subdecks=False,
+        anki_context_use_br=False,
+        anki_parent_deck=None,
+        anki_deck_content=None,
+        context_window_type=None,
+        unit_type='sentence',
+        sentence_context_size=1,
+        source_text=source_text,
+        source_text_content=source_text,
+        output_file_path=out_tsv,
+        field_mapping={
+            'WordSource': 'lemma',
+            'WordSourceInflectedForm': 'source_word',
+            'SentenceSource': 'source_sentence'
+        },
+        anki_header=['WordSource', 'WordSourceInflectedForm', 'SentenceSource'],
+        header=['WordSource', 'WordSourceInflectedForm', 'SentenceSource']
+    )
+
+    config = ExtractionConfig.from_args(args)
+    ctx = ExecutionContext(nlp_model=nlp_en, simplemma_lang='en')
+    records = list(ParallelTextsStrategy().execute(config, ctx))
+
+    lemmas_map = {}
+    for r in records:
+        if r.row_data:
+            lemmas_map[r.row_data.get('lemma')] = r.row_data.get('source_word')
+
+    assert 'in' in lemmas_map or 'In' in lemmas_map
+    assert 'memory' in lemmas_map or 'Memory' in lemmas_map
+    in_key = 'in' if 'in' in lemmas_map else 'In'
+    mem_key = 'memory' if 'memory' in lemmas_map else 'Memory'
+    assert lemmas_map[in_key] == 'In-Memory'
+    assert lemmas_map[mem_key] == 'In-Memory'
+
+    assert 'user' in lemmas_map
+    assert 'friendly' in lemmas_map
+    assert lemmas_map['user'] == 'user-friendly'
+    assert lemmas_map['friendly'] == 'user-friendly'
+
+
+def test_hyphenated_compound_german_gcs_orthogonality():
+    import spacy
+    from kardenwort.core.kardenwort import (
+        retokenize_hyphenated_compounds, _extract_standard_token
+    )
+
+    try:
+        nlp_de = spacy.load('de_core_news_sm')
+    except Exception:
+        nlp_de = spacy.blank('de')
+
+    args_gcs_off = SimpleNamespace(
+        language='de',
+        de_gcs=False,
+        de_gcs_only_nouns=False,
+        de_gcs_combine_noun_modes=False,
+        de_fix_genitive=False,
+        de_gcs_mask_unknown_parts=False,
+        de_gcs_preserve_compound_word=False,
+        de_gcs_skip_merge_fractions=False,
+        simplemma_pos_aware=False,
+        simplemma_smart_fallback=False,
+        preserve_capitalization=False,
+        strip_garbage_characters='',
+        de_gcs_part_singularization='none',
+        de_gcs_pos_tags=[]
+    )
+
+    doc = retokenize_hyphenated_compounds(nlp_de("Projekt-Manager"))
+    token = doc[0]
+    lemmas_off, mapped_off = _extract_standard_token(
+        token=token,
+        nlp_model=nlp_de,
+        de_dictionary=set(),
+        lemma_override_rules={},
+        sentence_text="Projekt-Manager",
+        de_fix_genitive=False,
+        de_gcs=False,
+        gcs_automaton=None,
+        de_gcs_pos_tags=[],
+        args=args_gcs_off,
+        separable_verb_map={}
+    )
+
+    assert "Projekt" in lemmas_off or "projekt" in lemmas_off
+    assert "Manager" in lemmas_off or "manager" in lemmas_off
+    for lem in lemmas_off:
+        assert mapped_off[lem] == "Projekt-Manager"
+
+

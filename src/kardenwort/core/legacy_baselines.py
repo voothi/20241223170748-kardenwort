@@ -8,7 +8,7 @@ from kardenwort.core.kardenwort import (
     find_separable_verb_particle_pairs, find_token_mappings_in_text, _extract_mapped_token,
     _extract_standard_token, deduplicate_lemmas, sort_inflected_forms, get_lemma_sort_key,
     get_field_index_map, prepare_row_data, apply_field_mapping, extract_lemmas_from_sentence,
-    _write_deck_metadata, read_text_from_file
+    _write_deck_metadata, read_text_from_file, is_composite_token
 )
 
 nlp = None
@@ -189,7 +189,7 @@ def process_parallel_text_files(
                 else:
                     continue
             else:
-                if not (token.is_alpha or ('-' in token.text and token.text.strip('-')) or ('_' in token.text and token.text.strip('_'))):
+                if not (token.is_alpha or ('-' in token.text and token.text.strip('-')) or is_composite_token(token.text)):
                     continue
                 lemmas_for_current_token, mapped_sources = _extract_standard_token(
                     token, nlp, de_dictionary, lemma_override_rules, source_sentence, de_fix_genitive, 
@@ -518,7 +518,7 @@ def process_single_text(
                 else:
                     continue
             else:
-                if not (token.is_alpha or ('-' in token.text and token.text.strip('-')) or ('_' in token.text and token.text.strip('_'))):
+                if not (token.is_alpha or ('-' in token.text and token.text.strip('-')) or is_composite_token(token.text)):
                     continue
                 lemmas_for_current_token, mapped_sources = _extract_standard_token(
                     token, nlp, de_dictionary, lemma_override_rules, unit_text, de_fix_genitive, 

@@ -59,7 +59,7 @@ def process_parallel_text_files(
 
     lemma_data = {}
     if args.deduplication_scope == 'global':
-        lemma_data = {'lemmas': {}, 'info': {}}
+        lemma_data = {'lemmas': {}, 'info': {}, 'raw_source_words': {}}
     else:
         lemma_data = []
 
@@ -209,12 +209,15 @@ def process_parallel_text_files(
                     continue
                 
                 cur_source_word = mapped_lemma_sources.get(lemma, token.text)
+                cur_raw_source_word = token_mappings_matches[token.i]['source_word'] if (token.i in mapped_tokens and token.i in token_mappings_matches) else cur_source_word
                 if getattr(args, 'strip_garbage_characters', ''):
                     cur_source_word = cur_source_word.strip(args.strip_garbage_characters)
+                    cur_raw_source_word = cur_raw_source_word.strip(args.strip_garbage_characters)
                 
                 data_entry = {
                     'lemma': lemma,
                     'source_word': cur_source_word,
+                    'raw_source_word': cur_raw_source_word,
                     'sentence_index': content_line_idx,
                     'source_sentence': source_sentence,
                     'deck_name': final_deck
@@ -224,14 +227,21 @@ def process_parallel_text_files(
                     is_new = lemma not in lemma_data['lemmas']
                     if is_new:
                         lemma_data['lemmas'][lemma] = cur_source_word
+                        lemma_data['raw_source_words'][lemma] = cur_raw_source_word
                         lemma_data['info'][lemma] = (content_line_idx, source_sentence, final_deck)
                     elif getattr(args, 'combine_source_words', False):
                         existing_forms = [s.strip() for s in lemma_data['lemmas'][lemma].split(',') if s.strip()]
                         if cur_source_word not in existing_forms:
                             existing_forms.append(cur_source_word)
                         lemma_data['lemmas'][lemma] = ", ".join(sort_inflected_forms(existing_forms, apo_cfg, order_cfg, prefer_lowercase_cfg))
+                        if 'raw_source_words' in lemma_data:
+                            existing_raw = [s.strip() for s in lemma_data['raw_source_words'].get(lemma, '').split(',') if s.strip()]
+                            if cur_raw_source_word not in existing_raw:
+                                existing_raw.append(cur_raw_source_word)
+                            lemma_data['raw_source_words'][lemma] = ", ".join(sort_inflected_forms(existing_raw, apo_cfg, order_cfg, prefer_lowercase_cfg))
                     elif args.prefer_shortest_form and len(cur_source_word) < len(lemma_data['lemmas'][lemma]):
                         lemma_data['lemmas'][lemma] = cur_source_word
+                        lemma_data['raw_source_words'][lemma] = cur_raw_source_word
                         lemma_data['info'][lemma] = (content_line_idx, source_sentence, final_deck)
 
                 elif args.deduplication_scope == 'sentence':
@@ -243,6 +253,10 @@ def process_parallel_text_files(
                             if cur_source_word not in existing_forms:
                                 existing_forms.append(cur_source_word)
                             lemmas_in_sentence[lemma]['source_word'] = ", ".join(sort_inflected_forms(existing_forms, apo_cfg, order_cfg, prefer_lowercase_cfg))
+                            existing_raw = [s.strip() for s in lemmas_in_sentence[lemma]['raw_source_word'].split(',') if s.strip()]
+                            if cur_raw_source_word not in existing_raw:
+                                existing_raw.append(cur_raw_source_word)
+                            lemmas_in_sentence[lemma]['raw_source_word'] = ", ".join(sort_inflected_forms(existing_raw, apo_cfg, order_cfg, prefer_lowercase_cfg))
                     else:
                         dedup_key = (lemma, cur_source_word.lower())
                         if dedup_key not in lemmas_in_sentence:
@@ -289,12 +303,14 @@ def process_parallel_text_files(
                     sentence_index, source_sentence_for_lemmas, deck_name = lemma_data['info'].get(word, (-1, "", ""))
                     if sentence_index == -1: continue
                     source_word_col_val = lemma_data['lemmas'].get(word, '')
+                    raw_source_word_col_val = lemma_data.get('raw_source_words', {}).get(word, source_word_col_val)
                 else: # sentence or none
                     word = item['lemma']
                     sentence_index = item['sentence_index']
                     source_sentence_for_lemmas = item['source_sentence']
                     deck_name = item['deck_name']
                     source_word_col_val = item['source_word']
+                    raw_source_word_col_val = item.get('raw_source_word', source_word_col_val)
 
                 context_start_index, context_end_index = max(0, sentence_index - sentence_context_size), sentence_index + sentence_context_size + 1
                 
@@ -324,6 +340,7 @@ def process_parallel_text_files(
                     args,
                     lemma=word,
                     source_word=source_word_col_val,
+                    raw_source_word=raw_source_word_col_val,
                     sentence_index=str(sentence_index + 1).zfill(6),
                     source_sentence=source_sentence_for_tsv,
                     source_context_left=context_join_str.join(line.strip() for line in display_source_content_lines[context_start_index:sentence_index]),
@@ -481,7 +498,7 @@ def process_single_text(
 
     lemma_data = {}
     if args.deduplication_scope == 'global':
-        lemma_data = {'lemmas': {}, 'info': {}}
+        lemma_data = {'lemmas': {}, 'info': {}, 'raw_source_words': {}}
     else:
         lemma_data = []
 
@@ -538,12 +555,15 @@ def process_single_text(
                     continue
 
                 cur_source_word = mapped_lemma_sources.get(lemma, token.text)
+                cur_raw_source_word = token_mappings_matches[token.i]['source_word'] if (token.i in mapped_tokens and token.i in token_mappings_matches) else cur_source_word
                 if getattr(args, 'strip_garbage_characters', ''):
                     cur_source_word = cur_source_word.strip(args.strip_garbage_characters)
+                    cur_raw_source_word = cur_raw_source_word.strip(args.strip_garbage_characters)
 
                 data_entry = {
                     'lemma': lemma,
                     'source_word': cur_source_word,
+                    'raw_source_word': cur_raw_source_word,
                     'sentence_index': unit_index,
                     'source_sentence': unit_text,
                     'deck_name': current_deck
@@ -553,14 +573,21 @@ def process_single_text(
                     is_new = lemma not in lemma_data['lemmas']
                     if is_new:
                         lemma_data['lemmas'][lemma] = cur_source_word
+                        lemma_data['raw_source_words'][lemma] = cur_raw_source_word
                         lemma_data['info'][lemma] = (unit_index, unit_text, current_deck)
                     elif getattr(args, 'combine_source_words', False):
                         existing_forms = [s.strip() for s in lemma_data['lemmas'][lemma].split(',') if s.strip()]
                         if cur_source_word not in existing_forms:
                             existing_forms.append(cur_source_word)
                         lemma_data['lemmas'][lemma] = ", ".join(sort_inflected_forms(existing_forms, apo_cfg, order_cfg, prefer_lowercase_cfg))
+                        if 'raw_source_words' in lemma_data:
+                            existing_raw = [s.strip() for s in lemma_data['raw_source_words'].get(lemma, '').split(',') if s.strip()]
+                            if cur_raw_source_word not in existing_raw:
+                                existing_raw.append(cur_raw_source_word)
+                            lemma_data['raw_source_words'][lemma] = ", ".join(sort_inflected_forms(existing_raw, apo_cfg, order_cfg, prefer_lowercase_cfg))
                     elif args.prefer_shortest_form and len(cur_source_word) < len(lemma_data['lemmas'][lemma]):
                         lemma_data['lemmas'][lemma] = cur_source_word
+                        lemma_data['raw_source_words'][lemma] = cur_raw_source_word
                         lemma_data['info'][lemma] = (unit_index, unit_text, current_deck)
                         
                 elif args.deduplication_scope == 'sentence':
@@ -572,6 +599,10 @@ def process_single_text(
                             if cur_source_word not in existing_forms:
                                 existing_forms.append(cur_source_word)
                             lemmas_in_sentence[lemma]['source_word'] = ", ".join(sort_inflected_forms(existing_forms, apo_cfg, order_cfg, prefer_lowercase_cfg))
+                            existing_raw = [s.strip() for s in lemmas_in_sentence[lemma]['raw_source_word'].split(',') if s.strip()]
+                            if cur_raw_source_word not in existing_raw:
+                                existing_raw.append(cur_raw_source_word)
+                            lemmas_in_sentence[lemma]['raw_source_word'] = ", ".join(sort_inflected_forms(existing_raw, apo_cfg, order_cfg, prefer_lowercase_cfg))
                     else:
                         dedup_key = (lemma, cur_source_word.lower())
                         if dedup_key not in lemmas_in_sentence:
@@ -662,12 +693,14 @@ def process_single_text(
                 unit_index, source_sentence_for_lemmas, deck_name = lemma_data['info'].get(word, (-1, "", ""))
                 if unit_index == -1: continue
                 source_word_col_val = lemma_data['lemmas'].get(word, '')
+                raw_source_word_col_val = lemma_data.get('raw_source_words', {}).get(word, source_word_col_val)
             else: # sentence or none
                 word = item['lemma']
                 unit_index = item['sentence_index']
                 source_sentence_for_lemmas = item['source_sentence']
                 deck_name = item['deck_name']
                 source_word_col_val = item['source_word']
+                raw_source_word_col_val = item.get('raw_source_word', source_word_col_val)
             
             source_sentence_for_tsv = display_unit_texts[unit_index].strip()
             context_start_index = max(0, unit_index - sentence_context_size)
@@ -695,6 +728,7 @@ def process_single_text(
                 args,
                 lemma=word,
                 source_word=source_word_col_val,
+                raw_source_word=raw_source_word_col_val,
                 source_sentence=source_sentence_for_tsv,
                 source_context_left=context_join_str.join(u.strip() for u in display_unit_texts[context_start_index:unit_index]),
                 source_context_right=context_join_str.join(u.strip() for u in display_unit_texts[unit_index + 1:context_end_index]),

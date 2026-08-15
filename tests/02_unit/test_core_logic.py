@@ -521,6 +521,49 @@ def test_find_token_mappings_in_text():
     # check z. B.
     assert "z. B." in [m['source_word'] for m in matches.values()]
 
+def test_extract_mapped_token_inflected_expansion():
+    import spacy
+    import argparse
+    import kardenwort.core.kardenwort as kw
+    
+    nlp_en = spacy.blank("en")
+    
+    # English contraction: isn't -> is, not
+    match_en = {
+        'source_word': "isn't",
+        'lemmas': ["is", "not"]
+    }
+    args_en = argparse.Namespace(
+        token_mappings_lemmatize=False,
+        combine_source_words_order='contractions_first',
+        combine_source_words_prefer_lowercase=True,
+        apostrophe_chars="', ’, ‘, `, ´, ʼ"
+    )
+    lemmas_en, mapped_sources_en = kw._extract_mapped_token(
+        match_en, nlp_en, None, {}, args_en, "This ensures isn't properly generates.", False
+    )
+    assert lemmas_en == ["is", "not"]
+    assert mapped_sources_en["is"] == "isn't, is"
+    assert mapped_sources_en["not"] == "isn't, not"
+    
+    # German abbreviation: z. B. -> zum, Beispiel
+    match_de = {
+        'source_word': "z. B.",
+        'lemmas': ["zum", "Beispiel"]
+    }
+    args_de = argparse.Namespace(
+        token_mappings_lemmatize=False,
+        combine_source_words_order='contractions_first',
+        combine_source_words_prefer_lowercase=True,
+        apostrophe_chars="', ’, ‘, `, ´, ʼ"
+    )
+    lemmas_de, mapped_sources_de = kw._extract_mapped_token(
+        match_de, nlp_en, None, {}, args_de, "Wir gehen z. B. in den Park.", False
+    )
+    assert lemmas_de == ["zum", "Beispiel"]
+    assert mapped_sources_de["zum"] == "z. B., zum"
+    assert mapped_sources_de["Beispiel"] == "z. B., Beispiel"
+
 def test_sentence_deduplication_preserves_multiple_source_words():
     import kardenwort.core.kardenwort as kw
     import argparse

@@ -663,3 +663,64 @@ def test_process_lemmas_per_line_invariants(mock_nlp, default_args, tmp_path, mo
     assert out_lines[0] == "Haus Auto Hund"
     assert out_lines[2] == "Eins Zwei Drei"
 
+
+def test_token_mapping_inflected_expansion_and_quotation(mock_nlp, tmp_path, default_args):
+    """
+    Test that token mappings (contractions) expand inflected forms (e.g. isn't -> isn't, is / isn't, not)
+    while strictly preserving the verbatim token in the Quotation field (isn't).
+    """
+    source_text = "This ensures isn't properly generates.\n"
+    import copy
+    mock_nlp.lang = 'en'
+    args = copy.deepcopy(default_args)
+    args.language = 'en'
+    args.type = 'word'
+    args.token_mappings_enabled = True
+    args.token_mappings_lemmatize = True
+    args.token_mappings = {"isn't": ["is", "not"]}
+    args.combine_source_words = False
+    args.deduplication_scope = 'sentence'
+    
+    override_rules = {
+        'priority1': {}, 'priority1_regex': [],
+        'priority2': {
+            'is': [('be', None)],
+        },
+        'priority2_regex': [], 'priority3': {}
+    }
+
+    custom_field_mapping = {
+        "Quotation": "source_word",
+        "WordSource": "lemma",
+        "WordSource2": "lemma",
+        "WordSourceInflectedForm": "source_word",
+        "WordSourceInflectedForm2": "source_word"
+    }
+
+    out_path = run_pipeline_parallel(
+        args,
+        tmp_path,
+        output_filename="result.tsv",
+        source_text=source_text,
+        token_mappings={"isn't": ["is", "not"]},
+        lemma_override_rules=override_rules,
+        field_mapping=custom_field_mapping
+    )
+    
+    records = read_tsv_records(out_path)
+    
+    be_recs = [r for r in records if r.get("WordSource") == "be"]
+    not_recs = [r for r in records if r.get("WordSource") == "not"]
+    
+    assert len(be_recs) == 1
+    assert len(not_recs) == 1
+    
+    assert be_recs[0]["Quotation"] == "isn't"
+    assert be_recs[0]["WordSourceInflectedForm"] == "isn't, is"
+    assert be_recs[0]["WordSourceInflectedForm2"] == "isn't, is"
+    
+    assert not_recs[0]["Quotation"] == "isn't"
+    assert not_recs[0]["WordSourceInflectedForm"] == "isn't, not"
+    assert not_recs[0]["WordSourceInflectedForm2"] == "isn't, not"
+
+

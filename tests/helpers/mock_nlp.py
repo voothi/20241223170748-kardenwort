@@ -49,8 +49,8 @@ class MockToken:
         self.pos_ = pos_
         self.tag_ = tag_
         self.dep_ = dep_
-        self.i = idx if idx is not None else i
-        self.idx = self.i
+        self.i = i
+        self.idx = idx if idx is not None else i
         self.whitespace_ = whitespace_
         self._head_i = head_i
         self.head = self
@@ -91,9 +91,11 @@ class MockPipelineNLP:
         self.lang = lang
         
     def __call__(self, text: str) -> MockDoc:
-        raw_words = text.split()
+        import re
         tokens = []
-        for idx, w in enumerate(raw_words):
+        for idx, match in enumerate(re.finditer(r'\S+', text)):
+            w = match.group(0)
             is_start = (idx == 0)
-            tokens.append(MockToken(w, i=idx, is_sent_start=is_start))
+            tokens.append(MockToken(w, i=idx, idx=match.start(), is_sent_start=is_start))
         return MockDoc(tokens, text)
+

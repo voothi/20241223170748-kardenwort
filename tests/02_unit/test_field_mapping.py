@@ -101,3 +101,24 @@ def test_get_anki_csv_header_override():
     
     f_map = get_field_index_map(header_override=custom_header)
     assert f_map == {"A": 0, "B": 1, "C": 2}
+
+def test_apply_field_mapping_preserves_raw_source_word_for_quotation(field_setup):
+    _, field_index_map, empty_row = field_setup
+    csv_row = list(empty_row)
+    row_data = {
+        "source_word": "isn't, is",
+        "raw_source_word": "isn't",
+        "lemma": "be"
+    }
+    field_mapping = {
+        "Quotation": "source_word",
+        "WordSource": "lemma",
+        "WordSourceInflectedForm": "source_word",
+        "WordSourceInflectedForm2": "source_word"
+    }
+    apply_field_mapping(csv_row, row_data, field_mapping, field_index_map)
+    assert csv_row[field_index_map["Quotation"]] == "isn't"
+    assert csv_row[field_index_map["WordSource"]] == "be"
+    assert csv_row[field_index_map["WordSourceInflectedForm"]] == "isn't, is"
+    assert csv_row[field_index_map["WordSourceInflectedForm2"]] == "isn't, is"
+

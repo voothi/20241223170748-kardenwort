@@ -788,6 +788,8 @@ def is_complex_inflected_form(form: str, apostrophe_chars: Optional[Union[str, T
         return True
     if '-' in form or ' ' in form:
         return True
+    if len(form) >= 2 and form.isupper():
+        return True
     return any(not c.isalnum() for c in form)
 
 def sort_inflected_forms(

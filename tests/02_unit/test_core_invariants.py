@@ -198,6 +198,15 @@ def test_sort_inflected_forms_invariants(config):
     assert sorted_contractions[1] in ["don't", "do not"]
     assert sorted_contractions[2] == "did"
 
+    # Check uppercase acronyms sort before regular expanded words
+    acronym_forms = ["user", "UI"]
+    sorted_acronyms = sort_inflected_forms(acronym_forms, apostrophe_chars=apostrophes, order='contractions_first', prefer_lowercase=prefer_lower)
+    assert sorted_acronyms == ["UI", "user"]
+
+    acronym_forms_interface = ["interface", "UI"]
+    sorted_acronyms_interface = sort_inflected_forms(acronym_forms_interface, apostrophe_chars=apostrophes, order='contractions_first', prefer_lowercase=prefer_lower)
+    assert sorted_acronyms_interface == ["UI", "interface"]
+
 
 @pytest.mark.parametrize("config", generate_capitalization_matrix())
 def test_format_lemma_capitalization_invariants(config, mock_nlp):

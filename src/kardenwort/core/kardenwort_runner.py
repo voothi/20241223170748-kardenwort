@@ -174,6 +174,9 @@ def get_script_args(args, python_path, workspace_path, config, anki_mapping):
     if args.prefer_shortest_form:
         base_args.append("--prefer-shortest-form")
 
+    if getattr(args, 'preserve_composite_tokens', False):
+        base_args.append("--preserve-composite-tokens")
+
     if args.anki_create_subdecks:
         base_args.append("--anki-create-subdecks")
         if args.anki_parent_deck:
@@ -427,6 +430,7 @@ def main():
     parser.add_argument("--text", type=str, help="Directly pass a text string for 'single' mode processing, bypassing the default text1.txt file.")
     parser.add_argument("--multi-text", action="store_true", help="Enable multi-text parsing from a single text input source using '---' as a separator.")
     parser.add_argument("--prefer-shortest-form", action="store_true", help="When deduplicating globally, prefer the shortest word form of a lemma, even if it appears later in the text. Default is to keep the first occurrence.")
+    parser.add_argument("--preserve-composite-tokens", action="store_true", help="Keep the whole composite token / hyphenated compound lemma in addition to decomposed sub-lemmas.")
     parser.add_argument("--de-gcs", action='store_true', help="Enable German Compound Splitting (only effective when --language is 'de').")
     parser.add_argument("--de-gcs-pos-tags", nargs='+', help="Specify POS tags for GCS (e.g., 'NOUN PROPN' or '!VERB').")
     parser.add_argument("--de-gcs-split-mode", type=str, choices=["only-nouns", "any", "combined"], help="Specify the rule set for GCS dissection.")

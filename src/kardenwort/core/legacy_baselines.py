@@ -25,6 +25,7 @@ def process_parallel_text_files(
     de_fix_genitive = kwargs.get('de_fix_genitive', False)
     de_gcs_mask_unknown_parts = kwargs.get('de_gcs_mask_unknown_parts', False)
     de_gcs_preserve_compound_word = kwargs.get('de_gcs_preserve_compound_word', False)
+    preserve_composite_tokens = kwargs.get('preserve_composite_tokens', getattr(args, 'preserve_composite_tokens', False))
     de_gcs_skip_merge_fractions = kwargs.get('de_gcs_skip_merge_fractions', False)
     sentence_lemmas_cache = {}
     doc_cache = {}
@@ -198,7 +199,8 @@ def process_parallel_text_files(
                     de_gcs_combine_noun_modes=de_gcs_combine_noun_modes,
                     de_gcs_mask_unknown_parts=de_gcs_mask_unknown_parts,
                     de_gcs_preserve_compound_word=de_gcs_preserve_compound_word,
-                    de_gcs_skip_merge_fractions=de_gcs_skip_merge_fractions
+                    de_gcs_skip_merge_fractions=de_gcs_skip_merge_fractions,
+                    preserve_composite_tokens=preserve_composite_tokens
                 )
                 mapped_lemma_sources.update(mapped_sources)
 
@@ -385,6 +387,7 @@ def process_single_text(
     de_fix_genitive = kwargs.get('de_fix_genitive', False)
     de_gcs_mask_unknown_parts = kwargs.get('de_gcs_mask_unknown_parts', False)
     de_gcs_preserve_compound_word = kwargs.get('de_gcs_preserve_compound_word', False)
+    preserve_composite_tokens = kwargs.get('preserve_composite_tokens', getattr(args, 'preserve_composite_tokens', False))
     de_gcs_skip_merge_fractions = kwargs.get('de_gcs_skip_merge_fractions', False)
 
     is_multiline_from_file = '\n' in source_text.strip()
@@ -544,7 +547,8 @@ def process_single_text(
                     de_gcs_combine_noun_modes=de_gcs_combine_noun_modes,
                     de_gcs_mask_unknown_parts=de_gcs_mask_unknown_parts,
                     de_gcs_preserve_compound_word=de_gcs_preserve_compound_word,
-                    de_gcs_skip_merge_fractions=de_gcs_skip_merge_fractions
+                    de_gcs_skip_merge_fractions=de_gcs_skip_merge_fractions,
+                    preserve_composite_tokens=preserve_composite_tokens
                 )
                 mapped_lemma_sources.update(mapped_sources)
 

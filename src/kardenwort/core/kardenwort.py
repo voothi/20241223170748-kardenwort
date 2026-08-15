@@ -310,6 +310,7 @@ class ExtractionConfig:
     combine_source_words_order: str = "contractions_first"
     combine_source_words_prefer_lowercase: bool = True
     prefer_shortest_form: bool = False
+    preserve_composite_tokens: bool = False
     strip_headers: Optional[Union[List[str], Tuple[str, ...], str, bool]] = None
     de_force_noun_capitalization: bool = True
     force_proper_noun_capitalization: bool = True
@@ -1431,7 +1432,8 @@ def _extract_standard_token(
     de_gcs_combine_noun_modes=False,
     de_gcs_mask_unknown_parts=False,
     de_gcs_preserve_compound_word=False,
-    de_gcs_skip_merge_fractions=False
+    de_gcs_skip_merge_fractions=False,
+    preserve_composite_tokens=False
 ):
 
     lemmas_for_current_token = []
@@ -1454,12 +1456,13 @@ def _extract_standard_token(
     was_split = False
     is_explicit_url = token.like_url and (token.text.startswith(('http://', 'https://', 'ftp://', 'www.')) or '://' in token.text)
     is_special_token = is_explicit_url or token.like_email
+    preserve_composite = preserve_composite_tokens or getattr(args, 'preserve_composite_tokens', False)
 
     if de_gcs and '-' in token.text and not is_special_token:
         was_split = True
         hyphenated_parts = token.text.split('-')
 
-        if de_gcs_preserve_compound_word:
+        if de_gcs_preserve_compound_word or preserve_composite:
             lemmas_for_current_token.append(base_lemma)
 
         for part in hyphenated_parts:
@@ -1490,6 +1493,8 @@ def _extract_standard_token(
                     extracted_sub_lemmas.append(sub_lemma)
         if extracted_sub_lemmas:
             was_split = True
+            if preserve_composite or (de_gcs and de_gcs_preserve_compound_word):
+                lemmas_for_current_token.append(base_lemma)
             lemmas_for_current_token.extend(extracted_sub_lemmas)
 
     elif de_gcs and gcs_automaton and nlp_model.lang == 'de' and not is_special_token and len(token.text) > 3 and (token.pos_ in de_gcs_pos_tags):
@@ -1527,7 +1532,7 @@ def _extract_standard_token(
 
             if len(split_components) > 1:
                 was_split = True
-                if de_gcs_preserve_compound_word:
+                if de_gcs_preserve_compound_word or preserve_composite:
                     lemmas_for_current_token.append(base_lemma)
 
                 for raw_component in set(split_components):
@@ -1593,6 +1598,7 @@ def extract_lemmas_from_sentence(
     de_gcs_mask_unknown_parts = gcs_config.de_gcs_mask_unknown_parts
     de_gcs_preserve_compound_word = gcs_config.de_gcs_preserve_compound_word
     de_gcs_skip_merge_fractions = gcs_config.de_gcs_skip_merge_fractions
+    preserve_composite_tokens = getattr(extraction_config, 'preserve_composite_tokens', False) if extraction_config is not None else getattr(args, 'preserve_composite_tokens', False)
 
     sentence_doc = retokenize_hyphenated_compounds(current_nlp(sentence_text))
     final_lemmas = set()
@@ -1623,7 +1629,8 @@ def extract_lemmas_from_sentence(
                 de_gcs_combine_noun_modes=de_gcs_combine_noun_modes,
                 de_gcs_mask_unknown_parts=de_gcs_mask_unknown_parts,
                 de_gcs_preserve_compound_word=de_gcs_preserve_compound_word,
-                de_gcs_skip_merge_fractions=de_gcs_skip_merge_fractions
+                de_gcs_skip_merge_fractions=de_gcs_skip_merge_fractions,
+                preserve_composite_tokens=preserve_composite_tokens
             )
 
         deduplicated_lemmas = deduplicate_lemmas(lemmas_for_current_token, extraction_config)
@@ -1834,6 +1841,7 @@ class ParallelTextsStrategy(OperationalStrategy):
         de_fix_genitive = getattr(config, 'de_fix_genitive', False)
         de_gcs_mask_unknown_parts = getattr(config, 'de_gcs_mask_unknown_parts', False)
         de_gcs_preserve_compound_word = getattr(config, 'de_gcs_preserve_compound_word', False)
+        preserve_composite_tokens = getattr(config, 'preserve_composite_tokens', False)
         de_gcs_skip_merge_fractions = getattr(config, 'de_gcs_skip_merge_fractions', False)
         token_mappings_val = getattr(config, 'token_mappings', {})
         classifications_val = getattr(config, 'classifications', {})
@@ -2008,7 +2016,8 @@ class ParallelTextsStrategy(OperationalStrategy):
                         de_gcs_combine_noun_modes=de_gcs_combine_noun_modes,
                         de_gcs_mask_unknown_parts=de_gcs_mask_unknown_parts,
                         de_gcs_preserve_compound_word=de_gcs_preserve_compound_word,
-                        de_gcs_skip_merge_fractions=de_gcs_skip_merge_fractions
+                        de_gcs_skip_merge_fractions=de_gcs_skip_merge_fractions,
+                        preserve_composite_tokens=preserve_composite_tokens
                     )
                     mapped_lemma_sources.update(mapped_sources)
 
@@ -2197,6 +2206,7 @@ class SingleTextStrategy(OperationalStrategy):
         de_fix_genitive = getattr(config, 'de_fix_genitive', False)
         de_gcs_mask_unknown_parts = getattr(config, 'de_gcs_mask_unknown_parts', False)
         de_gcs_preserve_compound_word = getattr(config, 'de_gcs_preserve_compound_word', False)
+        preserve_composite_tokens = getattr(config, 'preserve_composite_tokens', False)
         de_gcs_skip_merge_fractions = getattr(config, 'de_gcs_skip_merge_fractions', False)
         token_mappings_val = getattr(config, 'token_mappings', {})
         classifications_val = getattr(config, 'classifications', {})
@@ -2361,7 +2371,8 @@ class SingleTextStrategy(OperationalStrategy):
                         de_gcs_combine_noun_modes=de_gcs_combine_noun_modes,
                         de_gcs_mask_unknown_parts=de_gcs_mask_unknown_parts,
                         de_gcs_preserve_compound_word=de_gcs_preserve_compound_word,
-                        de_gcs_skip_merge_fractions=de_gcs_skip_merge_fractions
+                        de_gcs_skip_merge_fractions=de_gcs_skip_merge_fractions,
+                        preserve_composite_tokens=preserve_composite_tokens
                     )
                     mapped_lemma_sources.update(mapped_sources)
 
@@ -2938,6 +2949,7 @@ def main():
     lemmatization_group.add_argument("--force-proper-noun-capitalization", action="store_true", help="Force capitalization of proper noun lemmas (PROPN).")
     lemmatization_group.add_argument("--deduplication-scope", choices=['global', 'sentence', 'none'], default='global', help="Set the scope for lemma deduplication. 'global': unique lemmas across the entire text. 'sentence': unique lemmas within each sentence. 'none': no duplication, one entry per word occurrence.")
     lemmatization_group.add_argument("--prefer-shortest-form", action="store_true", help="When deduplicating globally, prefer the shortest word form of a lemma, even if it appears later in the text. Default is to keep the first occurrence.")
+    lemmatization_group.add_argument("--preserve-composite-tokens", action="store_true", help="Keep the whole composite token / hyphenated compound lemma in addition to decomposed sub-lemmas.")
     lemmatization_group.add_argument("--combine-source-words", action="store_true", help="When deduplicating globally, combine different source word forms for the same lemma by separating them with a comma. Default is to keep only one.")
     lemmatization_group.add_argument("--combine-source-words-order", choices=['contractions_first', 'occurrence', 'alphabetical'], default=None, help="Set order for combined inflected forms when --combine-source-words is enabled.")
     lemmatization_group.add_argument("--apostrophe-chars", default="', ’, ‘, `, ´, ʼ", help="Comma-separated list of apostrophe characters for complex form detection.")
@@ -3404,6 +3416,7 @@ def main():
         'de_fix_genitive': getattr(args, 'de_fix_genitive', False),
         'de_gcs_mask_unknown_parts': getattr(args, 'de_gcs_mask_unknown_parts', False),
         'de_gcs_preserve_compound_word': getattr(args, 'de_gcs_preserve_compound_word', False),
+        'preserve_composite_tokens': getattr(args, 'preserve_composite_tokens', False),
         'de_gcs_skip_merge_fractions': getattr(args, 'de_gcs_skip_merge_fractions', False),
         'classification_case_sensitive': getattr(args, 'classification_case_sensitive', True),
         'classifications': classifications,

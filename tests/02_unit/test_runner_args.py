@@ -19,6 +19,7 @@ class MockArgs:
         self.text = None
         self.multi_text = False
         self.prefer_shortest_form = False
+        self.preserve_composite_tokens = False
         self.anki_create_subdecks = False
         self.anki_parent_deck = None
         self.anki_markdown_decks = False
@@ -167,3 +168,16 @@ def test_get_script_args_gcs_orthogonal_flags(mock_config):
     assert "--de-gcs-preserve-compound-word" in script_args
     assert "--de-gcs-split-mode" in script_args
     assert "only-nouns" in script_args
+
+
+def test_get_script_args_preserve_composite_tokens(mock_config):
+    python_path = Path("/mock/python")
+    workspace_path = Path("/mock/workspace")
+    args = MockArgs(
+        language="en",
+        type="word",
+        preserve_composite_tokens=True
+    )
+    
+    script_args = get_script_args(args, python_path, workspace_path, mock_config, mock_config)
+    assert "--preserve-composite-tokens" in script_args

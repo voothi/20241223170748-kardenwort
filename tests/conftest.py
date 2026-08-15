@@ -43,6 +43,7 @@ def default_args(tmp_path):
         combine_source_words_order='contractions_first',
         combine_source_words_prefer_lowercase=True,
         prefer_shortest_form=False,
+        preserve_composite_tokens=False,
         strip_headers=None,
         add_header=True,
         wordlist_use_br=False,

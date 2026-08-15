@@ -3084,6 +3084,12 @@ def main():
             elif cfg.has_section('settings') and cfg.has_option('settings', 'combine_source_words'):
                 args.combine_source_words = cfg.getboolean('settings', 'combine_source_words')
 
+        if not getattr(args, 'preserve_composite_tokens', False):
+            if cfg.has_section('lemmatization') and cfg.has_option('lemmatization', 'preserve_composite_tokens'):
+                args.preserve_composite_tokens = cfg.getboolean('lemmatization', 'preserve_composite_tokens')
+            elif cfg.has_section('settings') and cfg.has_option('settings', 'preserve_composite_tokens'):
+                args.preserve_composite_tokens = cfg.getboolean('settings', 'preserve_composite_tokens')
+
         # Read simplemma correction options from config
         if not getattr(args, 'use_simplemma_correction', False):
             if cfg.has_section('settings') and cfg.has_option('settings', 'use_simplemma_correction'):

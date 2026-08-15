@@ -174,7 +174,14 @@ def get_script_args(args, python_path, workspace_path, config, anki_mapping):
     if args.prefer_shortest_form:
         base_args.append("--prefer-shortest-form")
 
-    if getattr(args, 'preserve_composite_tokens', False):
+    preserve_composite = getattr(args, 'preserve_composite_tokens', False)
+    if not preserve_composite and config:
+        if config.has_section('lemmatization') and config.has_option('lemmatization', 'preserve_composite_tokens'):
+            preserve_composite = config.getboolean('lemmatization', 'preserve_composite_tokens', fallback=False)
+        elif config.has_section('settings') and config.has_option('settings', 'preserve_composite_tokens'):
+            preserve_composite = config.getboolean('settings', 'preserve_composite_tokens', fallback=False)
+
+    if preserve_composite:
         base_args.append("--preserve-composite-tokens")
 
     if args.anki_create_subdecks:

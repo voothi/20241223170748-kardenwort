@@ -164,3 +164,26 @@ def test_simplemma_config_loading():
         assert args.simplemma_pos_aware is True
         assert args.simplemma_smart_fallback is True
 
+
+def test_preserve_composite_tokens_config_loading():
+    with patch.dict('sys.modules', {'spacy': MagicMock()}), \
+         patch('pathlib.Path.exists', return_value=True), \
+         patch('kardenwort.core.kardenwort.load_lemma_frequency_index', return_value={}), \
+         patch('kardenwort.core.kardenwort.load_classification_dictionaries', return_value={}), \
+         patch('kardenwort.core.kardenwort.ModeDispatcher.dispatch') as mock_process, \
+         patch('configparser.ConfigParser') as mock_cp, \
+         patch.object(sys, 'argv', ['kardenwort.py', '--type', 'word', '--text', 'test', '--language', 'en']):
+        
+        instance = mock_cp.return_value
+        instance.__contains__.side_effect = lambda k: k in ('settings', 'lemmatization')
+        instance.has_section.side_effect = lambda s: s in ('settings', 'lemmatization')
+        instance.has_option.side_effect = lambda s, k: k == 'preserve_composite_tokens'
+        instance.getboolean.side_effect = lambda s, k, fallback=False: True if k == 'preserve_composite_tokens' else fallback
+        instance.get.side_effect = lambda s, k, fallback='': fallback
+        
+        main()
+        mock_process.assert_called_once()
+        args = next((arg for arg in mock_process.call_args[0] if hasattr(arg, 'preserve_composite_tokens')), None)
+        assert args is not None
+        assert args.preserve_composite_tokens is True
+

@@ -181,3 +181,19 @@ def test_get_script_args_preserve_composite_tokens(mock_config):
     
     script_args = get_script_args(args, python_path, workspace_path, mock_config, mock_config)
     assert "--preserve-composite-tokens" in script_args
+
+
+def test_get_script_args_preserve_composite_tokens_from_config(mock_config):
+    python_path = Path("/mock/python")
+    workspace_path = Path("/mock/workspace")
+    args = MockArgs(
+        language="en",
+        type="word",
+        preserve_composite_tokens=False
+    )
+    mock_config.has_section.side_effect = lambda s: s in ["lemmatization", "language_resources", "project_structure", "scripts", "output_format", "input_files"]
+    mock_config.has_option.side_effect = lambda s, o: (s, o) == ("lemmatization", "preserve_composite_tokens")
+    mock_config.getboolean.side_effect = lambda s, o, fallback=False: True if (s, o) == ("lemmatization", "preserve_composite_tokens") else False
+    
+    script_args = get_script_args(args, python_path, workspace_path, mock_config, mock_config)
+    assert "--preserve-composite-tokens" in script_args

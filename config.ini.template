@@ -80,13 +80,14 @@ case_sensitive = false
 ; Order for combined inflected forms when combine_source_words is true ('contractions_first', 'occurrence', 'alphabetical')
 combine_source_words_order = contractions_first
 
+; If true, deduplicates identical inflected forms differing only by case by keeping the lowercase version (e.g. Das and das -> das)
+combine_source_words_prefer_lowercase = true
+
 ; List of characters considered as apostrophes for sorting and normalization
-apostrophe_chars = "', ’, ‘, `, ´, ʼ"
+apostrophe_chars = "', ’, ‘, ´, ʼ"
 
 ; Normalizes typographic characters (e.g. ’ to ')
 normalize_apostrophes = true
-
-
 
 ; Treat internal spaces flexibly (e.g. match 'z.B.' and 'z. B.' equally)
 normalize_spaces = true
@@ -104,6 +105,12 @@ de = data/de/lemma_abbreviations_de.tsv, data/de/lemma_contractions_de.tsv
 [lemmatization]
 ; When deduplicating globally, combine different source word forms for the same lemma by separating them with a comma
 combine_source_words = false
+
+; Keep whole composite / hyphenated compound tokens in addition to decomposed constituent lemmas
+preserve_composite_tokens = false
+
+; Characters to strip from the beginning and end of extracted source words (e.g., garbage hyphens)
+strip_garbage_characters = -
 
 [anki_importer_settings]
 ; Settings for the Anki CSV Importer script
@@ -163,3 +170,6 @@ classification_en = true
 ; German (de): frequency is case-sensitive, classification is case-sensitive
 frequency_de = true
 classification_de = true
+
+[settings]
+use_simplemma_correction = false

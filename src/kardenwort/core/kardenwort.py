@@ -1454,6 +1454,8 @@ def _extract_standard_token(
         default_lemma = format_lemma_capitalization(token, spacy_lemma, args)
         
     base_lemma = get_overridden_lemma_for_word(default_lemma, source_word_form, lemma_override_rules, sentence_text)
+    if base_lemma and re.match(r'^\d{14}-', base_lemma):
+        base_lemma = re.sub(r'^\d{14}-', '', base_lemma)
 
     was_split = False
     is_explicit_url = token.like_url and (token.text.startswith(('http://', 'https://', 'ftp://', 'www.')) or '://' in token.text)

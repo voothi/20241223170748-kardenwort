@@ -830,9 +830,45 @@ def test_composite_identifier_process_parallel_text_files_tsv(tmp_path, monkeypa
     assert 'decompose' in file_lemmas
 
 
+def test_code_identifier_and_url_delimiter_tokenization():
+    import spacy
+    from kardenwort.core.kardenwort import extract_lemmas_from_sentence, ExtractionConfig
 
+    try:
+        nlp = spacy.load('en_core_web_lg')
+    except Exception:
+        pytest.skip('en_core_web_lg not installed in current environment')
 
+    args = SimpleNamespace(
+        language='en',
+        de_gcs=False,
+        de_gcs_only_nouns=False,
+        de_gcs_combine_noun_modes=False,
+        de_fix_genitive=False,
+        de_gcs_mask_unknown_parts=False,
+        de_gcs_preserve_compound_word=False,
+        de_gcs_skip_merge_fractions=False,
+        simplemma_pos_aware=False,
+        simplemma_smart_fallback=False,
+        preserve_capitalization=False,
+        strip_garbage_characters='',
+        de_gcs_part_singularization='none',
+        de_gcs_pos_tags=[]
+    )
 
+    # 1. Filename with underscore and extension (.py)
+    res_py = extract_lemmas_from_sentence("text_tokenizer.py", {}, nlp, {}, {}, [], args=args)
+    assert set(res_py) == {'Py', 'text', 'tokenizer'} or set(res_py) == {'py', 'text', 'tokenizer'}
 
+    # 2. Dotted code identifier
+    res_dot = extract_lemmas_from_sentence("os.path.join", {}, nlp, {}, {}, [], args=args)
+    assert set(res_dot) == {'join', 'os', 'path'}
 
+    # 3. Snake_case identifier
+    res_snake = extract_lemmas_from_sentence("prepare_lookup_tsv", {}, nlp, {}, {}, [], args=args)
+    assert set(res_snake) == {'lookup', 'prepare', 'Tsv'} or set(res_snake) == {'lookup', 'prepare', 'tsv'}
 
+    # 4. Explicit URL preservation
+    res_url = extract_lemmas_from_sentence("Visit https://spacy.io/api for docs.", {}, nlp, {}, {}, [], args=args)
+    assert "https://spacy.io/api" in res_url
+    assert "spacy" not in res_url  # URL was not chopped up into separate sub-tokens

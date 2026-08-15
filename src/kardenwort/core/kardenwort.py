@@ -1342,6 +1342,13 @@ def _extract_mapped_token(match, nlp_model, de_dictionary, lemma_override_rules,
     mapped_sources = {lem: match['source_word'] for lem in lemmas}
     return lemmas, mapped_sources
 
+def is_composite_token(text: str) -> bool:
+    if '_' in text and text.strip('_'):
+        return True
+    if re.search(r'[a-zA-Z0-9_]\.[a-zA-Z0-9_]', text) and any(c.isalpha() for c in text):
+        return True
+    return False
+
 def _extract_standard_token(
     token, nlp_model, de_dictionary, lemma_override_rules, sentence_text, de_fix_genitive, 
     de_gcs, gcs_automaton, de_gcs_pos_tags, args, separable_verb_map, 
@@ -1370,11 +1377,12 @@ def _extract_standard_token(
     base_lemma = get_overridden_lemma_for_word(default_lemma, source_word_form, lemma_override_rules, sentence_text)
 
     was_split = False
-    is_special_token = token.like_url or token.like_email
+    is_explicit_url = token.like_url and (token.text.startswith(('http://', 'https://', 'ftp://', 'www.')) or '://' in token.text)
+    is_special_token = is_explicit_url or token.like_email
 
-    if '_' in token.text and not is_special_token and token.text.strip('_'):
-        was_split = True
-        sub_parts = token.text.split('_')
+    if is_composite_token(token.text) and not is_special_token:
+        sub_parts = re.split(r'[_.]', token.text)
+        extracted_sub_lemmas = []
         for part in sub_parts:
             part = part.strip("()[]{}:;,.!?'\"`~-<> \t\r\n")
             if not part:
@@ -1388,7 +1396,10 @@ def _extract_standard_token(
                 sub_default_lemma = format_lemma_capitalization(sub_token, sub_spacy_lemma, args)
                 sub_lemma = get_overridden_lemma_for_word(sub_default_lemma, sub_token.text, lemma_override_rules, sentence_text)
                 if sub_lemma:
-                    lemmas_for_current_token.append(sub_lemma)
+                    extracted_sub_lemmas.append(sub_lemma)
+        if extracted_sub_lemmas:
+            was_split = True
+            lemmas_for_current_token.extend(extracted_sub_lemmas)
 
     elif de_gcs and '-' in token.text and not is_special_token:
         was_split = True
@@ -1528,7 +1539,7 @@ def extract_lemmas_from_sentence(
             else:
                 continue
         else:
-            if not (token.is_alpha or ('-' in token.text and token.text.strip('-')) or ('_' in token.text and token.text.strip('_'))):
+            if not (token.is_alpha or ('-' in token.text and token.text.strip('-')) or is_composite_token(token.text)):
                 continue
             lemmas_for_current_token, _ = _extract_standard_token(
                 token, current_nlp, de_dictionary, lemma_override_rules, sentence_text, de_fix_genitive, 
@@ -1913,7 +1924,7 @@ class ParallelTextsStrategy(OperationalStrategy):
                     else:
                         continue
                 else:
-                    if not (token.is_alpha or ('-' in token.text and token.text.strip('-')) or ('_' in token.text and token.text.strip('_'))):
+                    if not (token.is_alpha or ('-' in token.text and token.text.strip('-')) or is_composite_token(token.text)):
                         continue
                     lemmas_for_current_token, mapped_sources = _extract_standard_token(
                         token, current_nlp, de_dictionary, lemma_override_rules, source_sentence, de_fix_genitive, 
@@ -2249,7 +2260,7 @@ class SingleTextStrategy(OperationalStrategy):
                     else:
                         continue
                 else:
-                    if not (token.is_alpha or ('-' in token.text and token.text.strip('-')) or ('_' in token.text and token.text.strip('_'))):
+                    if not (token.is_alpha or ('-' in token.text and token.text.strip('-')) or is_composite_token(token.text)):
                         continue
                     lemmas_for_current_token, mapped_sources = _extract_standard_token(
                         token, current_nlp, de_dictionary, lemma_override_rules, unit_text, de_fix_genitive, 

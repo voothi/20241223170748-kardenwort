@@ -233,13 +233,15 @@ def process_parallel_text_files(
                         lemma_data['info'][lemma] = (content_line_idx, source_sentence, final_deck)
                     elif getattr(args, 'combine_source_words', False):
                         existing_forms = [s.strip() for s in lemma_data['lemmas'][lemma].split(',') if s.strip()]
-                        if cur_source_word not in existing_forms:
-                            existing_forms.append(cur_source_word)
+                        for form in [s.strip() for s in cur_source_word.split(',') if s.strip()]:
+                            if form not in existing_forms:
+                                existing_forms.append(form)
                         lemma_data['lemmas'][lemma] = ", ".join(sort_inflected_forms(existing_forms, apo_cfg, order_cfg, prefer_lowercase_cfg))
                         if 'raw_source_words' in lemma_data:
                             existing_raw = [s.strip() for s in lemma_data['raw_source_words'].get(lemma, '').split(',') if s.strip()]
-                            if cur_raw_source_word not in existing_raw:
-                                existing_raw.append(cur_raw_source_word)
+                            for form in [s.strip() for s in cur_raw_source_word.split(',') if s.strip()]:
+                                if form not in existing_raw:
+                                    existing_raw.append(form)
                             lemma_data['raw_source_words'][lemma] = ", ".join(sort_inflected_forms(existing_raw, apo_cfg, order_cfg, prefer_lowercase_cfg))
                     elif args.prefer_shortest_form and len(cur_source_word) < len(lemma_data['lemmas'][lemma]):
                         lemma_data['lemmas'][lemma] = cur_source_word
@@ -252,12 +254,14 @@ def process_parallel_text_files(
                             lemmas_in_sentence[lemma] = data_entry
                         else:
                             existing_forms = [s.strip() for s in lemmas_in_sentence[lemma]['source_word'].split(',') if s.strip()]
-                            if cur_source_word not in existing_forms:
-                                existing_forms.append(cur_source_word)
+                            for form in [s.strip() for s in cur_source_word.split(',') if s.strip()]:
+                                if form not in existing_forms:
+                                    existing_forms.append(form)
                             lemmas_in_sentence[lemma]['source_word'] = ", ".join(sort_inflected_forms(existing_forms, apo_cfg, order_cfg, prefer_lowercase_cfg))
                             existing_raw = [s.strip() for s in lemmas_in_sentence[lemma]['raw_source_word'].split(',') if s.strip()]
-                            if cur_raw_source_word not in existing_raw:
-                                existing_raw.append(cur_raw_source_word)
+                            for form in [s.strip() for s in cur_raw_source_word.split(',') if s.strip()]:
+                                if form not in existing_raw:
+                                    existing_raw.append(form)
                             lemmas_in_sentence[lemma]['raw_source_word'] = ", ".join(sort_inflected_forms(existing_raw, apo_cfg, order_cfg, prefer_lowercase_cfg))
                     else:
                         dedup_key = (lemma, cur_source_word.lower())
@@ -581,13 +585,15 @@ def process_single_text(
                         lemma_data['info'][lemma] = (unit_index, unit_text, current_deck)
                     elif getattr(args, 'combine_source_words', False):
                         existing_forms = [s.strip() for s in lemma_data['lemmas'][lemma].split(',') if s.strip()]
-                        if cur_source_word not in existing_forms:
-                            existing_forms.append(cur_source_word)
+                        for form in [s.strip() for s in cur_source_word.split(',') if s.strip()]:
+                            if form not in existing_forms:
+                                existing_forms.append(form)
                         lemma_data['lemmas'][lemma] = ", ".join(sort_inflected_forms(existing_forms, apo_cfg, order_cfg, prefer_lowercase_cfg))
                         if 'raw_source_words' in lemma_data:
                             existing_raw = [s.strip() for s in lemma_data['raw_source_words'].get(lemma, '').split(',') if s.strip()]
-                            if cur_raw_source_word not in existing_raw:
-                                existing_raw.append(cur_raw_source_word)
+                            for form in [s.strip() for s in cur_raw_source_word.split(',') if s.strip()]:
+                                if form not in existing_raw:
+                                    existing_raw.append(form)
                             lemma_data['raw_source_words'][lemma] = ", ".join(sort_inflected_forms(existing_raw, apo_cfg, order_cfg, prefer_lowercase_cfg))
                     elif args.prefer_shortest_form and len(cur_source_word) < len(lemma_data['lemmas'][lemma]):
                         lemma_data['lemmas'][lemma] = cur_source_word
@@ -600,12 +606,14 @@ def process_single_text(
                             lemmas_in_sentence[lemma] = data_entry
                         else:
                             existing_forms = [s.strip() for s in lemmas_in_sentence[lemma]['source_word'].split(',') if s.strip()]
-                            if cur_source_word not in existing_forms:
-                                existing_forms.append(cur_source_word)
+                            for form in [s.strip() for s in cur_source_word.split(',') if s.strip()]:
+                                if form not in existing_forms:
+                                    existing_forms.append(form)
                             lemmas_in_sentence[lemma]['source_word'] = ", ".join(sort_inflected_forms(existing_forms, apo_cfg, order_cfg, prefer_lowercase_cfg))
                             existing_raw = [s.strip() for s in lemmas_in_sentence[lemma]['raw_source_word'].split(',') if s.strip()]
-                            if cur_raw_source_word not in existing_raw:
-                                existing_raw.append(cur_raw_source_word)
+                            for form in [s.strip() for s in cur_raw_source_word.split(',') if s.strip()]:
+                                if form not in existing_raw:
+                                    existing_raw.append(form)
                             lemmas_in_sentence[lemma]['raw_source_word'] = ", ".join(sort_inflected_forms(existing_raw, apo_cfg, order_cfg, prefer_lowercase_cfg))
                     else:
                         dedup_key = (lemma, cur_source_word.lower())

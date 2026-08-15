@@ -759,6 +759,10 @@ def test_path_token_decomposition_and_numeric_filtering_extract_standard_token()
     assert "20260815131120" not in lemmas
     # Ensure entire path is NOT preserved as a composite lemma
     assert "openspec/changes/archive/20260815131120-token-mapping-inflected-expansion/" not in lemmas
+    # Ensure mapped_sources maps each lemma to its constituent sub-part, not the entire path
+    assert mapped_sources["archive"] == "archive"
+    assert mapped_sources["token"] == "token"
+    assert mapped_sources["expansion"] == "expansion"
 
 
 def test_composite_identifier_extract_lemmas_from_sentence():
@@ -1276,4 +1280,44 @@ def test_preserve_composite_tokens_extract_lemmas_from_sentence():
     assert any(x.lower() == "art" for x in lemmas_on)
 
 
+def test_combine_source_words_deduplicates_multi_token_forms(tmp_path):
+    import argparse
+    from kardenwort.core.kardenwort import sort_inflected_forms
+    from mock_nlp import MockPipelineNLP
 
+    nlp = MockPipelineNLP('en')
+    src_file = tmp_path / "test.en.txt"
+    src_file.write_text("Specs: ✓ Synced to main spec. All specs complete.", encoding="utf-8")
+    tgt_file = tmp_path / "test.ru.txt"
+    tgt_file.write_text("Спецификации: готово.", encoding="utf-8")
+    out_file = tmp_path / "out.tsv"
+
+    args = argparse.Namespace(
+        source_file=str(src_file),
+        target_file=str(tgt_file),
+        output_file=str(out_file),
+        language='en',
+        deduplication_scope='global',
+        combine_source_words=True,
+        combine_source_words_order='contractions_first',
+        combine_source_words_prefer_lowercase=True,
+        token_mappings_enabled=True,
+        token_mappings_file="data/en/lemma_abbreviations_en.tsv",
+        token_mappings_lemmatize=True,
+        preserve_composite_tokens=False,
+        de_force_noun_capitalization=False,
+        strip_garbage_characters="",
+        anki_create_subdecks=False,
+        anki_markdown_decks=False,
+        prefer_shortest_form=False
+    )
+
+    forms = ["specifications, Specs", "specifications, spec", "specifications, specs"]
+    existing = []
+    for cur in forms:
+        for form in [s.strip() for s in cur.split(',') if s.strip()]:
+            if form not in existing:
+                existing.append(form)
+    sorted_forms = sort_inflected_forms(existing, config=args)
+    assert len(sorted_forms) == len(set(sorted_forms))
+    assert sorted_forms.count("specifications") == 1

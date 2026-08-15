@@ -1141,3 +1141,107 @@ def test_hyphenated_compound_german_gcs_orthogonality():
         assert mapped_off[lem] == "Projekt-Manager"
 
 
+def test_preserve_composite_tokens_unit_english():
+    import argparse
+    from kardenwort.core import kardenwort as kw
+    from mock_nlp import MockPipelineNLP
+
+    nlp = MockPipelineNLP('en')
+    tok = MockToken("state-of-the-art", pos_="ADJ", is_alpha=False)
+
+    # 1. Disabled (default)
+    args_disabled = argparse.Namespace(language='en', de_force_noun_capitalization=False, preserve_composite_tokens=False)
+    lemmas_disabled, mapped_disabled = kw._extract_standard_token(
+        tok, nlp, de_dictionary=None, lemma_override_rules={},
+        sentence_text="This is a state-of-the-art solution.", de_fix_genitive=False,
+        de_gcs=False, gcs_automaton=None, de_gcs_pos_tags=[],
+        args=args_disabled, separable_verb_map={},
+        preserve_composite_tokens=False
+    )
+    assert "state-of-the-art" not in lemmas_disabled
+    assert "state" in lemmas_disabled
+    assert "art" in lemmas_disabled
+
+    # 2. Enabled
+    args_enabled = argparse.Namespace(language='en', de_force_noun_capitalization=False, preserve_composite_tokens=True)
+    lemmas_enabled, mapped_enabled = kw._extract_standard_token(
+        tok, nlp, de_dictionary=None, lemma_override_rules={},
+        sentence_text="This is a state-of-the-art solution.", de_fix_genitive=False,
+        de_gcs=False, gcs_automaton=None, de_gcs_pos_tags=[],
+        args=args_enabled, separable_verb_map={},
+        preserve_composite_tokens=True
+    )
+    assert "state-of-the-art" in lemmas_enabled
+    assert "state" in lemmas_enabled
+    assert "art" in lemmas_enabled
+    assert mapped_enabled["state-of-the-art"] == "state-of-the-art"
+    assert mapped_enabled["state"] == "state-of-the-art"
+
+
+def test_preserve_composite_tokens_unit_german():
+    import argparse
+    from kardenwort.core import kardenwort as kw
+    from mock_nlp import MockPipelineNLP
+
+    nlp = MockPipelineNLP('de')
+    tok = MockToken("viel-zu-beschäftigte", lemma_="viel-zu-beschäftigt", pos_="ADJ", is_alpha=False)
+
+    # 1. Disabled (default)
+    args_disabled = argparse.Namespace(language='de', de_force_noun_capitalization=False, preserve_composite_tokens=False)
+    lemmas_disabled, _ = kw._extract_standard_token(
+        tok, nlp, de_dictionary=set(), lemma_override_rules={},
+        sentence_text="Er ist eine viel-zu-beschäftigte Person.", de_fix_genitive=False,
+        de_gcs=False, gcs_automaton=None, de_gcs_pos_tags=[],
+        args=args_disabled, separable_verb_map={},
+        preserve_composite_tokens=False
+    )
+    assert "viel-zu-beschäftigt" not in lemmas_disabled
+    assert "viel" in lemmas_disabled
+
+    # 2. Enabled
+    args_enabled = argparse.Namespace(language='de', de_force_noun_capitalization=False, preserve_composite_tokens=True)
+    lemmas_enabled, mapped_enabled = kw._extract_standard_token(
+        tok, nlp, de_dictionary=set(), lemma_override_rules={},
+        sentence_text="Er ist eine viel-zu-beschäftigte Person.", de_fix_genitive=False,
+        de_gcs=False, gcs_automaton=None, de_gcs_pos_tags=[],
+        args=args_enabled, separable_verb_map={},
+        preserve_composite_tokens=True
+    )
+    assert "viel-zu-beschäftigt" in lemmas_enabled
+    assert "viel" in lemmas_enabled
+    assert mapped_enabled["viel-zu-beschäftigt"] == "viel-zu-beschäftigte"
+
+
+def test_preserve_composite_tokens_extract_lemmas_from_sentence():
+    from kardenwort.core.kardenwort import extract_lemmas_from_sentence, ExtractionConfig
+    from mock_nlp import MockPipelineNLP
+
+    nlp = MockPipelineNLP('en')
+    sentence = "We offer a state-of-the-art platform."
+
+    # 1. Disabled (default)
+    cfg_off = ExtractionConfig(language='en', preserve_composite_tokens=False, de_force_noun_capitalization=False)
+    lemmas_off = extract_lemmas_from_sentence(
+        sentence_text=sentence,
+        lemma_sort_index={},
+        nlp_model=nlp,
+        extraction_config=cfg_off
+    )
+    assert not any(x.lower() == "state-of-the-art" for x in lemmas_off)
+    assert any(x.lower() == "state" for x in lemmas_off)
+    assert any(x.lower() == "art" for x in lemmas_off)
+
+    # 2. Enabled
+    cfg_on = ExtractionConfig(language='en', preserve_composite_tokens=True, de_force_noun_capitalization=False)
+    lemmas_on = extract_lemmas_from_sentence(
+        sentence_text=sentence,
+        lemma_sort_index={},
+        nlp_model=nlp,
+        extraction_config=cfg_on
+    )
+    assert any(x.lower() == "state-of-the-art" for x in lemmas_on)
+    assert any(x.lower() == "state" for x in lemmas_on)
+    assert any(x.lower() == "art" for x in lemmas_on)
+
+
+

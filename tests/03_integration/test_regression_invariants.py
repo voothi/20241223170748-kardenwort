@@ -724,3 +724,79 @@ def test_token_mapping_inflected_expansion_and_quotation(mock_nlp, tmp_path, def
     assert not_recs[0]["WordSourceInflectedForm2"] == "isn't, not"
 
 
+def test_preserve_composite_tokens_execution_strategies(mock_nlp, default_args, tmp_path):
+    """
+    Test preserve_composite_tokens across ParallelTextsStrategy and SingleTextStrategy.
+    """
+    import argparse
+    from kardenwort.core.kardenwort import ParallelTextsStrategy, SingleTextStrategy, ExtractionConfig, ExecutionContext
+    source_text = "We use a state-of-the-art method."
+
+    # 1. ParallelTextsStrategy with preserve_composite_tokens=False (default)
+    args_off = argparse.Namespace(**vars(default_args))
+    args_off.language = 'en'
+    args_off.preserve_composite_tokens = False
+    args_off.source_text = source_text
+    args_off.source_text_content = source_text
+    args_off.field_mapping = {'WordSource': 'lemma', 'WordSourceInflectedForm': 'source_word'}
+    args_off.anki_header = ['WordSource', 'WordSourceInflectedForm']
+    args_off.header = ['WordSource', 'WordSourceInflectedForm']
+
+    cfg_off = ExtractionConfig.from_args(args_off)
+    ctx = ExecutionContext(nlp_model=mock_nlp, simplemma_lang='en')
+
+    records_off = list(ParallelTextsStrategy().execute(cfg_off, ctx))
+    lemmas_off = {str(r.row_data.get('lemma')).lower() for r in records_off}
+    assert "state-of-the-art" not in lemmas_off
+    assert "state" in lemmas_off
+    assert "art" in lemmas_off
+
+    # 2. ParallelTextsStrategy with preserve_composite_tokens=True
+    args_on = argparse.Namespace(**vars(default_args))
+    args_on.language = 'en'
+    args_on.preserve_composite_tokens = True
+    args_on.source_text = source_text
+    args_on.source_text_content = source_text
+    args_on.field_mapping = {'WordSource': 'lemma', 'WordSourceInflectedForm': 'source_word'}
+    args_on.anki_header = ['WordSource', 'WordSourceInflectedForm']
+    args_on.header = ['WordSource', 'WordSourceInflectedForm']
+
+    cfg_on = ExtractionConfig.from_args(args_on)
+    records_on = list(ParallelTextsStrategy().execute(cfg_on, ctx))
+    lemmas_on = {str(r.row_data.get('lemma')).lower() for r in records_on}
+    assert "state-of-the-art" in lemmas_on
+    assert "state" in lemmas_on
+    assert "art" in lemmas_on
+
+    # 3. SingleTextStrategy with preserve_composite_tokens=True
+    single_records_on = list(SingleTextStrategy().execute(cfg_on, ctx))
+    single_lemmas_on = {str(r.row_data.get('lemma')).lower() for r in single_records_on}
+    assert "state-of-the-art" in single_lemmas_on
+    assert "state" in single_lemmas_on
+
+
+def test_preserve_composite_tokens_legacy_baselines_tsv(mock_nlp, default_args, tmp_path):
+    """
+    Test preserve_composite_tokens in legacy baselines pipeline.
+    """
+    source_text = "This is a state-of-the-art framework."
+    default_args.language = 'en'
+
+    # 1. Disabled (default)
+    default_args.preserve_composite_tokens = False
+    out_off = run_pipeline_parallel(default_args, tmp_path, "out_off.tsv", source_text=source_text)
+    recs_off = read_tsv_records(out_off)
+    lemmas_off = {str(r.get("WordSource")).lower() for r in recs_off}
+    assert "state-of-the-art" not in lemmas_off
+    assert "state" in lemmas_off
+
+    # 2. Enabled
+    default_args.preserve_composite_tokens = True
+    out_on = run_pipeline_parallel(default_args, tmp_path, "out_on.tsv", source_text=source_text, preserve_composite_tokens=True)
+    recs_on = read_tsv_records(out_on)
+    lemmas_on = {str(r.get("WordSource")).lower() for r in recs_on}
+    assert "state-of-the-art" in lemmas_on
+    assert "state" in lemmas_on
+
+
+

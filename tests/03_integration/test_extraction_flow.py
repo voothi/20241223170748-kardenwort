@@ -84,10 +84,13 @@ class IntegrationTester:
         return {"deck_descriptions": normalized}
 
     def verify_tsv(self, language, suffix, reference_tsv_path):
-        tsv_pattern = f"*.{suffix}.{language}.tsv"
-        tsv_files = list(self.results_dir.glob(tsv_pattern))
+        ref_slug = re.sub(r'^\d{14}-', '', reference_tsv_path.name)
+        tsv_files = list(self.results_dir.glob(f"*{ref_slug}"))
         if not tsv_files:
-            pytest.fail(f"No {tsv_pattern} file found in results")
+            tsv_pattern = f"*.{suffix}.{language}.tsv"
+            tsv_files = list(self.results_dir.glob(tsv_pattern))
+        if not tsv_files:
+            pytest.fail(f"No matching TSV file for {ref_slug} found in results")
         
         latest_tsv = max(tsv_files, key=os.path.getmtime)
         
@@ -122,10 +125,13 @@ class IntegrationTester:
             assert gen_row_norm == ref_row_norm, f"Content mismatch at row {i+1} in {latest_tsv}"
 
     def verify_json(self, language, reference_json_path):
-        json_pattern = f"*.sentence.{language}.json"
-        json_files = list(self.results_dir.glob(json_pattern))
+        ref_slug = re.sub(r'^\d{14}-', '', reference_json_path.name)
+        json_files = list(self.results_dir.glob(f"*{ref_slug}"))
         if not json_files:
-            pytest.fail(f"No {json_pattern} file found in results")
+            json_pattern = f"*.sentence.{language}.json"
+            json_files = list(self.results_dir.glob(json_pattern))
+        if not json_files:
+            pytest.fail(f"No matching JSON file for {ref_slug} found in results")
         
         latest_json = max(json_files, key=os.path.getmtime)
         

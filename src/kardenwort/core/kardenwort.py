@@ -1395,9 +1395,9 @@ def retokenize_hyphenated_compounds(doc: Any) -> Any:
 def is_composite_token(text: str) -> bool:
     if '_' in text and text.strip('_'):
         return True
-    if re.search(r'[a-zA-Z0-9_]\.[a-zA-Z0-9_]', text) and any(c.isalpha() for c in text):
+    if re.search(r'\w\.\w', text) and any(c.isalpha() for c in text):
         return True
-    if re.search(r'[a-zA-Z0-9_]-[a-zA-Z0-9_]', text) and any(c.isalpha() for c in text):
+    if re.search(r'\w-\w', text) and any(c.isalpha() for c in text):
         return True
     return False
 

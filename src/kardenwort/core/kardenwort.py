@@ -1418,7 +1418,16 @@ def retokenize_hyphenated_compounds(doc: Any) -> Any:
 
     return doc
 
+def split_camel_case(s: str) -> list:
+    """Split camelCase, PascalCase, or uppercase acronym boundaries into constituent words."""
+    if not s:
+        return []
+    parts = re.findall(r'[A-ZА-ЯÄÖÜ0-9]+(?=[A-ZА-ЯÄÖÜ][a-zа-яäöüß])|[A-ZА-ЯÄÖÜ]?[a-zа-яäöüß\'’‘`´ʼ]+[0-9]*|[A-ZА-ЯÄÖÜ0-9]+', s)
+    return [p for p in parts if p]
+
 def is_composite_token(text: str) -> bool:
+    if not text:
+        return False
     if ('/' in text or '\\' in text) and any(c.isalpha() for c in text):
         return True
     if '_' in text and text.strip('_'):
@@ -1426,6 +1435,8 @@ def is_composite_token(text: str) -> bool:
     if re.search(r'\w\.\w', text) and any(c.isalpha() for c in text):
         return True
     if re.search(r'\w-\w', text) and any(c.isalpha() for c in text):
+        return True
+    if re.search(r'[a-zа-яäöüß][A-ZА-ЯÄÖÜ]|[A-ZА-ЯÄÖÜ]{2,}[a-zа-яäöüß]', text):
         return True
     return False
 
@@ -1489,17 +1500,20 @@ def _extract_standard_token(
             part = part.strip("()[]{}:;,.!?'\"`~-<>\\/ \t\r\n")
             if not part or part.isdigit():
                 continue
-            part_doc = nlp_model(part)
-            for sub_token in part_doc:
-                if not (sub_token.is_alpha or ('-' in sub_token.text and sub_token.text.strip('-')) or any(c.isalpha() for c in sub_token.text)):
-                    continue
-                sub_override_lemma, sub_smart_fallback = get_simplemma_lemmas(sub_token, getattr(nlp_model, 'lang', 'en'), args)
-                sub_spacy_lemma = correct_spacy_lemma(sub_token, de_dictionary, de_fix_genitive, override_lemma=sub_override_lemma, smart_fallback_lemma=sub_smart_fallback)
-                sub_default_lemma = format_lemma_capitalization(sub_token, sub_spacy_lemma, args)
-                sub_lemma = get_overridden_lemma_for_word(sub_default_lemma, sub_token.text, lemma_override_rules, sentence_text)
-                if sub_lemma:
-                    extracted_sub_lemmas.append(sub_lemma)
-                    part_source_map[sub_lemma] = sub_token.text if is_path_token else source_word_form
+            camel_parts = split_camel_case(part)
+            sub_units = camel_parts if len(camel_parts) > 1 else [part]
+            for unit in sub_units:
+                part_doc = nlp_model(unit)
+                for sub_token in part_doc:
+                    if not (sub_token.is_alpha or ('-' in sub_token.text and sub_token.text.strip('-')) or any(c.isalpha() for c in sub_token.text)):
+                        continue
+                    sub_override_lemma, sub_smart_fallback = get_simplemma_lemmas(sub_token, getattr(nlp_model, 'lang', 'en'), args)
+                    sub_spacy_lemma = correct_spacy_lemma(sub_token, de_dictionary, de_fix_genitive, override_lemma=sub_override_lemma, smart_fallback_lemma=sub_smart_fallback)
+                    sub_default_lemma = format_lemma_capitalization(sub_token, sub_spacy_lemma, args)
+                    sub_lemma = get_overridden_lemma_for_word(sub_default_lemma, sub_token.text, lemma_override_rules, sentence_text)
+                    if sub_lemma:
+                        extracted_sub_lemmas.append(sub_lemma)
+                        part_source_map[sub_lemma] = sub_token.text if is_path_token else source_word_form
         if extracted_sub_lemmas:
             was_split = True
             if not is_path_token and (preserve_composite or (de_gcs and de_gcs_preserve_compound_word)):

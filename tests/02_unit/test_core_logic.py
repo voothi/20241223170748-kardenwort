@@ -729,6 +729,33 @@ def test_composite_identifier_decomposition_extract_standard_token():
     assert mapped_sources["case"] == "split_camel_case"
 
 
+def test_camel_case_token_decomposition_extract_standard_token():
+    import argparse
+    from kardenwort.core import kardenwort as kw
+    from mock_nlp import MockPipelineNLP, MockToken
+
+    nlp = MockPipelineNLP('en')
+    tok = MockToken("flipWord", pos_="NOUN", is_alpha=True)
+    args = argparse.Namespace(language='en', de_force_noun_capitalization=False)
+    
+    assert kw.is_composite_token("flipWord") is True
+    assert kw.is_composite_token("isNumericToken") is True
+    assert kw.is_composite_token("PascalCase") is True
+    assert kw.is_composite_token("Simple") is False
+    
+    lemmas, mapped_sources = kw._extract_standard_token(
+        tok, nlp, de_dictionary=None, lemma_override_rules={},
+        sentence_text="function flipWord(span):", de_fix_genitive=False,
+        de_gcs=False, gcs_automaton=None, de_gcs_pos_tags=[],
+        args=args, separable_verb_map={}
+    )
+    
+    assert "flip" in lemmas
+    assert "word" in lemmas
+    assert mapped_sources["flip"] == "flipWord"
+    assert mapped_sources["word"] == "flipWord"
+
+
 def test_path_token_decomposition_and_numeric_filtering_extract_standard_token():
     import argparse
     from kardenwort.core import kardenwort as kw

@@ -756,6 +756,34 @@ def test_camel_case_token_decomposition_extract_standard_token():
     assert mapped_sources["word"] == "flipWord"
 
 
+def test_named_entity_and_brand_preservation_extract_standard_token():
+    import argparse
+    from kardenwort.core import kardenwort as kw
+    from mock_nlp import MockPipelineNLP, MockToken
+
+    nlp = MockPipelineNLP('en')
+    args = argparse.Namespace(language='en', de_force_noun_capitalization=False)
+
+    # Known brands should NOT be treated as composite tokens
+    assert kw.is_composite_token("ChatGPT") is False
+    assert kw.is_composite_token("OpenAI") is False
+    assert kw.is_composite_token("YouTube") is False
+    assert kw.is_composite_token("iPhone") is False
+
+    # Standard token extraction should keep them intact
+    for brand in ["ChatGPT", "OpenAI", "YouTube", "iPhone"]:
+        tok = MockToken(brand, pos_="PROPN", is_alpha=True)
+        lemmas, mapped_sources = kw._extract_standard_token(
+            tok, nlp, de_dictionary=None, lemma_override_rules={},
+            sentence_text=f"We use {brand} every day.", de_fix_genitive=False,
+            de_gcs=False, gcs_automaton=None, de_gcs_pos_tags=[],
+            args=args, separable_verb_map={}
+        )
+        assert brand.lower() in [l.lower() for l in lemmas] or brand in lemmas
+        assert mapped_sources.get(brand) == brand or mapped_sources.get(brand.lower()) == brand
+
+
+
 def test_path_token_decomposition_and_numeric_filtering_extract_standard_token():
     import argparse
     from kardenwort.core import kardenwort as kw

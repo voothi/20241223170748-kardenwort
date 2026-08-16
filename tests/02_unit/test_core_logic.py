@@ -1491,3 +1491,12 @@ def test_wed_and_id_tokenizer_exception_removal():
     assert "we" not in [t.text.lower() for t in doc]
 
 
+def test_split_camel_case_acronym_plurals():
+    """Verify split_camel_case preserves uppercase acronym plurals."""
+    from kardenwort.core.kardenwort import split_camel_case
+
+    for word in ["LLMs", "GPUs", "APIs", "CPUs", "SDKs", "URLs"]:
+        assert split_camel_case(word) == [word]
+
+
+

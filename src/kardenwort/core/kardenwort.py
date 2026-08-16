@@ -1418,15 +1418,6 @@ def retokenize_hyphenated_compounds(doc: Any) -> Any:
 
     return doc
 
-KNOWN_ENTITIES_AND_BRANDS = {
-    "chatgpt", "openai", "youtube", "iphone", "ipad", "ipod", "macos", "ios", "watchos",
-    "github", "gitlab", "javascript", "typescript", "powershell", "autohotkey",
-    "quicktime", "wordpress", "linkedin", "playstation", "tiktok", "whatsapp",
-    "deepl", "fedex", "ebay", "paypal", "openspec", "webgl", "opengl", "openal",
-    "directx", "vulkan", "scikit", "spacy", "huggingface", "pytorch", "tensorflow",
-    "nvidia", "amd", "intel", "microsoft", "google", "apple", "amazon", "meta"
-}
-
 def split_camel_case(s: str) -> list:
     """Split camelCase, PascalCase, or uppercase acronym boundaries into constituent words."""
     if not s:
@@ -1445,8 +1436,6 @@ def is_composite_token(text: str) -> bool:
         return True
     if re.search(r'\w-\w', text) and any(c.isalpha() for c in text):
         return True
-    if text.lower() in KNOWN_ENTITIES_AND_BRANDS:
-        return False
     if re.search(r'[a-zа-яäöüß][A-ZА-ЯÄÖÜ]|[A-ZА-ЯÄÖÜ]{2,}[a-zа-яäöüß]', text):
         return True
     return False
@@ -1486,14 +1475,6 @@ def _extract_standard_token(
     is_special_token = is_explicit_url or token.like_email
     preserve_composite = preserve_composite_tokens or getattr(args, 'preserve_composite_tokens', False)
 
-    is_named_entity = (
-        getattr(token, 'ent_type_', '') in {'ORG', 'PRODUCT', 'PERSON', 'GPE', 'FAC', 'NORP', 'WORK_OF_ART', 'EVENT'}
-        or (getattr(token, 'pos_', '') == 'PROPN' and not any(c in token.text for c in '_/\\.'))
-        or token.text.lower() in KNOWN_ENTITIES_AND_BRANDS
-        or (de_dictionary and (token.text in de_dictionary or token.text.capitalize() in de_dictionary or token.text.lower() in de_dictionary))
-    )
-    is_pure_camel = not any(c in token.text for c in '_-\\/:#@.') and is_composite_token(token.text)
-
     if de_gcs and '-' in token.text and not is_special_token:
         was_split = True
         hyphenated_parts = token.text.split('-')
@@ -1510,7 +1491,7 @@ def _extract_standard_token(
             if processed_part_lemma:
                 lemmas_for_current_token.append(processed_part_lemma)
 
-    elif is_composite_token(token.text) and not is_special_token and not (is_pure_camel and is_named_entity):
+    elif is_composite_token(token.text) and not is_special_token:
         is_path_token = '/' in token.text or '\\' in token.text
         sub_parts = re.split(r'[_.\-/:#@\\]+', token.text)
         extracted_sub_lemmas = []
@@ -1519,10 +1500,7 @@ def _extract_standard_token(
             part = part.strip("()[]{}:;,.!?'\"`~-<>\\/ \t\r\n")
             if not part or part.isdigit():
                 continue
-            if part.lower() in KNOWN_ENTITIES_AND_BRANDS or (de_dictionary and (part in de_dictionary or part.capitalize() in de_dictionary or part.lower() in de_dictionary)):
-                camel_parts = [part]
-            else:
-                camel_parts = split_camel_case(part)
+            camel_parts = split_camel_case(part)
             sub_units = camel_parts if len(camel_parts) > 1 else [part]
             for unit in sub_units:
                 part_doc = nlp_model(unit)

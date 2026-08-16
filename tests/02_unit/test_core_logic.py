@@ -762,25 +762,38 @@ def test_named_entity_and_brand_preservation_extract_standard_token():
     from mock_nlp import MockPipelineNLP, MockToken
 
     nlp = MockPipelineNLP('en')
-    args = argparse.Namespace(language='en', de_force_noun_capitalization=False)
+    args = argparse.Namespace(language='en', de_force_noun_capitalization=False, preserve_composite_tokens=False)
 
-    # Known brands should NOT be treated as composite tokens
-    assert kw.is_composite_token("ChatGPT") is False
-    assert kw.is_composite_token("OpenAI") is False
-    assert kw.is_composite_token("YouTube") is False
-    assert kw.is_composite_token("iPhone") is False
+    # Brands with camelCase/PascalCase ARE treated as composite tokens uniformly
+    assert kw.is_composite_token("ChatGPT") is True
+    assert kw.is_composite_token("OpenAI") is True
+    assert kw.is_composite_token("YouTube") is True
+    assert kw.is_composite_token("iPhone") is True
 
-    # Standard token extraction should keep them intact
-    for brand in ["ChatGPT", "OpenAI", "YouTube", "iPhone"]:
-        tok = MockToken(brand, pos_="PROPN", is_alpha=True)
-        lemmas, mapped_sources = kw._extract_standard_token(
-            tok, nlp, de_dictionary=None, lemma_override_rules={},
-            sentence_text=f"We use {brand} every day.", de_fix_genitive=False,
-            de_gcs=False, gcs_automaton=None, de_gcs_pos_tags=[],
-            args=args, separable_verb_map={}
-        )
-        assert brand.lower() in [l.lower() for l in lemmas] or brand in lemmas
-        assert mapped_sources.get(brand) == brand or mapped_sources.get(brand.lower()) == brand
+    # Standard token extraction decomposes them into constituent parts
+    tok = MockToken("ChatGPT", pos_="PROPN", is_alpha=True)
+    lemmas, mapped_sources = kw._extract_standard_token(
+        tok, nlp, de_dictionary=None, lemma_override_rules={},
+        sentence_text="We use ChatGPT every day.", de_fix_genitive=False,
+        de_gcs=False, gcs_automaton=None, de_gcs_pos_tags=[],
+        args=args, separable_verb_map={}
+    )
+    assert "chat" in lemmas
+    assert "GPT" in lemmas
+    assert mapped_sources["chat"] == "ChatGPT"
+    assert mapped_sources["GPT"] == "ChatGPT"
+
+    # With preserve_composite_tokens=True, the whole token is also included
+    args_preserve = argparse.Namespace(language='en', de_force_noun_capitalization=False, preserve_composite_tokens=True)
+    lemmas_pres, mapped_pres = kw._extract_standard_token(
+        tok, nlp, de_dictionary=None, lemma_override_rules={},
+        sentence_text="We use ChatGPT every day.", de_fix_genitive=False,
+        de_gcs=False, gcs_automaton=None, de_gcs_pos_tags=[],
+        args=args_preserve, separable_verb_map={}
+    )
+    assert "chat" in lemmas_pres
+    assert "GPT" in lemmas_pres
+    assert "ChatGPT" in lemmas_pres
 
 
 

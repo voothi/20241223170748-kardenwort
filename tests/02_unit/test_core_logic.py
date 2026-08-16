@@ -1499,4 +1499,53 @@ def test_split_camel_case_acronym_plurals():
         assert split_camel_case(word) == [word]
 
 
+def test_possessive_token_suppression_and_inflection():
+    """Verify possessive tokens ('s, 's, ') are suppressed as standalone lemmas."""
+    import spacy
+    from kardenwort.core.kardenwort import (
+        extract_lemmas_from_sentence, configure_spacy_model, ExtractionConfig,
+        is_possessive_token, find_possessive_token_pairs
+    )
+
+    try:
+        nlp = spacy.load("en_core_web_lg")
+    except Exception:
+        try:
+            nlp = spacy.load("en_core_web_sm")
+        except Exception:
+            nlp = spacy.blank("en")
+
+    configure_spacy_model(nlp)
+
+    sentence = "Alibaba's Qwen has become the world's most-downloaded AI model family, per Hugging Face's latest report in China's market."
+    config = ExtractionConfig(language='en', preserve_composite_tokens=True)
+
+    lemmas = extract_lemmas_from_sentence(
+        sentence_text=sentence,
+        lemma_sort_index={},
+        nlp_model=nlp,
+        extraction_config=config
+    )
+    lemmas_lower = [l.lower() for l in lemmas]
+
+    # Preceding nouns / entities must be present
+    assert "alibaba" in lemmas_lower
+    assert "world" in lemmas_lower
+    assert "china" in lemmas_lower
+    assert "face" in lemmas_lower
+
+    # Standalone possessive particles MUST NOT be emitted
+    assert "'s" not in lemmas
+    assert "’s" not in lemmas
+    assert "s" not in lemmas_lower
+
+    # Test find_possessive_token_pairs directly on doc
+    doc = nlp(sentence)
+    poss_indices, poss_suffixes = find_possessive_token_pairs(doc)
+    assert len(poss_indices) >= 4  # Alibaba's, world's, Face's, China's
+    for idx in poss_indices:
+        assert is_possessive_token(doc[idx])
+
+
+
 

@@ -1077,6 +1077,37 @@ def correct_spacy_lemma(token, de_dictionary, fix_genitive=False, override_lemma
 
     return spacy_lemma
 
+POSSESSIVE_ENCLITICS = {"'s", "’s", "‘s", "´s", "`s", "ʼs", "'", "’"}
+
+def is_possessive_token(token) -> bool:
+    if not token:
+        return False
+    tag = getattr(token, 'tag_', '')
+    pos = getattr(token, 'pos_', '')
+    text = getattr(token, 'text', '')
+    if tag == 'POS':
+        return True
+    if text in POSSESSIVE_ENCLITICS and pos in ('PART', 'PUNCT', 'X'):
+        return True
+    return False
+
+def find_possessive_token_pairs(document):
+    possessive_indices = set()
+    possessive_noun_suffixes = {}
+    if not document:
+        return possessive_indices, possessive_noun_suffixes
+    for token in document:
+        if is_possessive_token(token):
+            possessive_indices.add(token.i)
+            target_idx = None
+            if token.head and token.head.i != token.i and token.head.i < token.i:
+                target_idx = token.head.i
+            elif token.i > 0:
+                target_idx = token.i - 1
+            if target_idx is not None:
+                possessive_noun_suffixes[target_idx] = token.text
+    return possessive_indices, possessive_noun_suffixes
+
 def find_separable_verb_particle_pairs(document):
     particle_map = {}
     for token in document:
@@ -1474,11 +1505,14 @@ def _extract_standard_token(
     de_gcs_mask_unknown_parts=False,
     de_gcs_preserve_compound_word=False,
     de_gcs_skip_merge_fractions=False,
-    preserve_composite_tokens=False
+    preserve_composite_tokens=False,
+    possessive_suffix=""
 ):
+    if is_possessive_token(token):
+        return [], {}
 
     lemmas_for_current_token = []
-    source_word_form = token.text
+    source_word_form = f"{token.text}{possessive_suffix}" if possessive_suffix else token.text
     base_lemma = ""
     
     if token.i in separable_verb_map:
@@ -1655,11 +1689,12 @@ def extract_lemmas_from_sentence(
 
     separable_verb_map = find_separable_verb_particle_pairs(sentence_doc)
     processed_particle_indices = {p.i for p in separable_verb_map.values()}
+    possessive_indices, possessive_noun_suffixes = find_possessive_token_pairs(sentence_doc)
 
     token_mappings_matches, mapped_tokens = find_token_mappings_in_text(sentence_text, sentence_doc, kwargs.get('token_mappings', {}), args)
 
     for token in sentence_doc:
-        if token.i in processed_particle_indices:
+        if token.i in processed_particle_indices or token.i in possessive_indices or is_possessive_token(token):
             continue
 
         if token.i in mapped_tokens:
@@ -1680,7 +1715,8 @@ def extract_lemmas_from_sentence(
                 de_gcs_mask_unknown_parts=de_gcs_mask_unknown_parts,
                 de_gcs_preserve_compound_word=de_gcs_preserve_compound_word,
                 de_gcs_skip_merge_fractions=de_gcs_skip_merge_fractions,
-                preserve_composite_tokens=preserve_composite_tokens
+                preserve_composite_tokens=preserve_composite_tokens,
+                possessive_suffix=possessive_noun_suffixes.get(token.i, "")
             )
 
         deduplicated_lemmas = deduplicate_lemmas(lemmas_for_current_token, extraction_config)
@@ -2041,10 +2077,11 @@ class ParallelTextsStrategy(OperationalStrategy):
             
             separable_verb_map = find_separable_verb_particle_pairs(doc)
             processed_particle_indices = {p.i for p in separable_verb_map.values()}
+            possessive_indices, possessive_noun_suffixes = find_possessive_token_pairs(doc)
             token_mappings_matches, mapped_tokens = find_token_mappings_in_text(source_sentence, doc, token_mappings_val, config)
 
             for token in doc:
-                if token.i in processed_particle_indices:
+                if token.i in processed_particle_indices or token.i in possessive_indices or is_possessive_token(token):
                     continue
 
                 mapped_lemma_sources = {}
@@ -2067,7 +2104,8 @@ class ParallelTextsStrategy(OperationalStrategy):
                         de_gcs_mask_unknown_parts=de_gcs_mask_unknown_parts,
                         de_gcs_preserve_compound_word=de_gcs_preserve_compound_word,
                         de_gcs_skip_merge_fractions=de_gcs_skip_merge_fractions,
-                        preserve_composite_tokens=preserve_composite_tokens
+                        preserve_composite_tokens=preserve_composite_tokens,
+                        possessive_suffix=possessive_noun_suffixes.get(token.i, "")
                     )
                     mapped_lemma_sources.update(mapped_sources)
 
@@ -2400,10 +2438,11 @@ class SingleTextStrategy(OperationalStrategy):
             current_deck = deck_map.get(unit_index, "")
             separable_verb_map = find_separable_verb_particle_pairs(unit_doc)
             processed_particle_indices = {p.i for p in separable_verb_map.values()}
+            possessive_indices, possessive_noun_suffixes = find_possessive_token_pairs(unit_doc)
             token_mappings_matches, mapped_tokens = find_token_mappings_in_text(unit_text, unit_doc, token_mappings_val, config)
 
             for token in unit_doc:
-                if token.i in processed_particle_indices:
+                if token.i in processed_particle_indices or token.i in possessive_indices or is_possessive_token(token):
                     continue
 
                 mapped_lemma_sources = {}
@@ -2426,7 +2465,8 @@ class SingleTextStrategy(OperationalStrategy):
                         de_gcs_mask_unknown_parts=de_gcs_mask_unknown_parts,
                         de_gcs_preserve_compound_word=de_gcs_preserve_compound_word,
                         de_gcs_skip_merge_fractions=de_gcs_skip_merge_fractions,
-                        preserve_composite_tokens=preserve_composite_tokens
+                        preserve_composite_tokens=preserve_composite_tokens,
+                        possessive_suffix=possessive_noun_suffixes.get(token.i, "")
                     )
                     mapped_lemma_sources.update(mapped_sources)
 

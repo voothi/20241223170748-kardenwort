@@ -8,7 +8,8 @@ from kardenwort.core.kardenwort import (
     find_separable_verb_particle_pairs, find_token_mappings_in_text, _extract_mapped_token,
     _extract_standard_token, deduplicate_lemmas, sort_inflected_forms, get_lemma_sort_key,
     get_field_index_map, prepare_row_data, apply_field_mapping, extract_lemmas_from_sentence,
-    _write_deck_metadata, read_text_from_file, is_composite_token, retokenize_hyphenated_compounds
+    _write_deck_metadata, read_text_from_file, is_composite_token, retokenize_hyphenated_compounds,
+    find_possessive_token_pairs, is_possessive_token
 )
 
 nlp = None
@@ -174,10 +175,11 @@ def process_parallel_text_files(
         
         separable_verb_map = find_separable_verb_particle_pairs(doc)
         processed_particle_indices = {p.i for p in separable_verb_map.values()}
+        possessive_indices, possessive_noun_suffixes = find_possessive_token_pairs(doc)
         token_mappings_matches, mapped_tokens = find_token_mappings_in_text(source_sentence, doc, kwargs.get('token_mappings', {}), args)
 
         for token in doc:
-            if token.i in processed_particle_indices:
+            if token.i in processed_particle_indices or token.i in possessive_indices or is_possessive_token(token):
                 continue
 
             mapped_lemma_sources = {}
@@ -200,7 +202,8 @@ def process_parallel_text_files(
                     de_gcs_mask_unknown_parts=de_gcs_mask_unknown_parts,
                     de_gcs_preserve_compound_word=de_gcs_preserve_compound_word,
                     de_gcs_skip_merge_fractions=de_gcs_skip_merge_fractions,
-                    preserve_composite_tokens=preserve_composite_tokens
+                    preserve_composite_tokens=preserve_composite_tokens,
+                    possessive_suffix=possessive_noun_suffixes.get(token.i, "")
                 )
                 mapped_lemma_sources.update(mapped_sources)
 
@@ -525,11 +528,11 @@ def process_single_text(
 
         separable_verb_map = find_separable_verb_particle_pairs(unit_doc)
         processed_particle_indices = {p.i for p in separable_verb_map.values()}
-
+        possessive_indices, possessive_noun_suffixes = find_possessive_token_pairs(unit_doc)
         token_mappings_matches, mapped_tokens = find_token_mappings_in_text(unit_text, unit_doc, kwargs.get('token_mappings', {}), args)
 
         for token in unit_doc:
-            if token.i in processed_particle_indices:
+            if token.i in processed_particle_indices or token.i in possessive_indices or is_possessive_token(token):
                 continue
 
             mapped_lemma_sources = {}
@@ -552,7 +555,8 @@ def process_single_text(
                     de_gcs_mask_unknown_parts=de_gcs_mask_unknown_parts,
                     de_gcs_preserve_compound_word=de_gcs_preserve_compound_word,
                     de_gcs_skip_merge_fractions=de_gcs_skip_merge_fractions,
-                    preserve_composite_tokens=preserve_composite_tokens
+                    preserve_composite_tokens=preserve_composite_tokens,
+                    possessive_suffix=possessive_noun_suffixes.get(token.i, "")
                 )
                 mapped_lemma_sources.update(mapped_sources)
 

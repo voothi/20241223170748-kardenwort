@@ -1425,6 +1425,28 @@ def split_camel_case(s: str) -> list:
     parts = re.findall(r'[A-ZА-ЯÄÖÜ0-9]+(?=[A-ZА-ЯÄÖÜ][a-zа-яäöüß])|[A-ZА-ЯÄÖÜ]?[a-zа-яäöüß\'’‘`´ʼ]+[0-9]*|[A-ZА-ЯÄÖÜ0-9]+', s)
     return [p for p in parts if p]
 
+def configure_spacy_model(nlp_model: Optional[Any]) -> Optional[Any]:
+    """Configure SpaCy model pipeline, infix splitting for brackets/quotes, and remove unwanted tokenizer exceptions."""
+    if nlp_model is not None and hasattr(nlp_model, 'tokenizer'):
+        try:
+            from spacy.util import compile_infix_regex
+            custom_infixes = list(nlp_model.Defaults.infixes) + [r'[\(\)\[\]\{\}\<\>\"\']']
+            nlp_model.tokenizer.infix_finditer = compile_infix_regex(custom_infixes).finditer
+        except Exception:
+            pass
+        try:
+            rules = dict(nlp_model.tokenizer.rules)
+            changed = False
+            for k in ("id", "Id", "iD"):
+                if k in rules:
+                    del rules[k]
+                    changed = True
+            if changed:
+                nlp_model.tokenizer.rules = rules
+        except Exception:
+            pass
+    return nlp_model
+
 def is_composite_token(text: str) -> bool:
     if not text:
         return False
@@ -1437,6 +1459,8 @@ def is_composite_token(text: str) -> bool:
     if re.search(r'\w-\w', text) and any(c.isalpha() for c in text):
         return True
     if re.search(r'[a-zа-яäöüß][A-ZА-ЯÄÖÜ]|[A-ZА-ЯÄÖÜ]{2,}[a-zа-яäöüß]', text):
+        return True
+    if any(c in text for c in '()[]{}"\'<>') and any(c.isalpha() for c in text):
         return True
     return False
 
@@ -1493,7 +1517,7 @@ def _extract_standard_token(
 
     elif is_composite_token(token.text) and not is_special_token:
         is_path_token = '/' in token.text or '\\' in token.text
-        sub_parts = re.split(r'[_.\-/:#@\\]+', token.text)
+        sub_parts = re.split(r'[_.\-/:#@\\()\[\]{}"\'<>]+', token.text)
         extracted_sub_lemmas = []
         part_source_map = {}
         for part in sub_parts:
@@ -1595,6 +1619,8 @@ def extract_lemmas_from_sentence(
     **kwargs: object
 ) -> List[str]:
     current_nlp = context.nlp if (context and context.nlp is not None) else nlp_model
+    if current_nlp is not None:
+        configure_spacy_model(current_nlp)
     gcs_automaton = context.gcs_automaton if (context and context.gcs_automaton is not None) else kwargs.get('gcs_automaton', None)
     de_dictionary = getattr(context, 'de_dictionary', None) if (context and getattr(context, 'de_dictionary', None) is not None) else de_dictionary
 
@@ -3288,6 +3314,7 @@ def main():
 
     global nlp
     nlp = spacy.load("de_core_news_lg" if args.language == "de" else "en_core_web_lg")
+    configure_spacy_model(nlp)
 
     lemma_override_rules = load_lemma_override_rules(args.lemma_override_file) if args.lemma_override_file else {}
     token_mappings = {}

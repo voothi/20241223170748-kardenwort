@@ -1389,3 +1389,68 @@ def test_combine_source_words_deduplicates_multi_token_forms(tmp_path):
     sorted_forms = sort_inflected_forms(existing, config=args)
     assert len(sorted_forms) == len(set(sorted_forms))
     assert sorted_forms.count("specifications") == 1
+
+
+def test_function_call_bracket_decomposition_and_id_preservation():
+    import spacy
+    from kardenwort.core.kardenwort import extract_lemmas_from_sentence, _extract_standard_token, ExtractionConfig
+
+    try:
+        nlp = spacy.load("en_core_web_lg")
+    except Exception:
+        pytest.skip("SpaCy en_core_web_lg model not installed")
+
+    sentence = "Call split_camel_case(raw_word) using compound_id and id."
+    config = ExtractionConfig(language='en', preserve_composite_tokens=True, de_force_noun_capitalization=False)
+
+    lemmas = extract_lemmas_from_sentence(
+        sentence_text=sentence,
+        lemma_sort_index={},
+        nlp_model=nlp,
+        extraction_config=config
+    )
+
+    lemmas_lower = [l.lower() for l in lemmas]
+
+    # Verify function signature components
+    assert "split_camel_case" in lemmas_lower
+    assert "split" in lemmas_lower
+    assert "camel" in lemmas_lower
+    assert "case" in lemmas_lower
+    assert "raw_word" in lemmas_lower
+    assert "raw" in lemmas_lower
+    assert "word" in lemmas_lower
+
+    # Verify ID preservation
+    assert "compound_id" in lemmas_lower
+    assert "compound" in lemmas_lower
+    assert "id" in lemmas_lower
+
+    # Verify that id is NOT split into contraction components (I / 'd)
+    doc = nlp("compound_id id")
+    tok_compound = doc[0]
+    tok_id = doc[1]
+
+    lemmas_comp, mapped_comp = _extract_standard_token(
+        tok_compound, nlp, de_dictionary=None, lemma_override_rules={},
+        sentence_text=sentence, de_fix_genitive=False,
+        de_gcs=False, gcs_automaton=None, de_gcs_pos_tags=[],
+        args=config, separable_verb_map={},
+        preserve_composite_tokens=True
+    )
+    assert any(l.lower() == "compound_id" for l in lemmas_comp)
+    assert "compound" in [l.lower() for l in lemmas_comp]
+    assert "id" in [l.lower() for l in lemmas_comp]
+    assert mapped_comp["compound"] == "compound_id"
+    assert mapped_comp["id"] == "compound_id"
+
+    lemmas_id, mapped_id = _extract_standard_token(
+        tok_id, nlp, de_dictionary=None, lemma_override_rules={},
+        sentence_text=sentence, de_fix_genitive=False,
+        de_gcs=False, gcs_automaton=None, de_gcs_pos_tags=[],
+        args=config, separable_verb_map={},
+        preserve_composite_tokens=True
+    )
+    assert any(l.lower() == "id" for l in lemmas_id)
+    assert not any(l.lower() == "'d" or l == "d" for l in lemmas_id)
+

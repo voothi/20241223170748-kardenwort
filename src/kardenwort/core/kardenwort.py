@@ -1437,7 +1437,7 @@ def configure_spacy_model(nlp_model: Optional[Any]) -> Optional[Any]:
         try:
             rules = dict(nlp_model.tokenizer.rules)
             changed = False
-            for k in ("id", "Id", "iD"):
+            for k in ("id", "Id", "iD", "ID", "wed", "Wed", "WED"):
                 if k in rules:
                     del rules[k]
                     changed = True

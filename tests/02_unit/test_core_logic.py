@@ -1454,3 +1454,40 @@ def test_function_call_bracket_decomposition_and_id_preservation():
     assert any(l.lower() == "id" for l in lemmas_id)
     assert not any(l.lower() == "'d" or l == "d" for l in lemmas_id)
 
+
+def test_wed_and_id_tokenizer_exception_removal():
+    import spacy
+    from kardenwort.core.kardenwort import extract_lemmas_from_sentence, configure_spacy_model, ExtractionConfig
+
+    try:
+        nlp = spacy.load("en_core_web_lg")
+    except Exception:
+        try:
+            nlp = spacy.load("en_core_web_sm")
+        except Exception:
+            nlp = spacy.blank("en")
+
+    configure_spacy_model(nlp)
+
+    sentence = "They wed in June and meet on Wed, Aug 16."
+    config = ExtractionConfig(language='en', preserve_composite_tokens=True, de_force_noun_capitalization=False)
+
+    lemmas = extract_lemmas_from_sentence(
+        sentence_text=sentence,
+        lemma_sort_index={},
+        nlp_model=nlp,
+        extraction_config=config
+    )
+    lemmas_lower = [l.lower() for l in lemmas]
+
+    assert "wed" in lemmas_lower
+    # Ensure it wasn't decomposed into 'd or would/had from slang contraction
+    assert "'d" not in lemmas_lower
+
+    doc = nlp(sentence)
+    tokens_text = [t.text for t in doc]
+    assert "wed" in tokens_text
+    assert "Wed" in tokens_text
+    assert "we" not in [t.text.lower() for t in doc]
+
+

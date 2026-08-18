@@ -362,6 +362,22 @@ def run_importer_script(output_filename_basename, args, python_path, workspace_p
     output_base_path = Path(output_filename_basename)
     if not output_base_path.is_absolute():
         output_base_path = workspace_path / output_dir_name / output_filename_basename
+
+    zid = getattr(args, 'zid', None)
+    if not zid and output_filename_basename:
+        m = re.search(r'(\d{14})', os.path.basename(str(output_filename_basename)))
+        if m:
+            zid = m.group(1)
+
+    trace_id = getattr(args, 'trace_id', None)
+    if not trace_id and zid:
+        trace_id = f"{zid}:export:anki"
+
+    if zid:
+        importer_command.extend(["--zid", str(zid)])
+    if trace_id:
+        importer_command.extend(["--trace-id", str(trace_id)])
+
     metadata_path = output_base_path.with_suffix('.json')
     if metadata_path.exists():
         importer_command.extend(["--deck-metadata-file", str(metadata_path)])
@@ -464,6 +480,8 @@ def main():
     parser.add_argument("--import-only", action="store_true", help="Import an existing TSV directly into Anki without running extraction.")
     parser.add_argument("--tsv", nargs="+", help="Path to the TSV file(s) (required for --import-only).")
     parser.add_argument("--structured-output", "--json-ipc", action="store_true", dest="structured_output", help="Emit JSON/JSONL output instead of plain text, enabling structured IPC communication.")
+    parser.add_argument("--zid", type=str, help="Session ZID for correlation")
+    parser.add_argument("--trace-id", type=str, help="Trace correlation ID")
 
     args = parser.parse_args()
     

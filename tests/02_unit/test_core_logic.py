@@ -982,7 +982,7 @@ def test_code_identifier_and_url_delimiter_tokenization():
     from kardenwort.core.kardenwort import extract_lemmas_from_sentence, ExtractionConfig
 
     try:
-        nlp = spacy.load('en_core_web_lg')
+        nlp = spacy.load('en_core_web_lg', exclude=["ner", "parser"])
     except Exception:
         pytest.skip('en_core_web_lg not installed in current environment')
 
@@ -1202,7 +1202,7 @@ def test_hyphenated_compound_german_gcs_orthogonality():
     )
 
     try:
-        nlp_de = spacy.load('de_core_news_sm')
+        nlp_de = spacy.load('de_core_news_sm', exclude=["ner", "parser"])
     except Exception:
         nlp_de = spacy.blank('de')
 
@@ -1396,7 +1396,7 @@ def test_function_call_bracket_decomposition_and_id_preservation():
     from kardenwort.core.kardenwort import extract_lemmas_from_sentence, _extract_standard_token, ExtractionConfig
 
     try:
-        nlp = spacy.load("en_core_web_lg")
+        nlp = spacy.load("en_core_web_lg", exclude=["ner", "parser"])
     except Exception:
         pytest.skip("SpaCy en_core_web_lg model not installed")
 
@@ -1460,10 +1460,10 @@ def test_wed_and_id_tokenizer_exception_removal():
     from kardenwort.core.kardenwort import extract_lemmas_from_sentence, configure_spacy_model, ExtractionConfig
 
     try:
-        nlp = spacy.load("en_core_web_lg")
+        nlp = spacy.load("en_core_web_lg", exclude=["ner", "parser"])
     except Exception:
         try:
-            nlp = spacy.load("en_core_web_sm")
+            nlp = spacy.load("en_core_web_sm", exclude=["ner", "parser"])
         except Exception:
             nlp = spacy.blank("en")
 
@@ -1508,10 +1508,10 @@ def test_possessive_token_suppression_and_inflection():
     )
 
     try:
-        nlp = spacy.load("en_core_web_lg")
+        nlp = spacy.load("en_core_web_lg", exclude=["ner", "parser"])
     except Exception:
         try:
-            nlp = spacy.load("en_core_web_sm")
+            nlp = spacy.load("en_core_web_sm", exclude=["ner", "parser"])
         except Exception:
             nlp = spacy.blank("en")
 

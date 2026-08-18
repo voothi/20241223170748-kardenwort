@@ -79,10 +79,11 @@ class MockDoc(list):
                 
     @property
     def sents(self):
-        class _Span:
-            def __init__(self, t: str):
+        class _Span(list):
+            def __init__(self, tokens: List[MockToken], t: str):
+                super().__init__(tokens)
                 self.text = t
-        return [_Span(self.text)]
+        return [_Span(list(self), self.text)]
 
 
 class MockPipelineNLP:

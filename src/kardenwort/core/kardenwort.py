@@ -1110,9 +1110,34 @@ def find_possessive_token_pairs(document):
 
 def find_separable_verb_particle_pairs(document):
     particle_map = {}
-    for token in document:
-        if token.dep_ == "svp":
-            particle_map[token.head.i] = token
+    if hasattr(document, 'sents'):
+        try:
+            for sent in document.sents:
+                if hasattr(sent, '__iter__'):
+                    for i, token in enumerate(sent):
+                        if getattr(token, 'dep_', None) == "svp" and getattr(token, 'head', token) != token:
+                            particle_map[token.head.i] = token
+                        elif getattr(token, 'tag_', None) == "PTKVZ" or getattr(token, 'dep_', None) == "svp":
+                            for prev_t in reversed(sent[:i]):
+                                if getattr(prev_t, 'pos_', None) == 'VERB' or getattr(prev_t, 'tag_', None) in ('VVFIN', 'VAFIN', 'VMFIN', 'VVINF', 'VVPP'):
+                                    particle_map[prev_t.i] = token
+                                    break
+            return particle_map
+        except (ValueError, TypeError):
+            pass
+
+    try:
+        tokens = list(document)
+        for i, token in enumerate(tokens):
+            if getattr(token, 'dep_', None) == "svp" and getattr(token, 'head', token) != token:
+                particle_map[token.head.i] = token
+            elif getattr(token, 'tag_', None) == "PTKVZ" or getattr(token, 'dep_', None) == "svp":
+                for prev_t in reversed(tokens[:i]):
+                    if getattr(prev_t, 'pos_', None) == 'VERB' or getattr(prev_t, 'tag_', None) in ('VVFIN', 'VAFIN', 'VMFIN', 'VVINF', 'VVPP'):
+                        particle_map[prev_t.i] = token
+                        break
+    except Exception:
+        pass
     return particle_map
 
 def load_lemma_frequency_index(file_path):
@@ -1460,24 +1485,30 @@ def split_camel_case(s: str) -> list:
 
 def configure_spacy_model(nlp_model: Optional[Any]) -> Optional[Any]:
     """Configure SpaCy model pipeline, infix splitting for brackets/quotes, and remove unwanted tokenizer exceptions."""
-    if nlp_model is not None and hasattr(nlp_model, 'tokenizer'):
-        try:
-            from spacy.util import compile_infix_regex
-            custom_infixes = list(nlp_model.Defaults.infixes) + [r'[\(\)\[\]\{\}\<\>\"\']']
-            nlp_model.tokenizer.infix_finditer = compile_infix_regex(custom_infixes).finditer
-        except Exception:
-            pass
-        try:
-            rules = dict(nlp_model.tokenizer.rules)
-            changed = False
-            for k in ("id", "Id", "iD", "ID", "wed", "Wed", "WED"):
-                if k in rules:
-                    del rules[k]
-                    changed = True
-            if changed:
-                nlp_model.tokenizer.rules = rules
-        except Exception:
-            pass
+    if nlp_model is not None:
+        if hasattr(nlp_model, 'pipe_names') and "sentencizer" not in nlp_model.pipe_names and "parser" not in nlp_model.pipe_names:
+            try:
+                nlp_model.add_pipe("sentencizer")
+            except Exception:
+                pass
+        if hasattr(nlp_model, 'tokenizer'):
+            try:
+                from spacy.util import compile_infix_regex
+                custom_infixes = list(nlp_model.Defaults.infixes) + [r'[\(\)\[\]\{\}\<\>\"\']']
+                nlp_model.tokenizer.infix_finditer = compile_infix_regex(custom_infixes).finditer
+            except Exception:
+                pass
+            try:
+                rules = dict(nlp_model.tokenizer.rules)
+                changed = False
+                for k in ("id", "Id", "iD", "ID", "wed", "Wed", "WED"):
+                    if k in rules:
+                        del rules[k]
+                        changed = True
+                if changed:
+                    nlp_model.tokenizer.rules = rules
+            except Exception:
+                pass
     return nlp_model
 
 def is_composite_token(text: str) -> bool:
@@ -3355,7 +3386,7 @@ def main():
         print("Error: --de-gcs-preserve-compound-word requires --de-gcs to be enabled.", file=sys.stderr); exit(1)
 
     global nlp
-    nlp = spacy.load("de_core_news_lg" if args.language == "de" else "en_core_web_lg")
+    nlp = spacy.load("de_core_news_lg" if args.language == "de" else "en_core_web_lg", exclude=["ner", "parser"])
     configure_spacy_model(nlp)
 
     lemma_override_rules = load_lemma_override_rules(args.lemma_override_file) if args.lemma_override_file else {}

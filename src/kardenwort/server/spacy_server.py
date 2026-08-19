@@ -278,9 +278,12 @@ def start_spacy_server(host: str = "127.0.0.1", port: int = 8081, preload_models
 
 
 if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description="Kardenwort SpaCy Server")
+    parser.add_argument("--host", default="127.0.0.1", help="Host to bind to")
+    parser.add_argument("--port", type=int, default=8081, help="Port to bind to")
+    parser.add_argument("pos_port", nargs="?", type=int, default=None, help="Positional port")
+    cli_args, _ = parser.parse_known_args()
+    resolved_port = cli_args.pos_port if cli_args.pos_port is not None else cli_args.port
     logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
-    port = 8081
-    host = "127.0.0.1"
-    if len(sys.argv) > 1 and sys.argv[1].isdigit():
-        port = int(sys.argv[1])
-    start_spacy_server(host=host, port=port)
+    start_spacy_server(host=cli_args.host, port=resolved_port)

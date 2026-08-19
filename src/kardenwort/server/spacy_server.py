@@ -10,6 +10,11 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 
+# Ensure 'src' root is in sys.path when executed directly as a script
+src_dir = Path(__file__).resolve().parent.parent.parent
+if str(src_dir) not in sys.path:
+    sys.path.insert(0, str(src_dir))
+
 import spacy
 from kardenwort.core.kardenwort import configure_spacy_model, retokenize_hyphenated_compounds
 

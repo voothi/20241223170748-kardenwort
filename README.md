@@ -168,11 +168,11 @@ While many text-processing tools for language learners exist
 
 ## Installation and Setup
 
-Follow these steps to get the entire Kardenwort ecosystem up and running.
+Follow these steps to set up the minimal, secure, and reproducible Python runtime environment for Kardenwort.
 
 **Prerequisites:**
-*   **Python 3.9**: It is **strongly recommended** to use this specific version.
-    > **Important for Windows Users:** Versions of Python higher than 3.9 (e.g., 3.10+) may require a C++ compiler (like Visual Studio Build Tools) to install dependencies such as `spaCy`. To avoid these compilation issues, we recommend installing **Python 3.9** directly from the **Microsoft Store**, which provides a hassle-free setup.
+*   **Python 3.12 (e.g. 3.12.7 or >= 3.12.0)**: Standard 64-bit Python installation.
+    > **Note for Windows Users:** Python 3.12 features native pre-compiled wheel support on Windows x64 for `spaCy 3.8.x` and all linguistic binary extensions (Blis, Cymem, Preshed, MurmurHash, Srsly), requiring **no Visual Studio C++ compilers or build tools**.
 *   **Anki Desktop**: Must be installed and running.
 *   **AnkiConnect Add-on**: Install the [AnkiConnect](https://ankiweb.net/shared/info/2055492159) add-on in Anki.
     > ⚠️ **Important Dependency for Deck Descriptions**
@@ -205,28 +205,50 @@ Follow these steps to get the entire Kardenwort ecosystem up and running.
 2.  **Import the Anki Template**:
     In the `20250913123501-kardenwort-anki-templates` project, navigate to the `decks-for-first-initialize-templates` directory. Choose the latest version folder (e.g., `v1.0.0`), select **one** of the `.apkg` deck files inside, and import it into Anki Desktop. This will automatically add and configure the required note type.
 
-3.  **Set up a Shared Python Environment**:
-    We will create a single virtual environment one level above the project folders. This keeps the project directories clean and allows all scripts to use the same set of installed packages.
-    ```bash
-    # First, navigate into the main project directory
+3.  **Provision the Python 3.12 Virtual Environment**:
+    Navigate into the main project directory and create a dedicated project-local virtual environment (`venv/`):
+    ```powershell
+    # Navigate to repository root
     cd 20250913122858-kardenwort
 
-    # Create the virtual environment in the parent directory (../)
-    python -m venv ../20250914043440-kardenwort-spacy-env
+    # Create virtual environment with Python 3.12
+    python -m venv venv
 
-    # Activate it
-    ../20250914043440-kardenwort-spacy-env/Scripts/Activate.ps1  # Windows (PowerShell)
-    # source ../20250914043440-kardenwort-spacy-env/bin/activate # macOS/Linux
+    # Upgrade pip to latest release
+    .\venv\Scripts\python.exe -m pip install --upgrade pip
+    ```
+    *(On Linux/macOS, use `./venv/bin/python -m pip install --upgrade pip`)*
 
-    # Now that the environment is active, install dependencies from the requirements file
-    pip install -r requirements.txt
+4.  **Install Pinned & Verified Dependencies**:
+    To protect against supply chain attacks and guarantee linguistic reproducibility, all dependencies and language models are pinned to verified versions and immutable Git commit hashes:
 
-    # Download SpaCy language models
-    python -m spacy download en_core_web_lg
-    python -m spacy download de_core_news_lg
+    | Component | Verified Specification | Role |
+    | :--- | :--- | :--- |
+    | **`spacy`** | `spacy>=3.8.0,<3.9.0` (e.g. `3.8.15`) | Core linguistic pipeline & tokenization |
+    | **`simplemma`** | `simplemma>=1.1.2` (e.g. `2.0.0`) | Morphological lemmatization & fallback |
+    | **`german_compound_splitter`** | `git+https://github.com/repodiac/german_compound_splitter@cec07e3c70f9ce46f8bb18c078684c2b93c2ab08` | Pinned immutable commit for German GCS |
+    | **`en_core_web_lg`** | `https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.8.0/en_core_web_lg-3.8.0-py3-none-any.whl` | SpaCy 3.8 English Large Model |
+    | **`de_core_news_lg`** | `https://github.com/explosion/spacy-models/releases/download/de_core_news_lg-3.8.0/de_core_news_lg-3.8.0-py3-none-any.whl` | SpaCy 3.8 German Large Model |
+    | **`pytest` / `pytest-cov`** | `pytest>=9.0.0`, `pytest-cov>=7.0.0`, `coverage>=7.0.0` | Test suite & regression runner |
+
+    Install the production stack via `requirements.txt`:
+    ```powershell
+    .\venv\Scripts\pip.exe install -r requirements.txt
     ```
 
-4.  **Configure Kardenwort**:
+    Install testing tools (optional, for development):
+    ```powershell
+    .\venv\Scripts\pip.exe install pytest pytest-cov coverage
+    ```
+
+5.  **Verify Environment & Run Test Suite**:
+    Run the full unit and integration test suite to verify 100% linguistic parity and regression safety:
+    ```powershell
+    .\venv\Scripts\pytest.exe tests/ -v
+    ```
+    *All 261 tests should pass successfully.*
+
+6.  **Configure Kardenwort**:
     *   While still inside the `20250913122858-kardenwort` directory, copy `config.ini.template` to `config.ini`.
     *   Open `config.ini` and verify the paths under `[environment]`. The default relative paths are designed for this structure and should work without changes.
 

@@ -228,6 +228,12 @@ def get_script_args(args, python_path, workspace_path, config, anki_mapping):
                 gcs_args.extend(args.de_gcs_pos_tags)
             base_args.extend(gcs_args)
 
+    spacy_url = getattr(args, 'spacy_server_url', None)
+    if not spacy_url and config and config.has_section('services') and config.has_option('services', 'spacy_server_url'):
+        spacy_url = config.get('services', 'spacy_server_url', fallback='').strip()
+    if spacy_url:
+        base_args.extend(["--spacy-server-url", spacy_url])
+
     output_suffix = "sentence" if args.type == "sentence" else "word"
     
     mode_for_filename = "triple" if args.mode == "mixed-triple" else args.mode
@@ -476,6 +482,7 @@ def main():
     parser.add_argument("--skip-fill", action="store_true", help="Skip the IntelliFiller fill stage.")
     parser.add_argument("--fill", action="store_true", help="Explicitly run the IntelliFiller fill stage.")
     parser.add_argument("--stages", type=str, help="Override pipeline stages (comma-separated, e.g., 'extract,import').")
+    parser.add_argument("--spacy-server-url", type=str, default=None, help="HTTP endpoint of the running SpaCy microservice.")
     parser.add_argument("--subtitle-timestamps-file", type=str, help="Path to the sidecar subtitle timestamps file.")
     parser.add_argument("--import-only", action="store_true", help="Import an existing TSV directly into Anki without running extraction.")
     parser.add_argument("--tsv", nargs="+", help="Path to the TSV file(s) (required for --import-only).")

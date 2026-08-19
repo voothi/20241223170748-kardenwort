@@ -1511,6 +1511,165 @@ def configure_spacy_model(nlp_model: Optional[Any]) -> Optional[Any]:
                 pass
     return nlp_model
 
+
+class RemoteMorph:
+    """Simulates spaCy token morphology object for remote microservice tokens."""
+    def __init__(self, morph_str: str = ""):
+        self._str = morph_str or ""
+        self._data: Dict[str, List[str]] = {}
+        if self._str:
+            for item in self._str.split("|"):
+                if "=" in item:
+                    k, v = item.split("=", 1)
+                    self._data[k] = v.split(",")
+
+    def get(self, key: str, default: Optional[List[str]] = None) -> List[str]:
+        return self._data.get(key, default if default is not None else [])
+
+    def __str__(self) -> str:
+        return self._str
+
+    def __bool__(self) -> bool:
+        return bool(self._str)
+
+
+class RemoteToken:
+    """Lightweight adapter mimicking spaCy Token from microservice JSON payload."""
+    def __init__(
+        self,
+        word: str,
+        lemma: str,
+        pos: str,
+        tag: str = "",
+        morphology: str = "",
+        sentence_index: int = 1,
+        i: int = 0,
+        idx: int = 0,
+        whitespace: str = " "
+    ):
+        self.text = word
+        self.lemma_ = lemma
+        self.pos_ = pos
+        self.tag_ = tag or pos
+        self.dep_ = ""
+        self.morph = RemoteMorph(morphology)
+        self.sentence_index = sentence_index
+        self.i = i
+        self.idx = idx
+        self.whitespace_ = whitespace
+        self.head = self
+        self.is_alpha = any(c.isalpha() for c in word)
+        self.is_space = not word or word.isspace()
+        self.is_sent_start = False
+        self.like_url = bool(re.match(r'^(https?://|www\.)', word, re.IGNORECASE))
+        self.like_email = bool(re.match(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$', word))
+
+    def __str__(self) -> str:
+        return self.text
+
+    def __repr__(self) -> str:
+        return f"RemoteToken({self.text!r}, lemma={self.lemma_!r}, pos={self.pos_!r})"
+
+
+class RemoteSpan(list):
+    """Represents a sentence span containing tokens."""
+    def __init__(self, tokens: List[RemoteToken], text: str = ""):
+        super().__init__(tokens)
+        self.text = text
+
+
+class RemoteDoc(list):
+    """Sequence of RemoteToken objects simulating a spaCy Doc."""
+    def __init__(self, tokens_data: List[Dict[str, Any]], raw_text: str = ""):
+        tokens = []
+        sentences_map: Dict[int, List[RemoteToken]] = {}
+        for idx, t in enumerate(tokens_data):
+            tok = RemoteToken(
+                word=t.get("word", ""),
+                lemma=t.get("lemma", t.get("word", "")),
+                pos=t.get("pos", "X"),
+                tag=t.get("tag", t.get("pos", "X")),
+                morphology=t.get("morphology", ""),
+                sentence_index=t.get("sentence_index", 1),
+                i=idx,
+                idx=idx,
+                whitespace=" "
+            )
+            if idx == 0 or (idx > 0 and tokens[idx - 1].sentence_index != tok.sentence_index):
+                tok.is_sent_start = True
+            tokens.append(tok)
+            sentences_map.setdefault(tok.sentence_index, []).append(tok)
+
+        super().__init__(tokens)
+        self.text = raw_text
+        self._sentences = []
+        for s_idx in sorted(sentences_map.keys()):
+            s_toks = sentences_map[s_idx]
+            s_text = " ".join(t.text for t in s_toks)
+            self._sentences.append(RemoteSpan(s_toks, s_text))
+
+    @property
+    def sents(self) -> List[RemoteSpan]:
+        if self._sentences:
+            return self._sentences
+        return [RemoteSpan(list(self), self.text)]
+
+    def has_annotation(self, name: str) -> bool:
+        if name == "SENT_START":
+            return True
+        return False
+
+
+class RemotePipelineNLP:
+    """HTTP client querying persistent SpaCy microservice on /tokenize with offline fallback."""
+    def __init__(self, server_url: str, lang: str = "de", timeout: float = 5.0):
+        self.server_url = server_url.rstrip("/")
+        self.lang = lang
+        self.timeout = timeout
+        self._fallback_mode = False
+        self._local_nlp = None
+
+    def _get_local_nlp(self):
+        if self._local_nlp is None:
+            import spacy
+            model_name = "de_core_news_lg" if self.lang == "de" else "en_core_web_lg"
+            self._local_nlp = spacy.load(model_name, exclude=["ner", "parser"])
+            configure_spacy_model(self._local_nlp)
+        return self._local_nlp
+
+    def __call__(self, text: str) -> Any:
+        if not text:
+            if self._fallback_mode:
+                return self._get_local_nlp()(text)
+            return RemoteDoc([], "")
+
+        if not self._fallback_mode:
+            try:
+                import urllib.request
+                import json
+                req_url = f"{self.server_url}/tokenize"
+                payload = {
+                    "text": text,
+                    "language": self.lang
+                }
+                req_data = json.dumps(payload).encode("utf-8")
+                req = urllib.request.Request(
+                    req_url,
+                    data=req_data,
+                    headers={"Content-Type": "application/json"}
+                )
+                with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+                    if resp.status == 200:
+                        data = json.loads(resp.read().decode("utf-8"))
+                        if data.get("status") == "success" and "tokens" in data:
+                            return RemoteDoc(data["tokens"], text)
+                    raise RuntimeError(f"Unexpected response status: {resp.status}")
+            except Exception as e:
+                print(f"Warning: SpaCy microservice at {self.server_url} unavailable ({e}). Falling back to local model.", file=sys.stderr)
+                self._fallback_mode = True
+
+        return self._get_local_nlp()(text)
+
 def is_composite_token(text: str) -> bool:
     if not text:
         return False
@@ -2999,7 +3158,6 @@ def main():
                     pass # Fall back to heavy mode if lite script is missing
 
     # --- End Auto-lite check ---
-    import spacy
 
     parser = argparse.ArgumentParser(
         description="Extract and process words or sentences from text.",
@@ -3152,6 +3310,7 @@ def main():
 
     parser.add_argument("--json-ipc", action="store_true", dest="structured_output", help="Alias for --structured-output.")
     parser.add_argument("--structured-output", action="store_true", dest="structured_output", help="Emit JSON/JSONL output instead of plain text, enabling structured IPC communication.")
+    parser.add_argument("--spacy-server-url", type=str, default=None, help="HTTP endpoint of the running SpaCy microservice (e.g., http://127.0.0.1:8081).")
     parser.add_argument("--serve", action="store_true", help="Start persistent SpaCy HTTP microservice daemon.")
     parser.add_argument("--port", type=int, default=8081, help="Port for the HTTP microservice daemon (default: 8081).")
     parser.add_argument("--host", type=str, default="127.0.0.1", help="Host address for the HTTP microservice daemon (default: 127.0.0.1).")
@@ -3214,6 +3373,11 @@ def main():
                         classify_val = f"{prefix}:{full_path}" if prefix else str(full_path)
                         args.classify.append(f"{name.strip()}={classify_val}")
                         
+        # Read spacy_server_url from config [services]
+        if not getattr(args, 'spacy_server_url', None):
+            if cfg.has_section('services') and cfg.has_option('services', 'spacy_server_url'):
+                args.spacy_server_url = cfg.get('services', 'spacy_server_url', fallback='').strip() or None
+
         # Read combine_source_words and combine_source_words_order
         if not args.combine_source_words:
             if cfg.has_section('lemmatization') and cfg.has_option('lemmatization', 'combine_source_words'):
@@ -3394,8 +3558,13 @@ def main():
         print("Error: --de-gcs-preserve-compound-word requires --de-gcs to be enabled.", file=sys.stderr); exit(1)
 
     global nlp
-    nlp = spacy.load("de_core_news_lg" if args.language == "de" else "en_core_web_lg", exclude=["ner", "parser"])
-    configure_spacy_model(nlp)
+    spacy_url = getattr(args, 'spacy_server_url', None) or os.environ.get('SPACY_SERVER_URL') or None
+    if spacy_url:
+        nlp = RemotePipelineNLP(server_url=spacy_url, lang=args.language)
+    else:
+        import spacy
+        nlp = spacy.load("de_core_news_lg" if args.language == "de" else "en_core_web_lg", exclude=["ner", "parser"])
+        configure_spacy_model(nlp)
 
     lemma_override_rules = load_lemma_override_rules(args.lemma_override_file) if args.lemma_override_file else {}
     token_mappings = {}

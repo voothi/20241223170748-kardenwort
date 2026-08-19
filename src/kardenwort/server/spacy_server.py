@@ -158,6 +158,7 @@ class SpacyRequestHandler(BaseHTTPRequestHandler):
                             "word": token.text,
                             "lemma": token.lemma_,
                             "pos": token.pos_,
+                            "tag": token.tag_,
                             "morphology": str(token.morph) if token.morph else "",
                             "sentence_index": sent_idx
                         })

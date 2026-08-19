@@ -1547,5 +1547,26 @@ def test_possessive_token_suppression_and_inflection():
         assert is_possessive_token(doc[idx])
 
 
+def test_path_and_file_compound_subtoken_inflections():
+    """Verify sub-tokens extracted from file paths and compound file names propagate specific source words."""
+    import argparse
+    from kardenwort.core import kardenwort as kw
+    from mock_nlp import MockPipelineNLP, MockToken
 
+    nlp = MockPipelineNLP('en')
+    tok = MockToken("run_goldens.py", pos_="NOUN", is_alpha=False)
+    args = argparse.Namespace(language='en', de_force_noun_capitalization=False, preserve_composite_tokens=False)
 
+    lemmas, mapped_sources = kw._extract_standard_token(
+        tok, nlp, de_dictionary=None, lemma_override_rules={},
+        sentence_text="Execute run_goldens.py now.", de_fix_genitive=False,
+        de_gcs=False, gcs_automaton=None, de_gcs_pos_tags=[],
+        args=args, separable_verb_map={}
+    )
+
+    assert "run" in lemmas
+    assert "goldens" in lemmas
+    assert "py" in lemmas
+    assert mapped_sources["run"] == "run"
+    assert mapped_sources["goldens"] == "goldens"
+    assert mapped_sources["py"] == "py"

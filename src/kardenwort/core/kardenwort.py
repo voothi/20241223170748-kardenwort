@@ -1087,7 +1087,7 @@ def is_possessive_token(token) -> bool:
     text = getattr(token, 'text', '')
     if tag == 'POS':
         return True
-    if text in POSSESSIVE_ENCLITICS and pos in ('PART', 'PUNCT', 'X'):
+    if text in POSSESSIVE_ENCLITICS and pos in ('PART', 'PUNCT', 'X', ''):
         return True
     return False
 
@@ -1742,7 +1742,7 @@ def _extract_standard_token(
                 lemmas_for_current_token.append(processed_part_lemma)
 
     elif is_composite_token(token.text) and not is_special_token:
-        is_path_token = '/' in token.text or '\\' in token.text
+        is_path_token = '/' in token.text or '\\' in token.text or bool(re.search(r'\.[a-zA-Z0-9]{1,5}$', token.text))
         sub_parts = re.split(r'[_.\-/:#@\\()\[\]{}"\'<>]+', token.text)
         extracted_sub_lemmas = []
         part_source_map = {}

@@ -1763,7 +1763,16 @@ def _extract_standard_token(
                     sub_lemma = get_overridden_lemma_for_word(sub_default_lemma, sub_token.text, lemma_override_rules, sentence_text)
                     if sub_lemma:
                         extracted_sub_lemmas.append(sub_lemma)
-                        part_source_map[sub_lemma] = sub_token.text if is_path_token else source_word_form
+                        if is_path_token:
+                            if sub_lemma in part_source_map:
+                                existing = [s.strip() for s in part_source_map[sub_lemma].split(',') if s.strip()]
+                                if sub_token.text not in existing:
+                                    existing.append(sub_token.text)
+                                part_source_map[sub_lemma] = ", ".join(sort_inflected_forms(existing, config=args))
+                            else:
+                                part_source_map[sub_lemma] = sub_token.text
+                        else:
+                            part_source_map[sub_lemma] = source_word_form
         if extracted_sub_lemmas:
             was_split = True
             if not is_path_token and (preserve_composite or (de_gcs and de_gcs_preserve_compound_word)):

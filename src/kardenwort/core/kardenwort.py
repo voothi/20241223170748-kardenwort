@@ -3158,7 +3158,7 @@ def main():
     
     args = parser.parse_args()
     
-    if getattr(args, 'serve', False):
+    if getattr(args, 'serve', False) is True:
         from kardenwort.server.spacy_server import start_spacy_server
         start_spacy_server(host=getattr(args, 'host', '127.0.0.1'), port=getattr(args, 'port', 8081))
         sys.exit(0)

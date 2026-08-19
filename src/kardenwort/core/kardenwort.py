@@ -3152,8 +3152,16 @@ def main():
 
     parser.add_argument("--json-ipc", action="store_true", dest="structured_output", help="Alias for --structured-output.")
     parser.add_argument("--structured-output", action="store_true", dest="structured_output", help="Emit JSON/JSONL output instead of plain text, enabling structured IPC communication.")
+    parser.add_argument("--serve", action="store_true", help="Start persistent SpaCy HTTP microservice daemon.")
+    parser.add_argument("--port", type=int, default=8081, help="Port for the HTTP microservice daemon (default: 8081).")
+    parser.add_argument("--host", type=str, default="127.0.0.1", help="Host address for the HTTP microservice daemon (default: 127.0.0.1).")
     
     args = parser.parse_args()
+    
+    if getattr(args, 'serve', False):
+        from kardenwort.server.spacy_server import start_spacy_server
+        start_spacy_server(host=getattr(args, 'host', '127.0.0.1'), port=getattr(args, 'port', 8081))
+        sys.exit(0)
     
     if hasattr(args, 'text') and args.text:
         args.text = args.text.replace('\u200b', '').replace('\u200c', '').replace('\u200d', '').replace('\ufeff', '')

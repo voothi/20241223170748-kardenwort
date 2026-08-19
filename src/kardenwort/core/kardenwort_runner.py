@@ -482,8 +482,16 @@ def main():
     parser.add_argument("--structured-output", "--json-ipc", action="store_true", dest="structured_output", help="Emit JSON/JSONL output instead of plain text, enabling structured IPC communication.")
     parser.add_argument("--zid", type=str, help="Session ZID for correlation")
     parser.add_argument("--trace-id", type=str, help="Trace correlation ID")
+    parser.add_argument("--serve", action="store_true", help="Start the persistent SpaCy HTTP microservice daemon.")
+    parser.add_argument("--port", type=int, default=8081, help="Port to bind the HTTP microservice daemon (default: 8081).")
+    parser.add_argument("--host", type=str, default="127.0.0.1", help="Host interface to bind the HTTP microservice daemon (default: 127.0.0.1).")
 
     args = parser.parse_args()
+    
+    if getattr(args, 'serve', False):
+        from kardenwort.server.spacy_server import start_spacy_server
+        start_spacy_server(host=getattr(args, 'host', '127.0.0.1'), port=getattr(args, 'port', 8081))
+        sys.exit(0)
     
     python_path, workspace_path, importer_workspace, config = load_config()
     anki_mapping = load_anki_mapping()

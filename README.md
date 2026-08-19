@@ -170,9 +170,13 @@ While many text-processing tools for language learners exist
 
 Follow these steps to set up the minimal, secure, and reproducible Python runtime environment for Kardenwort.
 
-**Prerequisites:**
+**Prerequisites & System Requirements:**
 *   **Python 3.12 (e.g. 3.12.7 or >= 3.12.0)**: Standard 64-bit Python installation.
     > **Note for Windows Users:** Python 3.12 features native pre-compiled wheel support on Windows x64 for `spaCy 3.8.x` and all linguistic binary extensions (Blis, Cymem, Preshed, MurmurHash, Srsly), requiring **no Visual Studio C++ compilers or build tools**.
+*   **Memory (RAM)**: Minimum **2 GB RAM per service** (when loading large language models `de_core_news_lg` and `en_core_web_lg` into memory). Recommended system RAM is **8 GB+** to run the desktop application, linguistic services, and translation concurrently.
+*   **Storage & Download Footprint**:
+    *   **Disk Footprint**: **~1.25 GB** for the complete project-local virtual environment (`venv/`).
+    *   **Download Volume**: **~1.0 GB** total network download (`en_core_web_lg` ~400 MB, `de_core_news_lg` ~568 MB, Python packages ~50 MB).
 *   **Anki Desktop**: Must be installed and running.
 *   **AnkiConnect Add-on**: Install the [AnkiConnect](https://ankiweb.net/shared/info/2055492159) add-on in Anki.
     > ⚠️ **Important Dependency for Deck Descriptions**

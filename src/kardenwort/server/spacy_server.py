@@ -160,7 +160,9 @@ class SpacyRequestHandler(BaseHTTPRequestHandler):
                             "pos": token.pos_,
                             "tag": token.tag_,
                             "morphology": str(token.morph) if token.morph else "",
-                            "sentence_index": sent_idx
+                            "sentence_index": sent_idx,
+                            "idx": token.idx,
+                            "whitespace": token.whitespace_
                         })
 
                 duration_ms = round((time.perf_counter() - t0) * 1000, 2)

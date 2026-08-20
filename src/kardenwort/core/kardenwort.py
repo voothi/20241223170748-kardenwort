@@ -1592,8 +1592,8 @@ class RemoteDoc(list):
                 morphology=t.get("morphology", ""),
                 sentence_index=t.get("sentence_index", 1),
                 i=idx,
-                idx=idx,
-                whitespace=" "
+                idx=t.get("idx", idx),
+                whitespace=t.get("whitespace", " ")
             )
             if idx == 0 or (idx > 0 and tokens[idx - 1].sentence_index != tok.sentence_index):
                 tok.is_sent_start = True

@@ -52,11 +52,11 @@ def test_remote_morph():
 
 def test_remote_token_and_doc():
     tokens_data = [
-        {"word": "Der", "lemma": "der", "pos": "DET", "tag": "ART", "morphology": "Case=Nom", "sentence_index": 1},
-        {"word": "Hund", "lemma": "Hund", "pos": "NOUN", "tag": "NN", "morphology": "Case=Nom|Gender=Masc", "sentence_index": 1},
-        {"word": "bellt", "lemma": "bellen", "pos": "VERB", "tag": "VVFIN", "morphology": "Person=3", "sentence_index": 1},
-        {"word": "Die", "lemma": "der", "pos": "DET", "tag": "ART", "morphology": "Case=Nom", "sentence_index": 2},
-        {"word": "Katze", "lemma": "Katze", "pos": "NOUN", "tag": "NN", "morphology": "Case=Nom|Gender=Fem", "sentence_index": 2},
+        {"word": "Der", "lemma": "der", "pos": "DET", "tag": "ART", "morphology": "Case=Nom", "sentence_index": 1, "idx": 0, "whitespace": " "},
+        {"word": "Hund", "lemma": "Hund", "pos": "NOUN", "tag": "NN", "morphology": "Case=Nom|Gender=Masc", "sentence_index": 1, "idx": 4, "whitespace": " "},
+        {"word": "bellt", "lemma": "bellen", "pos": "VERB", "tag": "VVFIN", "morphology": "Person=3", "sentence_index": 1, "idx": 9, "whitespace": ". "},
+        {"word": "Die", "lemma": "der", "pos": "DET", "tag": "ART", "morphology": "Case=Nom", "sentence_index": 2, "idx": 16, "whitespace": " "},
+        {"word": "Katze", "lemma": "Katze", "pos": "NOUN", "tag": "NN", "morphology": "Case=Nom|Gender=Fem", "sentence_index": 2, "idx": 20, "whitespace": "."},
     ]
     raw_text = "Der Hund bellt. Die Katze."
     doc = RemoteDoc(tokens_data, raw_text)
@@ -72,21 +72,27 @@ def test_remote_token_and_doc():
     assert tok0.tag_ == "ART"
     assert tok0.is_sent_start is True
     assert tok0.is_alpha is True
+    assert tok0.idx == 0
+    assert tok0.whitespace_ == " "
     assert tok0.morph.get("Case") == ["Nom"]
 
     tok1 = doc[1]
     assert tok1.is_sent_start is False
+    assert tok1.idx == 4
+    assert tok1.whitespace_ == " "
 
     tok3 = doc[3]
     assert tok3.text == "Die"
     assert tok3.is_sent_start is True
+    assert tok3.idx == 16
 
     assert doc.has_annotation("SENT_START") is True
 
 
 def test_remote_pipeline_nlp_live(spacy_server):
     nlp_client = RemotePipelineNLP(server_url=spacy_server, lang="de", timeout=5.0)
-    doc = nlp_client("Der schnelle braune Fuchs springt über den faulen Hund.")
+    raw_text = "Der schnelle braune Fuchs springt über den faulen Hund."
+    doc = nlp_client(raw_text)
 
     assert isinstance(doc, RemoteDoc)
     assert len(doc) > 0
@@ -97,6 +103,27 @@ def test_remote_pipeline_nlp_live(spacy_server):
     fuchs_tok = next(t for t in doc if t.text == "Fuchs")
     assert fuchs_tok.pos_ in ("NOUN", "PROPN")
     assert fuchs_tok.lemma_ == "Fuchs"
+    assert fuchs_tok.idx == raw_text.index("Fuchs")
+    assert fuchs_tok.whitespace_ == " "
+
+
+def test_remote_pipeline_contractions_and_abbreviations_parity(spacy_server):
+    # German abbreviations and contractions
+    de_client = RemotePipelineNLP(server_url=spacy_server, lang="de", timeout=5.0)
+    de_text = "Wir gehen zum Haus, bzw. in den Garten."
+    de_doc = de_client(de_text)
+
+    # Verify character offsets match slice positions in source text
+    for tok in de_doc:
+        assert de_text[tok.idx:tok.idx + len(tok.text)] == tok.text
+
+    # English contractions
+    en_client = RemotePipelineNLP(server_url=spacy_server, lang="en", timeout=5.0)
+    en_text = "I've decided that there's no problem."
+    en_doc = en_client(en_text)
+
+    for tok in en_doc:
+        assert en_text[tok.idx:tok.idx + len(tok.text)] == tok.text
 
 
 def test_remote_pipeline_nlp_fallback():

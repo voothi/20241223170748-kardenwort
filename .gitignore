@@ -154,3 +154,12 @@ test_out_40_idx.tsv
 test_out_40.tsv
 test_out_41.tsv
 venv/
+
+# Database files
+*.db
+*.db-wal
+*.db-shm
+data/*.db
+data/*.db-wal
+data/*.db-shm
+

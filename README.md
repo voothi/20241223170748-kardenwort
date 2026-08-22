@@ -606,6 +606,26 @@ U:\voothi\20250825231214-spacy-env\Scripts\python.exe -m pytest tests/02_unit/ -
 U:\voothi\20250825231214-spacy-env\Scripts\python.exe -m pytest tests/ -v --cov=src --cov-report=term-missing
 ```
 
+### SpaCy HTTP Microservice & RAM Optimization
+
+Kardenwort provides a high-performance background daemon (`spacy_server.py`) for zero-cold-start tokenization and lemmatization.
+
+```bash
+# Start microservice with default always-resident models (sub-5ms hot latency)
+python src/kardenwort/server/spacy_server.py --port 8081
+
+# Start microservice with dynamic TTL model eviction (e.g., 300s / 5 minutes idle TTL)
+python src/kardenwort/server/spacy_server.py --port 8081 --model-ttl 300
+
+# Start with lazy on-demand model loading (saves ~1.2 GB RAM on boot)
+python src/kardenwort/server/spacy_server.py --port 8081 --no-preload --model-ttl 300
+```
+
+#### Memory Tuning Recommendations
+* **Always-Hot (`--model-ttl 0` / default)**: Best for high-frequency workflows. Both German and English models remain resident in memory for instant `<5ms` tokenization.
+* **Balanced Desktop (`--model-ttl 300` / 5 min)**: Recommended for desktop environments. Models stay hot during active study sessions and are automatically evicted after 5 minutes of inactivity, reclaiming **~500 MB – 1.2 GB** of RAM.
+* **Low-Memory / Constrained Systems (`--no-preload --model-ttl 60`)**: Server starts with minimal memory footprint (<30 MB) and loads language models only when requested.
+
 ### Development Repositories
 
 For those who want the latest features, bug fixes, or wish to explore the development history, we maintain a set of active development repositories. Code is periodically merged from these repos into the stable public ones listed above.

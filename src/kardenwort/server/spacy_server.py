@@ -101,11 +101,30 @@ class SpacyRequestHandler(BaseHTTPRequestHandler):
         # Health endpoint
         if path in ('/health', '/api/v1/health', '/'):
             uptime = round(time.time() - getattr(self.server, 'start_time', time.time()), 2)
-            loaded_models = list(getattr(self.server, 'models', {}).keys())
+            with getattr(self.server, 'models_lock', threading.Lock()):
+                models_dict = getattr(self.server, 'models', {})
+                access_dict = getattr(self.server, 'access_times', {})
+                warmed_dict = getattr(self.server, 'simplemma_warmed', {})
+                ttl_val = getattr(self.server, 'model_idle_ttl', 0)
+                now = time.time()
+
+                models_info = {}
+                for lang, nlp in models_dict.items():
+                    model_name = getattr(nlp, 'meta', {}).get('name', 'custom') if hasattr(nlp, 'meta') else 'custom'
+                    idle_sec = round(now - access_dict.get(lang, now), 2)
+                    models_info[lang] = {
+                        "model_name": model_name,
+                        "idle_seconds": idle_sec,
+                        "simplemma_warmed": warmed_dict.get(lang, False)
+                    }
+                loaded_models_list = list(models_dict.keys())
+
             self._send_json(200, {
                 "status": "success",
                 "service": "kardenwort-spacy-server",
-                "loaded_models": loaded_models,
+                "loaded_models": loaded_models_list,
+                "models": models_info,
+                "model_idle_ttl_seconds": ttl_val,
                 "uptime_seconds": uptime
             })
             return
@@ -132,10 +151,7 @@ class SpacyRequestHandler(BaseHTTPRequestHandler):
             req_zid = body.get("zid") or self.headers.get("X-ZID") or generate_server_zid(self.server)
             req_trace_id = body.get("trace_id") or self.headers.get("X-Trace-ID") or f"{req_zid}:tokenize"
 
-            nlp = self.server.models.get(language)
-            if not nlp:
-                # Fallback to general loader or first available model
-                nlp = self.server.load_or_get_model(language)
+            nlp = self.server.load_or_get_model(language)
 
             t0 = time.perf_counter()
             try:
@@ -166,6 +182,8 @@ class SpacyRequestHandler(BaseHTTPRequestHandler):
                         })
 
                 duration_ms = round((time.perf_counter() - t0) * 1000, 2)
+                with self.server.models_lock:
+                    self.server.access_times[language] = time.time()
                 logger.info(f"[{req_zid}] [{req_trace_id}] Tokenized {len(tokens)} tokens in {duration_ms}ms (lang={language})")
 
                 self._send_json(200, {
@@ -205,9 +223,10 @@ class SpacyRequestHandler(BaseHTTPRequestHandler):
 
 class SpacyHTTPServer(ThreadingHTTPServer):
     """
-    Custom ThreadingHTTPServer with pre-loaded NLP models and Windows optimizations.
+    Custom ThreadingHTTPServer with thread-safe model management, on-demand loading,
+    Simplemma pre-warming, and configurable idle TTL unloading.
     """
-    def __init__(self, server_address, RequestHandlerClass, preload_models=True):
+    def __init__(self, server_address, RequestHandlerClass, preload_models: bool = True, model_idle_ttl: int = 0):
         self.allow_reuse_address = False
         self.daemon_threads = True
         self.disable_nagle_algorithm = True
@@ -217,62 +236,130 @@ class SpacyHTTPServer(ThreadingHTTPServer):
         self.start_time = time.time()
         self.seq_counter = 0
         self.seq_lock = threading.Lock()
+        self.models_lock = threading.RLock()
+        self.model_idle_ttl = max(0, int(model_idle_ttl))
         self.models: Dict[str, Any] = {}
+        self.access_times: Dict[str, float] = {}
+        self.simplemma_warmed: Dict[str, bool] = {}
+        self.janitor_stop_event = threading.Event()
+        self.janitor_thread: Optional[threading.Thread] = None
 
         if preload_models:
             self.preload_all_models()
 
+        if self.model_idle_ttl > 0:
+            self.start_janitor()
+
+    def _load_spacy_pipeline(self, lang: str):
+        """Loads and configures SpaCy pipeline and warms up Simplemma for the specified language."""
+        candidates_map = {
+            "de": ["de_core_news_lg", "de_core_news_md", "de_core_news_sm"],
+            "en": ["en_core_web_lg", "en_core_web_md", "en_core_web_sm"]
+        }
+        model_candidates = candidates_map.get(lang, [f"{lang}_core_news_lg", f"{lang}_core_news_sm", f"{lang}_core_web_sm"])
+
+        nlp = None
+        for model_name in model_candidates:
+            try:
+                logger.info(f"Loading SpaCy model '{model_name}' for language '{lang}'...")
+                nlp = spacy.load(model_name, exclude=["ner", "parser"])
+                configure_spacy_model(nlp)
+                logger.info(f"Successfully loaded '{model_name}' for language '{lang}'")
+                break
+            except Exception as e:
+                logger.debug(f"Candidate model '{model_name}' not available: {e}")
+
+        if nlp is None:
+            logger.warning(f"Could not load standard models for '{lang}'. Initializing blank pipeline.")
+            try:
+                nlp = spacy.blank(lang)
+                configure_spacy_model(nlp)
+            except Exception as e:
+                logger.error(f"Failed to initialize blank model for '{lang}': {e}")
+                if self.models:
+                    nlp = next(iter(self.models.values()))
+                else:
+                    raise RuntimeError(f"Cannot initialize pipeline for language '{lang}': {e}")
+
+        # Simplemma dictionary pre-warming
+        try:
+            import simplemma
+            simplemma.lemmatize("init", lang=lang)
+            self.simplemma_warmed[lang] = True
+            logger.debug(f"Simplemma dictionary pre-warmed for '{lang}'")
+        except Exception as e:
+            self.simplemma_warmed[lang] = False
+            logger.debug(f"Simplemma pre-warming skipped for '{lang}': {e}")
+
+        return nlp
+
     def preload_all_models(self):
         """Preload German and English language models during boot."""
-        for lang, model_candidates in [
-            ("de", ["de_core_news_lg", "de_core_news_md", "de_core_news_sm"]),
-            ("en", ["en_core_web_lg", "en_core_web_md", "en_core_web_sm"])
-        ]:
-            model_loaded = False
-            for model_name in model_candidates:
+        with self.models_lock:
+            for lang in ["de", "en"]:
                 try:
-                    logger.info(f"Loading SpaCy model '{model_name}' for language '{lang}'...")
-                    nlp = spacy.load(model_name, exclude=["ner", "parser"])
-                    configure_spacy_model(nlp)
-                    self.models[lang] = nlp
-                    logger.info(f"Successfully loaded '{model_name}' for language '{lang}'")
-                    model_loaded = True
-                    break
+                    self.load_or_get_model(lang)
                 except Exception as e:
-                    logger.debug(f"Candidate model '{model_name}' not available: {e}")
-
-            if not model_loaded:
-                logger.warning(f"Could not load standard models for '{lang}'. Initializing blank pipeline.")
-                try:
-                    nlp = spacy.blank(lang)
-                    configure_spacy_model(nlp)
-                    self.models[lang] = nlp
-                except Exception as e:
-                    logger.error(f"Failed to initialize blank model for '{lang}': {e}")
+                    logger.error(f"Failed to preload model for language '{lang}': {e}")
 
     def load_or_get_model(self, lang: str):
-        """Load or return cached model for given language."""
-        if lang in self.models:
-            return self.models[lang]
-        try:
-            nlp = spacy.blank(lang)
-            configure_spacy_model(nlp)
+        """Thread-safe method to return active model or dynamically load it on demand."""
+        with self.models_lock:
+            now = time.time()
+            if lang in self.models:
+                self.access_times[lang] = now
+                return self.models[lang]
+
+            nlp = self._load_spacy_pipeline(lang)
             self.models[lang] = nlp
+            self.access_times[lang] = now
             return nlp
-        except Exception:
-            return self.models.get("de") or self.models.get("en")
+
+    def start_janitor(self):
+        """Starts background eviction thread if TTL > 0."""
+        if self.model_idle_ttl > 0 and (self.janitor_thread is None or not self.janitor_thread.is_alive()):
+            self.janitor_stop_event.clear()
+            self.janitor_thread = threading.Thread(target=self._janitor_loop, name="SpacyModelJanitor", daemon=True)
+            self.janitor_thread.start()
+            logger.info(f"Model eviction janitor started with TTL={self.model_idle_ttl}s")
+
+    def _janitor_loop(self):
+        """Background loop to evict idle models exceeding TTL."""
+        check_interval = max(0.25, min(5.0, self.model_idle_ttl / 4.0 if self.model_idle_ttl > 0 else 1.0))
+        while not self.janitor_stop_event.wait(timeout=check_interval):
+            if self.model_idle_ttl <= 0:
+                continue
+            with self.models_lock:
+                now = time.time()
+                to_evict = []
+                for lang, last_time in list(self.access_times.items()):
+                    if (now - last_time) >= self.model_idle_ttl:
+                        to_evict.append(lang)
+
+                if to_evict:
+                    import gc
+                    for lang in to_evict:
+                        logger.info(f"Evicting idle SpaCy model for '{lang}' (idle for {round(now - self.access_times[lang], 2)}s >= TTL {self.model_idle_ttl}s)")
+                        self.models.pop(lang, None)
+                        self.access_times.pop(lang, None)
+                        self.simplemma_warmed.pop(lang, None)
+                    gc.collect()
+
+    def server_close(self):
+        self.janitor_stop_event.set()
+        super().server_close()
 
 
-def start_spacy_server(host: str = "127.0.0.1", port: int = 8081, preload_models: bool = True):
+def start_spacy_server(host: str = "127.0.0.1", port: int = 8081, preload_models: bool = True, model_idle_ttl: int = 0):
     """
     Starts the persistent SpaCy HTTP server.
     """
     if host not in ("127.0.0.1", "localhost", "::1"):
         raise ValueError(f"Host must be a loopback address (127.0.0.1). Specified: {host}")
 
-    server = SpacyHTTPServer((host, port), SpacyRequestHandler, preload_models=preload_models)
-    logger.info(f"SpaCy HTTP Server started on http://{host}:{port}")
-    print(f"SpaCy HTTP Server started on http://{host}:{port}", flush=True)
+    server = SpacyHTTPServer((host, port), SpacyRequestHandler, preload_models=preload_models, model_idle_ttl=model_idle_ttl)
+    logger.info(f"SpaCy HTTP Server started on http://{host}:{port} (preload={preload_models}, model_idle_ttl={model_idle_ttl}s)")
+    print(f"SpaCy HTTP Server started on http://{host}:{port} (preload={preload_models}, model_idle_ttl={model_idle_ttl}s)", flush=True)
 
     try:
         server.serve_forever()
@@ -290,8 +377,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Kardenwort SpaCy Server")
     parser.add_argument("--host", default="127.0.0.1", help="Host to bind to")
     parser.add_argument("--port", type=int, default=8081, help="Port to bind to")
+    parser.add_argument("--model-ttl", type=int, default=0, help="Model inactivity TTL in seconds (0 = disabled / always resident)")
+    parser.add_argument("--no-preload", action="store_true", help="Do not preload models on boot; load on demand")
+    parser.add_argument("--preload-models", action="store_true", default=True, help="Preload models on boot (default)")
     parser.add_argument("pos_port", nargs="?", type=int, default=None, help="Positional port")
     cli_args, _ = parser.parse_known_args()
     resolved_port = cli_args.pos_port if cli_args.pos_port is not None else cli_args.port
+    preload = not cli_args.no_preload
     logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
-    start_spacy_server(host=cli_args.host, port=resolved_port)
+    start_spacy_server(host=cli_args.host, port=resolved_port, preload_models=preload, model_idle_ttl=cli_args.model_ttl)

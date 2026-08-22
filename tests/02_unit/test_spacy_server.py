@@ -114,3 +114,112 @@ def test_spacy_server_not_found(spacy_server_instance):
     with pytest.raises(urllib.error.HTTPError) as exc_info:
         urllib.request.urlopen(req, timeout=5)
     assert exc_info.value.code == 404
+
+
+def test_spacy_server_enhanced_health_details(spacy_server_instance):
+    base_url, _ = spacy_server_instance
+    req = urllib.request.Request(f"{base_url}/health")
+    with urllib.request.urlopen(req, timeout=5) as resp:
+        assert resp.status == 200
+        data = json.loads(resp.read().decode('utf-8'))
+        assert data["status"] == "success"
+        assert "models" in data
+        assert "model_idle_ttl_seconds" in data
+        assert data["model_idle_ttl_seconds"] == 0
+
+        models_info = data["models"]
+        for lang in ("de", "en"):
+            if lang in models_info:
+                assert "model_name" in models_info[lang]
+                assert "idle_seconds" in models_info[lang]
+                assert "simplemma_warmed" in models_info[lang]
+                assert models_info[lang]["simplemma_warmed"] is True
+
+
+def test_spacy_server_ttl_eviction_and_cold_reload():
+    port = get_free_port()
+    # Server with 2-second TTL and no preload
+    server = SpacyHTTPServer(('127.0.0.1', port), SpacyRequestHandler, preload_models=False, model_idle_ttl=2)
+    server_thread = threading.Thread(target=server.serve_forever, daemon=True)
+    server_thread.start()
+    time.sleep(0.2)
+    base_url = f"http://127.0.0.1:{port}"
+
+    try:
+        # Initial health check: no models loaded
+        req = urllib.request.Request(f"{base_url}/health")
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+            assert data["loaded_models"] == []
+            assert data["model_idle_ttl_seconds"] == 2
+
+        # On-demand cold load for German
+        payload = {
+            "text": "Das ist ein schneller Test.",
+            "language": "de",
+            "zid": "20260822214000"
+        }
+        req = urllib.request.Request(
+            f"{base_url}/tokenize",
+            data=json.dumps(payload).encode('utf-8'),
+            headers={"Content-Type": "application/json"}
+        )
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            assert resp.status == 200
+            data = json.loads(resp.read().decode('utf-8'))
+            assert data["status"] == "success"
+            assert len(data["tokens"]) > 0
+
+        # Verify German model is now resident
+        req = urllib.request.Request(f"{base_url}/health")
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+            assert "de" in data["loaded_models"]
+            assert data["models"]["de"]["simplemma_warmed"] is True
+
+        # Hot request latency check (< 20ms)
+        req = urllib.request.Request(
+            f"{base_url}/tokenize",
+            data=json.dumps(payload).encode('utf-8'),
+            headers={"Content-Type": "application/json"}
+        )
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            assert resp.status == 200
+            data = json.loads(resp.read().decode('utf-8'))
+            assert data["duration_ms"] < 25.0
+
+        # Wait for TTL eviction (TTL=2s, wait up to 4.0s with polling)
+        evicted = False
+        start_wait = time.time()
+        while time.time() - start_wait < 4.0:
+            time.sleep(0.25)
+            req = urllib.request.Request(f"{base_url}/health")
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                data = json.loads(resp.read().decode('utf-8'))
+                if "de" not in data["loaded_models"]:
+                    evicted = True
+                    break
+
+        assert evicted is True
+        assert len(data["loaded_models"]) == 0
+
+        # On-demand cold load again after eviction
+        req = urllib.request.Request(
+            f"{base_url}/tokenize",
+            data=json.dumps(payload).encode('utf-8'),
+            headers={"Content-Type": "application/json"}
+        )
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            assert resp.status == 200
+            data = json.loads(resp.read().decode('utf-8'))
+            assert data["status"] == "success"
+
+        # Verify re-loaded
+        req = urllib.request.Request(f"{base_url}/health")
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+            assert "de" in data["loaded_models"]
+
+    finally:
+        server.shutdown()
+        server.server_close()

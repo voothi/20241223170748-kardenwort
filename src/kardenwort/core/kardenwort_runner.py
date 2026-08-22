@@ -492,12 +492,19 @@ def main():
     parser.add_argument("--serve", action="store_true", help="Start the persistent SpaCy HTTP microservice daemon.")
     parser.add_argument("--port", type=int, default=8081, help="Port to bind the HTTP microservice daemon (default: 8081).")
     parser.add_argument("--host", type=str, default="127.0.0.1", help="Host interface to bind the HTTP microservice daemon (default: 127.0.0.1).")
+    parser.add_argument("--model-ttl", type=int, default=0, help="Model inactivity TTL in seconds for SpaCy microservice (default: 0 = disabled).")
+    parser.add_argument("--no-preload", action="store_true", help="Do not preload SpaCy models on boot in server mode.")
 
     args = parser.parse_args()
-    
+
     if getattr(args, 'serve', False) is True:
         from kardenwort.server.spacy_server import start_spacy_server
-        start_spacy_server(host=getattr(args, 'host', '127.0.0.1'), port=getattr(args, 'port', 8081))
+        start_spacy_server(
+            host=getattr(args, 'host', '127.0.0.1'),
+            port=getattr(args, 'port', 8081),
+            preload_models=not getattr(args, 'no_preload', False),
+            model_idle_ttl=getattr(args, 'model_ttl', 0)
+        )
         sys.exit(0)
     
     python_path, workspace_path, importer_workspace, config = load_config()

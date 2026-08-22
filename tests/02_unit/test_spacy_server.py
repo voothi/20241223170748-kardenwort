@@ -6,7 +6,7 @@ import urllib.request
 import urllib.error
 import pytest
 
-from kardenwort.server.spacy_server import SpacyHTTPServer, SpacyRequestHandler
+from kardenwort.server.spacy_server import SpacyHTTPServer, SpacyRequestHandler, _trim_process_memory
 
 
 def get_free_port():
@@ -223,3 +223,30 @@ def test_spacy_server_ttl_eviction_and_cold_reload():
     finally:
         server.shutdown()
         server.server_close()
+
+
+def test_spacy_server_trim_process_memory():
+    import simplemma
+    import simplemma.lemmatizer as lm
+
+    # Pre-populate Simplemma dictionary cache
+    if hasattr(lm, "DEFAULT_DICTIONARY_FACTORY") and hasattr(lm.DEFAULT_DICTIONARY_FACTORY, "get_dictionary"):
+        lm.DEFAULT_DICTIONARY_FACTORY.get_dictionary("de")
+    else:
+        simplemma.lemmatize("Häuser", lang="de")
+
+    if hasattr(lm, "DEFAULT_DICTIONARY_FACTORY") and hasattr(lm.DEFAULT_DICTIONARY_FACTORY, "_get_dictionary"):
+        cache_info = lm.DEFAULT_DICTIONARY_FACTORY._get_dictionary.cache_info()
+        assert cache_info.currsize > 0
+
+    # Call _trim_process_memory
+    _trim_process_memory()
+
+    # Verify cache cleared
+    if hasattr(lm, "DEFAULT_DICTIONARY_FACTORY") and hasattr(lm.DEFAULT_DICTIONARY_FACTORY, "_get_dictionary"):
+        cache_info = lm.DEFAULT_DICTIONARY_FACTORY._get_dictionary.cache_info()
+        assert cache_info.currsize == 0
+
+    # Verify transparent re-warming works without error
+    lemma = simplemma.lemmatize("Häuser", lang="de")
+    assert lemma == "Haus"

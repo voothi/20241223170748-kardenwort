@@ -308,6 +308,13 @@ class SpacyHTTPServer(ThreadingHTTPServer):
             now = time.time()
             if lang in self.models:
                 self.access_times[lang] = now
+                if not self.simplemma_warmed.get(lang, False):
+                    try:
+                        import simplemma
+                        simplemma.lemmatize("init", lang=lang)
+                        self.simplemma_warmed[lang] = True
+                    except Exception as e:
+                        logger.debug(f"Simplemma re-warming skipped for '{lang}': {e}")
                 return self.models[lang]
 
             nlp = self._load_spacy_pipeline(lang)
@@ -337,17 +344,61 @@ class SpacyHTTPServer(ThreadingHTTPServer):
                         to_evict.append(lang)
 
                 if to_evict:
-                    import gc
                     for lang in to_evict:
                         logger.info(f"Evicting idle SpaCy model for '{lang}' (idle for {round(now - self.access_times[lang], 2)}s >= TTL {self.model_idle_ttl}s)")
                         self.models.pop(lang, None)
                         self.access_times.pop(lang, None)
                         self.simplemma_warmed.pop(lang, None)
-                    gc.collect()
+
+                    if not self.models:
+                        logger.info("All SpaCy models evicted. Performing deep idle memory trimming.")
+                        _trim_process_memory()
+                    else:
+                        import gc
+                        gc.collect()
 
     def server_close(self):
         self.janitor_stop_event.set()
+        if self.janitor_thread is not None and self.janitor_thread.is_alive():
+            self.janitor_thread.join(timeout=2.0)
         super().server_close()
+
+
+def _trim_process_memory():
+    """
+    Performs deep memory compaction:
+    1. Clears Simplemma dictionary LRU cache.
+    2. Runs Python garbage collection.
+    3. Reclaims MSVCRT C-heap pages.
+    4. Flushes process working set memory pages to OS standby/free list (Windows).
+    """
+    try:
+        import simplemma.lemmatizer as lm
+        if hasattr(lm, "DEFAULT_DICTIONARY_FACTORY") and hasattr(lm.DEFAULT_DICTIONARY_FACTORY, "_get_dictionary"):
+            lm.DEFAULT_DICTIONARY_FACTORY._get_dictionary.cache_clear()
+    except Exception as e:
+        logger.debug(f"Simplemma cache clear skipped/failed: {e}")
+
+    try:
+        import gc
+        gc.collect()
+    except Exception:
+        pass
+
+    try:
+        import ctypes
+        if hasattr(ctypes, "cdll") and hasattr(ctypes.cdll, "msvcrt"):
+            ctypes.cdll.msvcrt._heapmin()
+    except Exception as e:
+        logger.debug(f"msvcrt._heapmin skipped/failed: {e}")
+
+    try:
+        import ctypes
+        if hasattr(ctypes, "windll") and hasattr(ctypes.windll, "kernel32"):
+            handle = ctypes.windll.kernel32.GetCurrentProcess()
+            ctypes.windll.kernel32.SetProcessWorkingSetSize(handle, -1, -1)
+    except Exception as e:
+        logger.debug(f"SetProcessWorkingSetSize skipped/failed: {e}")
 
 
 def start_spacy_server(host: str = "127.0.0.1", port: int = 8081, preload_models: bool = True, model_idle_ttl: int = 0):

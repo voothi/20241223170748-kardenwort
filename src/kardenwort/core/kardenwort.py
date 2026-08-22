@@ -1194,18 +1194,12 @@ def get_lemma_sort_key(word, lemma_index, language="en", case_sensitive=None):
         if var in lemma_index:
             return (False, lemma_index[var], word.lower())
 
-    # 2. Handle subparts by comma, slash, space, or hyphen
+    # 2. Handle subparts by comma or slash (alternative synonyms/variants)
     parts = []
     if ',' in word:
         parts = [p.strip() for p in word.split(',') if p.strip()]
     elif '/' in word:
         parts = [p.strip() for p in word.split('/') if p.strip()]
-    elif language != "de":
-        # Only split by spaces or hyphens for non-German languages
-        if ' ' in word:
-            parts = [p.strip() for p in word.split(' ') if p.strip()]
-        elif '-' in word:
-            parts = [p.strip() for p in word.split('-') if p.strip()]
 
     if parts:
         found_indices = []
@@ -1215,12 +1209,7 @@ def get_lemma_sort_key(word, lemma_index, language="en", case_sensitive=None):
                     found_indices.append(lemma_index[var])
                     break
         if found_indices:
-            # Use min rank (highest freq) for alternatives (comma/slash),
-            # and max rank (lowest freq component) for phrases (space/hyphen).
-            if ',' in word or '/' in word:
-                val = min(found_indices)
-            else:
-                val = max(found_indices)
+            val = min(found_indices)
             return (False, val, word.lower())
             
     # 3. Fallback if not found

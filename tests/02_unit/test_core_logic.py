@@ -24,7 +24,8 @@ from kardenwort.core.kardenwort import (
     get_anki_csv_header,
     get_field_index_map,
     load_classification_dictionaries,
-    prepare_row_data
+    prepare_row_data,
+    get_lemma_sort_key
 )
 
 def test_deduplicate_lemmas():
@@ -1570,3 +1571,53 @@ def test_path_and_file_compound_subtoken_inflections():
     assert mapped_sources["run"] == "run"
     assert mapped_sources["goldens"] == "goldens"
     assert mapped_sources["py"] == "py"
+
+
+def test_get_lemma_sort_key_strict_frequency():
+    """Verify get_lemma_sort_key matches full words and comma/slash variants, but does NOT split hyphens or spaces."""
+    lemma_index = {
+        "the": 1,
+        "window": 680,
+        "color": 200,
+        "colour": 500,
+        "big": 100,
+        "large": 300,
+        "well-known": 1500,
+    }
+
+    # 1. Exact full word match
+    assert get_lemma_sort_key("the", lemma_index, language="en") == (False, 1, "the")
+    assert get_lemma_sort_key("Window", lemma_index, language="en") == (False, 680, "window")
+    assert get_lemma_sort_key("well-known", lemma_index, language="en") == (False, 1500, "well-known")
+
+    # 2. Alternative delimiter matches (slash and comma) take the best (min) rank
+    assert get_lemma_sort_key("color/colour", lemma_index, language="en") == (False, 200, "color/colour")
+    assert get_lemma_sort_key("big, large", lemma_index, language="en") == (False, 100, "big, large")
+
+    # 3. Unlisted compound/hyphenated words do NOT inherit constituent rank
+    assert get_lemma_sort_key("kardenwort-window", lemma_index, language="en") == (True, 0, "kardenwort-window")
+    assert get_lemma_sort_key("super-window", lemma_index, language="en") == (True, 0, "super-window")
+
+    # 4. Multi-word phrases with spaces do NOT inherit constituent rank
+    assert get_lemma_sort_key("custom window", lemma_index, language="en") == (True, 0, "custom window")
+
+    # 5. Unknown words
+    assert get_lemma_sort_key("superfluous", lemma_index, language="en") == (True, 0, "superfluous")
+
+
+def test_sort_frequency_order():
+    """Verify sorting order placing ranked words first by frequency and unlisted compounds at the bottom."""
+    lemma_index = {
+        "the": 1,
+        "button": 50,
+        "window": 680,
+    }
+
+    words = ["kardenwort-window", "window", "the", "superfluous", "button"]
+    sorted_words = sorted(
+        words,
+        key=lambda w: get_lemma_sort_key(w, lemma_index, language="en")
+    )
+
+    assert sorted_words == ["the", "button", "window", "kardenwort-window", "superfluous"]
+

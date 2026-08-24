@@ -1373,7 +1373,8 @@ def deduplicate_lemmas(
         config = ExtractionConfig.from_args(config)
     lemmas_grouped_by_lowercase: Dict[str, Set[str]] = {}
     for lemma in candidate_lemmas:
-        if not lemma: continue
+        if not lemma or lemma in ('--', '-') or not any(c.isalnum() for c in str(lemma)):
+            continue
         lower_lemma = str(lemma).lower()
         if lower_lemma not in lemmas_grouped_by_lowercase:
             lemmas_grouped_by_lowercase[lower_lemma] = set()
@@ -1429,7 +1430,11 @@ def _extract_mapped_token(match, nlp_model, de_dictionary, lemma_override_rules,
         match['lemmas'], nlp_model, de_dictionary, lemma_override_rules, args, sentence_text, de_fix_genitive
     )
     mapped_sources = {}
+    valid_lemmas = []
     for raw_target_token, lem in zip(match['lemmas'], lemmas):
+        if not lem or lem in ('--', '-') or not any(c.isalnum() for c in lem):
+            continue
+        valid_lemmas.append(lem)
         combined = sort_inflected_forms([match['source_word'], raw_target_token], config=args)
         if lem in mapped_sources:
             existing = [s.strip() for s in mapped_sources[lem].split(',') if s.strip()]
@@ -1437,7 +1442,7 @@ def _extract_mapped_token(match, nlp_model, de_dictionary, lemma_override_rules,
             mapped_sources[lem] = ", ".join(sort_inflected_forms(existing, config=args))
         else:
             mapped_sources[lem] = ", ".join(combined)
-    return lemmas, mapped_sources
+    return valid_lemmas, mapped_sources
 
 def retokenize_hyphenated_compounds(doc: Any) -> Any:
     """Retokenize contiguous alphanumeric tokens separated by single hyphens into single composite tokens.
@@ -1753,7 +1758,7 @@ def _extract_standard_token(
 
             initial_part_lemma = lemmatize_compound_part(part, nlp_model, de_dictionary, args)
             processed_part_lemma = get_overridden_lemma_for_compound_part(initial_part_lemma, part, token.text, lemma_override_rules, sentence_text)
-            if processed_part_lemma:
+            if processed_part_lemma and processed_part_lemma not in ('--', '-') and any(c.isalnum() for c in processed_part_lemma):
                 lemmas_for_current_token.append(processed_part_lemma)
 
     elif is_composite_token(token.text) and not is_special_token:
@@ -1763,11 +1768,13 @@ def _extract_standard_token(
         part_source_map = {}
         for part in sub_parts:
             part = part.strip("()[]{}:;,.!?'\"`~-<>\\/ \t\r\n")
-            if not part or part.isdigit():
+            if not part or part.isdigit() or len(part) <= 1:
                 continue
             camel_parts = split_camel_case(part)
             sub_units = camel_parts if len(camel_parts) > 1 else [part]
             for unit in sub_units:
+                if not unit or len(unit) <= 1:
+                    continue
                 part_doc = nlp_model(unit)
                 for sub_token in part_doc:
                     if not (sub_token.is_alpha or ('-' in sub_token.text and sub_token.text.strip('-')) or any(c.isalpha() for c in sub_token.text)):
@@ -1776,7 +1783,7 @@ def _extract_standard_token(
                     sub_spacy_lemma = correct_spacy_lemma(sub_token, de_dictionary, de_fix_genitive, override_lemma=sub_override_lemma, smart_fallback_lemma=sub_smart_fallback)
                     sub_default_lemma = format_lemma_capitalization(sub_token, sub_spacy_lemma, args)
                     sub_lemma = get_overridden_lemma_for_word(sub_default_lemma, sub_token.text, lemma_override_rules, sentence_text)
-                    if sub_lemma:
+                    if sub_lemma and sub_lemma not in ('--', '-') and any(c.isalnum() for c in sub_lemma):
                         extracted_sub_lemmas.append(sub_lemma)
                         if is_path_token:
                             if sub_lemma in part_source_map:
@@ -1791,8 +1798,9 @@ def _extract_standard_token(
         if extracted_sub_lemmas:
             was_split = True
             if not is_path_token and (preserve_composite or (de_gcs and de_gcs_preserve_compound_word)):
-                lemmas_for_current_token.append(base_lemma)
-                part_source_map[base_lemma] = source_word_form
+                if base_lemma and base_lemma not in ('--', '-') and any(c.isalnum() for c in base_lemma):
+                    lemmas_for_current_token.append(base_lemma)
+                    part_source_map[base_lemma] = source_word_form
             lemmas_for_current_token.extend(extracted_sub_lemmas)
 
     elif de_gcs and gcs_automaton and nlp_model.lang == 'de' and not is_special_token and len(token.text) > 3 and (token.pos_ in de_gcs_pos_tags):
@@ -1830,7 +1838,7 @@ def _extract_standard_token(
 
             if len(split_components) > 1:
                 was_split = True
-                if de_gcs_preserve_compound_word or preserve_composite:
+                if (de_gcs_preserve_compound_word or preserve_composite) and base_lemma and base_lemma not in ('--', '-') and any(c.isalnum() for c in base_lemma):
                     lemmas_for_current_token.append(base_lemma)
 
                 for raw_component in set(split_components):
@@ -1841,7 +1849,7 @@ def _extract_standard_token(
                     overridden_part_lemma = get_overridden_lemma_for_compound_part(initial_part_lemma, component, token.text, lemma_override_rules, sentence_text)
                     processed_part_lemma = _format_gcs_component_case(overridden_part_lemma)
 
-                    if processed_part_lemma:
+                    if processed_part_lemma and processed_part_lemma not in ('--', '-') and any(c.isalnum() for c in processed_part_lemma):
                         lemmas_for_current_token.append(processed_part_lemma)
                         
         except Exception as e:
@@ -1850,10 +1858,14 @@ def _extract_standard_token(
     if not was_split:
         lemmas_for_current_token.append(base_lemma)
 
+    sanitized_lemmas = [
+        lem for lem in lemmas_for_current_token
+        if lem and lem not in ('--', '-') and any(c.isalnum() for c in lem)
+    ]
     mapped_sources = {}
-    for lem in lemmas_for_current_token:
+    for lem in sanitized_lemmas:
         mapped_sources[lem] = part_source_map.get(lem, source_word_form) if 'part_source_map' in locals() else source_word_form
-    return lemmas_for_current_token, mapped_sources
+    return sanitized_lemmas, mapped_sources
 
 def extract_lemmas_from_sentence(
     sentence_text: str,
@@ -1935,7 +1947,8 @@ def extract_lemmas_from_sentence(
 
         deduplicated_lemmas = deduplicate_lemmas(lemmas_for_current_token, extraction_config)
         for lemma in deduplicated_lemmas:
-            final_lemmas.add(lemma)
+            if lemma and lemma not in ('--', '-') and any(c.isalnum() for c in lemma):
+                final_lemmas.add(lemma)
 
     lang_code = getattr(extraction_config, 'language', getattr(args, 'language', 'en')) if extraction_config or args else 'en'
     return sorted(list(final_lemmas), key=lambda x: get_lemma_sort_key(x, lemma_sort_index, lang_code))
@@ -2326,7 +2339,7 @@ class ParallelTextsStrategy(OperationalStrategy):
                 deduplicated_lemmas = deduplicate_lemmas(lemmas_for_current_token)
 
                 for lemma in deduplicated_lemmas:
-                    if not lemma:
+                    if not lemma or lemma in ('--', '-') or not any(c.isalnum() for c in lemma):
                         continue
                     
                     cur_source_word = mapped_lemma_sources.get(lemma, token.text)
@@ -2687,7 +2700,7 @@ class SingleTextStrategy(OperationalStrategy):
                 deduplicated_lemmas = deduplicate_lemmas(lemmas_for_current_token)
 
                 for lemma in deduplicated_lemmas:
-                    if not lemma:
+                    if not lemma or lemma in ('--', '-') or not any(c.isalnum() for c in lemma):
                         continue
 
                     cur_source_word = mapped_lemma_sources.get(lemma, token.text)

@@ -1680,3 +1680,74 @@ def test_sort_frequency_order():
 
     assert sorted_words == ["the", "button", "window", "kardenwort-window", "superfluous"]
 
+
+def test_hyphenated_single_letter_prefix_clean_lemmas():
+    """Verify that hyphenated words with single-letter prefixes (e.g., E-Mail, U-Bahn, E-Bike) extract clean lemmas without phantom '--' rows."""
+    import argparse
+    from kardenwort.core import kardenwort as kw
+    from mock_nlp import MockPipelineNLP, MockToken
+
+    nlp = MockPipelineNLP('de')
+    args = argparse.Namespace(language='de', de_force_noun_capitalization=True, preserve_composite_tokens=True, token_mappings_lemmatize=False)
+
+    for word in ["E-Mail", "U-Bahn", "E-Bike"]:
+        tok = MockToken(word, pos_="NOUN", is_alpha=False)
+        lemmas, mapped_sources = kw._extract_standard_token(
+            tok, nlp, de_dictionary=None, lemma_override_rules={},
+            sentence_text=f"Hier ist die {word}.", de_fix_genitive=False,
+            de_gcs=False, gcs_automaton=None, de_gcs_pos_tags=[],
+            args=args, separable_verb_map={},
+            preserve_composite_tokens=True
+        )
+
+        assert "--" not in lemmas
+        assert "-" not in lemmas
+        assert "" not in lemmas
+        assert all(len(lem) > 1 for lem in lemmas)
+        assert all(any(c.isalnum() for c in lem) for lem in lemmas)
+        assert word in lemmas or word.capitalize() in lemmas
+
+
+def test_deduplicate_and_extract_lemmas_filters_placeholders():
+    """Verify deduplicate_lemmas and mapped tokens filter out dummy placeholders like '--' and '-'."""
+    from kardenwort.core.kardenwort import deduplicate_lemmas, _extract_mapped_token, extract_lemmas_from_sentence, ExtractionConfig
+    from mock_nlp import MockPipelineNLP
+
+    # deduplicate_lemmas filters out placeholder symbols
+    raw_lemmas = ["E-Mail", "--", "-", "Mail", ""]
+    clean = deduplicate_lemmas(raw_lemmas)
+    assert "--" not in clean
+    assert "-" not in clean
+    assert "" not in clean
+    assert "E-Mail" in clean
+    assert "Mail" in clean
+
+    # _extract_mapped_token filters placeholder lemmas
+    nlp = MockPipelineNLP('en')
+    match = {
+        'source_word': 'test',
+        'lemmas': ['valid', '--', '-']
+    }
+    valid_lemmas, mapped_sources = _extract_mapped_token(
+        match, nlp, de_dictionary=None, lemma_override_rules={},
+        args=SimpleNamespace(token_mappings_lemmatize=False),
+        sentence_text="test", de_fix_genitive=False
+    )
+    assert valid_lemmas == ['valid']
+
+    # extract_lemmas_from_sentence does not contain dummy placeholders
+    nlp_de = MockPipelineNLP('de')
+    cfg = ExtractionConfig(language='de', preserve_composite_tokens=True, de_force_noun_capitalization=True)
+    sentence_lemmas = extract_lemmas_from_sentence(
+        "Ich schreibe eine E-Mail.",
+        {},
+        nlp_model=nlp_de,
+        extraction_config=cfg
+    )
+    assert "--" not in sentence_lemmas
+    assert "-" not in sentence_lemmas
+    assert "" not in sentence_lemmas
+    assert any("E-Mail" in lem or "Email" in lem or "Mail" in lem for lem in sentence_lemmas)
+
+
+

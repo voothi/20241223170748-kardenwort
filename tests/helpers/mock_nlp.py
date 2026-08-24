@@ -74,6 +74,7 @@ class MockDoc(list):
         super().__init__(tokens)
         self.text = text
         for token in self:
+            token.doc = self
             if 0 <= getattr(token, "_head_i", -1) < len(self):
                 token.head = self[token._head_i]
                 

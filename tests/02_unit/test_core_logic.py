@@ -1548,6 +1548,65 @@ def test_possessive_token_suppression_and_inflection():
         assert is_possessive_token(doc[idx])
 
 
+def test_quoted_phrase_isolation_and_possessive_variants():
+    """Verify single quotes around phrases do not attach to words and true singular/plural possessives are paired."""
+    import spacy
+    from kardenwort.core.kardenwort import (
+        extract_lemmas_from_sentence, configure_spacy_model, ExtractionConfig,
+        is_possessive_token, find_possessive_token_pairs
+    )
+
+    try:
+        nlp = spacy.load("en_core_web_lg", exclude=["ner", "parser"])
+    except Exception:
+        try:
+            nlp = spacy.load("en_core_web_sm", exclude=["ner", "parser"])
+        except Exception:
+            nlp = spacy.blank("en")
+
+    configure_spacy_model(nlp)
+
+    # 1. Quoted phrase test: quotes must not attach as possessive suffixes
+    quote_sentence = "Altman says private OpenAI models show 'various degrees of OpenAI misalignment' during evaluation."
+    doc_quotes = nlp(quote_sentence)
+    poss_indices, poss_suffixes = find_possessive_token_pairs(doc_quotes)
+    
+    # Check that neither opening quote nor closing quote is recognized as possessive
+    assert len(poss_indices) == 0
+    assert len(poss_suffixes) == 0
+
+    lemmas_quotes = extract_lemmas_from_sentence(
+        sentence_text=quote_sentence,
+        lemma_sort_index={},
+        nlp_model=nlp,
+        extraction_config=ExtractionConfig(language='en')
+    )
+    assert "'" not in lemmas_quotes
+    assert "show" in [l.lower() for l in lemmas_quotes]
+    assert "misalignment" in [l.lower() for l in lemmas_quotes]
+
+    # 2. Plural possessive test: bare apostrophe on s-ending word attaches and suppresses particle
+    plural_poss_sentence = "The students' books were kept on James' desk."
+    doc_plural = nlp(plural_poss_sentence)
+    poss_indices_pl, poss_suffixes_pl = find_possessive_token_pairs(doc_plural)
+
+    # Ensure possessives are detected on students' and James'
+    for idx in poss_indices_pl:
+        assert is_possessive_token(doc_plural[idx])
+        # Suffix must be attached to preceding token index
+        assert (idx - 1) in poss_suffixes_pl
+
+    # 3. Singular possessive test: Alibaba's attaches suffix 's
+    singular_poss_sentence = "Alibaba's team announced Qwen."
+    doc_singular = nlp(singular_poss_sentence)
+    poss_indices_sg, poss_suffixes_sg = find_possessive_token_pairs(doc_singular)
+    assert len(poss_indices_sg) >= 1
+    for idx in poss_indices_sg:
+        assert is_possessive_token(doc_singular[idx])
+        assert doc_singular[idx - 1].text == "Alibaba"
+        assert poss_suffixes_sg[idx - 1] in ("'s", "’s")
+
+
 def test_path_and_file_compound_subtoken_inflections():
     """Verify sub-tokens extracted from file paths and compound file names propagate specific source words."""
     import argparse

@@ -1083,7 +1083,10 @@ def correct_spacy_lemma(token, de_dictionary, fix_genitive=False, override_lemma
 
     return spacy_lemma
 
-POSSESSIVE_ENCLITICS = {"'s", "’s", "‘s", "´s", "`s", "ʼs", "'", "’"}
+POSSESSIVE_S_ENCLITICS = {"'s", "’s", "‘s", "´s", "`s", "ʼs"}
+BARE_APOSTROPHES = {"'", "’"}
+POSSESSIVE_ENCLITICS = POSSESSIVE_S_ENCLITICS | BARE_APOSTROPHES
+SIBILANT_ENDINGS = ('s', 'S', 'z', 'Z', 'x', 'X')
 
 def is_possessive_token(token) -> bool:
     if not token:
@@ -1091,9 +1094,26 @@ def is_possessive_token(token) -> bool:
     tag = getattr(token, 'tag_', '')
     pos = getattr(token, 'pos_', '')
     text = getattr(token, 'text', '')
-    if tag == 'POS':
+
+    if tag != 'POS' and text not in POSSESSIVE_ENCLITICS and not (pos in ('PART', 'PUNCT', 'X', '') and text in POSSESSIVE_ENCLITICS):
+        return False
+
+    doc = getattr(token, 'doc', None)
+    i = getattr(token, 'i', 0)
+    if doc is not None and isinstance(i, int):
+        if i <= 0 or i >= len(doc):
+            return False
+        prev_token = doc[i - 1]
+        if getattr(prev_token, 'whitespace_', '') != "":
+            return False
+        if text in BARE_APOSTROPHES:
+            prev_text = getattr(prev_token, 'text', '')
+            if not prev_text.endswith(SIBILANT_ENDINGS):
+                return False
         return True
-    if text in POSSESSIVE_ENCLITICS and pos in ('PART', 'PUNCT', 'X', ''):
+
+    # Fallback when token has no doc attached
+    if text in POSSESSIVE_S_ENCLITICS:
         return True
     return False
 
@@ -1103,15 +1123,15 @@ def find_possessive_token_pairs(document):
     if not document:
         return possessive_indices, possessive_noun_suffixes
     for token in document:
+        if getattr(token, 'doc', None) is None:
+            try:
+                token.doc = document
+            except Exception:
+                pass
         if is_possessive_token(token):
             possessive_indices.add(token.i)
-            target_idx = None
-            if token.head and token.head.i != token.i and token.head.i < token.i:
-                target_idx = token.head.i
-            elif token.i > 0:
-                target_idx = token.i - 1
-            if target_idx is not None:
-                possessive_noun_suffixes[target_idx] = token.text
+            if token.i > 0:
+                possessive_noun_suffixes[token.i - 1] = token.text
     return possessive_indices, possessive_noun_suffixes
 
 def find_separable_verb_particle_pairs(document):

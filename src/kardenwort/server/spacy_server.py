@@ -305,9 +305,8 @@ class SpacyHTTPServer(ThreadingHTTPServer):
     def load_or_get_model(self, lang: str):
         """Thread-safe method to return active model or dynamically load it on demand."""
         with self.models_lock:
-            now = time.time()
             if lang in self.models:
-                self.access_times[lang] = now
+                self.access_times[lang] = time.time()
                 if not self.simplemma_warmed.get(lang, False):
                     try:
                         import simplemma
@@ -319,7 +318,7 @@ class SpacyHTTPServer(ThreadingHTTPServer):
 
             nlp = self._load_spacy_pipeline(lang)
             self.models[lang] = nlp
-            self.access_times[lang] = now
+            self.access_times[lang] = time.time()
             return nlp
 
     def start_janitor(self):

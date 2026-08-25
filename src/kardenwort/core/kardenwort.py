@@ -1498,7 +1498,7 @@ def split_camel_case(s: str) -> list:
     """Split camelCase, PascalCase, or uppercase acronym boundaries into constituent words."""
     if not s:
         return []
-    if re.match(r'^[A-ZА-ЯÄÖÜ]{2,}s$', s):
+    if re.match(r'^[A-ZА-ЯÄÖÜ]{2,}(?:[\'’‘`´ʼ]s|s)?$', s):
         return [s]
     parts = re.findall(r'[A-ZА-ЯÄÖÜ0-9]+(?=[A-ZА-ЯÄÖÜ][a-zа-яäöüß])|[A-ZА-ЯÄÖÜ]?[a-zа-яäöüß\'’‘`´ʼ]+[0-9]*|[A-ZА-ЯÄÖÜ0-9]+', s)
     return [p for p in parts if p]
@@ -1577,6 +1577,7 @@ class RemoteToken:
         self.i = i
         self.idx = idx
         self.whitespace_ = whitespace
+        self.doc = None
         self.head = self
         self.is_alpha = any(c.isalpha() for c in word)
         self.is_space = not word or word.isspace()
@@ -1615,6 +1616,7 @@ class RemoteDoc(list):
                 idx=t.get("idx", idx),
                 whitespace=t.get("whitespace", " ")
             )
+            tok.doc = self
             if idx == 0 or (idx > 0 and tokens[idx - 1].sentence_index != tok.sentence_index):
                 tok.is_sent_start = True
             tokens.append(tok)
@@ -1625,7 +1627,7 @@ class RemoteDoc(list):
         self._sentences = []
         for s_idx in sorted(sentences_map.keys()):
             s_toks = sentences_map[s_idx]
-            s_text = " ".join(t.text for t in s_toks)
+            s_text = "".join(f"{t.text}{t.whitespace_}" for t in s_toks).strip()
             self._sentences.append(RemoteSpan(s_toks, s_text))
 
     @property

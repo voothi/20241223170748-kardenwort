@@ -86,7 +86,29 @@ def test_remote_token_and_doc():
     assert tok3.is_sent_start is True
     assert tok3.idx == 16
 
+    assert tok0.doc is doc
+    assert doc.sents[0].text == "Der Hund bellt."
+    assert doc.sents[1].text == "Die Katze."
     assert doc.has_annotation("SENT_START") is True
+
+
+def test_remote_doc_possessive_whitespace_and_attachment():
+    from kardenwort.core.kardenwort import is_possessive_token, find_possessive_token_pairs
+    tokens_data = [
+        {"word": "Aschenbrenner", "lemma": "Aschenbrenner", "pos": "PROPN", "tag": "NNP", "morphology": "Number=Sing", "sentence_index": 1, "idx": 0, "whitespace": ""},
+        {"word": "'s", "lemma": "'s", "pos": "PART", "tag": "POS", "morphology": "", "sentence_index": 1, "idx": 13, "whitespace": " "},
+        {"word": "situational", "lemma": "situational", "pos": "ADJ", "tag": "JJ", "morphology": "Degree=Pos", "sentence_index": 1, "idx": 16, "whitespace": " "},
+        {"word": "awareness", "lemma": "awareness", "pos": "NOUN", "tag": "NN", "morphology": "Number=Sing", "sentence_index": 1, "idx": 28, "whitespace": "."},
+    ]
+    raw_text = "Aschenbrenner's situational awareness."
+    doc = RemoteDoc(tokens_data, raw_text)
+
+    assert doc.sents[0].text == "Aschenbrenner's situational awareness."
+    assert is_possessive_token(doc[1]) is True
+    poss_indices, poss_suffixes = find_possessive_token_pairs(doc)
+    assert 1 in poss_indices
+    assert poss_suffixes[0] == "'s"
+
 
 
 def test_remote_pipeline_nlp_live(spacy_server):

@@ -1493,10 +1493,10 @@ def test_wed_and_id_tokenizer_exception_removal():
 
 
 def test_split_camel_case_acronym_plurals():
-    """Verify split_camel_case preserves uppercase acronym plurals."""
+    """Verify split_camel_case preserves uppercase acronym plurals and possessives."""
     from kardenwort.core.kardenwort import split_camel_case
 
-    for word in ["LLMs", "GPUs", "APIs", "CPUs", "SDKs", "URLs"]:
+    for word in ["LLMs", "GPUs", "APIs", "CPUs", "SDKs", "URLs", "AI's", "GPU's", "LLM's", "USA's", "GPU’s"]:
         assert split_camel_case(word) == [word]
 
 
@@ -1605,6 +1605,41 @@ def test_quoted_phrase_isolation_and_possessive_variants():
         assert is_possessive_token(doc_singular[idx])
         assert doc_singular[idx - 1].text == "Alibaba"
         assert poss_suffixes_sg[idx - 1] in ("'s", "’s")
+
+
+def test_possessive_names_and_acronyms_attachment():
+    """Verify AI's, Nvidia's, and Aschenbrenner's attach correctly and don't emit orphan 's."""
+    import spacy
+    from kardenwort.core.kardenwort import (
+        extract_lemmas_from_sentence, configure_spacy_model, ExtractionConfig
+    )
+
+    try:
+        nlp = spacy.load("en_core_web_lg", exclude=["ner", "parser"])
+    except Exception:
+        try:
+            nlp = spacy.load("en_core_web_sm", exclude=["ner", "parser"])
+        except Exception:
+            nlp = spacy.blank("en")
+
+    configure_spacy_model(nlp)
+
+    sentence = "AI's impact on Nvidia's chips and Aschenbrenner's thesis is profound."
+    config = ExtractionConfig(language='en', preserve_composite_tokens=True)
+
+    lemmas = extract_lemmas_from_sentence(
+        sentence_text=sentence,
+        lemma_sort_index={},
+        nlp_model=nlp,
+        extraction_config=config
+    )
+    lemmas_lower = [l.lower() for l in lemmas]
+
+    assert "'s" not in lemmas
+    assert "’s" not in lemmas
+    assert "s" not in lemmas_lower
+    assert any("nvidia" in l.lower() for l in lemmas)
+    assert any("aschenbrenner" in l.lower() for l in lemmas)
 
 
 def test_path_and_file_compound_subtoken_inflections():

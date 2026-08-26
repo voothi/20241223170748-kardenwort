@@ -1785,4 +1785,76 @@ def test_deduplicate_and_extract_lemmas_filters_placeholders():
     assert any("E-Mail" in lem or "Email" in lem or "Mail" in lem for lem in sentence_lemmas)
 
 
+def test_suspension_hyphens_strip_from_lemmas():
+    """Verify that suspension and boundary hyphen tokens produce clean unhyphenated lemmas."""
+    from kardenwort.core.kardenwort import (
+        get_simplemma_input_text,
+        lemmatize_compound_part,
+        _extract_standard_token,
+        deduplicate_lemmas,
+        extract_lemmas_from_sentence,
+        ExtractionConfig,
+    )
+    from mock_nlp import MockPipelineNLP
+
+    args = SimpleNamespace(
+        language='de',
+        simplemma_after_spacy=False,
+        simplemma_pos_aware=False,
+        use_simplemma_correction=False,
+        preserve_composite_tokens=True,
+        de_force_noun_capitalization=True,
+        force_proper_noun_capitalization=False,
+    )
+
+    # 1. get_simplemma_input_text strips boundary hyphens
+    tok_de = MockToken("Schulungs-", pos_="NOUN")
+    assert get_simplemma_input_text(tok_de, args) == "Schulungs"
+
+    tok_en = MockToken("pre-", pos_="ADJ")
+    assert get_simplemma_input_text(tok_en, args) == "pre"
+
+    tok_suffix = MockToken("-basiert", pos_="ADJ")
+    assert get_simplemma_input_text(tok_suffix, args) == "basiert"
+
+    # 2. lemmatize_compound_part strips boundary hyphens
+    nlp_de = MockPipelineNLP('de')
+    de_dict = {"Schulung", "Schulungs", "Basiert"}
+    assert lemmatize_compound_part("Schulungs-", nlp_de, de_dict, args) in ("Schulung", "Schulungs")
+    assert lemmatize_compound_part("-basiert", nlp_de, de_dict, args) in ("basiert", "Basiert")
+
+    # 3. deduplicate_lemmas strips boundary hyphens while preserving internal hyphens
+    candidates = ["Schulungs-", "pre-", "-basiert", "Onboarding-Unterstützung", "--", "-"]
+    deduped = deduplicate_lemmas(candidates)
+    assert "--" not in deduped
+    assert "-" not in deduped
+    assert "Schulungs" in deduped or "schulungs" in deduped
+    assert "pre" in deduped
+    assert "basiert" in deduped
+    assert "Onboarding-Unterstützung" in deduped
+    for lemma in deduped:
+        assert not lemma.startswith("-")
+        assert not lemma.endswith("-")
+
+    # 4. _extract_standard_token yields clean lemmas and preserves raw inflected token
+    tok_schulung = MockToken("Schulungs-", lemma_="Schulung", pos_="NOUN")
+    lemmas, mapped = _extract_standard_token(
+        tok_schulung, nlp_de, de_dict, lemma_override_rules={}, sentence_text="Schulungs- und Onboarding",
+        de_fix_genitive=False, de_gcs=False, gcs_automaton=None, de_gcs_pos_tags=[], args=args,
+        separable_verb_map={}, preserve_composite_tokens=True
+    )
+    assert "Schulung" in lemmas
+    assert "Schulungs-" not in lemmas
+    assert mapped.get("Schulung") == "Schulungs-"
+
+    # 5. extract_lemmas_from_sentence
+    cfg = ExtractionConfig(language='de', preserve_composite_tokens=True, de_force_noun_capitalization=True)
+    sentence = "Schulungs- und Onboarding-Unterstützung."
+    extracted = extract_lemmas_from_sentence(sentence, {}, nlp_model=nlp_de, extraction_config=cfg)
+    for lem in extracted:
+        assert not lem.startswith("-"), f"Lemma '{lem}' should not start with hyphen"
+        assert not lem.endswith("-"), f"Lemma '{lem}' should not end with hyphen"
+
+
+
 

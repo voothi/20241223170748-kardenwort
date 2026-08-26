@@ -996,6 +996,10 @@ def lemmatize_compound_part(part, nlp_model, de_dictionary, args=None):
     if not part:
         return ""
 
+    part = part.strip('-')
+    if not part:
+        return ""
+
     is_all_caps = part.isupper() and len(part) > 1
     has_internal_caps = any(c.isupper() for c in part[1:])
 
@@ -1009,14 +1013,14 @@ def lemmatize_compound_part(part, nlp_model, de_dictionary, args=None):
     token = part_document[0]
     
     if token.pos_ not in ["NOUN", "PROPN"]:
-        spacy_lemma = token.lemma_
+        spacy_lemma = token.lemma_.strip('-')
         if args and getattr(args, 'use_simplemma_correction', False):
-            return simplemma.lemmatize(part, lang=getattr(args, 'language', 'en'))
+            return simplemma.lemmatize(part, lang=getattr(args, 'language', 'en')).strip('-')
         return spacy_lemma
     
-    spacy_lemma = token.lemma_.capitalize()
+    spacy_lemma = token.lemma_.strip('-').capitalize()
     if args and getattr(args, 'use_simplemma_correction', False):
-        spacy_lemma = simplemma.lemmatize(part, lang=getattr(args, 'language', 'en')).capitalize()
+        spacy_lemma = simplemma.lemmatize(part, lang=getattr(args, 'language', 'en')).strip('-').capitalize()
 
     capitalized_part = part.capitalize()
 
@@ -1032,6 +1036,8 @@ def get_simplemma_input_text(token, args):
     else:
         base_str = str(getattr(token, 'text', str(token)))
     
+    base_str = base_str.strip('-')
+    
     if getattr(args, 'simplemma_pos_aware', False):
         if getattr(token, 'is_sent_start', False) and getattr(token, 'pos_', '') not in ['NOUN', 'PROPN']:
             return base_str.lower()
@@ -1044,12 +1050,18 @@ def get_simplemma_lemmas(token, lang, args):
     if getattr(args, 'use_simplemma_correction', False):
         target_text = get_simplemma_input_text(token, args)
         override_lemma = simplemma.lemmatize(target_text, lang=lang)
+        if override_lemma:
+            override_lemma = override_lemma.strip('-')
     elif getattr(args, 'simplemma_smart_fallback', False):
         target_text = get_simplemma_input_text(token, args)
         smart_fallback_lemma = simplemma.lemmatize(target_text, lang=lang)
+        if smart_fallback_lemma:
+            smart_fallback_lemma = smart_fallback_lemma.strip('-')
     elif getattr(args, 'simplemma_after_spacy', False):
         target_text = get_simplemma_input_text(token, args)
         override_lemma = simplemma.lemmatize(target_text, lang=lang)
+        if override_lemma:
+            override_lemma = override_lemma.strip('-')
     return override_lemma, smart_fallback_lemma
 
 
@@ -1373,12 +1385,15 @@ def deduplicate_lemmas(
         config = ExtractionConfig.from_args(config)
     lemmas_grouped_by_lowercase: Dict[str, Set[str]] = {}
     for lemma in candidate_lemmas:
-        if not lemma or lemma in ('--', '-') or not any(c.isalnum() for c in str(lemma)):
+        if not lemma:
             continue
-        lower_lemma = str(lemma).lower()
+        cleaned_lemma = str(lemma).strip('-')
+        if not cleaned_lemma or cleaned_lemma in ('--', '-') or not any(c.isalnum() for c in cleaned_lemma):
+            continue
+        lower_lemma = cleaned_lemma.lower()
         if lower_lemma not in lemmas_grouped_by_lowercase:
             lemmas_grouped_by_lowercase[lower_lemma] = set()
-        lemmas_grouped_by_lowercase[lower_lemma].add(str(lemma))
+        lemmas_grouped_by_lowercase[lower_lemma].add(cleaned_lemma)
     
     final_lemmas: List[str] = []
     for _, capitalization_variants in lemmas_grouped_by_lowercase.items():
@@ -1741,6 +1756,8 @@ def _extract_standard_token(
     base_lemma = get_overridden_lemma_for_word(default_lemma, source_word_form, lemma_override_rules, sentence_text)
     if base_lemma and re.match(r'^\d{14}-', base_lemma):
         base_lemma = re.sub(r'^\d{14}-', '', base_lemma)
+    if base_lemma:
+        base_lemma = base_lemma.strip('-')
 
     was_split = False
     is_explicit_url = token.like_url and (token.text.startswith(('http://', 'https://', 'ftp://', 'www.')) or '://' in token.text)
@@ -1752,7 +1769,8 @@ def _extract_standard_token(
         hyphenated_parts = token.text.split('-')
 
         if de_gcs_preserve_compound_word or preserve_composite:
-            lemmas_for_current_token.append(base_lemma)
+            if base_lemma and base_lemma not in ('--', '-') and any(c.isalnum() for c in base_lemma):
+                lemmas_for_current_token.append(base_lemma)
 
         for part in hyphenated_parts:
             part = part.strip()
@@ -1760,6 +1778,8 @@ def _extract_standard_token(
 
             initial_part_lemma = lemmatize_compound_part(part, nlp_model, de_dictionary, args)
             processed_part_lemma = get_overridden_lemma_for_compound_part(initial_part_lemma, part, token.text, lemma_override_rules, sentence_text)
+            if processed_part_lemma:
+                processed_part_lemma = processed_part_lemma.strip('-')
             if processed_part_lemma and processed_part_lemma not in ('--', '-') and any(c.isalnum() for c in processed_part_lemma):
                 lemmas_for_current_token.append(processed_part_lemma)
 
@@ -1785,6 +1805,8 @@ def _extract_standard_token(
                     sub_spacy_lemma = correct_spacy_lemma(sub_token, de_dictionary, de_fix_genitive, override_lemma=sub_override_lemma, smart_fallback_lemma=sub_smart_fallback)
                     sub_default_lemma = format_lemma_capitalization(sub_token, sub_spacy_lemma, args)
                     sub_lemma = get_overridden_lemma_for_word(sub_default_lemma, sub_token.text, lemma_override_rules, sentence_text)
+                    if sub_lemma:
+                        sub_lemma = sub_lemma.strip('-')
                     if sub_lemma and sub_lemma not in ('--', '-') and any(c.isalnum() for c in sub_lemma):
                         extracted_sub_lemmas.append(sub_lemma)
                         if is_path_token:
@@ -1850,6 +1872,8 @@ def _extract_standard_token(
                     initial_part_lemma = lemmatize_compound_part(component, nlp_model, de_dictionary, args)
                     overridden_part_lemma = get_overridden_lemma_for_compound_part(initial_part_lemma, component, token.text, lemma_override_rules, sentence_text)
                     processed_part_lemma = _format_gcs_component_case(overridden_part_lemma)
+                    if processed_part_lemma:
+                        processed_part_lemma = processed_part_lemma.strip('-')
 
                     if processed_part_lemma and processed_part_lemma not in ('--', '-') and any(c.isalnum() for c in processed_part_lemma):
                         lemmas_for_current_token.append(processed_part_lemma)
@@ -1861,8 +1885,8 @@ def _extract_standard_token(
         lemmas_for_current_token.append(base_lemma)
 
     sanitized_lemmas = [
-        lem for lem in lemmas_for_current_token
-        if lem and lem not in ('--', '-') and any(c.isalnum() for c in lem)
+        lem.strip('-') for lem in lemmas_for_current_token
+        if lem and lem.strip('-') not in ('--', '-') and any(c.isalnum() for c in lem.strip('-'))
     ]
     mapped_sources = {}
     for lem in sanitized_lemmas:
@@ -1949,6 +1973,7 @@ def extract_lemmas_from_sentence(
 
         deduplicated_lemmas = deduplicate_lemmas(lemmas_for_current_token, extraction_config)
         for lemma in deduplicated_lemmas:
+            lemma = lemma.strip('-')
             if lemma and lemma not in ('--', '-') and any(c.isalnum() for c in lemma):
                 final_lemmas.add(lemma)
 
@@ -2341,6 +2366,7 @@ class ParallelTextsStrategy(OperationalStrategy):
                 deduplicated_lemmas = deduplicate_lemmas(lemmas_for_current_token)
 
                 for lemma in deduplicated_lemmas:
+                    lemma = lemma.strip('-')
                     if not lemma or lemma in ('--', '-') or not any(c.isalnum() for c in lemma):
                         continue
                     
@@ -2702,6 +2728,7 @@ class SingleTextStrategy(OperationalStrategy):
                 deduplicated_lemmas = deduplicate_lemmas(lemmas_for_current_token)
 
                 for lemma in deduplicated_lemmas:
+                    lemma = lemma.strip('-')
                     if not lemma or lemma in ('--', '-') or not any(c.isalnum() for c in lemma):
                         continue
 

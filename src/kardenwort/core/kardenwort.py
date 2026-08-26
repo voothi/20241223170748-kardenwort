@@ -1644,7 +1644,7 @@ class RemoteDoc(list):
 
 class RemotePipelineNLP:
     """HTTP client querying persistent SpaCy microservice on /tokenize with offline fallback."""
-    def __init__(self, server_url: str, lang: str = "de", timeout: float = 5.0):
+    def __init__(self, server_url: str, lang: str = "de", timeout: float = 18.0):
         self.server_url = server_url.rstrip("/")
         self.lang = lang
         self.timeout = timeout

@@ -2684,7 +2684,7 @@ class SingleTextStrategy(OperationalStrategy):
 
         lemma_data = {}
         if getattr(config, 'deduplication_scope', 'global') == 'global':
-            lemma_data = {'lemmas': {}, 'info': {}, 'raw_source_words': {}}
+            lemma_data = {'lemmas': {}, 'info': {}, 'raw_source_words': {}, 'token_orders': {}}
         else:
             lemma_data = []
 

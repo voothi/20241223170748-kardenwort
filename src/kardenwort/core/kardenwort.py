@@ -64,6 +64,7 @@ KEY_CLOZE = "cloze"
 KEY_SENTENCE_INDEX = "sentence_index"
 KEY_DECK_NAME = "deck_name"
 KEY_SUBTITLE_START_TIME = "subtitle_start_time"
+KEY_TOKEN_ORDER = "token_order"
 KEY_CLASSIFICATIONS = "classifications"
 KEY_CLASSIFICATION_CASE_SENSITIVE = "classification_case_sensitive"
 KEY_TTS_SOURCE_PREFIX = "tts_source_"
@@ -164,6 +165,8 @@ FIELD_CLASSIFICATION_GOETHE = "ClassificationGoethe"
 FIELD_WORD_DESTINATION_INFLECTED_FORM = "WordDestinationInflectedForm"
 FIELD_WORD_SOURCE_AI = "WordSourceAI"
 FIELD_WORD_SOURCE_INFLECTED_FORM_AI = "WordSourceInflectedFormAI"
+FIELD_TOKEN_ORDER = "TokenOrder"
+FIELD_WORD_SOURCE_TOKEN_ORDER = "WordSourceTokenOrder"
 
 # Standard 90-field default Anki baseline tuple
 DEFAULT_ANKI_HEADER = (
@@ -1293,6 +1296,7 @@ def prepare_row_data(args: Union[ExtractionConfig, argparse.Namespace, SimpleNam
         KEY_SENTENCE_INDEX: kwargs.get(KEY_SENTENCE_INDEX, ''),
         KEY_DECK_NAME: kwargs.get(KEY_DECK_NAME, ''),
         KEY_SUBTITLE_START_TIME: kwargs.get(KEY_SUBTITLE_START_TIME, ''),
+        KEY_TOKEN_ORDER: kwargs.get(KEY_TOKEN_ORDER, kwargs.get("TokenOrder", "")),
     }
     
     # Dynamic TTS activation flags
@@ -1327,9 +1331,11 @@ def apply_field_mapping(csv_row, row_data, field_mapping, field_index_map):
     for field_name, data_source in field_mapping.items():
         if field_name in field_index_map:
             val = row_data.get(data_source, "")
+            if not val and data_source in (FIELD_TOKEN_ORDER, FIELD_WORD_SOURCE_TOKEN_ORDER, KEY_TOKEN_ORDER, "TokenOrder"):
+                val = row_data.get(KEY_TOKEN_ORDER, row_data.get(FIELD_TOKEN_ORDER, ""))
             if field_name == FIELD_QUOTATION and data_source == KEY_SOURCE_WORD:
                 val = row_data.get(KEY_RAW_SOURCE_WORD, val)
-            csv_row[field_index_map[field_name]] = val
+            csv_row[field_index_map[field_name]] = str(val) if val is not None else ""
         else:
             print(f"Warning: Unknown field '{field_name}' in anki_field_mapping, skipping.", file=sys.stderr)
 
@@ -2215,7 +2221,7 @@ class ParallelTextsStrategy(OperationalStrategy):
 
         lemma_data = {}
         if getattr(config, 'deduplication_scope', 'global') == 'global':
-            lemma_data = {'lemmas': {}, 'info': {}, 'raw_source_words': {}}
+            lemma_data = {'lemmas': {}, 'info': {}, 'raw_source_words': {}, 'token_orders': {}}
         else:
             lemma_data = []
 
@@ -2372,6 +2378,7 @@ class ParallelTextsStrategy(OperationalStrategy):
                     
                     cur_source_word = mapped_lemma_sources.get(lemma, token.text)
                     cur_raw_source_word = token_mappings_matches[token.i]['source_word'] if (token.i in mapped_tokens and token.i in token_mappings_matches) else cur_source_word
+                    cur_token_order = f"{token.i}+{separable_verb_map[token.i].i}" if token.i in separable_verb_map else str(token.i)
                     if getattr(config, 'strip_garbage_characters', ''):
                         cur_source_word = cur_source_word.strip(getattr(config, 'strip_garbage_characters', ''))
                         cur_raw_source_word = cur_raw_source_word.strip(getattr(config, 'strip_garbage_characters', ''))
@@ -2380,6 +2387,7 @@ class ParallelTextsStrategy(OperationalStrategy):
                         'lemma': lemma,
                         'source_word': cur_source_word,
                         'raw_source_word': cur_raw_source_word,
+                        'token_order': cur_token_order,
                         'sentence_index': content_line_idx,
                         'source_sentence': source_sentence,
                         'deck_name': final_deck
@@ -2390,6 +2398,7 @@ class ParallelTextsStrategy(OperationalStrategy):
                         if is_new:
                             lemma_data['lemmas'][lemma] = cur_source_word
                             lemma_data['raw_source_words'][lemma] = cur_raw_source_word
+                            lemma_data['token_orders'][lemma] = cur_token_order
                             lemma_data['info'][lemma] = (content_line_idx, source_sentence, final_deck)
                         elif getattr(config, 'combine_source_words', False):
                             existing_forms = [s.strip() for s in lemma_data['lemmas'][lemma].split(',') if s.strip()]
@@ -2406,6 +2415,7 @@ class ParallelTextsStrategy(OperationalStrategy):
                         elif getattr(config, 'prefer_shortest_form', False) and len(cur_source_word) < len(lemma_data['lemmas'][lemma]):
                             lemma_data['lemmas'][lemma] = cur_source_word
                             lemma_data['raw_source_words'][lemma] = cur_raw_source_word
+                            lemma_data['token_orders'][lemma] = cur_token_order
                             lemma_data['info'][lemma] = (content_line_idx, source_sentence, final_deck)
 
                     elif getattr(config, 'deduplication_scope', 'global') == 'sentence':
@@ -2464,6 +2474,7 @@ class ParallelTextsStrategy(OperationalStrategy):
                     continue
                 source_word_col_val = lemma_data['lemmas'].get(word, '')
                 raw_source_word_col_val = lemma_data.get('raw_source_words', {}).get(word, source_word_col_val)
+                token_order_col_val = lemma_data.get('token_orders', {}).get(word, '')
             else:
                 word = item['lemma']
                 sentence_index = item['sentence_index']
@@ -2471,6 +2482,7 @@ class ParallelTextsStrategy(OperationalStrategy):
                 deck_name = item['deck_name']
                 source_word_col_val = item['source_word']
                 raw_source_word_col_val = item.get('raw_source_word', source_word_col_val)
+                token_order_col_val = item.get('token_order', '')
 
             context_start_index = max(0, sentence_index - sentence_context_size)
             context_end_index = sentence_index + sentence_context_size + 1
@@ -2501,6 +2513,7 @@ class ParallelTextsStrategy(OperationalStrategy):
                 lemma=word,
                 source_word=source_word_col_val,
                 raw_source_word=raw_source_word_col_val,
+                token_order=token_order_col_val,
                 sentence_index=str(sentence_index + 1).zfill(6),
                 source_sentence=source_sentence_for_tsv,
                 source_context_left=context_join_str.join(line.strip() for line in display_source_content_lines[context_start_index:sentence_index]),
@@ -2734,6 +2747,7 @@ class SingleTextStrategy(OperationalStrategy):
 
                     cur_source_word = mapped_lemma_sources.get(lemma, token.text)
                     cur_raw_source_word = token_mappings_matches[token.i]['source_word'] if (token.i in mapped_tokens and token.i in token_mappings_matches) else cur_source_word
+                    cur_token_order = f"{token.i}+{separable_verb_map[token.i].i}" if token.i in separable_verb_map else str(token.i)
                     if getattr(config, 'strip_garbage_characters', ''):
                         cur_source_word = cur_source_word.strip(getattr(config, 'strip_garbage_characters', ''))
                         cur_raw_source_word = cur_raw_source_word.strip(getattr(config, 'strip_garbage_characters', ''))
@@ -2742,6 +2756,7 @@ class SingleTextStrategy(OperationalStrategy):
                         'lemma': lemma,
                         'source_word': cur_source_word,
                         'raw_source_word': cur_raw_source_word,
+                        'token_order': cur_token_order,
                         'sentence_index': unit_index,
                         'source_sentence': unit_text,
                         'deck_name': current_deck
@@ -2752,6 +2767,7 @@ class SingleTextStrategy(OperationalStrategy):
                         if is_new:
                             lemma_data['lemmas'][lemma] = cur_source_word
                             lemma_data['raw_source_words'][lemma] = cur_raw_source_word
+                            lemma_data['token_orders'][lemma] = cur_token_order
                             lemma_data['info'][lemma] = (unit_index, unit_text, current_deck)
                         elif getattr(config, 'combine_source_words', False):
                             existing_forms = [s.strip() for s in lemma_data['lemmas'][lemma].split(',') if s.strip()]
@@ -2768,6 +2784,7 @@ class SingleTextStrategy(OperationalStrategy):
                         elif getattr(config, 'prefer_shortest_form', False) and len(cur_source_word) < len(lemma_data['lemmas'][lemma]):
                             lemma_data['lemmas'][lemma] = cur_source_word
                             lemma_data['raw_source_words'][lemma] = cur_raw_source_word
+                            lemma_data['token_orders'][lemma] = cur_token_order
                             lemma_data['info'][lemma] = (unit_index, unit_text, current_deck)
                             
                     elif getattr(config, 'deduplication_scope', 'global') == 'sentence':
@@ -2828,6 +2845,7 @@ class SingleTextStrategy(OperationalStrategy):
                     continue
                 source_word_col_val = lemma_data['lemmas'].get(word, '')
                 raw_source_word_col_val = lemma_data.get('raw_source_words', {}).get(word, source_word_col_val)
+                token_order_col_val = lemma_data.get('token_orders', {}).get(word, '')
             else:
                 word = item['lemma']
                 unit_index = item['sentence_index']
@@ -2835,6 +2853,7 @@ class SingleTextStrategy(OperationalStrategy):
                 deck_name = item['deck_name']
                 source_word_col_val = item['source_word']
                 raw_source_word_col_val = item.get('raw_source_word', source_word_col_val)
+                token_order_col_val = item.get('token_order', '')
             
             source_sentence_for_tsv = display_unit_texts[unit_index].strip() if unit_index < len(display_unit_texts) else ""
             context_start_index = max(0, unit_index - sentence_context_size)
@@ -2866,6 +2885,7 @@ class SingleTextStrategy(OperationalStrategy):
                 lemma=word,
                 source_word=source_word_col_val,
                 raw_source_word=raw_source_word_col_val,
+                token_order=token_order_col_val,
                 source_sentence=source_sentence_for_tsv,
                 source_context_left=left_str,
                 source_context_right=right_str,

@@ -122,3 +122,39 @@ def test_apply_field_mapping_preserves_raw_source_word_for_quotation(field_setup
     assert csv_row[field_index_map["WordSourceInflectedForm"]] == "isn't, is"
     assert csv_row[field_index_map["WordSourceInflectedForm2"]] == "isn't, is"
 
+
+def test_prepare_row_data_token_order():
+    args = SimpleNamespace(language="de", tts_destination_lang=None)
+    data = prepare_row_data(
+        args,
+        lemma="anpassen",
+        source_word="passt, an",
+        token_order="4+14",
+        sentence_index="000001",
+        source_sentence="Er passt das Bike an."
+    )
+    assert data["lemma"] == "anpassen"
+    assert data["token_order"] == "4+14"
+
+
+def test_apply_field_mapping_token_order(field_setup):
+    _, field_index_map, empty_row = field_setup
+    csv_row = list(empty_row)
+    row_data = {
+        "lemma": "anpassen",
+        "source_word": "passt, an",
+        "token_order": "4+14"
+    }
+    field_mapping = {
+        "TokenOrder": "token_order",
+        "WordSourceTokenOrder": "token_order",
+        "WordSource": "lemma"
+    }
+    custom_index_map = {"TokenOrder": 0, "WordSourceTokenOrder": 1, "WordSource": 2}
+    test_row = ["", "", ""]
+    apply_field_mapping(test_row, row_data, field_mapping, custom_index_map)
+    assert test_row[0] == "4+14"
+    assert test_row[1] == "4+14"
+    assert test_row[2] == "anpassen"
+
+

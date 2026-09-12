@@ -118,11 +118,27 @@ def normalize_pos_tag(pos: Optional[str]) -> str:
         return mapped
     return str(pos).strip()
 
-def extract_gender_from_token(token: Any) -> str:
+def extract_gender_from_token(token: Any, lemma: Optional[str] = None, nlp_model: Optional[Any] = None) -> str:
     """
     Extracts grammatical gender ('m', 'f', 'n') strictly for nouns.
     Returns empty string for non-nouns or tokens without gender.
+    When a lemma is provided (e.g. base noun lemma like 'Arbeit' from 'Arbeiten'),
+    dictionary/model gender for the base lemma takes precedence.
     """
+    if lemma:
+        cur_nlp = nlp_model or globals().get('nlp')
+        if cur_nlp and callable(cur_nlp) and getattr(cur_nlp, 'lang', 'de') == 'de':
+            try:
+                lemma_doc = cur_nlp(str(lemma).strip())
+                if lemma_doc and len(lemma_doc) > 0:
+                    lemma_tok = lemma_doc[0]
+                    if getattr(lemma_tok, 'pos_', '') in ("NOUN", "PROPN"):
+                        lemma_g = extract_gender_from_token(lemma_tok)
+                        if lemma_g:
+                            return lemma_g
+            except Exception:
+                pass
+
     pos_val = getattr(token, "pos_", "") or getattr(token, "pos", "") or ""
     pos_norm = normalize_pos_tag(pos_val)
     is_noun = str(pos_val).upper() in ("NOUN", "PROPN", "NN", "NE") or pos_norm in ("n.", "n")
@@ -2469,7 +2485,9 @@ class ParallelTextsStrategy(OperationalStrategy):
                     
                     tok_pos = getattr(token, "pos_", "") or getattr(token, "pos", "") or ""
                     norm_pos = normalize_pos_tag(tok_pos)
-                    tok_gender = extract_gender_from_token(token)
+                    tok_gender = extract_gender_from_token(token, lemma=lemma, nlp_model=nlp_model)
+                    if tok_gender and norm_pos != "n.":
+                        norm_pos = "n."
 
                     data_entry = {
                         'lemma': lemma,
@@ -2861,7 +2879,9 @@ class SingleTextStrategy(OperationalStrategy):
 
                     tok_pos = getattr(token, "pos_", "") or getattr(token, "pos", "") or ""
                     norm_pos = normalize_pos_tag(tok_pos)
-                    tok_gender = extract_gender_from_token(token)
+                    tok_gender = extract_gender_from_token(token, lemma=lemma, nlp_model=nlp_model)
+                    if tok_gender and norm_pos != "n.":
+                        norm_pos = "n."
 
                     data_entry = {
                         'lemma': lemma,

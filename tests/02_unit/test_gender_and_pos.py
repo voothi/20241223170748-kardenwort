@@ -118,3 +118,19 @@ def test_prepare_row_data_and_field_mapping_gender_pos():
     apply_field_mapping(csv_row, row_data, field_mapping, field_index_map)
     assert csv_row[field_index_map["WordSourcePOS"]] == "n."
     assert csv_row[field_index_map["WordSourceGender"]] == "n"
+
+
+def test_extract_gender_lemma_precedence():
+    # Contextual token 'Arbeiten' in 'das Arbeiten' has Neut morph
+    tok_substantivized = MockToken("Arbeiten", pos_="NOUN", gender_morph=["Neut"])
+    
+    class MockArbeitNLP:
+        lang = 'de'
+        def __call__(self, text):
+            if text == "Arbeit":
+                return [MockToken("Arbeit", pos_="NOUN", gender_morph=["Fem"])]
+            return [MockToken(text, pos_="NOUN", gender_morph=["Neut"])]
+            
+    mock_nlp = MockArbeitNLP()
+    assert extract_gender_from_token(tok_substantivized, lemma="Arbeit", nlp_model=mock_nlp) == "f"
+

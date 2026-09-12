@@ -2485,7 +2485,7 @@ class ParallelTextsStrategy(OperationalStrategy):
                     
                     tok_pos = getattr(token, "pos_", "") or getattr(token, "pos", "") or ""
                     norm_pos = normalize_pos_tag(tok_pos)
-                    tok_gender = extract_gender_from_token(token, lemma=lemma, nlp_model=nlp_model)
+                    tok_gender = extract_gender_from_token(token, lemma=lemma, nlp_model=current_nlp)
                     if tok_gender and norm_pos != "n.":
                         norm_pos = "n."
 
@@ -2879,7 +2879,7 @@ class SingleTextStrategy(OperationalStrategy):
 
                     tok_pos = getattr(token, "pos_", "") or getattr(token, "pos", "") or ""
                     norm_pos = normalize_pos_tag(tok_pos)
-                    tok_gender = extract_gender_from_token(token, lemma=lemma, nlp_model=nlp_model)
+                    tok_gender = extract_gender_from_token(token, lemma=lemma, nlp_model=current_nlp)
                     if tok_gender and norm_pos != "n.":
                         norm_pos = "n."
 

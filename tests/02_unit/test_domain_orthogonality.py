@@ -26,13 +26,15 @@ def test_3_2_extraction_config_round_trip_265_args():
         config.language = "en"
 
 
-def test_3_2_anki_mapping_config_90_field_baseline():
-    """Verify AnkiMappingConfig loads the 90-field baseline intact."""
+def test_3_2_anki_mapping_config_92_field_baseline():
+    """Verify AnkiMappingConfig loads the 92-field baseline intact."""
     config = AnkiMappingConfig()
-    assert len(config.header) == 90
+    assert len(config.header) == 92
     assert "Quotation" in config.header
     assert "WordSource2" in config.header
     assert "ClassificationOxford" in config.header
+    assert "WordSourcePOS" in config.header
+    assert "WordSourceGender" in config.header
 
     with pytest.raises(FrozenInstanceError):
         config.header = ("Changed",)

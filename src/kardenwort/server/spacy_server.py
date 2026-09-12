@@ -16,7 +16,7 @@ if str(src_dir) not in sys.path:
     sys.path.insert(0, str(src_dir))
 
 import spacy
-from kardenwort.core.kardenwort import configure_spacy_model, retokenize_hyphenated_compounds
+from kardenwort.core.kardenwort import configure_spacy_model, retokenize_hyphenated_compounds, extract_gender_from_token
 
 logger = logging.getLogger("kardenwort.spacy_server")
 
@@ -174,6 +174,7 @@ class SpacyRequestHandler(BaseHTTPRequestHandler):
                             "word": token.text,
                             "lemma": token.lemma_,
                             "pos": token.pos_,
+                            "gender": extract_gender_from_token(token),
                             "tag": token.tag_,
                             "morphology": str(token.morph) if token.morph else "",
                             "sentence_index": sent_idx,

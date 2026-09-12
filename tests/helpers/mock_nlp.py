@@ -27,6 +27,7 @@ class MockToken:
         like_url: bool = False,
         like_email: bool = False,
         case_morph: Optional[List[str]] = None,
+        gender_morph: Optional[List[str]] = None,
         idx: Optional[int] = None,
         pos: Optional[str] = None,
         whitespace_: str = " "
@@ -57,7 +58,11 @@ class MockToken:
         self.is_sent_start = is_sent_start
         self.like_url = like_url
         self.like_email = like_email
-        self.morph = MockMorph({"Case": case_morph or []})
+        case_list = case_morph or []
+        morph_dict = {"Case": case_list}
+        if gender_morph is not None:
+            morph_dict["Gender"] = gender_morph
+        self.morph = MockMorph(morph_dict)
         
         if is_alpha is not None:
             self.is_alpha = is_alpha

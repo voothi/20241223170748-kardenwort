@@ -37,13 +37,15 @@ def test_8_1_prepare_row_data_tts():
     assert row_data.get('tts_dest_ru') == "1"
 
     header = kw.get_anki_csv_header()
-    assert len(header) == 90
+    assert len(header) == 92
     tts_cols = [
         "Source-en-GB", "Source-en-US", "Source-de-DE", "Source-uk-UA", "Source-ru-RU",
         "Destination-en-GB", "Destination-en-US", "Destination-de-DE", "Destination-uk-UA", "Destination-ru-RU"
     ]
     for col in tts_cols:
         assert col in header
+    assert "WordSourcePOS" in header
+    assert "WordSourceGender" in header
 
 # 8.2
 def test_8_2_auto_lite_mode():

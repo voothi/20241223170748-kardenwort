@@ -69,6 +69,8 @@ KEY_CLASSIFICATIONS = "classifications"
 KEY_CLASSIFICATION_CASE_SENSITIVE = "classification_case_sensitive"
 KEY_TTS_SOURCE_PREFIX = "tts_source_"
 KEY_TTS_DEST_PREFIX = "tts_dest_"
+KEY_POS = "pos"
+KEY_GENDER = "gender"
 
 # Tabular & Anki Field Constants
 FIELD_LEMMA = "Lemma"
@@ -79,6 +81,78 @@ FIELD_WORD_SOURCE2 = "WordSource2"
 FIELD_WORD_SOURCE_INFLECTED_FORM = "WordSourceInflectedForm"
 FIELD_WORD_SOURCE_INFLECTED_FORM2 = "WordSourceInflectedForm2"
 FIELD_WORD_DESTINATION = "WordDestination"
+FIELD_WORD_SOURCE_POS = "WordSourcePOS"
+FIELD_WORD_SOURCE_GENDER = "WordSourceGender"
+
+POS_UNIVERSAL_TO_SHORT: Dict[str, str] = {
+    "NOUN": "n.",
+    "PROPN": "n.",
+    "VERB": "v.",
+    "AUX": "v.",
+    "ADJ": "adj.",
+    "ADV": "adv.",
+    "ADP": "prep.",
+    "PREP": "prep.",
+    "PRON": "pron.",
+    "CCONJ": "conj.",
+    "SCONJ": "conj.",
+    "CONJ": "conj.",
+    "NUM": "num.",
+    "DET": "art.",
+    "PART": "part.",
+    "INTJ": "intj.",
+}
+
+def normalize_pos_tag(pos: Optional[str]) -> str:
+    """Converts a Universal or standard POS tag to short representation (e.g. 'NOUN' -> 'n.')."""
+    if not pos:
+        return ""
+    pos_clean = str(pos).strip().upper()
+    if pos_clean in POS_UNIVERSAL_TO_SHORT:
+        return POS_UNIVERSAL_TO_SHORT[pos_clean]
+    pos_lower = str(pos).strip().lower()
+    if pos_lower in ("n.", "v.", "adj.", "adv.", "prep.", "conj.", "pron.", "art.", "num.", "part.", "intj."):
+        return pos_lower
+    if pos_lower in ("noun", "verb", "adj", "adv", "prep", "conj", "pron", "num", "part", "intj"):
+        mapped = {"noun": "n.", "verb": "v."}.get(pos_lower, f"{pos_lower}.")
+        return mapped
+    return str(pos).strip()
+
+def extract_gender_from_token(token: Any) -> str:
+    """
+    Extracts grammatical gender ('m', 'f', 'n') strictly for nouns.
+    Returns empty string for non-nouns or tokens without gender.
+    """
+    pos_val = getattr(token, "pos_", "") or getattr(token, "pos", "") or ""
+    pos_norm = normalize_pos_tag(pos_val)
+    is_noun = str(pos_val).upper() in ("NOUN", "PROPN", "NN", "NE") or pos_norm in ("n.", "n")
+    if not is_noun:
+        return ""
+    
+    morph = getattr(token, "morph", None)
+    if not morph:
+        return ""
+    
+    genders = []
+    if hasattr(morph, "get"):
+        genders = morph.get("Gender", [])
+    elif isinstance(morph, str):
+        for part in morph.split("|"):
+            if part.startswith("Gender="):
+                genders = part.split("=", 1)[1].split(",")
+                break
+    
+    if not genders:
+        return ""
+    
+    g_first = str(genders[0]).strip().lower()
+    if g_first in ("masc", "m", "masculine", "der"):
+        return "m"
+    elif g_first in ("fem", "f", "feminine", "die"):
+        return "f"
+    elif g_first in ("neut", "n", "neuter", "das"):
+        return "n"
+    return ""
 FIELD_WORD_SOURCE_CONTEXT = "WordSourceContext"
 FIELD_SENTENCE_SOURCE_CONTEXT_LEFT = "SentenceSourceContextLeft"
 FIELD_SENTENCE_SOURCE = "SentenceSource"
@@ -200,7 +274,8 @@ DEFAULT_ANKI_HEADER = (
     FIELD_AM_UNKNOWN_MORPHS, FIELD_AM_UNKNOWN_MORPHS_COUNT, FIELD_AM_HIGHLIGHTED,
     FIELD_AM_SCORE, FIELD_AM_SCORE_TERMS, FIELD_AM_STUDY_MORPHS, FIELD_SENTENCE_SOURCE_INDEX,
     FIELD_DECK, FIELD_LEITNER_BOX, FIELD_LEITNER_DUE, FIELD_DESK_SELECTED,
-    FIELD_CLASSIFICATION_OXFORD, FIELD_CLASSIFICATION_GOETHE
+    FIELD_CLASSIFICATION_OXFORD, FIELD_CLASSIFICATION_GOETHE,
+    FIELD_WORD_SOURCE_POS, FIELD_WORD_SOURCE_GENDER
 )
 
 @dataclass(frozen=True)
@@ -1297,6 +1372,8 @@ def prepare_row_data(args: Union[ExtractionConfig, argparse.Namespace, SimpleNam
         KEY_DECK_NAME: kwargs.get(KEY_DECK_NAME, ''),
         KEY_SUBTITLE_START_TIME: kwargs.get(KEY_SUBTITLE_START_TIME, ''),
         KEY_TOKEN_ORDER: kwargs.get(KEY_TOKEN_ORDER, kwargs.get("TokenOrder", "")),
+        KEY_POS: normalize_pos_tag(kwargs.get(KEY_POS, kwargs.get("pos", ""))),
+        KEY_GENDER: kwargs.get(KEY_GENDER, kwargs.get("gender", "")),
     }
     
     # Dynamic TTS activation flags
@@ -1333,6 +1410,10 @@ def apply_field_mapping(csv_row, row_data, field_mapping, field_index_map):
             val = row_data.get(data_source, "")
             if not val and data_source in (FIELD_TOKEN_ORDER, FIELD_WORD_SOURCE_TOKEN_ORDER, KEY_TOKEN_ORDER, "TokenOrder"):
                 val = row_data.get(KEY_TOKEN_ORDER, row_data.get(FIELD_TOKEN_ORDER, ""))
+            if not val and data_source in (FIELD_WORD_SOURCE_POS, "pos", KEY_POS, "WordSourcePOS"):
+                val = row_data.get(KEY_POS, row_data.get("pos", ""))
+            if not val and data_source in (FIELD_WORD_SOURCE_GENDER, "gender", KEY_GENDER, "WordSourceGender"):
+                val = row_data.get(KEY_GENDER, row_data.get("gender", ""))
             if field_name == FIELD_QUOTATION and data_source == KEY_SOURCE_WORD:
                 val = row_data.get(KEY_RAW_SOURCE_WORD, val)
             csv_row[field_index_map[field_name]] = str(val) if val is not None else ""
@@ -1586,7 +1667,8 @@ class RemoteToken:
         sentence_index: int = 1,
         i: int = 0,
         idx: int = 0,
-        whitespace: str = " "
+        whitespace: str = " ",
+        gender: str = ""
     ):
         self.text = word
         self.lemma_ = lemma
@@ -1598,6 +1680,7 @@ class RemoteToken:
         self.i = i
         self.idx = idx
         self.whitespace_ = whitespace
+        self.gender = gender or extract_gender_from_token(self)
         self.doc = None
         self.head = self
         self.is_alpha = any(c.isalpha() for c in word)
@@ -1610,7 +1693,7 @@ class RemoteToken:
         return self.text
 
     def __repr__(self) -> str:
-        return f"RemoteToken({self.text!r}, lemma={self.lemma_!r}, pos={self.pos_!r})"
+        return f"RemoteToken({self.text!r}, lemma={self.lemma_!r}, pos={self.pos_!r}, gender={self.gender!r})"
 
 
 class RemoteSpan(list):
@@ -1635,7 +1718,8 @@ class RemoteDoc(list):
                 sentence_index=t.get("sentence_index", 1),
                 i=idx,
                 idx=t.get("idx", idx),
-                whitespace=t.get("whitespace", " ")
+                whitespace=t.get("whitespace", " "),
+                gender=t.get("gender", "")
             )
             tok.doc = self
             if idx == 0 or (idx > 0 and tokens[idx - 1].sentence_index != tok.sentence_index):
@@ -2221,7 +2305,7 @@ class ParallelTextsStrategy(OperationalStrategy):
 
         lemma_data = {}
         if getattr(config, 'deduplication_scope', 'global') == 'global':
-            lemma_data = {'lemmas': {}, 'info': {}, 'raw_source_words': {}, 'token_orders': {}}
+            lemma_data = {'lemmas': {}, 'info': {}, 'raw_source_words': {}, 'token_orders': {}, 'pos': {}, 'gender': {}}
         else:
             lemma_data = []
 
@@ -2383,11 +2467,17 @@ class ParallelTextsStrategy(OperationalStrategy):
                         cur_source_word = cur_source_word.strip(getattr(config, 'strip_garbage_characters', ''))
                         cur_raw_source_word = cur_raw_source_word.strip(getattr(config, 'strip_garbage_characters', ''))
                     
+                    tok_pos = getattr(token, "pos_", "") or getattr(token, "pos", "") or ""
+                    norm_pos = normalize_pos_tag(tok_pos)
+                    tok_gender = extract_gender_from_token(token)
+
                     data_entry = {
                         'lemma': lemma,
                         'source_word': cur_source_word,
                         'raw_source_word': cur_raw_source_word,
                         'token_order': cur_token_order,
+                        'pos': norm_pos,
+                        'gender': tok_gender,
                         'sentence_index': content_line_idx,
                         'source_sentence': source_sentence,
                         'deck_name': final_deck
@@ -2399,6 +2489,11 @@ class ParallelTextsStrategy(OperationalStrategy):
                             lemma_data['lemmas'][lemma] = cur_source_word
                             lemma_data['raw_source_words'][lemma] = cur_raw_source_word
                             lemma_data['token_orders'][lemma] = cur_token_order
+                            if 'pos' not in lemma_data:
+                                lemma_data['pos'] = {}
+                                lemma_data['gender'] = {}
+                            lemma_data['pos'][lemma] = norm_pos
+                            lemma_data['gender'][lemma] = tok_gender
                             lemma_data['info'][lemma] = (content_line_idx, source_sentence, final_deck)
                         elif getattr(config, 'combine_source_words', False):
                             existing_forms = [s.strip() for s in lemma_data['lemmas'][lemma].split(',') if s.strip()]
@@ -2416,6 +2511,11 @@ class ParallelTextsStrategy(OperationalStrategy):
                             lemma_data['lemmas'][lemma] = cur_source_word
                             lemma_data['raw_source_words'][lemma] = cur_raw_source_word
                             lemma_data['token_orders'][lemma] = cur_token_order
+                            if 'pos' not in lemma_data:
+                                lemma_data['pos'] = {}
+                                lemma_data['gender'] = {}
+                            lemma_data['pos'][lemma] = norm_pos
+                            lemma_data['gender'][lemma] = tok_gender
                             lemma_data['info'][lemma] = (content_line_idx, source_sentence, final_deck)
 
                     elif getattr(config, 'deduplication_scope', 'global') == 'sentence':
@@ -2466,6 +2566,7 @@ class ParallelTextsStrategy(OperationalStrategy):
                 break
             csv_row = [""] * len(anki_header) if anki_header else None
             word, source_word_col_val, sentence_index, source_sentence_for_lemmas, deck_name = "", "", -1, "", ""
+            pos_col_val, gender_col_val = "", ""
 
             if getattr(config, 'deduplication_scope', 'global') == 'global':
                 word = item
@@ -2475,6 +2576,8 @@ class ParallelTextsStrategy(OperationalStrategy):
                 source_word_col_val = lemma_data['lemmas'].get(word, '')
                 raw_source_word_col_val = lemma_data.get('raw_source_words', {}).get(word, source_word_col_val)
                 token_order_col_val = lemma_data.get('token_orders', {}).get(word, '')
+                pos_col_val = lemma_data.get('pos', {}).get(word, '')
+                gender_col_val = lemma_data.get('gender', {}).get(word, '')
             else:
                 word = item['lemma']
                 sentence_index = item['sentence_index']
@@ -2483,6 +2586,8 @@ class ParallelTextsStrategy(OperationalStrategy):
                 source_word_col_val = item['source_word']
                 raw_source_word_col_val = item.get('raw_source_word', source_word_col_val)
                 token_order_col_val = item.get('token_order', '')
+                pos_col_val = item.get('pos', '')
+                gender_col_val = item.get('gender', '')
 
             context_start_index = max(0, sentence_index - sentence_context_size)
             context_end_index = sentence_index + sentence_context_size + 1
@@ -2514,6 +2619,8 @@ class ParallelTextsStrategy(OperationalStrategy):
                 source_word=source_word_col_val,
                 raw_source_word=raw_source_word_col_val,
                 token_order=token_order_col_val,
+                pos=pos_col_val,
+                gender=gender_col_val,
                 sentence_index=str(sentence_index + 1).zfill(6),
                 source_sentence=source_sentence_for_tsv,
                 source_context_left=context_join_str.join(line.strip() for line in display_source_content_lines[context_start_index:sentence_index]),
@@ -2684,7 +2791,7 @@ class SingleTextStrategy(OperationalStrategy):
 
         lemma_data = {}
         if getattr(config, 'deduplication_scope', 'global') == 'global':
-            lemma_data = {'lemmas': {}, 'info': {}, 'raw_source_words': {}, 'token_orders': {}}
+            lemma_data = {'lemmas': {}, 'info': {}, 'raw_source_words': {}, 'token_orders': {}, 'pos': {}, 'gender': {}}
         else:
             lemma_data = []
 
@@ -2752,11 +2859,17 @@ class SingleTextStrategy(OperationalStrategy):
                         cur_source_word = cur_source_word.strip(getattr(config, 'strip_garbage_characters', ''))
                         cur_raw_source_word = cur_raw_source_word.strip(getattr(config, 'strip_garbage_characters', ''))
 
+                    tok_pos = getattr(token, "pos_", "") or getattr(token, "pos", "") or ""
+                    norm_pos = normalize_pos_tag(tok_pos)
+                    tok_gender = extract_gender_from_token(token)
+
                     data_entry = {
                         'lemma': lemma,
                         'source_word': cur_source_word,
                         'raw_source_word': cur_raw_source_word,
                         'token_order': cur_token_order,
+                        'pos': norm_pos,
+                        'gender': tok_gender,
                         'sentence_index': unit_index,
                         'source_sentence': unit_text,
                         'deck_name': current_deck
@@ -2768,6 +2881,11 @@ class SingleTextStrategy(OperationalStrategy):
                             lemma_data['lemmas'][lemma] = cur_source_word
                             lemma_data['raw_source_words'][lemma] = cur_raw_source_word
                             lemma_data['token_orders'][lemma] = cur_token_order
+                            if 'pos' not in lemma_data:
+                                lemma_data['pos'] = {}
+                                lemma_data['gender'] = {}
+                            lemma_data['pos'][lemma] = norm_pos
+                            lemma_data['gender'][lemma] = tok_gender
                             lemma_data['info'][lemma] = (unit_index, unit_text, current_deck)
                         elif getattr(config, 'combine_source_words', False):
                             existing_forms = [s.strip() for s in lemma_data['lemmas'][lemma].split(',') if s.strip()]
@@ -2785,6 +2903,11 @@ class SingleTextStrategy(OperationalStrategy):
                             lemma_data['lemmas'][lemma] = cur_source_word
                             lemma_data['raw_source_words'][lemma] = cur_raw_source_word
                             lemma_data['token_orders'][lemma] = cur_token_order
+                            if 'pos' not in lemma_data:
+                                lemma_data['pos'] = {}
+                                lemma_data['gender'] = {}
+                            lemma_data['pos'][lemma] = norm_pos
+                            lemma_data['gender'][lemma] = tok_gender
                             lemma_data['info'][lemma] = (unit_index, unit_text, current_deck)
                             
                     elif getattr(config, 'deduplication_scope', 'global') == 'sentence':
@@ -2837,6 +2960,7 @@ class SingleTextStrategy(OperationalStrategy):
                 break
             csv_row = [""] * len(anki_header) if anki_header else None
             word, source_word_col_val, unit_index, source_sentence_for_lemmas, deck_name = "", "", -1, "", ""
+            pos_col_val, gender_col_val = "", ""
 
             if getattr(config, 'deduplication_scope', 'global') == 'global':
                 word = item
@@ -2846,6 +2970,8 @@ class SingleTextStrategy(OperationalStrategy):
                 source_word_col_val = lemma_data['lemmas'].get(word, '')
                 raw_source_word_col_val = lemma_data.get('raw_source_words', {}).get(word, source_word_col_val)
                 token_order_col_val = lemma_data.get('token_orders', {}).get(word, '')
+                pos_col_val = lemma_data.get('pos', {}).get(word, '')
+                gender_col_val = lemma_data.get('gender', {}).get(word, '')
             else:
                 word = item['lemma']
                 unit_index = item['sentence_index']
@@ -2854,6 +2980,8 @@ class SingleTextStrategy(OperationalStrategy):
                 source_word_col_val = item['source_word']
                 raw_source_word_col_val = item.get('raw_source_word', source_word_col_val)
                 token_order_col_val = item.get('token_order', '')
+                pos_col_val = item.get('pos', '')
+                gender_col_val = item.get('gender', '')
             
             source_sentence_for_tsv = display_unit_texts[unit_index].strip() if unit_index < len(display_unit_texts) else ""
             context_start_index = max(0, unit_index - sentence_context_size)
@@ -2886,6 +3014,8 @@ class SingleTextStrategy(OperationalStrategy):
                 source_word=source_word_col_val,
                 raw_source_word=raw_source_word_col_val,
                 token_order=token_order_col_val,
+                pos=pos_col_val,
+                gender=gender_col_val,
                 source_sentence=source_sentence_for_tsv,
                 source_context_left=left_str,
                 source_context_right=right_str,

@@ -118,41 +118,195 @@ def normalize_pos_tag(pos: Optional[str]) -> str:
         return mapped
     return str(pos).strip()
 
+# Morphological Grundwörter and derivational suffixes for German nouns (sub-microsecond O(1) precedence lookup):
+GERMAN_GENDER_SUFFIXES_MASCULINE: Tuple[Tuple[str, int], ...] = (
+    ("partner", 7),
+    ("mann", 4),
+    ("ling", 5),
+    ("ismus", 6),
+    ("eur", 5),
+    ("iker", 5),
+    ("ist", 6),
+    ("ant", 6),
+    ("ent", 6),
+    ("or", 5),
+)
+
+GERMAN_GENDER_SUFFIXES_FEMININE: Tuple[Tuple[str, int], ...] = (
+    ("schaft", 6),
+    ("heit", 5),
+    ("keit", 5),
+    ("ung", 5),
+    ("tät", 5),
+    ("ion", 5),
+    ("thek", 5),
+    ("ik", 4),
+    ("ur", 4),
+    ("ei", 5),
+    ("in", 5),
+)
+
+GERMAN_GENDER_SUFFIXES_NEUTER: Tuple[Tuple[str, int], ...] = (
+    ("chen", 5),
+    ("lein", 5),
+    ("ment", 5),
+    ("tum", 5),
+    ("ium", 4),
+    ("um", 4),
+    ("ma", 4),
+)
+
+# Known lexical exceptions where terminal substrings deviate from general suffix rules
+GERMAN_SUFFIX_EXCEPTIONS_MASCULINE: Set[str] = {
+    "sprung", "ursprung", "schwung", "dung", "spion", "streik", "irrtum", "reichtum", "zement", "moment",
+    "cousin", "rubin", "ruin", "urin"
+}
+
+GERMAN_SUFFIX_EXCEPTIONS_FEMININE: Set[str] = {
+    "frist", "list", "firma", "oma"
+}
+
+GERMAN_SUFFIX_EXCEPTIONS_NEUTER: Set[str] = {
+    "talent", "patent", "stadion", "abitur", "benzin", "magazin", "berlin", "dublin"
+}
+
+
+def _match_morphological_suffix(word: str, is_propn: bool = False) -> str:
+    """
+    Checks if a German word or lemma matches known morphological Grundwörter,
+    derivational suffixes, or lexical exceptions in O(1) time.
+    Returns 'm', 'f', 'n', or empty string if no rule matches.
+    """
+    if not word:
+        return ""
+    w = word.strip().lower()
+    
+    # Check specific lexical exceptions first
+    if w in GERMAN_SUFFIX_EXCEPTIONS_MASCULINE:
+        return "m"
+    if w in GERMAN_SUFFIX_EXCEPTIONS_FEMININE:
+        return "f"
+    if w in GERMAN_SUFFIX_EXCEPTIONS_NEUTER:
+        return "n"
+        
+    for suf, min_len in GERMAN_GENDER_SUFFIXES_MASCULINE:
+        # Neuter derivational suffix -ment (e.g. Dokument, Instrument) takes precedence over -ent
+        if suf == "ent" and w.endswith("ment"):
+            continue
+        if len(w) >= min_len and w.endswith(suf):
+            return "m"
+
+    for suf, min_len in GERMAN_GENDER_SUFFIXES_FEMININE:
+        # Feminine agent suffix -in applies to common nouns, not proper nouns (e.g. Berlin, Dublin)
+        if is_propn and suf == "in":
+            continue
+        if len(w) >= min_len and w.endswith(suf):
+            return "f"
+
+    for suf, min_len in GERMAN_GENDER_SUFFIXES_NEUTER:
+        if len(w) >= min_len and w.endswith(suf):
+            return "n"
+
+    return ""
+
+
+def _detect_definite_article_gender(token: Any) -> str:
+    """
+    Checks if token has a definite article determiner in its dependency subtree.
+    Returns 'n' for 'das', 'm' for 'der' (nominative singular), 'f' for 'die' (singular).
+    """
+    children = getattr(token, "children", None)
+    if children is not None and not isinstance(children, list) and hasattr(children, "__iter__"):
+        try:
+            children = list(children)
+        except Exception:
+            children = []
+    if not children and getattr(token, "doc", None) is not None:
+        doc = getattr(token, "doc", None)
+        if isinstance(doc, (list, tuple)):
+            children = [t for t in doc if getattr(t, "head", None) is token and t is not token]
+
+    if children:
+        for child in children:
+            child_text = (getattr(child, "text", "") or getattr(child, "word", "") or "").strip().lower()
+            if child_text == "das":
+                return "n"
+            elif child_text == "der":
+                morph = getattr(child, "morph", None)
+                if morph:
+                    m_case = morph.get("Case") if hasattr(morph, "get") else []
+                    m_gender = morph.get("Gender") if hasattr(morph, "get") else []
+                    if "Fem" in m_gender:
+                        return "f"
+                    if "Masc" in m_gender or "Nom" in m_case:
+                        return "m"
+                return "m"
+            elif child_text == "die":
+                morph = getattr(child, "morph", None)
+                if morph:
+                    m_num = morph.get("Number") if hasattr(morph, "get") else []
+                    if "Plur" in m_num:
+                        continue
+                return "f"
+    return ""
+
+
 def extract_gender_from_token(token: Any) -> str:
     """
-    Extracts grammatical gender ('m', 'f', 'n') strictly for nouns from contextual token morphology.
+    Extracts grammatical gender ('m', 'f', 'n') strictly for nouns using a deterministic 4-step precedence cascade:
+    1. Direct definite article context check (e.g. 'das Arbeiten' -> 'n', 'die Tür' -> 'f', 'der Tisch' -> 'm').
+    2. Morphological Grundwort and derivational suffix lookup (e.g. '-partner' -> 'm', '-ung' -> 'f', '-chen' -> 'n').
+    3. Isolated lemma morphology fallback for ambiguous or detached noun tokens.
+    4. Contextual token morphology fallback.
     Returns empty string for non-nouns or tokens without gender.
     """
     pos_val = getattr(token, "pos_", "") or getattr(token, "pos", "") or ""
     pos_norm = normalize_pos_tag(pos_val)
-    is_noun = str(pos_val).upper() in ("NOUN", "PROPN", "NN", "NE") or pos_norm in ("n.", "n")
+    pos_upper = str(pos_val).upper()
+    is_propn = pos_upper in ("PROPN", "NE")
+    word_text = (getattr(token, "text", "") or getattr(token, "word", "") or "").strip()
+    lemma_text = (getattr(token, "lemma_", "") or getattr(token, "lemma", "") or "").strip()
+
+    is_noun = pos_upper in ("NOUN", "PROPN", "NN", "NE") or pos_norm in ("n.", "n")
+    if not is_noun and word_text and word_text[0].isupper() and len(word_text) >= 4:
+        if _detect_definite_article_gender(token) or _match_morphological_suffix(word_text, is_propn=is_propn) or _match_morphological_suffix(lemma_text, is_propn=is_propn):
+            is_noun = True
+
     if not is_noun:
         return ""
-    
+
+    # Step 1: Direct definite article check (protects substantivized verbs like 'das Arbeiten')
+    art_gender = _detect_definite_article_gender(token)
+    if art_gender:
+        return art_gender
+
+    # Step 2: Morphological Grundwort & derivational suffix lookup
+    suf_gender = _match_morphological_suffix(word_text, is_propn=is_propn) or _match_morphological_suffix(lemma_text, is_propn=is_propn)
+    if suf_gender:
+        return suf_gender
+
+    # Step 3 & 4: Token morphology fallback
     morph = getattr(token, "morph", None)
-    if not morph:
-        return ""
-    
-    genders = []
-    if hasattr(morph, "get"):
-        genders = morph.get("Gender", [])
-    elif isinstance(morph, str):
-        for part in morph.split("|"):
-            if part.startswith("Gender="):
-                genders = part.split("=", 1)[1].split(",")
-                break
-    
-    if not genders:
-        return ""
-    
-    g_first = str(genders[0]).strip().lower()
-    if g_first in ("masc", "m", "masculine", "der"):
-        return "m"
-    elif g_first in ("fem", "f", "feminine", "die"):
-        return "f"
-    elif g_first in ("neut", "n", "neuter", "das"):
-        return "n"
+    if morph:
+        genders = []
+        if hasattr(morph, "get"):
+            genders = morph.get("Gender", [])
+        elif isinstance(morph, str):
+            for part in morph.split("|"):
+                if part.startswith("Gender="):
+                    genders = part.split("=", 1)[1].split(",")
+                    break
+        if genders:
+            g_first = str(genders[0]).strip().lower()
+            if g_first in ("masc", "m", "masculine", "der"):
+                return "m"
+            elif g_first in ("fem", "f", "feminine", "die"):
+                return "f"
+            elif g_first in ("neut", "n", "neuter", "das"):
+                return "n"
+
     return ""
+
 FIELD_WORD_SOURCE_CONTEXT = "WordSourceContext"
 FIELD_SENTENCE_SOURCE_CONTEXT_LEFT = "SentenceSourceContextLeft"
 FIELD_SENTENCE_SOURCE = "SentenceSource"

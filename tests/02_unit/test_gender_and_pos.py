@@ -13,7 +13,7 @@ from kardenwort.core.kardenwort import (
     RemoteDoc,
     ExtractionConfig,
 )
-from mock_nlp import MockToken
+from mock_nlp import MockToken, MockDoc
 
 
 def test_normalize_pos_tag():
@@ -128,5 +128,62 @@ def test_extract_gender_contextual_substantivized_and_plural():
     # Plural feminine noun: 'die Arbeiten' -> NOUN with Fem gender -> 'f'
     tok_plural_fem = MockToken("Arbeiten", pos_="NOUN", gender_morph=["Fem"])
     assert extract_gender_from_token(tok_plural_fem) == "f"
+
+
+def test_extract_gender_grundwort_compound_precedence():
+    # Suffix/Grundwort '-partner' resolves strictly to 'm', overriding contextual statistical misclassifications
+    tok_partner_misclassified = MockToken("Lieferpartner", pos_="NOUN", gender_morph=["Fem"])
+    assert extract_gender_from_token(tok_partner_misclassified) == "m"
+
+    # Capitalized German noun misclassified as ADJ or PROPN by spaCy
+    tok_adj_misclassified = MockToken("Lieferpartner", pos_="ADJ")
+    assert extract_gender_from_token(tok_adj_misclassified) == "m"
+
+    tok_propn_partner = MockToken("Handelspartner", pos_="PROPN")
+    assert extract_gender_from_token(tok_propn_partner) == "m"
+
+    # Grundwort '-mann'
+    tok_mann = MockToken("Kaufmann", pos_="NOUN", gender_morph=["Fem"])
+    assert extract_gender_from_token(tok_mann) == "m"
+
+    # Derivational suffixes
+    assert extract_gender_from_token(MockToken("Lieferung", pos_="NOUN")) == "f"
+    assert extract_gender_from_token(MockToken("Wahrheit", pos_="NOUN")) == "f"
+    assert extract_gender_from_token(MockToken("Möglichkeit", pos_="NOUN")) == "f"
+    assert extract_gender_from_token(MockToken("Freundschaft", pos_="NOUN")) == "f"
+    assert extract_gender_from_token(MockToken("Universität", pos_="NOUN")) == "f"
+    assert extract_gender_from_token(MockToken("Mädchen", pos_="NOUN")) == "n"
+    assert extract_gender_from_token(MockToken("Dokument", pos_="NOUN")) == "n"
+
+
+def test_extract_gender_definite_article_precedence_das_arbeiten():
+    # Definite article 'das' child strictly resolves to 'n' even if base token or morph indicates otherwise
+    tok_art = MockToken("das", pos_="DET", dep_="nk", head_i=1)
+    tok_noun = MockToken("Arbeiten", pos_="NOUN", head_i=1, gender_morph=["Fem"])
+    doc = MockDoc([tok_art, tok_noun], "das Arbeiten")
+    assert extract_gender_from_token(tok_noun) == "n"
+
+
+def test_extract_gender_real_spacy_amazon_lieferpartner_and_arbeiten():
+    try:
+        import spacy
+        nlp = spacy.load("de_core_news_lg")
+    except Exception:
+        pytest.skip("spacy or de_core_news_lg model not installed in test environment")
+
+    doc = nlp("Wie ist das Arbeiten als Fahrer:in bei einem Amazon Lieferpartner ?")
+    token_arbeiten = None
+    token_lieferpartner = None
+    for token in doc:
+        if token.text == "Arbeiten":
+            token_arbeiten = token
+        elif token.text == "Lieferpartner":
+            token_lieferpartner = token
+
+    assert token_arbeiten is not None
+    assert token_lieferpartner is not None
+    assert extract_gender_from_token(token_arbeiten) == "n"
+    assert extract_gender_from_token(token_lieferpartner) == "m"
+
 
 

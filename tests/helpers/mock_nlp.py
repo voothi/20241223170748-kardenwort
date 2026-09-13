@@ -69,6 +69,13 @@ class MockToken:
         else:
             self.is_alpha = any(c.isalpha() for c in text)
         
+    @property
+    def children(self):
+        doc = getattr(self, "doc", None)
+        if doc and isinstance(doc, (list, tuple)):
+            return [t for t in doc if getattr(t, "head", None) is self and t is not self]
+        return []
+
     def __str__(self) -> str:
         return self.text
 

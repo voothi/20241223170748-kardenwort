@@ -120,17 +120,13 @@ def test_prepare_row_data_and_field_mapping_gender_pos():
     assert csv_row[field_index_map["WordSourceGender"]] == "n"
 
 
-def test_extract_gender_lemma_precedence():
-    # Contextual token 'Arbeiten' in 'das Arbeiten' has Neut morph
+def test_extract_gender_contextual_substantivized_and_plural():
+    # Substantivized verb: 'das Arbeiten' -> NOUN with Neut gender -> 'n'
     tok_substantivized = MockToken("Arbeiten", pos_="NOUN", gender_morph=["Neut"])
-    
-    class MockArbeitNLP:
-        lang = 'de'
-        def __call__(self, text):
-            if text == "Arbeit":
-                return [MockToken("Arbeit", pos_="NOUN", gender_morph=["Fem"])]
-            return [MockToken(text, pos_="NOUN", gender_morph=["Neut"])]
-            
-    mock_nlp = MockArbeitNLP()
-    assert extract_gender_from_token(tok_substantivized, lemma="Arbeit", nlp_model=mock_nlp) == "f"
+    assert extract_gender_from_token(tok_substantivized) == "n"
+
+    # Plural feminine noun: 'die Arbeiten' -> NOUN with Fem gender -> 'f'
+    tok_plural_fem = MockToken("Arbeiten", pos_="NOUN", gender_morph=["Fem"])
+    assert extract_gender_from_token(tok_plural_fem) == "f"
+
 

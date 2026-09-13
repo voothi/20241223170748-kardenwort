@@ -215,14 +215,34 @@ def _detect_definite_article_gender(token: Any) -> str:
     Checks if token has a definite article determiner in its dependency subtree.
     Returns 'n' for 'das', 'm' for 'der' (nominative singular), 'f' for 'die' (singular).
     """
-    children = getattr(token, "children", None)
-    if children is not None and not isinstance(children, list) and hasattr(children, "__iter__"):
+    doc = getattr(token, "doc", None)
+    if doc is not None and hasattr(doc, "has_annotation"):
         try:
-            children = list(children)
+            if not doc.has_annotation("DEP"):
+                return ""
+        except Exception:
+            return ""
+
+    if hasattr(token, "has_dep"):
+        try:
+            if not token.has_dep():
+                return ""
+        except Exception:
+            return ""
+
+    children = None
+    if hasattr(token, "children"):
+        try:
+            cand = getattr(token, "children", None)
+            if cand is not None:
+                if isinstance(cand, list):
+                    children = cand
+                elif hasattr(cand, "__iter__"):
+                    children = list(cand)
         except Exception:
             children = []
-    if not children and getattr(token, "doc", None) is not None:
-        doc = getattr(token, "doc", None)
+
+    if not children and doc is not None:
         if isinstance(doc, (list, tuple)):
             children = [t for t in doc if getattr(t, "head", None) is token and t is not token]
 

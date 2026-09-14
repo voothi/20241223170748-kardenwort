@@ -118,6 +118,34 @@ def normalize_pos_tag(pos: Optional[str]) -> str:
         return mapped
     return str(pos).strip()
 
+GERMAN_CONTRACTION_PREPOSITIONS: Set[str] = {
+    "zu", "in", "an", "bei", "von", "für", "fuer", "durch", "um", "auf", "unter", "hinter", "vor", "über", "ueber", "mit", "nach", "aus", "ab"
+}
+GERMAN_CONTRACTION_ARTICLES: Set[str] = {
+    "der", "die", "das", "dem", "den", "des", "ein", "eine", "einem", "einen", "einer", "eines"
+}
+GERMAN_CONTRACTION_PRONOUNS: Set[str] = {
+    "es", "ich", "du", "er", "sie", "wir", "ihr", "man", "mich", "dich", "ihn", "uns", "euch", "ihnen"
+}
+
+def resolve_contraction_constituent_pos(lemma: str, raw_target_token: str = "", default_pos: str = "") -> str:
+    """Assigns linguistically authentic POS tags to deconstructed contraction sub-lemmas.
+    
+    E.g. in German 'zur' -> 'zu' (prep.) + 'der' (art.), prevents article constituents
+    from inheriting 'prep.' from the parent APPRART token.
+    """
+    lem_lower = (lemma or "").strip().lower()
+    raw_lower = (raw_target_token or "").strip().lower()
+
+    if lem_lower in GERMAN_CONTRACTION_ARTICLES or raw_lower in GERMAN_CONTRACTION_ARTICLES:
+        return "art."
+    if lem_lower in GERMAN_CONTRACTION_PREPOSITIONS or raw_lower in GERMAN_CONTRACTION_PREPOSITIONS:
+        return "prep."
+    if lem_lower in GERMAN_CONTRACTION_PRONOUNS or raw_lower in GERMAN_CONTRACTION_PRONOUNS:
+        return "pron."
+
+    return default_pos
+
 # Morphological Grundwörter and derivational suffixes for German nouns (sub-microsecond O(1) precedence lookup):
 GERMAN_GENDER_SUFFIXES_MASCULINE: Tuple[Tuple[str, int], ...] = (
     ("partner", 7),
@@ -1701,11 +1729,12 @@ def parse_markdown_for_branch_headers(all_lines):
     return branch_header_indices
 
 
-def _extract_mapped_token(match, nlp_model, de_dictionary, lemma_override_rules, args, sentence_text, de_fix_genitive):
+def _extract_mapped_token(match, nlp_model, de_dictionary, lemma_override_rules, args, sentence_text, de_fix_genitive, return_pos=False):
     lemmas = _lemmatize_mapped_tokens(
         match['lemmas'], nlp_model, de_dictionary, lemma_override_rules, args, sentence_text, de_fix_genitive
     )
     mapped_sources = {}
+    mapped_pos = {}
     valid_lemmas = []
     for raw_target_token, lem in zip(match['lemmas'], lemmas):
         if not lem or lem in ('--', '-') or not any(c.isalnum() for c in lem):
@@ -1718,6 +1747,13 @@ def _extract_mapped_token(match, nlp_model, de_dictionary, lemma_override_rules,
             mapped_sources[lem] = ", ".join(sort_inflected_forms(existing, config=args))
         else:
             mapped_sources[lem] = ", ".join(combined)
+
+        resolved_pos = resolve_contraction_constituent_pos(lem, raw_target_token, default_pos="")
+        if resolved_pos:
+            mapped_pos[lem] = resolved_pos
+
+    if return_pos:
+        return valid_lemmas, mapped_sources, mapped_pos
     return valid_lemmas, mapped_sources
 
 def retokenize_hyphenated_compounds(doc: Any) -> Any:
@@ -2603,12 +2639,14 @@ class ParallelTextsStrategy(OperationalStrategy):
                     continue
 
                 mapped_lemma_sources = {}
+                mapped_lemma_pos = {}
                 if token.i in mapped_tokens:
                     if token.i in token_mappings_matches:
-                        lemmas_for_current_token, mapped_sources = _extract_mapped_token(
-                            token_mappings_matches[token.i], current_nlp, de_dictionary, lemma_override_rules, config, source_sentence, de_fix_genitive
+                        lemmas_for_current_token, mapped_sources, mapped_pos = _extract_mapped_token(
+                            token_mappings_matches[token.i], current_nlp, de_dictionary, lemma_override_rules, config, source_sentence, de_fix_genitive, return_pos=True
                         )
                         mapped_lemma_sources.update(mapped_sources)
+                        mapped_lemma_pos.update(mapped_pos)
                     else:
                         continue
                 else:
@@ -2646,6 +2684,10 @@ class ParallelTextsStrategy(OperationalStrategy):
                     tok_gender = extract_gender_from_token(token)
                     if tok_gender and norm_pos != "n.":
                         norm_pos = "n."
+                    if lemma in mapped_lemma_pos:
+                        norm_pos = mapped_lemma_pos[lemma]
+                        if norm_pos != "n.":
+                            tok_gender = ""
 
                     data_entry = {
                         'lemma': lemma,
@@ -2997,12 +3039,14 @@ class SingleTextStrategy(OperationalStrategy):
                     continue
 
                 mapped_lemma_sources = {}
+                mapped_lemma_pos = {}
                 if token.i in mapped_tokens:
                     if token.i in token_mappings_matches:
-                        lemmas_for_current_token, mapped_sources = _extract_mapped_token(
-                            token_mappings_matches[token.i], current_nlp, de_dictionary, lemma_override_rules, config, unit_text, de_fix_genitive
+                        lemmas_for_current_token, mapped_sources, mapped_pos = _extract_mapped_token(
+                            token_mappings_matches[token.i], current_nlp, de_dictionary, lemma_override_rules, config, unit_text, de_fix_genitive, return_pos=True
                         )
                         mapped_lemma_sources.update(mapped_sources)
+                        mapped_lemma_pos.update(mapped_pos)
                     else:
                         continue
                 else:
@@ -3040,6 +3084,10 @@ class SingleTextStrategy(OperationalStrategy):
                     tok_gender = extract_gender_from_token(token)
                     if tok_gender and norm_pos != "n.":
                         norm_pos = "n."
+                    if lemma in mapped_lemma_pos:
+                        norm_pos = mapped_lemma_pos[lemma]
+                        if norm_pos != "n.":
+                            tok_gender = ""
 
                     data_entry = {
                         'lemma': lemma,

@@ -12,8 +12,84 @@ from kardenwort.core.kardenwort import (
     RemoteToken,
     RemoteDoc,
     ExtractionConfig,
+    resolve_contraction_constituent_pos,
+    _extract_mapped_token,
 )
 from mock_nlp import MockToken, MockDoc
+
+
+def test_resolve_contraction_constituent_pos():
+    # Preposition sub-lemmas
+    for prep in ["zu", "in", "an", "bei", "von", "für", "durch", "um", "auf", "unter", "hinter", "vor"]:
+        assert resolve_contraction_constituent_pos(prep) == "prep."
+    
+    # Article sub-lemmas
+    for art in ["der", "die", "das", "dem", "den", "des", "ein", "eine", "einem", "einen", "einer"]:
+        assert resolve_contraction_constituent_pos(art) == "art."
+
+    # Pronoun sub-lemmas
+    for pron in ["es", "ich", "du", "er", "sie"]:
+        assert resolve_contraction_constituent_pos(pron) == "pron."
+
+    # Unknown tokens fallback to default_pos
+    assert resolve_contraction_constituent_pos("gehen", default_pos="v.") == "v."
+    assert resolve_contraction_constituent_pos("Haus", default_pos="n.") == "n."
+
+
+def test_extract_mapped_token_contraction_pos_zur():
+    import argparse
+    from mock_nlp import MockPipelineNLP
+
+    nlp = MockPipelineNLP('de')
+    match = {
+        'source_word': 'zur',
+        'lemmas': ['zu', 'der']
+    }
+    args = argparse.Namespace(
+        token_mappings_lemmatize=False,
+        combine_source_words_order='contractions_first',
+        combine_source_words_prefer_lowercase=True,
+        apostrophe_chars="', ’, ‘, `, ´, ʼ"
+    )
+
+    valid_lemmas, mapped_sources, mapped_pos = _extract_mapped_token(
+        match, nlp, None, {}, args, "Wir gehen zur Schule.", False, return_pos=True
+    )
+    assert valid_lemmas == ["zu", "der"]
+    assert mapped_pos["zu"] == "prep."
+    assert mapped_pos["der"] == "art."
+
+
+def test_extract_mapped_token_contraction_pos_german_apprart_variants():
+    import argparse
+    from mock_nlp import MockPipelineNLP
+
+    nlp = MockPipelineNLP('de')
+    args = argparse.Namespace(
+        token_mappings_lemmatize=False,
+        combine_source_words_order='contractions_first',
+        combine_source_words_prefer_lowercase=True,
+        apostrophe_chars="', ’, ‘, `, ´, ʼ"
+    )
+
+    contractions = [
+        ("im", ["in", "dem"], "prep.", "art."),
+        ("am", ["an", "dem"], "prep.", "art."),
+        ("beim", ["bei", "dem"], "prep.", "art."),
+        ("vom", ["von", "dem"], "prep.", "art."),
+        ("ans", ["an", "das"], "prep.", "art."),
+        ("ins", ["in", "das"], "prep.", "art."),
+        ("zum", ["zu", "dem"], "prep.", "art."),
+        ("zur", ["zu", "der"], "prep.", "art."),
+    ]
+
+    for source_word, sub_lemmas, expected_pos1, expected_pos2 in contractions:
+        match = {'source_word': source_word, 'lemmas': sub_lemmas}
+        _, _, mapped_pos = _extract_mapped_token(
+            match, nlp, None, {}, args, f"Er ist {source_word} Haus.", False, return_pos=True
+        )
+        assert mapped_pos[sub_lemmas[0]] == expected_pos1
+        assert mapped_pos[sub_lemmas[1]] == expected_pos2
 
 
 def test_normalize_pos_tag():

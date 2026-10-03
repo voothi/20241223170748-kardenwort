@@ -262,4 +262,14 @@ def test_extract_gender_real_spacy_amazon_lieferpartner_and_arbeiten():
     assert extract_gender_from_token(token_lieferpartner) == "m"
 
 
+def test_merge_pos_tags_and_combine_der():
+    from kardenwort.core.kardenwort import merge_pos_tags
+    assert merge_pos_tags("art.", "pron.") == "art., pron."
+    assert merge_pos_tags("pron.", "art.") == "art., pron."
+    assert merge_pos_tags("art.", "art.") == "art."
+    assert merge_pos_tags("art., det.", "pron.") == "art., pron., det."
+    assert merge_pos_tags("", "pron.") == "pron."
+
+
+
 

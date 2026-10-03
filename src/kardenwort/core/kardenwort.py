@@ -118,6 +118,25 @@ def normalize_pos_tag(pos: Optional[str]) -> str:
         return mapped
     return str(pos).strip()
 
+def merge_pos_tags(existing_pos_str: str, new_pos_str: str) -> str:
+    """Merges and orders POS tags (e.g. 'art.' + 'pron.' -> 'art., pron.')."""
+    if not existing_pos_str:
+        return new_pos_str or ""
+    if not new_pos_str:
+        return existing_pos_str or ""
+    seen_pos = []
+    for p in str(existing_pos_str).split(','):
+        norm = normalize_pos_tag(p).lower()
+        if norm and norm not in seen_pos:
+            seen_pos.append(norm)
+    for p in str(new_pos_str).split(','):
+        norm = normalize_pos_tag(p).lower()
+        if norm and norm not in seen_pos:
+            seen_pos.append(norm)
+    pos_order = {"art.": 0, "pron.": 1, "det.": 2, "prep.": 3}
+    seen_pos.sort(key=lambda x: (pos_order.get(x, 99), x))
+    return ", ".join(seen_pos)
+
 GERMAN_CONTRACTION_PREPOSITIONS: Set[str] = {
     "zu", "in", "an", "bei", "von", "für", "fuer", "durch", "um", "auf", "unter", "hinter", "vor", "über", "ueber", "mit", "nach", "aus", "ab"
 }
@@ -2725,6 +2744,9 @@ class ParallelTextsStrategy(OperationalStrategy):
                                     if form not in existing_raw:
                                         existing_raw.append(form)
                                 lemma_data['raw_source_words'][lemma] = ", ".join(sort_inflected_forms(existing_raw, apo_cfg, order_cfg, prefer_lowercase_cfg))
+                            if 'pos' in lemma_data and norm_pos:
+                                cur_p = lemma_data['pos'].get(lemma, '')
+                                lemma_data['pos'][lemma] = merge_pos_tags(cur_p, norm_pos)
                         elif getattr(config, 'prefer_shortest_form', False) and len(cur_source_word) < len(lemma_data['lemmas'][lemma]):
                             lemma_data['lemmas'][lemma] = cur_source_word
                             lemma_data['raw_source_words'][lemma] = cur_raw_source_word
@@ -2751,6 +2773,8 @@ class ParallelTextsStrategy(OperationalStrategy):
                                     if form not in existing_raw:
                                         existing_raw.append(form)
                                 lemmas_in_sentence[lemma]['raw_source_word'] = ", ".join(sort_inflected_forms(existing_raw, apo_cfg, order_cfg, prefer_lowercase_cfg))
+                                if norm_pos:
+                                    lemmas_in_sentence[lemma]['pos'] = merge_pos_tags(lemmas_in_sentence[lemma].get('pos', ''), norm_pos)
                         else:
                             dedup_key = (lemma, cur_source_word.lower())
                             if dedup_key not in lemmas_in_sentence:
@@ -3125,6 +3149,9 @@ class SingleTextStrategy(OperationalStrategy):
                                     if form not in existing_raw:
                                         existing_raw.append(form)
                                 lemma_data['raw_source_words'][lemma] = ", ".join(sort_inflected_forms(existing_raw, apo_cfg, order_cfg, prefer_lowercase_cfg))
+                            if 'pos' in lemma_data and norm_pos:
+                                cur_p = lemma_data['pos'].get(lemma, '')
+                                lemma_data['pos'][lemma] = merge_pos_tags(cur_p, norm_pos)
                         elif getattr(config, 'prefer_shortest_form', False) and len(cur_source_word) < len(lemma_data['lemmas'][lemma]):
                             lemma_data['lemmas'][lemma] = cur_source_word
                             lemma_data['raw_source_words'][lemma] = cur_raw_source_word
@@ -3151,6 +3178,8 @@ class SingleTextStrategy(OperationalStrategy):
                                     if form not in existing_raw:
                                         existing_raw.append(form)
                                 lemmas_in_sentence[lemma]['raw_source_word'] = ", ".join(sort_inflected_forms(existing_raw, apo_cfg, order_cfg, prefer_lowercase_cfg))
+                                if norm_pos:
+                                    lemmas_in_sentence[lemma]['pos'] = merge_pos_tags(lemmas_in_sentence[lemma].get('pos', ''), norm_pos)
                         else:
                             dedup_key = (lemma, cur_source_word.lower())
                             if dedup_key not in lemmas_in_sentence:

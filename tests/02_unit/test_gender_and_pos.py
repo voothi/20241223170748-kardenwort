@@ -416,6 +416,138 @@ def test_real_spacy_composite_identifier_pos_resolution():
     assert pos_by_lemma.get("task") != "num."
 
 
+def test_deduplicated_compound_part_nlp_calls():
+    """Verify that compound parts receive correct POS tags without redundant pipeline calls."""
+    import argparse
+    from kardenwort.core.kardenwort import _extract_standard_token
+    from mock_nlp import MockPipelineNLP, MockToken
+
+    class CallTrackingNLP(MockPipelineNLP):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.call_history = []
+
+        def __call__(self, text: str):
+            self.call_history.append(text)
+            return super().__call__(text)
+
+    nlp = CallTrackingNLP('de', pos_map={'Failover': 'NOUN', 'Mechanismus': 'NOUN'})
+    tok = MockToken("Failover-Mechanismus", pos_="NOUN", is_alpha=False)
+    args = argparse.Namespace(
+        language='de',
+        de_force_noun_capitalization=False,
+        preserve_composite_tokens=False,
+        de_gcs_preserve_compound_word=False,
+    )
+    de_dict = {"Failover", "Mechanismus"}
+
+    lemmas, mapped_sources, mapped_pos = _extract_standard_token(
+        tok, nlp, de_dictionary=de_dict, lemma_override_rules={},
+        sentence_text="Ein Failover-Mechanismus wird initialisiert.", de_fix_genitive=False,
+        de_gcs=True, gcs_automaton=None, de_gcs_pos_tags=['NOUN'],
+        args=args, separable_verb_map={}, return_pos=True
+    )
+
+    # Both parts must be evaluated through the NLP pipeline at most once
+    assert nlp.call_history.count("Failover") == 1
+    assert nlp.call_history.count("Mechanismus") == 1
+
+    # Both lemmas must be extracted and tagged as 'n.'
+    assert "Failover" in lemmas
+    assert "Mechanismus" in lemmas
+    assert mapped_pos.get("Failover") == "n."
+    assert mapped_pos.get("Mechanismus") == "n."
+
+
+def test_lemmatize_compound_part_backward_compatibility():
+    """Verify that lemmatize_compound_part preserves backward compatibility when called without return_pos."""
+    from types import SimpleNamespace
+    from kardenwort.core.kardenwort import lemmatize_compound_part
+    from mock_nlp import MockPipelineNLP
+
+    nlp = MockPipelineNLP('de', pos_map={'Schulungs': 'NOUN', 'basiert': 'ADJ'})
+    de_dict = {"Schulung", "Schulungs", "Basiert"}
+    args = SimpleNamespace(
+        language='de',
+        use_simplemma_correction=False,
+    )
+
+    # 1. Default call (no return_pos) returns a string
+    res_default = lemmatize_compound_part("Schulungs-", nlp, de_dict, args)
+    assert isinstance(res_default, str)
+    assert res_default in ("Schulung", "Schulungs")
+
+    # 2. Explicit return_pos=False returns a string
+    res_false = lemmatize_compound_part("Schulungs-", nlp, de_dict, args, return_pos=False)
+    assert isinstance(res_false, str)
+    assert res_false == res_default
+
+    # 3. Explicit return_pos=True returns a (lemma, pos_tag) tuple
+    res_tuple = lemmatize_compound_part("Schulungs-", nlp, de_dict, args, return_pos=True)
+    assert isinstance(res_tuple, tuple)
+    assert len(res_tuple) == 2
+    lemma, pos = res_tuple
+    assert lemma in ("Schulung", "Schulungs")
+    assert pos == "n."
+
+    # 4. Non-noun part with return_pos=True
+    lemma_adj, pos_adj = lemmatize_compound_part("-basiert", nlp, de_dict, args, return_pos=True)
+    assert lemma_adj in ("basiert", "Basiert")
+    assert pos_adj == "adj."
+
+
+def test_german_compound_head_gender_retention():
+    """Verify German compound splitting gender retention on head nouns and constituent suffix rules."""
+    from types import SimpleNamespace
+    from kardenwort.core.kardenwort import ExtractionConfig, ExecutionContext, SingleTextStrategy
+    from mock_nlp import MockPipelineNLP
+
+    nlp = MockPipelineNLP('de', pos_map={
+        'Lieferpartner-Netzwerk': 'NOUN',
+        'Lieferpartner': 'NOUN',
+        'Netzwerk': 'NOUN',
+        'Amazon-Lieferpartner': 'NOUN',
+        'Amazon': 'PROPN',
+    })
+    source_text = "Lieferpartner-Netzwerk und Amazon-Lieferpartner."
+    args = SimpleNamespace(
+        language='de', de_force_noun_capitalization=False, preserve_composite_tokens=False,
+        deduplication_scope='global', combine_source_words=False, combine_source_words_order='contractions_first',
+        combine_source_words_prefer_lowercase=True, prefer_shortest_form=False, strip_headers=[],
+        sentence_context_size=1, add_source_word_col=True, add_wordlist_col=False, add_sentence_index_col=False,
+        add_header=True, wordlist_use_br=False, stdout_print_output_basename=False, de_gcs=True,
+        de_gcs_add_parts_to_wordlist=True, de_gcs_pos_tags=['NOUN'], force_proper_noun_capitalization=True,
+        de_fix_genitive=False, de_gcs_mask_unknown_parts=False, de_gcs_preserve_compound_word=False,
+        de_gcs_skip_merge_fractions=False, de_gcs_only_nouns=True, de_gcs_combine_noun_modes=False,
+        strip_garbage_characters='', anki_markdown_decks=False, anki_create_subdecks=False,
+        anki_deck_content=['parent-source'], anki_sentence_subdecks=False, anki_parent_deck=None,
+        anki_context_use_br=False, field_mapping={}, anki_header=['lemma', 'source_word', 'pos', 'gender'],
+        header=['lemma', 'source_word', 'pos', 'gender'], type='sentence', lemmas_per_line=False,
+        token_mappings={}, classifications={}, classification_case_sensitive=False,
+        source_text=source_text, source_text_content=source_text, output_file_path=''
+    )
+    de_dict = {"Lieferpartner", "Netzwerk", "Amazon"}
+    cfg = ExtractionConfig.from_args(args)
+    ctx = ExecutionContext(nlp_model=nlp, simplemma_lang='de', de_dictionary=de_dict)
+    strategy = SingleTextStrategy()
+    records = list(strategy.execute(cfg, ctx))
+    by_lemma = {r.row_data['lemma']: r.row_data for r in records if r.row_data}
+
+    # Verify Lieferpartner retained masculine 'm' (Grundwort -partner)
+    assert "Lieferpartner" in by_lemma
+    assert by_lemma["Lieferpartner"]["pos"] == "n."
+    assert by_lemma["Lieferpartner"]["gender"] == "m"
+
+    # Verify Netzwerk retained neuter 'n' (derivational suffix -werk)
+    assert "Netzwerk" in by_lemma
+    assert by_lemma["Netzwerk"]["pos"] == "n."
+    assert by_lemma["Netzwerk"]["gender"] == "n"
+
+    # Verify Amazon does not falsely inherit head gender 'm'
+    if "Amazon" in by_lemma:
+        assert by_lemma["Amazon"]["gender"] == ""
+
+
 
 
 

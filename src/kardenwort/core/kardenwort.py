@@ -180,6 +180,7 @@ GERMAN_GENDER_SUFFIXES_MASCULINE: Tuple[Tuple[str, int], ...] = (
 )
 
 GERMAN_GENDER_SUFFIXES_FEMININE: Tuple[Tuple[str, int], ...] = (
+    ("frau", 4),
     ("schaft", 6),
     ("heit", 5),
     ("keit", 5),
@@ -194,6 +195,7 @@ GERMAN_GENDER_SUFFIXES_FEMININE: Tuple[Tuple[str, int], ...] = (
 )
 
 GERMAN_GENDER_SUFFIXES_NEUTER: Tuple[Tuple[str, int], ...] = (
+    ("werk", 4),
     ("chen", 5),
     ("lein", 5),
     ("ment", 5),
@@ -1291,31 +1293,37 @@ def get_overridden_lemma_for_compound_part(initial_lemma, part, original_word, o
             
     return initial_lemma
 
-def lemmatize_compound_part(part, nlp_model, de_dictionary, args=None):
+def lemmatize_compound_part(part, nlp_model, de_dictionary, args=None, return_pos=False):
     if not part:
-        return ""
+        return ("", "n.") if return_pos else ""
 
     part = part.strip('-')
     if not part:
-        return ""
+        return ("", "n.") if return_pos else ""
 
     is_all_caps = part.isupper() and len(part) > 1
     has_internal_caps = any(c.isupper() for c in part[1:])
 
     if is_all_caps or has_internal_caps:
-        return part
+        return (part, "n.") if return_pos else part
 
-    part_document = nlp_model(part)
+    try:
+        part_document = nlp_model(part)
+    except Exception:
+        part_document = None
     if not part_document or len(part_document) == 0:
-        return ""
+        return ("", "n.") if return_pos else ""
 
     token = part_document[0]
+    raw_pos = getattr(token, "pos_", "") or getattr(token, "pos", "") or ""
+    pos_tag = normalize_pos_tag(raw_pos) or "n."
     
     if token.pos_ not in ["NOUN", "PROPN"]:
         spacy_lemma = token.lemma_.strip('-')
         if args and getattr(args, 'use_simplemma_correction', False):
-            return simplemma.lemmatize(part, lang=getattr(args, 'language', 'en')).strip('-')
-        return spacy_lemma
+            res_lemma = simplemma.lemmatize(part, lang=getattr(args, 'language', 'en')).strip('-')
+            return (res_lemma, pos_tag) if return_pos else res_lemma
+        return (spacy_lemma, pos_tag) if return_pos else spacy_lemma
     
     spacy_lemma = token.lemma_.strip('-').capitalize()
     if args and getattr(args, 'use_simplemma_correction', False):
@@ -1323,11 +1331,16 @@ def lemmatize_compound_part(part, nlp_model, de_dictionary, args=None):
 
     capitalized_part = part.capitalize()
 
-    if spacy_lemma in de_dictionary:
-        return spacy_lemma
+    if de_dictionary:
+        if spacy_lemma in de_dictionary:
+            return (spacy_lemma, pos_tag) if return_pos else spacy_lemma
 
-    if capitalized_part in de_dictionary:
-        return capitalized_part
+        if capitalized_part in de_dictionary:
+            return (capitalized_part, pos_tag) if return_pos else capitalized_part
+    else:
+        return (spacy_lemma, pos_tag) if return_pos else spacy_lemma
+
+    return (None, pos_tag) if return_pos else None
 
 def get_simplemma_input_text(token, args):
     if getattr(args, 'simplemma_after_spacy', False) and hasattr(token, 'lemma_') and getattr(token, 'lemma_', None) is not None:
@@ -2099,20 +2112,19 @@ def _extract_standard_token(
             part = part.strip()
             if not part or len(part) <= 1: continue
 
-            initial_part_lemma = lemmatize_compound_part(part, nlp_model, de_dictionary, args)
+            try:
+                initial_part_lemma, part_pos = lemmatize_compound_part(part, nlp_model, de_dictionary, args, return_pos=True)
+            except Exception:
+                initial_part_lemma = None
+                part_pos = "n."
+
             processed_part_lemma = get_overridden_lemma_for_compound_part(initial_part_lemma, part, token.text, lemma_override_rules, sentence_text)
             if processed_part_lemma:
                 processed_part_lemma = processed_part_lemma.strip('-')
             if processed_part_lemma and processed_part_lemma not in ('--', '-') and any(c.isalnum() for c in processed_part_lemma):
                 lemmas_for_current_token.append(processed_part_lemma)
-                try:
-                    p_doc = nlp_model(part)
-                    if p_doc and len(p_doc) > 0:
-                        part_pos = normalize_pos_tag(getattr(p_doc[0], "pos_", "") or getattr(p_doc[0], "pos", "") or "")
-                        if part_pos and processed_part_lemma not in mapped_pos:
-                            mapped_pos[processed_part_lemma] = part_pos
-                except Exception:
-                    pass
+                if processed_part_lemma not in mapped_pos:
+                    mapped_pos[processed_part_lemma] = part_pos or "n."
 
     elif is_composite_token(token.text) and not is_special_token:
         is_path_token = '/' in token.text or '\\' in token.text or bool(re.search(r'\.[a-zA-Z0-9]{1,5}$', token.text))
@@ -2203,7 +2215,12 @@ def _extract_standard_token(
                     component = raw_component.strip('-')
                     if not component or len(component) < 3: continue
 
-                    initial_part_lemma = lemmatize_compound_part(component, nlp_model, de_dictionary, args)
+                    try:
+                        initial_part_lemma, comp_pos = lemmatize_compound_part(component, nlp_model, de_dictionary, args, return_pos=True)
+                    except Exception:
+                        initial_part_lemma = None
+                        comp_pos = "n."
+
                     overridden_part_lemma = get_overridden_lemma_for_compound_part(initial_part_lemma, component, token.text, lemma_override_rules, sentence_text)
                     processed_part_lemma = _format_gcs_component_case(overridden_part_lemma)
                     if processed_part_lemma:
@@ -2211,15 +2228,8 @@ def _extract_standard_token(
 
                     if processed_part_lemma and processed_part_lemma not in ('--', '-') and any(c.isalnum() for c in processed_part_lemma):
                         lemmas_for_current_token.append(processed_part_lemma)
-                        try:
-                            c_doc = nlp_model(component)
-                            if c_doc and len(c_doc) > 0:
-                                comp_pos = normalize_pos_tag(getattr(c_doc[0], "pos_", "") or getattr(c_doc[0], "pos", "") or "")
-                                if comp_pos and processed_part_lemma not in mapped_pos:
-                                    mapped_pos[processed_part_lemma] = comp_pos
-                        except Exception:
-                            if processed_part_lemma not in mapped_pos:
-                                mapped_pos[processed_part_lemma] = "n."
+                        if processed_part_lemma not in mapped_pos:
+                            mapped_pos[processed_part_lemma] = comp_pos or "n."
                         
         except Exception as e:
             print(f"Warning: GCS processing failed for '{token.text}': {e}", file=sys.stderr)
@@ -2735,6 +2745,24 @@ class ParallelTextsStrategy(OperationalStrategy):
                         norm_pos = mapped_lemma_pos[lemma]
                         if norm_pos != "n.":
                             tok_gender = ""
+                        else:
+                            token_clean = token.text.strip('-').lower()
+                            lemma_clean = lemma.strip('-').lower()
+                            cur_source_clean = cur_source_word.strip('-').lower()
+                            constituent_gender = (
+                                _match_morphological_suffix(lemma)
+                                or (_match_morphological_suffix(cur_source_word) if cur_source_clean != token_clean else "")
+                            )
+                            is_compound_head = (
+                                token_clean.endswith(lemma_clean)
+                                or (cur_source_clean != token_clean and token_clean.endswith(cur_source_clean))
+                            )
+                            if constituent_gender:
+                                tok_gender = constituent_gender
+                            elif is_compound_head and tok_gender:
+                                pass
+                            elif lemma_clean != token_clean:
+                                tok_gender = ""
 
                     data_entry = {
                         'lemma': lemma,
@@ -3142,6 +3170,24 @@ class SingleTextStrategy(OperationalStrategy):
                         norm_pos = mapped_lemma_pos[lemma]
                         if norm_pos != "n.":
                             tok_gender = ""
+                        else:
+                            token_clean = token.text.strip('-').lower()
+                            lemma_clean = lemma.strip('-').lower()
+                            cur_source_clean = cur_source_word.strip('-').lower()
+                            constituent_gender = (
+                                _match_morphological_suffix(lemma)
+                                or (_match_morphological_suffix(cur_source_word) if cur_source_clean != token_clean else "")
+                            )
+                            is_compound_head = (
+                                token_clean.endswith(lemma_clean)
+                                or (cur_source_clean != token_clean and token_clean.endswith(cur_source_clean))
+                            )
+                            if constituent_gender:
+                                tok_gender = constituent_gender
+                            elif is_compound_head and tok_gender:
+                                pass
+                            elif lemma_clean != token_clean:
+                                tok_gender = ""
 
                     data_entry = {
                         'lemma': lemma,

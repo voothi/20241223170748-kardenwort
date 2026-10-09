@@ -31,6 +31,20 @@ def test_resolve_contraction_constituent_pos():
     for pron in ["es", "ich", "du", "er", "sie"]:
         assert resolve_contraction_constituent_pos(pron) == "pron."
 
+    # English verbal constituents
+    for verb in ["be", "have", "will", "would", "had"]:
+        assert resolve_contraction_constituent_pos(verb) == "v."
+    for verb_raw in ["'re", "'ve", "'ll", "'d"]:
+        assert resolve_contraction_constituent_pos("", raw_target_token=verb_raw) == "v."
+
+    # English negative constituents
+    for neg in ["not", "n't", "nt"]:
+        assert resolve_contraction_constituent_pos(neg) == "part."
+
+    # English pronoun constituents
+    for pron in ["i", "you", "he", "she", "it", "we", "they"]:
+        assert resolve_contraction_constituent_pos(pron) == "pron."
+
     # Unknown tokens fallback to default_pos
     assert resolve_contraction_constituent_pos("gehen", default_pos="v.") == "v."
     assert resolve_contraction_constituent_pos("Haus", default_pos="n.") == "n."

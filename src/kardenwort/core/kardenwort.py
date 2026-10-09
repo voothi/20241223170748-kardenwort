@@ -147,11 +147,24 @@ GERMAN_CONTRACTION_PRONOUNS: Set[str] = {
     "es", "ich", "du", "er", "sie", "wir", "ihr", "man", "mich", "dich", "ihn", "uns", "euch", "ihnen"
 }
 
+ENGLISH_CONTRACTION_VERBS: Set[str] = {
+    "be", "have", "will", "would", "had", "am", "are", "is", "was", "were", "has", "do", "does", "did", "ca", "could", "should", "might", "must", "wo",
+    "'re", "’re", "re", "'ve", "’ve", "ve", "'ll", "’ll", "ll", "'d", "’d", "d", "'m", "’m", "m"
+}
+ENGLISH_CONTRACTION_PARTICLES: Set[str] = {
+    "not", "n't", "n’t", "nt", "'t", "’t"
+}
+ENGLISH_CONTRACTION_PRONOUNS: Set[str] = {
+    "i", "you", "he", "she", "it", "we", "they", "that", "what", "who", "where", "how", "there"
+}
+
 def resolve_contraction_constituent_pos(lemma: str, raw_target_token: str = "", default_pos: str = "") -> str:
     """Assigns linguistically authentic POS tags to deconstructed contraction sub-lemmas.
     
     E.g. in German 'zur' -> 'zu' (prep.) + 'der' (art.), prevents article constituents
     from inheriting 'prep.' from the parent APPRART token.
+    In English 'you're' -> 'you' (pron.) + 'be' (v.), prevents verbal constituents
+    from inheriting 'pron.' from the parent pronoun token.
     """
     lem_lower = (lemma or "").strip().lower()
     raw_lower = (raw_target_token or "").strip().lower()
@@ -161,6 +174,12 @@ def resolve_contraction_constituent_pos(lemma: str, raw_target_token: str = "", 
     if lem_lower in GERMAN_CONTRACTION_PREPOSITIONS or raw_lower in GERMAN_CONTRACTION_PREPOSITIONS:
         return "prep."
     if lem_lower in GERMAN_CONTRACTION_PRONOUNS or raw_lower in GERMAN_CONTRACTION_PRONOUNS:
+        return "pron."
+    if lem_lower in ENGLISH_CONTRACTION_VERBS or raw_lower in ENGLISH_CONTRACTION_VERBS:
+        return "v."
+    if lem_lower in ENGLISH_CONTRACTION_PARTICLES or raw_lower in ENGLISH_CONTRACTION_PARTICLES:
+        return "part."
+    if lem_lower in ENGLISH_CONTRACTION_PRONOUNS or raw_lower in ENGLISH_CONTRACTION_PRONOUNS:
         return "pron."
 
     return default_pos

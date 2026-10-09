@@ -101,8 +101,9 @@ class MockDoc(list):
 
 class MockPipelineNLP:
     """Simulates spaCy Language Pipeline model for integration baseline runners."""
-    def __init__(self, lang: str = 'de'):
+    def __init__(self, lang: str = 'de', pos_map: Optional[Dict[str, str]] = None):
         self.lang = lang
+        self.pos_map = pos_map or {}
         
     def __call__(self, text: str) -> MockDoc:
         import re
@@ -110,6 +111,7 @@ class MockPipelineNLP:
         for idx, match in enumerate(re.finditer(r'\S+', text)):
             w = match.group(0)
             is_start = (idx == 0)
-            tokens.append(MockToken(w, i=idx, idx=match.start(), is_sent_start=is_start))
+            pos_val = self.pos_map.get(w, self.pos_map.get(w.lower(), "NOUN"))
+            tokens.append(MockToken(w, i=idx, idx=match.start(), is_sent_start=is_start, pos_=pos_val))
         return MockDoc(tokens, text)
 

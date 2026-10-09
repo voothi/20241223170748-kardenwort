@@ -2052,14 +2052,18 @@ def _extract_standard_token(
     de_gcs_preserve_compound_word=False,
     de_gcs_skip_merge_fractions=False,
     preserve_composite_tokens=False,
-    possessive_suffix=""
+    possessive_suffix="",
+    return_pos=False
 ):
     if is_possessive_token(token):
+        if return_pos:
+            return [], {}, {}
         return [], {}
 
     lemmas_for_current_token = []
     source_word_form = f"{token.text}{possessive_suffix}" if possessive_suffix else token.text
     base_lemma = ""
+    mapped_pos = {}
     
     if token.i in separable_verb_map:
         particle = separable_verb_map[token.i]
@@ -2101,6 +2105,14 @@ def _extract_standard_token(
                 processed_part_lemma = processed_part_lemma.strip('-')
             if processed_part_lemma and processed_part_lemma not in ('--', '-') and any(c.isalnum() for c in processed_part_lemma):
                 lemmas_for_current_token.append(processed_part_lemma)
+                try:
+                    p_doc = nlp_model(part)
+                    if p_doc and len(p_doc) > 0:
+                        part_pos = normalize_pos_tag(getattr(p_doc[0], "pos_", "") or getattr(p_doc[0], "pos", "") or "")
+                        if part_pos and processed_part_lemma not in mapped_pos:
+                            mapped_pos[processed_part_lemma] = part_pos
+                except Exception:
+                    pass
 
     elif is_composite_token(token.text) and not is_special_token:
         is_path_token = '/' in token.text or '\\' in token.text or bool(re.search(r'\.[a-zA-Z0-9]{1,5}$', token.text))
@@ -2128,6 +2140,9 @@ def _extract_standard_token(
                         sub_lemma = sub_lemma.strip('-')
                     if sub_lemma and sub_lemma not in ('--', '-') and any(c.isalnum() for c in sub_lemma):
                         extracted_sub_lemmas.append(sub_lemma)
+                        sub_pos = normalize_pos_tag(getattr(sub_token, "pos_", "") or getattr(sub_token, "pos", "") or "")
+                        if sub_pos and sub_lemma not in mapped_pos:
+                            mapped_pos[sub_lemma] = sub_pos
                         if is_path_token:
                             if sub_lemma in part_source_map:
                                 existing = [s.strip() for s in part_source_map[sub_lemma].split(',') if s.strip()]
@@ -2196,6 +2211,15 @@ def _extract_standard_token(
 
                     if processed_part_lemma and processed_part_lemma not in ('--', '-') and any(c.isalnum() for c in processed_part_lemma):
                         lemmas_for_current_token.append(processed_part_lemma)
+                        try:
+                            c_doc = nlp_model(component)
+                            if c_doc and len(c_doc) > 0:
+                                comp_pos = normalize_pos_tag(getattr(c_doc[0], "pos_", "") or getattr(c_doc[0], "pos", "") or "")
+                                if comp_pos and processed_part_lemma not in mapped_pos:
+                                    mapped_pos[processed_part_lemma] = comp_pos
+                        except Exception:
+                            if processed_part_lemma not in mapped_pos:
+                                mapped_pos[processed_part_lemma] = "n."
                         
         except Exception as e:
             print(f"Warning: GCS processing failed for '{token.text}': {e}", file=sys.stderr)
@@ -2210,6 +2234,8 @@ def _extract_standard_token(
     mapped_sources = {}
     for lem in sanitized_lemmas:
         mapped_sources[lem] = part_source_map.get(lem, source_word_form) if 'part_source_map' in locals() else source_word_form
+    if return_pos:
+        return sanitized_lemmas, mapped_sources, mapped_pos
     return sanitized_lemmas, mapped_sources
 
 def extract_lemmas_from_sentence(
@@ -2671,7 +2697,7 @@ class ParallelTextsStrategy(OperationalStrategy):
                 else:
                     if not (token.is_alpha or ('-' in token.text and token.text.strip('-')) or is_composite_token(token.text)):
                         continue
-                    lemmas_for_current_token, mapped_sources = _extract_standard_token(
+                    lemmas_for_current_token, mapped_sources, mapped_pos = _extract_standard_token(
                         token, current_nlp, de_dictionary, lemma_override_rules, source_sentence, de_fix_genitive, 
                         de_gcs, gcs_automaton, de_gcs_pos_tags, config, separable_verb_map, 
                         de_gcs_only_nouns=de_gcs_only_nouns,
@@ -2680,9 +2706,11 @@ class ParallelTextsStrategy(OperationalStrategy):
                         de_gcs_preserve_compound_word=de_gcs_preserve_compound_word,
                         de_gcs_skip_merge_fractions=de_gcs_skip_merge_fractions,
                         preserve_composite_tokens=preserve_composite_tokens,
-                        possessive_suffix=possessive_noun_suffixes.get(token.i, "")
+                        possessive_suffix=possessive_noun_suffixes.get(token.i, ""),
+                        return_pos=True
                     )
                     mapped_lemma_sources.update(mapped_sources)
+                    mapped_lemma_pos.update(mapped_pos)
 
                 deduplicated_lemmas = deduplicate_lemmas(lemmas_for_current_token)
 
@@ -3076,7 +3104,7 @@ class SingleTextStrategy(OperationalStrategy):
                 else:
                     if not (token.is_alpha or ('-' in token.text and token.text.strip('-')) or is_composite_token(token.text)):
                         continue
-                    lemmas_for_current_token, mapped_sources = _extract_standard_token(
+                    lemmas_for_current_token, mapped_sources, mapped_pos = _extract_standard_token(
                         token, current_nlp, de_dictionary, lemma_override_rules, unit_text, de_fix_genitive, 
                         de_gcs, gcs_automaton, de_gcs_pos_tags, config, separable_verb_map, 
                         de_gcs_only_nouns=de_gcs_only_nouns,
@@ -3085,9 +3113,11 @@ class SingleTextStrategy(OperationalStrategy):
                         de_gcs_preserve_compound_word=de_gcs_preserve_compound_word,
                         de_gcs_skip_merge_fractions=de_gcs_skip_merge_fractions,
                         preserve_composite_tokens=preserve_composite_tokens,
-                        possessive_suffix=possessive_noun_suffixes.get(token.i, "")
+                        possessive_suffix=possessive_noun_suffixes.get(token.i, ""),
+                        return_pos=True
                     )
                     mapped_lemma_sources.update(mapped_sources)
+                    mapped_lemma_pos.update(mapped_pos)
 
                 deduplicated_lemmas = deduplicate_lemmas(lemmas_for_current_token)
 

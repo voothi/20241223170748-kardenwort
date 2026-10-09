@@ -271,5 +271,151 @@ def test_merge_pos_tags_and_combine_der():
     assert merge_pos_tags("", "pron.") == "pron."
 
 
+def test_filename_token_independent_pos_resolution():
+    import argparse
+    from kardenwort.core.kardenwort import _extract_standard_token
+    from mock_nlp import MockPipelineNLP, MockToken
+
+    # Parent token is classified as PRON (synthetic parser artifact from filename extension)
+    nlp = MockPipelineNLP('en', pos_map={'tasks.md': 'PRON', 'tasks': 'NOUN', 'md': 'NOUN'})
+    tok = MockToken("tasks.md", pos_="PRON", is_alpha=False)
+    args = argparse.Namespace(language='en', de_force_noun_capitalization=False, preserve_composite_tokens=False)
+
+    lemmas, mapped_sources, mapped_pos = _extract_standard_token(
+        tok, nlp, de_dictionary=None, lemma_override_rules={},
+        sentence_text="Review tasks.md before proceeding.", de_fix_genitive=False,
+        de_gcs=False, gcs_automaton=None, de_gcs_pos_tags=[],
+        args=args, separable_verb_map={}, return_pos=True
+    )
+
+    # Sub-lemma 'task' or 'tasks' must independently resolve as 'n.', NOT 'pron.'
+    task_lemma = "task" if "task" in lemmas else "tasks"
+    assert task_lemma in lemmas
+    assert mapped_pos[task_lemma] == "n."
+    assert mapped_pos.get(task_lemma) != "pron."
+
+
+def test_zid_kebab_token_independent_pos_resolution():
+    import argparse
+    from kardenwort.core.kardenwort import _extract_standard_token
+    from mock_nlp import MockPipelineNLP, MockToken
+
+    # Parent token is classified as NUM (synthetic parser artifact from leading timestamp)
+    pos_map = {
+        '20261009000137-harden-bifurcated-failover-and-task-scoped-cooldowns': 'NUM',
+        'harden': 'VERB',
+        'bifurcated': 'ADJ',
+        'failover': 'NOUN',
+        'and': 'CCONJ',
+        'task': 'NOUN',
+        'scoped': 'ADJ',
+        'cooldowns': 'NOUN',
+        'cooldown': 'NOUN'
+    }
+    nlp = MockPipelineNLP('en', pos_map=pos_map)
+    tok = MockToken("20261009000137-harden-bifurcated-failover-and-task-scoped-cooldowns", pos_="NUM", is_alpha=False)
+    args = argparse.Namespace(language='en', de_force_noun_capitalization=False, preserve_composite_tokens=False)
+
+    lemmas, mapped_sources, mapped_pos = _extract_standard_token(
+        tok, nlp, de_dictionary=None, lemma_override_rules={},
+        sentence_text="Check 20261009000137-harden-bifurcated-failover-and-task-scoped-cooldowns.", de_fix_genitive=False,
+        de_gcs=False, gcs_automaton=None, de_gcs_pos_tags=[],
+        args=args, separable_verb_map={}, return_pos=True
+    )
+
+    # Constituent sub-lemmas must resolve independently without inheriting 'num.'
+    for lem in ["harden", "failover", "task", "cooldowns"]:
+        if lem in lemmas:
+            assert mapped_pos.get(lem) != "num.", f"Lemma '{lem}' incorrectly inherited 'num.' from parent token"
+
+    # Specifically check POS classifications
+    if "harden" in lemmas:
+        assert mapped_pos["harden"] == "v."
+    if "task" in lemmas:
+        assert mapped_pos["task"] == "n."
+
+
+def test_composite_identifier_pos_resolution_in_strategy():
+    from types import SimpleNamespace
+    from kardenwort.core.kardenwort import ExtractionConfig, ExecutionContext, SingleTextStrategy
+    from mock_nlp import MockPipelineNLP
+
+    pos_map = {
+        'tasks.md': 'PRON',
+        'tasks': 'NOUN',
+        '20261009000137-harden-task': 'NUM',
+        'harden': 'VERB',
+        'task': 'NOUN'
+    }
+    nlp = MockPipelineNLP('en', pos_map=pos_map)
+    source_text = "See tasks.md and 20261009000137-harden-task."
+    args = SimpleNamespace(
+        language='en', de_force_noun_capitalization=False, preserve_composite_tokens=False,
+        deduplication_scope='global', combine_source_words=False, combine_source_words_order='contractions_first',
+        combine_source_words_prefer_lowercase=True, prefer_shortest_form=False, strip_headers=[],
+        sentence_context_size=1, add_source_word_col=True, add_wordlist_col=False, add_sentence_index_col=False,
+        add_header=True, wordlist_use_br=False, stdout_print_output_basename=False, de_gcs=False,
+        de_gcs_add_parts_to_wordlist=False, de_gcs_pos_tags=[], force_proper_noun_capitalization=True,
+        de_fix_genitive=False, de_gcs_mask_unknown_parts=False, de_gcs_preserve_compound_word=False,
+        de_gcs_skip_merge_fractions=False, de_gcs_only_nouns=True, de_gcs_combine_noun_modes=False,
+        strip_garbage_characters='', anki_markdown_decks=False, anki_create_subdecks=False,
+        anki_deck_content=['parent-source'], anki_sentence_subdecks=False, anki_parent_deck=None,
+        anki_context_use_br=False, field_mapping={}, anki_header=['lemma', 'source_word', 'pos'],
+        header=['lemma', 'source_word', 'pos'], type='sentence', lemmas_per_line=False,
+        token_mappings={}, classifications={}, classification_case_sensitive=False,
+        source_text=source_text, source_text_content=source_text, output_file_path=''
+    )
+    cfg = ExtractionConfig.from_args(args)
+    ctx = ExecutionContext(nlp_model=nlp, simplemma_lang='en')
+    strategy = SingleTextStrategy()
+    records = list(strategy.execute(cfg, ctx))
+    pos_by_lemma = {r.row_data['lemma']: r.row_data.get('pos') for r in records if r.row_data}
+
+    # Verify no constituent inherited 'pron.' or 'num.'
+    for lem, pos in pos_by_lemma.items():
+        assert pos not in ('pron.', 'num.'), f"Lemma '{lem}' unexpectedly has synthetic POS '{pos}'"
+
+
+def test_real_spacy_composite_identifier_pos_resolution():
+    try:
+        import spacy
+        nlp = spacy.load("en_core_web_lg")
+    except Exception:
+        pytest.skip("spacy or en_core_web_lg model not installed in test environment")
+
+    from types import SimpleNamespace
+    from kardenwort.core.kardenwort import ExtractionConfig, ExecutionContext, SingleTextStrategy
+
+    source_text = "Review tasks.md and 20261009000137-harden-bifurcated-failover-and-task-scoped-cooldowns."
+    args = SimpleNamespace(
+        language='en', de_force_noun_capitalization=False, preserve_composite_tokens=False,
+        deduplication_scope='global', combine_source_words=False, combine_source_words_order='contractions_first',
+        combine_source_words_prefer_lowercase=True, prefer_shortest_form=False, strip_headers=[],
+        sentence_context_size=1, add_source_word_col=True, add_wordlist_col=False, add_sentence_index_col=False,
+        add_header=True, wordlist_use_br=False, stdout_print_output_basename=False, de_gcs=False,
+        de_gcs_add_parts_to_wordlist=False, de_gcs_pos_tags=[], force_proper_noun_capitalization=True,
+        de_fix_genitive=False, de_gcs_mask_unknown_parts=False, de_gcs_preserve_compound_word=False,
+        de_gcs_skip_merge_fractions=False, de_gcs_only_nouns=True, de_gcs_combine_noun_modes=False,
+        strip_garbage_characters='', anki_markdown_decks=False, anki_create_subdecks=False,
+        anki_deck_content=['parent-source'], anki_sentence_subdecks=False, anki_parent_deck=None,
+        anki_context_use_br=False, field_mapping={}, anki_header=['lemma', 'source_word', 'pos'],
+        header=['lemma', 'source_word', 'pos'], type='sentence', lemmas_per_line=False,
+        token_mappings={}, classifications={}, classification_case_sensitive=False,
+        source_text=source_text, source_text_content=source_text, output_file_path=''
+    )
+    cfg = ExtractionConfig.from_args(args)
+    ctx = ExecutionContext(nlp_model=nlp, simplemma_lang='en')
+    strategy = SingleTextStrategy()
+    records = list(strategy.execute(cfg, ctx))
+    pos_by_lemma = {r.row_data['lemma']: r.row_data.get('pos') for r in records if r.row_data}
+
+    assert pos_by_lemma.get("task") == "n."
+    assert pos_by_lemma.get("cooldown") == "n."
+    assert pos_by_lemma.get("harden") == "v."
+    assert pos_by_lemma.get("task") != "pron."
+    assert pos_by_lemma.get("task") != "num."
+
+
+
 
 

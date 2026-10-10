@@ -133,17 +133,22 @@ def parse_filename(file_path: Path) -> Tuple[Optional[str], str, Optional[str]]:
     return zid, clean_title, lang
 
 def detect_language(paths: List[Path], default_lang: str) -> str:
-    """Picks the language from the first/primary sent file's postfix."""
+    """Picks the language from the sent files' postfixes by scanning all inputs."""
     if not paths:
         return default_lang
+        
+    for path in paths:
+        _, _, lang = parse_filename(path)
+        if lang:
+            lang_lower = lang.lower()
+            if lang_lower in ('en', 'de'):
+                return lang_lower
+                
     primary_file = paths[0]
     _, _, lang = parse_filename(primary_file)
     if lang:
-        lang_lower = lang.lower()
-        if lang_lower in ('en', 'de'):
-            return lang_lower
-        else:
-            log_warn(f"Unsupported language postfix '{lang}' detected on primary file '{primary_file.name}'. Falling back to default language '{default_lang}'.")
+        log_warn(f"Unsupported language postfix '{lang}' detected on primary file '{primary_file.name}'. Falling back to default language '{default_lang}'.")
+        
     return default_lang
 
 # ==============================================================================
